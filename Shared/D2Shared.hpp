@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef WIN32
+#include "IgnoreWarnings.h"
+#endif
+
 //////////////////////////////////////////////////
 //
 // Project definitions
@@ -20,7 +24,7 @@
 
 #define MAX_TOKEN_CHARS		1024
 #define	MAX_D2PATH_ABSOLUTE	1024
-#define	MAX_D2PATH_RELATIVE	128
+#define	MAX_D2PATH			128
 
 //////////////////////////////////////////////////
 //
@@ -29,6 +33,24 @@
 typedef unsigned long DWORD;
 typedef unsigned short WORD;
 typedef unsigned char BYTE;
+
+typedef DWORD fs_handle;
+
+enum OpenD2Paths
+{
+	FS_HOMEPATH,
+	FS_BASEPATH,
+	FS_MODPATH,
+	FS_MAXPATH
+};
+
+enum OpenD2FileModes
+{
+	FS_READ,
+	FS_WRITE,
+	FS_READWRITE,
+	FS_APPEND
+};
 
 
 //////////////////////////////////////////////////

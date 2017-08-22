@@ -92,6 +92,7 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"BUILD",		"BUILD",		"build",		CMD_BOOLEAN,	co(bBuild),			0x00},
 	{"",			"",				"",				CMD_BOOLEAN,	0x0000,				0x00},
 };
+#undef co
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -101,6 +102,7 @@ static D2CmdArgStrc OpenD2CommandArguments[] = {
 	{"FILEIO",		"HOMEPATH",		"homepath",		CMD_STRING,		co(szHomePath),		0x00},
 	{"FILEIO",		"MODPATH",		"modpath",		CMD_STRING,		co(szModPath),		0x00},
 };
+#undef co
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -289,7 +291,6 @@ static void PopulateConfiguration(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* p
  */
 int InitGame(int argc, char** argv, DWORD pid)
 {
-	char* arg;
 	D2GameConfigStrc config{ 0 };
 	OpenD2ConfigStrc openD2Config{ 0 };
 	bool bSuccess;
@@ -298,6 +299,8 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	PopulateConfiguration(&config, &openD2Config);
 	ParseCommandline(argc, argv, &config, &openD2Config);
+
+	FS_Init(&openD2Config);
 
 	dwRenderingMode = GetRenderingMode(&config);
 
@@ -396,6 +399,8 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FOG_10090();			// destroy async data
 	//D2MCPCLIENT_10001();	// destroy MCP client (FIXME: kind of a bad place for this..)
 	FOG_10143(nullptr);		// kill fog memory
+
+	FS_Shutdown();
 
 	return 0;
 }

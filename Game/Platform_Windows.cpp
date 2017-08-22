@@ -43,9 +43,10 @@ void Sys_CopyBetaRegistryKeys()
 	{	// We had the Diablo II beta installed. Copy the keys and delete the old ones.
 		RegCreateKeyA(HKEY_LOCAL_MACHINE, D2REGISTRY_KEY, &key);
 
+		i = 0;
 		do
 		{
-			status = RegEnumValueA(betakey, i, keybuffer, &keybufferSize, 0, &type, &data, &cbdata);
+			status = RegEnumValueA(betakey, i++, keybuffer, &keybufferSize, 0, &type, &data, &cbdata);
 		} while (status == 0 && RegSetValueExA(key, keybuffer, 0, type, &data, cbdata));
 
 		RegCloseKey(betakey);
@@ -61,6 +62,14 @@ void Sys_CopyBetaRegistryKeys()
 void Sys_CopySettings()
 {
 
+}
+
+/*
+ *	Get current working directory
+ */
+void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen)
+{
+	GetCurrentDirectoryA(dwBufferLen, szBuffer);
 }
 
 /*

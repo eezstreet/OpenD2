@@ -48,6 +48,16 @@ int InitGame(int argc, char** argv, DWORD pid);
 
 // Platform_*.cpp
 void Sys_InitModules();
+void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
+
+// FileSystem.cpp
+void FS_Init(OpenD2ConfigStrc* pConfig);
+void FS_Shutdown();
+size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode);
+size_t FS_Read(fs_handle f, char* buffer, size_t dwBufferLen);
+size_t FS_Write(fs_handle f, char* buffer, size_t dwBufferLen);
+size_t FS_WriteSimple(fs_handle f, char* buffer);
+void FS_CloseFile(fs_handle f);
 
 
 /////////////////////////////////////////////////////////
