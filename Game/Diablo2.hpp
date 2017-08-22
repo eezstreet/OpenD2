@@ -54,10 +54,12 @@ void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
 void FS_Init(OpenD2ConfigStrc* pConfig);
 void FS_Shutdown();
 size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode);
-size_t FS_Read(fs_handle f, char* buffer, size_t dwBufferLen);
+size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen);
 size_t FS_Write(fs_handle f, char* buffer, size_t dwBufferLen);
 size_t FS_WriteSimple(fs_handle f, char* buffer);
 void FS_CloseFile(fs_handle f);
+void FS_Seek(fs_handle f, size_t offset, int nSeekType);
+size_t FS_Tell(fs_handle f);
 
 
 /////////////////////////////////////////////////////////

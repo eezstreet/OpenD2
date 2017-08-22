@@ -256,7 +256,7 @@ static FSHandleStore* FS_GetFileRecord(fs_handle f)
  *	Read from the file into a buffer
  *	@return	The number of bytes read from the file
  */
-size_t FS_Read(fs_handle f, char* buffer, size_t dwBufferLen)
+size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen)
 {
 	if (!FS_GetFileRecord(f))
 	{
@@ -326,4 +326,30 @@ void FS_CloseFile(fs_handle f)
 		pPrevRecord = pRecord;
 		pRecord = pRecord->next;
 	}
+}
+
+/*
+ *	Perform a seek on a file handle
+ */
+void FS_Seek(fs_handle f, size_t offset, int nSeekType)
+{
+	if (!FS_GetFileRecord(f) || !f)
+	{	// either invalid or not something we've opened before
+		return;
+	}
+
+	fseek((FILE*)f, offset, nSeekType);
+}
+
+/*
+ *	Perform a tell on a file handle
+ */
+size_t FS_Tell(fs_handle f)
+{
+	if (!FS_GetFileRecord(f) || !f)
+	{	// either invalid or not something we've opened before
+		return;
+	}
+
+	return ftell((FILE*)f);
 }
