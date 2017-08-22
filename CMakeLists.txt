@@ -23,6 +23,8 @@ if(BUILD_GAME)
 	source_group("Game" FILES ${GAME_SRC})
 	set(GAME_SRC ${GAME_SRC} ${SHARED_SRC})
 
+	link_directories("../Shared")
+
 	add_executable(game WIN32 ${GAME_SRC})
 	set_target_properties(game PROPERTIES OUTPUT_NAME game)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)

@@ -33,3 +33,5 @@
 
 # Projects
 Build/*
+Win32/*
+game.dir/*
