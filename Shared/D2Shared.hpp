@@ -39,22 +39,24 @@ typedef unsigned char BYTE;
  *	The structure which contains data about commandline arguments (ie, the precise values of them)
  *	@author	Necrolis
  */
+#pragma pack(push,enter_include)
+#pragma pack(1)
 struct D2GameConfigStrc     // size 0x3C7
 {
-	DWORD dwExpansion;
-	BYTE  bWindowed;		// {"VIDEO","WINDOW"       ,"w"     , 0x00, 0x04, 0x00},
-	BYTE  b3DFX;			// {"VIDEO","3DFX"         ,"3dfx"  , 0x00, 0x05, 0x00},
-	BYTE  bOpenGL;			// {"VIDEO","OPENGL"       ,"opengl", 0x00, 0x06, 0x00},
-	BYTE  bRave;			// {"VIDEO","RAVE"         ,"rave"  , 0x00, 0x07, 0x00},
-	BYTE  bD3D;				// {"VIDEO","D3D"          ,"d3d"   , 0x00, 0x08, 0x00},
-	BYTE  bPerspective;		// {"VIDEO","PERSPECTIVE"  ,"per"   , 0x00, 0x09, 0x00},
-	BYTE  bQuality;			// {"VIDEO","QUALITY"      ,"lq"    , 0x00, 0x0A, 0x00},
-	DWORD dwGamma;			// {"VIDEO","GAMMA"        ,"gamma" , 0x00, 0x0B, 0x00},
-	BYTE  bVSync;			// {"VIDEO","VSYNC"        ,"vsync" , 0x00, 0x0F, 0x00},
-	DWORD dwFramerate;		// {"VIDEO","FRAMERATE"    ,"fr"    , 0x01, 0x10, 0x00},
-	DWORD dwGameType;		// {"NETWORK"  ,"GAMETYPE"    ,"gametype" , 0x01, 0x0014, 0x00},
-	WORD  wJoinID;			// {"NETWORK"  ,"JOINID"      ,"joinid"   , 0x01, 0x0018, 0x00}, ??? dword overlapps next addy !
-	char  szGameName[24];	// {"NETWORK"  ,"GAMENAME"    ,"gamename" , 0x02, 0x001A, 0x00},
+	DWORD dwExpansion;		// +00
+	BYTE  bWindowed;		// +04 ("w" option)
+	BYTE  b3DFX;			// +05 ("3dfx" option)
+	BYTE  bOpenGL;			// +06 ("opengl" option)
+	BYTE  bRave;			// +07 ("rave" option)
+	BYTE  bD3D;				// +08 ("d3d" option)
+	BYTE  bPerspective;		// +09 ("per" option)
+	BYTE  bQuality;			// +0A ("lq" option)
+	DWORD dwGamma;			// +0B ("gamma" option)
+	BYTE  bVSync;			// +0F ("vsync" option)
+	DWORD dwFramerate;		// +10 ("fr" option)
+	DWORD dwGameType;		// +14 ("gametype" option)
+	WORD  wJoinID;			// +18 ("joinid" option) ??? dword overlapps next addy !
+	char  szGameName[24];	// +1A ("gamename" option),
 	char  szServerIP[24];	// {"NETWORK"  ,"SERVERIP"    ,"s"        , 0x02, 0x0032, 0x00},
 	char  szBNetIP[24];		// {"NETWORK"  ,"BATTLENETIP" ,"bn"       , 0x02, 0x004A, 0x00},
 	char  szMCPIP[24];		// {"NETWORK"  ,"MCPIP"       ,"mcpip"    , 0x02, 0x0062, 0x00},
@@ -95,8 +97,8 @@ struct D2GameConfigStrc     // size 0x3C7
 	BYTE  bUnk208;
 	BYTE  bUnk209;
 	BYTE  bUnk20A;
-	BYTE  nDifficulty;
-	void* pfMPQFunc;		// function ptr; returns 1
+	BYTE  nDifficulty;		// +20B
+	void* pfMPQFunc;		// +20C function ptr; returns 1
 	BYTE  bTXT;				// {"TXT"         ,"TXT"         ,"txt"      , 0x00, 0x0210, 0x00},
 	BYTE  bLog;				// {"DEBUG"       ,"LOG"         ,"log"      , 0x00, 0x0211, 0x00},
 	BYTE  bMsgLog;			// {"DEBUG"       ,"MSGLOG"      ,"msglog"   , 0x00, 0x0212, 0x00},
@@ -110,7 +112,7 @@ struct D2GameConfigStrc     // size 0x3C7
 	BYTE  bSkipInterface;	// skips loading the BNClient QueryInterface
 	BYTE  bBuild;			// {"BUILD"       ,"BUILD"       ,"build"     , 0x00, 0x021E, 0x00},
 	void* pInterface;		// {"NETWORK"     ,"COMINT"      ,"comint"    , 0x01, 0x021F, 0x00},
-	BYTE  bUnk223[0x134];	// ?
+	BYTE  bUnk223[0x134];	// +223 ?
 	BYTE  bSkipToBNet;		// {"NETWORK"     ,"SKIPTOBNET"  ,"W"         , 0x00, 0x0357, 0x00}, //check at d2launch.6FA1D660 CMP BYTE PTR DS:[EAX+357],BL
 	BYTE  nScreenSize;		// {"VIDEO"       ,"SCREENSIZE"  ,"sz"     , 0x00, 0x358, 0x00},
 	BYTE  bShowLogo;		// {"VIDEO"       ,"SHOWLOGO"    ,"sl"     , 0x00, 0x359, 0x00},
@@ -118,6 +120,7 @@ struct D2GameConfigStrc     // size 0x3C7
 
 	BYTE nPadding;         // account for the extra option in 1.13c+
 };
+#pragma pack(pop,enter_include)
 
 /*
  *	The structure which contains OpenD2-specific data

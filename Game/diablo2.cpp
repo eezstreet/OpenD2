@@ -102,6 +102,8 @@ static D2CmdArgStrc OpenD2CommandArguments[] = {
 	{"FILEIO",		"MODPATH",		"modpath",		CMD_STRING,		co(szModPath),		0x00},
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*
  *	Processes a single commandline argument
  */
@@ -160,7 +162,7 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 	}
 
 	pArg = OpenD2CommandArguments;
-
+	// TODO
 }
 
 /*
@@ -203,16 +205,11 @@ D2InterfaceModules PumpModuleFrame(D2InterfaceModules dwInterface, D2GameConfigS
 }
 
 /*
- *	Initialize the game (from main entrypoint)
+ *	Parse commandline arguments
  */
-int InitGame(int argc, char** argv, DWORD pid)
+void ParseCommandline(int argc, char** argv, D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
 {
 	char* arg;
-	D2GameConfigStrc config{ 0 };
-	OpenD2ConfigStrc openD2Config{ 0 };
-	bool bSuccess;
-	DWORD dwRenderingMode;
-	D2InterfaceModules dwCurrentModule;
 
 	// Process the commandline arguments
 	for (int i = 1; i < argc; i++)
@@ -224,18 +221,83 @@ int InitGame(int argc, char** argv, DWORD pid)
 		}
 		else if (arg[0] == '-')
 		{	// Diablo II game setting
-			ProcessDiablo2Argument(arg + 1, &config);
+			ProcessDiablo2Argument(arg + 1, pConfig);
 		}
 		else if (arg[0] == '+')
 		{	// OpenD2 game setting
-			ProcessOpenD2Argument(arg + 1, &openD2Config);
+			ProcessOpenD2Argument(arg + 1, pOpenConfig);
 		}
 	}
+}
 
-	// Fix some other settings
+/*
+ *	Pull default values from a D2CmdArgStrc array
+ */
+static void PopulateDefaultValues(D2CmdArgStrc* paCommandArguments, void* pvInput)
+{
+	D2CmdArgStrc* pArg = paCommandArguments;
+	while (pArg != nullptr && pArg->szKeyName[0] != '\0')
+	{
+		switch (pArg->dwType)
+		{
+			case CMD_BOOLEAN:
+			case CMD_BYTE:
+				*((BYTE*)pvInput + pArg->nOffset) = (BYTE)pArg->dwDefault;
+				break;
+			case CMD_WORD:
+				*((WORD*)pvInput + pArg->nOffset) = (WORD)pArg->dwDefault;
+				break;
+			case CMD_DWORD:
+				*((DWORD*)pvInput + pArg->nOffset) = pArg->dwDefault;
+				break;
+		}
+		++pArg;
+	}
+}
+
+/*
+ *	A (tiny) callback that is needed by the game for some reason
+ */
+int __stdcall LoadExpansionMPQ()
+{
+	return 1;
+}
+
+/*
+ *	Populate the config with default values
+ */
+static void PopulateConfiguration(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
+{
 #ifdef EXPANSION
-	config.dwExpansion = 1;
+	pConfig->dwExpansion = 1;
 #endif
+
+	// Push the default values from the commandline settings for both OpenD2 and the retail game
+	//PopulateDefaultValues(CommandArguments, pConfig);
+	//PopulateDefaultValues(OpenD2CommandArguments, pOpenConfig);
+
+	// Set the default MPQ callback
+#if GAME_MINOR_VERSION >= 13	// In 1.13 we apply a +1 offset to keep it kosher
+	*(void**)((BYTE*)&pConfig->pfMPQFunc + 1) = LoadExpansionMPQ;
+#else
+	pConfig->pfMPQFunc = LoadExpansionMPQ;
+#endif
+}
+
+/*
+ *	Initialize the game (from main entrypoint)
+ */
+int InitGame(int argc, char** argv, DWORD pid)
+{
+	char* arg;
+	D2GameConfigStrc config{ 0 };
+	OpenD2ConfigStrc openD2Config{ 0 };
+	bool bSuccess;
+	DWORD dwRenderingMode;
+	D2InterfaceModules dwCurrentModule;
+
+	PopulateConfiguration(&config, &openD2Config);
+	ParseCommandline(argc, argv, &config, &openD2Config);
 
 	dwRenderingMode = GetRenderingMode(&config);
 
