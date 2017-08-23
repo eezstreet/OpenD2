@@ -159,18 +159,54 @@ static void FS_SanitizeFilePath(char** path)
 /*
  *	Converts an FS_MODE into something that can be used by fopen, etc
  */
-static const char* FS_ModeStr(OpenD2FileModes mode)
+static const char* FS_ModeStr(OpenD2FileModes mode, bool bBinary)
 {
 	switch (mode)
 	{
 		case FS_READ:
-			return "r";
+		{
+			if (bBinary)
+			{
+				return "rb";
+			}
+			else
+			{
+				return "r";
+			}
+		}
 		case FS_WRITE:
-			return "w";
+		{
+			if (bBinary)
+			{
+				return "wb";
+			}
+			else
+			{
+				return "w";
+			}
+		}
 		case FS_READWRITE:
-			return "rw";
+		{
+			if (bBinary)
+			{
+				return "rwb";
+			}
+			else
+			{
+				return "rw";
+			}
+		}
 		case FS_APPEND:
-			return "a";
+		{
+			if (bBinary)
+			{
+				return "ab";
+			}
+			else
+			{
+				return "a";
+			}
+		}
 	}
 	return "";
 }
@@ -179,10 +215,10 @@ static const char* FS_ModeStr(OpenD2FileModes mode)
  *	Open a file with the select mode
  *	@return	The size of the file
  */
-size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode)
+size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false)
 {
 	char path[MAX_D2PATH_ABSOLUTE]{ 0 };
-	const char* szModeStr = FS_ModeStr(mode);
+	const char* szModeStr = FS_ModeStr(mode, bBinary);
 
 	FS_SanitizeFilePath(&filename);
 	for (int i = 0; i < FS_MAXPATH; i++)
@@ -256,22 +292,16 @@ static FSHandleStore* FS_GetFileRecord(fs_handle f)
  *	Read from the file into a buffer
  *	@return	The number of bytes read from the file
  */
-size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen)
+inline size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen = 4, size_t dwCount = 1)
 {
-	if (!FS_GetFileRecord(f))
-	{
-		// It's not something we read, so we aren't responsible for it!
-		return 0;
-	}
-
-	return fread(buffer, 1, dwBufferLen, (FILE*)f);
+	return fread(buffer, dwCount, dwBufferLen, (FILE*)f);
 }
 
 /*
  *	Write to a file
  *	@return	The number of bytes written to the file
  */
-size_t FS_Write(fs_handle f, char* buffer, size_t dwBufferLen)
+size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen = 1, size_t dwCount = 1)
 {
 	FSHandleStore* pRecord = FS_GetFileRecord(f);
 	if (!pRecord || pRecord->mode == FS_READ)
@@ -280,23 +310,12 @@ size_t FS_Write(fs_handle f, char* buffer, size_t dwBufferLen)
 		return 0;
 	}
 
-	return fwrite(buffer, 1, dwBufferLen, (FILE*)f);
-}
-
-/*
- *	Writes to a file, more simply than the above.
- *	@return	The number of bytes written to the file.
- */
-size_t FS_WriteSimple(fs_handle f, char* buffer)
-{
-	FSHandleStore* pRecord = FS_GetFileRecord(f);
-	if (!pRecord || pRecord->mode == FS_READ)
+	if (dwBufferLen == 0)
 	{
-		// Not allowed to write to something which we opened in read mode
-		return 0;
+		dwBufferLen = strlen((const char*)buffer);
 	}
 
-	return fwrite(buffer, 1, strlen(buffer), (FILE*)f);
+	return fwrite(buffer, dwCount, dwBufferLen, (FILE*)f);
 }
 
 /*
@@ -331,25 +350,15 @@ void FS_CloseFile(fs_handle f)
 /*
  *	Perform a seek on a file handle
  */
-void FS_Seek(fs_handle f, size_t offset, int nSeekType)
+inline void FS_Seek(fs_handle f, size_t offset, int nSeekType)
 {
-	if (!FS_GetFileRecord(f) || !f)
-	{	// either invalid or not something we've opened before
-		return;
-	}
-
 	fseek((FILE*)f, offset, nSeekType);
 }
 
 /*
  *	Perform a tell on a file handle
  */
-size_t FS_Tell(fs_handle f)
+inline size_t FS_Tell(fs_handle f)
 {
-	if (!FS_GetFileRecord(f) || !f)
-	{	// either invalid or not something we've opened before
-		return;
-	}
-
 	return ftell((FILE*)f);
 }

@@ -52,6 +52,13 @@ enum OpenD2FileModes
 	FS_APPEND
 };
 
+enum OpenD2FileSeekModes
+{
+	FS_SEEK_SET,
+	FS_SEEK_CUR,
+	FS_SEEK_END,
+};
+
 
 //////////////////////////////////////////////////
 //
