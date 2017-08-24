@@ -6,30 +6,39 @@ Simply put, this project aims to be a "drag and drop" replacement for game.exe a
 
 Ideally the project will maintain compatibility with the original game *for at least one version* (the exact version still to be decided) over TCP/IP and Open Battle.net. Closed Battle.net will not be supported in order to minimize legal risk.
 
+### Project Status
+Currently, you can compile the game.exe module and it will run the original game without issues.
+
+However, very little of the game is actually rewritten. It calls the original libraries (D2Win, Fog, Storm, etc) that the game uses. In due time, these will all be replicated.
+
 ### Compiling
-TBD
+To compile this project, all you will need is CMake.
+*Currently the project only compiles and runs on Windows. More rewriting is needed to get this working on other platforms.*
+On Windows, Visual Studio 2013 or later is needed in order to compile, as some C++11 constructs are used.
+
+Run cmake-gui and set the Source directory to this folder. Set the "Where to build the files" to be ./Build. (This is so that the git repository doesn't pick this up as a source directory). Then, simply open the project file in whatever IDE you want.
 
 ### Architecture
 Just as in the original game, there are several interlocking components driving the game. The difference is that all but the core can be swapped out by a mod.
 
 #### Core (game.exe)
-The core game engine communicates with all of the other components and drives everything. It's also responsible for loading and running mods.
+The core game engine communicates with all of the other components and drives everything. It is (or will be) responsible for the following:
+- Window management
+- Filesystem
+- Memory management
+- Log management
+- Archive (.mpq) management
+- Networking
+- Sound
 
-#### Graphics (D2GFX.dll)
-The graphics engine draws all of the sprites, handles lighting, and provides some basic postprocessing.
+#### Graphics (D2Gfx.dll)
+The graphics are driven by a modular renderer.
 
-#### Sound (D2Sound.dll)
-The sound engine is responsible for playing sound effects, music, speech, etc.
+#### Common Code (D2Game.dll/D2Client.dll)
+Instead of a D2Common.dll, the common code is compiled right into the D2Game.dll and D2Client.dll. This reduces overhead dramatically.
 
-#### Networking (D2Net.dll)
-The networking component is responsible for packet transmission, serialization, etc. over TCP/IP. It's not responsible for anything related to Battle.net.
+#### Serverside (D2Game.dll)
+The serverside is responsible for quest management, AI, and more. Ideally, this should be allowed to mismatch the client DLL and have custom game server logic.
 
-#### Game Logic: Shared (D2Common.dll)
-The shared logic component provides a simulation state for the client and server to both run off of. D2Common routines involve pathfinding, dungeon building (DRLG), items, etc.
-
-#### Game Logic: Server (D2Game.dll)
-The server logic component handles all of the game logic that happens on the server. This includes treasure classes (loot), artificial intelligence, etc.
-
-#### Game Logic: Client (D2Client.dll)
-The client logic component handles all of the game logic that happens on the client. This includes drawing the user interface.
-
+#### Clientside (D2Client.dll)
+The clientside is responsible for client logic. It's not loaded at the start, however.
