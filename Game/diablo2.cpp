@@ -301,6 +301,23 @@ int InitGame(int argc, char** argv, DWORD pid)
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
 	FS_Init(&openD2Config);
+	FSMPQ_Init();
+
+	// Testing
+	/*D2MPQArchive* pMusicMPQ = FSMPQ_AddSearchPath("D2MUSIC", "d2music.mpq");
+	D2MPQArchive* pVideoMPQ = FSMPQ_AddSearchPath("D2VIDEO", "d2video.mpq");
+	D2MPQArchive* pSpeechMPQ = FSMPQ_AddSearchPath("D2SPEECH", "d2speech.mpq");
+	D2MPQArchive* pSFXMPQ = FSMPQ_AddSearchPath("D2SFX", "d2sfx.mpq");
+	D2MPQArchive* pDataMPQ = FSMPQ_AddSearchPath("D2DATA", "d2data.mpq");
+	D2MPQArchive* pCharsMPQ = FSMPQ_AddSearchPath("D2CHAR", "d2char.mpq");
+	D2MPQArchive* pExpTalkMPQ = FSMPQ_AddSearchPath("D2XTALK", "d2xtalk.mpq");
+	D2MPQArchive* pExpMPQ = FSMPQ_AddSearchPath("D2EXP", "d2exp.mpq");*/
+	D2MPQArchive* pPatchMPQ = FSMPQ_AddSearchPath("PATCH", "Patch_D2.mpq");
+
+	// lets try this!
+	char wayBiggerThanWeNeed[65535]{ 0 };
+	fs_handle f = FSMPQ_FindFile("data\\global\\excel\\levels.txt", nullptr, nullptr);
+	DWORD dwRead = MPQ_ReadFile(pPatchMPQ, f, (BYTE*)wayBiggerThanWeNeed, 65535);
 
 	dwRenderingMode = GetRenderingMode(&config);
 
@@ -400,6 +417,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 	//D2MCPCLIENT_10001();	// destroy MCP client (FIXME: kind of a bad place for this..)
 	FOG_10143(nullptr);		// kill fog memory
 
+	FSMPQ_Shutdown();
 	FS_Shutdown();
 
 	return 0;

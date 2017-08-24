@@ -24,7 +24,7 @@
 
 #define MAX_TOKEN_CHARS		1024
 #define	MAX_D2PATH_ABSOLUTE	1024
-#define	MAX_D2PATH			128
+#define	MAX_D2PATH			64
 
 //////////////////////////////////////////////////
 //

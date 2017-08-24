@@ -13,9 +13,9 @@
  *	3. It's rigid and doesn't allow for modifications.
  *
  *	To address this problem, we use three separate directories to load files from:
- *	homepath: First read, first write. Corresponds to ~ on Linux and My Documents/My Games/OpenD2 on Windows.
+ *	homepath: Last read, first write. Corresponds to ~ on Linux and My Documents/My Games/OpenD2 on Windows.
  *	basepath: Second read, second write. Corresponds to the working directory.
- *	modpath: Last read, last write. Defaults to the working directory.
+ *	modpath: First read, last write. Defaults to the working directory.
  *
  *	All of these paths can be adjusted by the user on startup, in D2.ini, or (as a last resort), the registry.
  *	Whenever we reference a file directly (ie, "d2char.mpq"), it's always assumed to be a path relative to a directory.
@@ -138,20 +138,20 @@ void FS_Shutdown()
  *	Cleanses a file's path.
  *	Any filename passed into the function is assumed to have MAX_D2PATH characters in its buffer, or otherwise be valid.
  */
-static void FS_SanitizeFilePath(char** path)
+static void FS_SanitizeFilePath(char* path)
 {
 	// Remove leading slashes
-	if (**path == '/')
+	if (*path == '/')
 	{
 		(*path)++;
 	}
 
 	// Remove double slashes (//)
-	for (int i = 0; i < strlen(*path); i++)
+	for (int i = 0; i < strlen(path); i++)
 	{
-		if (*path[i] == '/' && *path[i + 1] == '/')
+		if (path[i] == '/' && path[i + 1] == '/')
 		{	// found em
-			D2_strncpyz(*path + i, *path + i + 1, MAX_D2PATH_ABSOLUTE);
+			D2_strncpyz(path + i, path + i + 1, MAX_D2PATH_ABSOLUTE);
 		}
 	}
 }
@@ -215,22 +215,39 @@ static const char* FS_ModeStr(OpenD2FileModes mode, bool bBinary)
  *	Open a file with the select mode
  *	@return	The size of the file
  */
-size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false)
+size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 {
 	char path[MAX_D2PATH_ABSOLUTE]{ 0 };
 	const char* szModeStr = FS_ModeStr(mode, bBinary);
 
-	FS_SanitizeFilePath(&filename);
-	for (int i = 0; i < FS_MAXPATH; i++)
-	{
-		D2_strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
-		strcat(path, filename);
-
-		if (*f = (fs_handle)fopen(path, szModeStr))
+	FS_SanitizeFilePath(filename);
+	if (mode == FS_READ)
+	{	// If we're reading, we use the search paths in reverse order
+		for (int i = FS_MAXPATH - 1; i >= 0; i--)
 		{
-			break;
+			D2_strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
+			strcat(path, filename);
+
+			if (*f = (fs_handle)fopen(path, szModeStr))
+			{
+				break;
+			}
 		}
 	}
+	else
+	{
+		for (int i = 0; i < FS_MAXPATH; i++)
+		{
+			D2_strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
+			strcat(path, filename);
+
+			if (*f = (fs_handle)fopen(path, szModeStr))
+			{
+				break;
+			}
+		}
+	}
+	
 
 	if (*f == 0)
 	{	// file could not be found
@@ -264,9 +281,9 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary 
 
 	// Get the length of the file and return it
 	size_t dwLen = 0;
-	fseek((FILE*)f, 0, SEEK_END);
-	dwLen = ftell((FILE*)f);
-	rewind((FILE*)f);
+	fseek((FILE*)*f, 0, SEEK_END);
+	dwLen = ftell((FILE*)*f);
+	rewind((FILE*)*f);
 
 	return dwLen;
 }
@@ -292,16 +309,16 @@ static FSHandleStore* FS_GetFileRecord(fs_handle f)
  *	Read from the file into a buffer
  *	@return	The number of bytes read from the file
  */
-inline size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen = 4, size_t dwCount = 1)
+size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
 {
-	return fread(buffer, dwCount, dwBufferLen, (FILE*)f);
+	return fread(buffer, dwBufferLen, dwCount, (FILE*)f);
 }
 
 /*
  *	Write to a file
  *	@return	The number of bytes written to the file
  */
-size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen = 1, size_t dwCount = 1)
+size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
 {
 	FSHandleStore* pRecord = FS_GetFileRecord(f);
 	if (!pRecord || pRecord->mode == FS_READ)
@@ -350,7 +367,7 @@ void FS_CloseFile(fs_handle f)
 /*
  *	Perform a seek on a file handle
  */
-inline void FS_Seek(fs_handle f, size_t offset, int nSeekType)
+void FS_Seek(fs_handle f, size_t offset, int nSeekType)
 {
 	fseek((FILE*)f, offset, nSeekType);
 }
@@ -358,7 +375,7 @@ inline void FS_Seek(fs_handle f, size_t offset, int nSeekType)
 /*
  *	Perform a tell on a file handle
  */
-inline size_t FS_Tell(fs_handle f)
+size_t FS_Tell(fs_handle f)
 {
 	return ftell((FILE*)f);
 }
