@@ -22,6 +22,13 @@ int D2_stricmpn(char* s1, char* s2, int n)
 		}
 
 		if (c1 != c2) {
+			if (c1 >= 'a' && c1 <= 'z')
+			{
+				if (c1 - 'a' == c2 - 'A')
+				{
+					continue; // not actually different (case insensitivity)
+				}
+			}
 			return c1 < c2 ? -1 : 1;
 		}
 	} while (c1);

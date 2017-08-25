@@ -347,17 +347,6 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS_Init(&openD2Config);
 	FSMPQ_Init();
 
-	// Testing
-	/*D2MPQArchive* pMusicMPQ = FSMPQ_AddSearchPath("D2MUSIC", "d2music.mpq");
-	D2MPQArchive* pVideoMPQ = FSMPQ_AddSearchPath("D2VIDEO", "d2video.mpq");
-	D2MPQArchive* pSpeechMPQ = FSMPQ_AddSearchPath("D2SPEECH", "d2speech.mpq");
-	D2MPQArchive* pSFXMPQ = FSMPQ_AddSearchPath("D2SFX", "d2sfx.mpq");
-	D2MPQArchive* pDataMPQ = FSMPQ_AddSearchPath("D2DATA", "d2data.mpq");
-	D2MPQArchive* pCharsMPQ = FSMPQ_AddSearchPath("D2CHAR", "d2char.mpq");
-	D2MPQArchive* pExpTalkMPQ = FSMPQ_AddSearchPath("D2XTALK", "d2xtalk.mpq");
-	D2MPQArchive* pExpMPQ = FSMPQ_AddSearchPath("D2EXP", "d2exp.mpq");
-	D2MPQArchive* pPatchMPQ = FSMPQ_AddSearchPath("PATCH", "Patch_D2.mpq");*/
-
 	dwRenderingMode = GetRenderingMode(&config);
 
 	/*
