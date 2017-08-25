@@ -94,8 +94,11 @@ static void FS_SanitizeSearchPath(char* path)
 	dwPathLen = strlen(path);
 	if (dwPathLen < MAX_D2PATH_ABSOLUTE - 1)
 	{
-		path[dwPathLen] = '/';
-		path[dwPathLen + 1] = '\0';
+		if (path[dwPathLen - 1] != '/')
+		{
+			path[dwPathLen] = '/';
+			path[dwPathLen + 1] = '\0';
+		}
 	}
 }
 
