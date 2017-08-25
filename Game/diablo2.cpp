@@ -98,9 +98,10 @@ static D2CmdArgStrc CommandArguments[] = {
 
 #define co(x)	offsetof(OpenD2ConfigStrc, x)
 static D2CmdArgStrc OpenD2CommandArguments[] = {
-	{"FILEIO",		"BASEPATH",		"basepath",		CMD_STRING,		co(szBasePath),		0x00},
-	{"FILEIO",		"HOMEPATH",		"homepath",		CMD_STRING,		co(szHomePath),		0x00},
-	{"FILEIO",		"MODPATH",		"modpath",		CMD_STRING,		co(szModPath),		0x00},
+	{"FILEIO",		"BASEPATH",		"basepath",		CMD_STRING,		co(szBasePath),		MAX_D2PATH_ABSOLUTE},
+	{"FILEIO",		"HOMEPATH",		"homepath",		CMD_STRING,		co(szHomePath),		MAX_D2PATH_ABSOLUTE},
+	{"FILEIO",		"MODPATH",		"modpath",		CMD_STRING,		co(szModPath),		MAX_D2PATH_ABSOLUTE},
+	{"",			"",				"",				0,				0x0000,				0x00},
 };
 #undef co
 
@@ -141,12 +142,19 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 			*(BYTE*)(config + pArg->nOffset) = true;
 			break;
 		case CMD_DWORD:
+			*(DWORD*)(config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_WORD:
+			*(WORD*)(config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_BYTE:
+			*(BYTE*)(config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_STRING:
+			if (*(arg + strlen(pArg->szCmdName)) == '=')
+			{
+				D2_strncpyz((char*)(config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, 32);
+			}
 			break;
 	}
 }
@@ -164,7 +172,43 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 	}
 
 	pArg = OpenD2CommandArguments;
-	// TODO
+	while (pArg != nullptr && pArg->szCmdName[0] != '\0')
+	{
+		if (!D2_stricmpn(arg, pArg->szCmdName, strlen(pArg->szCmdName)))
+		{	// it's this one
+			break;
+		}
+		++pArg;
+	}
+
+	if (pArg == nullptr || pArg->szCmdName[0] == '\0')
+	{	// not valid
+		return;
+	}
+
+	switch (pArg->dwType)
+	{
+		case CMD_BOOLEAN:
+		default:
+			*(BYTE*)(config + pArg->nOffset) = true;
+			break;
+		case CMD_DWORD:
+			*(DWORD*)(config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
+			break;
+		case CMD_WORD:
+			*(WORD*)(config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
+			break;
+		case CMD_BYTE:
+			*(BYTE*)(config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
+			break;
+		case CMD_STRING:
+			// in OpenD2 we take the default argument type as meaning the size of the string to copy into
+			if (*(arg + strlen(pArg->szCmdName)) == '=')
+			{
+				D2_strncpyz((char*)(config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, pArg->dwDefault);
+			}
+			break;
+	}
 }
 
 /*

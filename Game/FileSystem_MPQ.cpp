@@ -24,7 +24,21 @@ static MPQSearchPath* gpMPQSearchPaths;
  */
 void FSMPQ_Init()
 {
-
+	FSMPQ_AddSearchPath("D2DATA", "d2data.mpq");
+	FSMPQ_AddSearchPath("D2CHAR", "d2char.mpq");
+	FSMPQ_AddSearchPath("D2SFX", "d2sfx.mpq");
+	FSMPQ_AddSearchPath("D2SPEECH", "d2speech.mpq");
+	FSMPQ_AddSearchPath("D2MUSIC", "d2music.mpq");
+	FSMPQ_AddSearchPath("D2VIDEO", "d2video.mpq");
+#ifdef ASIA_LOCALIZATION
+	FSMPQ_AddSearchPath("D2DELTA", "d2delta.mpq");
+	FSMPQ_AddSearchPath("D2KFIXUP", "d2kfixup.mpq");
+#endif
+	FSMPQ_AddSearchPath("D2EXP", "d2exp.mpq");
+	FSMPQ_AddSearchPath("D2EXPANSION", "d2XVideo.mpq");
+	FSMPQ_AddSearchPath("D2EXPANSION", "d2XTalk.mpq");
+	FSMPQ_AddSearchPath("D2EXPANSION", "d2XMusic.mpq");
+	FSMPQ_AddSearchPath("PATCH_D2", "patch_d2.mpq");
 }
 
 /*
