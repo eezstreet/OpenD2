@@ -106,7 +106,14 @@ static void FS_SanitizeSearchPath(char* path)
 void FS_Init(OpenD2ConfigStrc* pConfig)
 {
 	// Copy paths from the config to the FS
-	D2_strncpyz(gszHomePath, pConfig->szHomePath, MAX_D2PATH_ABSOLUTE);
+	if (pConfig->szHomePath[0] == '\0')
+	{
+		Sys_DefaultHomepath(gszHomePath, MAX_D2PATH_ABSOLUTE);
+	}
+	else
+	{
+		D2_strncpyz(gszHomePath, pConfig->szHomePath, MAX_D2PATH_ABSOLUTE);
+	}
 	D2_strncpyz(gszBasePath, pConfig->szBasePath, MAX_D2PATH_ABSOLUTE);
 	D2_strncpyz(gszModPath, pConfig->szModPath, MAX_D2PATH_ABSOLUTE);
 

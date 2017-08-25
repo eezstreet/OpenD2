@@ -17,6 +17,7 @@
 #define EXPANSION			// If not present, we are compiling D2 Classic!
 
 #define GAME_LOG_PATH		"Debug"
+#define GAME_HOMEPATH		"Diablo II"
 
 //////////////////////////////////////////////////
 //

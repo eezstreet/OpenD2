@@ -144,6 +144,7 @@ int InitGame(int argc, char** argv, DWORD pid);
 // Platform_*.cpp
 void Sys_InitModules();
 void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
+void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
 
 // FileSystem.cpp
 void FS_Init(OpenD2ConfigStrc* pConfig);

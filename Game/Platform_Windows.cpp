@@ -2,6 +2,8 @@
 #include "Diablo2.hpp"
 #include <Windows.h>
 #include <stdlib.h>
+#include <cstdio>
+#include <shlobj.h>
 
 #define D2REGISTRY_BETA_KEY	"SOFTWARE\\Blizzard Entertainment\\Diablo II Beta"
 #define D2REGISTRY_KEY		"SOFTWARE\\Blizzard Entertainment\\Diablo II"
@@ -62,6 +64,21 @@ void Sys_CopyBetaRegistryKeys()
 void Sys_CopySettings()
 {
 
+}
+
+/*
+ *	Get default homepath
+ */
+void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen)
+{
+	TCHAR homeDirectory[MAX_PATH];
+
+	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, homeDirectory)))
+	{	// Couldn't find it, I guess?
+		return;
+	}
+
+	snprintf(szBuffer, dwBufferLen, "%s/My Games/" GAME_HOMEPATH, homeDirectory);
 }
 
 /*
