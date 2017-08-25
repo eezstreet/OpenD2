@@ -1,5 +1,6 @@
 #include "Diablo2.hpp"
 #include <memory>
+#include <assert.h>
 
 #define MPQ_HASH_TABLE_INDEX    0x000
 #define MPQ_HASH_NAME_A         0x100
@@ -31,6 +32,8 @@ static unsigned char AsciiToUpperTable_Slash[256] =
 	0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
 	0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
 };
+
+static DWORD gdwFileHeaderBuffer[0x5A000];
 
 /*
  *	Finds the header of the MPQ file.
@@ -350,83 +353,223 @@ size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile)
 	return pMPQ->pBlockTable[fFile].dwFSize;
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+//
+// MPQ COMPRESSION
+
+#include "Libraries/adpcm/adpcm.h"
+#include "Libraries/huffman/huff.h"
+#include "Libraries/pkware/pklib.h"
+
+/*
+ *	Compression functions
+ *	@author Zezula / Paul Siramy / eezstreet
+ */
+
+typedef struct
+{
+	unsigned char * pbInBuff;           // Pointer to input data buffer
+	unsigned char * pbInBuffEnd;        // End of the input buffer
+	unsigned char * pbOutBuff;          // Pointer to output data buffer
+	unsigned char * pbOutBuffEnd;       // Pointer to output data buffer
+} TDataInfo;
+
+static unsigned int ReadPKWare(char* buf, unsigned int* size, void* param)
+{
+	TDataInfo * pInfo = (TDataInfo *)param;
+	unsigned int nMaxAvail = (unsigned int)(pInfo->pbInBuffEnd - pInfo->pbInBuff);
+	unsigned int nToRead = *size;
+
+	// Check the case when not enough data available
+	if (nToRead > nMaxAvail)
+		nToRead = nMaxAvail;
+
+	// Load data and increment offsets
+	memcpy(buf, pInfo->pbInBuff, nToRead);
+	pInfo->pbInBuff += nToRead;
+	assert(pInfo->pbInBuff <= pInfo->pbInBuffEnd);
+	return nToRead;
+}
+
+static void WritePKWare(char* buf, unsigned int* size, void* param)
+{
+	TDataInfo * pInfo = (TDataInfo *)param;
+	unsigned int nMaxWrite = (unsigned int)(pInfo->pbOutBuffEnd - pInfo->pbOutBuff);
+	unsigned int nToWrite = *size;
+
+	// Check the case when not enough space in the output buffer
+	if (nToWrite > nMaxWrite)
+		nToWrite = nMaxWrite;
+
+	// Write output data and increments offsets
+	memcpy(pInfo->pbOutBuff, buf, nToWrite);
+	pInfo->pbOutBuff += nToWrite;
+	assert(pInfo->pbOutBuff <= pInfo->pbOutBuffEnd);
+}
+
+static void MPQDecompress_PKWare(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+{
+	TDataInfo Info;                             // Data information
+	char * work_buf = (char*)malloc(EXP_BUFFER_SIZE);// Pklib's work buffer
+
+													 // Handle no-memory condition
+	if (work_buf == NULL)
+		return;
+
+	// Fill data information structure
+	memset(work_buf, 0, EXP_BUFFER_SIZE);
+	Info.pbInBuff = (unsigned char *)pInBuffer;
+	Info.pbInBuffEnd = (unsigned char *)pInBuffer + *dwInRead;
+	Info.pbOutBuff = (unsigned char *)pOutBuffer;
+	Info.pbOutBuffEnd = (unsigned char *)pOutBuffer + *dwOutRead;
+
+	// Do the decompression
+	explode(ReadPKWare, WritePKWare, work_buf, &Info);
+
+	// If PKLIB is unable to decompress the data, return 0;
+	if (Info.pbOutBuff == pOutBuffer)
+	{
+		free(work_buf);
+		return;
+	}
+
+	// Give away the number of decompressed bytes
+	*dwOutRead = (int)(Info.pbOutBuff - (unsigned char *)pOutBuffer);
+	free(work_buf);
+}
+
+static void MPQDecompress_Huffmann(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+{
+	THuffmannTree ht(false);
+	TInputStream is(pInBuffer, *dwInRead);
+
+	*dwOutRead = ht.Decompress(pOutBuffer, *dwOutRead, &is);
+}
+
+static void MPQDecompress_PCMMono(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+{
+	*dwOutRead = DecompressADPCM(pOutBuffer, *dwOutRead, pInBuffer, *dwInRead, 1);
+}
+
+static void MPQDecompress_PCMStereo(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+{
+	*dwOutRead = DecompressADPCM(pOutBuffer, *dwOutRead, pInBuffer, *dwInRead, 2);
+}
+
+/*
+ *	Compression table maps compression methods to functions to call to compress the data
+ */
+struct D2MPQCompression {
+	BYTE nCompressionType;
+	void(*pFunc)(void* pInBuffer, DWORD* dwInPos, void* pOutBuffer, DWORD* dwOutPos);
+};
+
+static D2MPQCompression CompressionModels[] = {
+	{MPQ_COMPRESSION_HUFFMANN, MPQDecompress_Huffmann},
+	{MPQ_COMPRESSION_PKWARE, MPQDecompress_PKWare},
+	{MPQ_COMPRESSION_ADPCM_MONO, MPQDecompress_PCMMono},
+	{MPQ_COMPRESSION_ADPCM_STEREO, MPQDecompress_PCMStereo},
+	{0, nullptr},
+};
+
 /*
  *	Reads a file from an archive into a memory buffer
- *	@author	Zezula/eezstreet
+ *	@author	Paul Siramy/eezstreet
  */
 size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
 {
-	DWORD dwFileSize;
+	DWORD dwNumBlocks;
+	DWORD dwBufferHead = 0;
+	DWORD dwNumRead = 0;
+
+	char* pTempBuffer;
 
 	if (fFile == (fs_handle)-1)
-	{	// invalid handle
+	{	// invalid file
 		return 0;
 	}
 
-	dwFileSize = MPQ_FileSize(pMPQ, fFile);
-	if (dwBufferLen < dwFileSize)
-	{	// Don't read it unless we have a buffer large enough to support it
+	if (!pMPQ || pMPQ->f == (fs_handle)-1)
+	{	// bad MPQ pointer or MPQ is not opened
 		return 0;
 	}
-	else if (dwFileSize < dwBufferLen)
-	{
-		dwBufferLen = dwFileSize;
+
+	if (!buffer || dwBufferLen <= 0)
+	{	// bad buffer or buffer length
+		return 0;
 	}
 
-	// Read all of the sectors into the buffer
 	MPQBlock* pBlock = &pMPQ->pBlockTable[fFile];
-	DWORD dwSectorOffset = pBlock->dwFilePos;
-	DWORD dwSectorsToRead = dwBufferLen / pMPQ->wSectorSize;
-	DWORD dwReadPosition = 0;
 
-	FS_Seek(pMPQ->f, dwSectorOffset, FS_SEEK_SET);
-	FS_Read(pMPQ->f, buffer, dwBufferLen);
+	if (dwBufferLen < pBlock->dwFSize)
+	{	// not enough room in the buffer to fit the file - should probably complain about this
+		return 0;
+	}
 
-	if (pBlock->dwFlags & MPQ_FILE_SECTOR_CRC)
+	pTempBuffer = (char*)malloc(pBlock->dwFSize);
+
+	if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 	{
-		return dwBufferLen;
+		// FIXME: apply fixes from Paul's code here
+		return 0;
 	}
 
-	if (pBlock->dwFlags & MPQ_FILE_COMPRESS_MASK)
-	{	// Compressed file, probably with implode (?)
-		// If we don't have the sector offset table built, we need to do that now
-		if (pMPQ->pSectorOffsets == nullptr)
-		{
-			DWORD dwSectorOffsetSize;
-
-			pMPQ->dwSectorCount = ((pMPQ->dwArchiveSize - 1) / pMPQ->wSectorSize) + 1;
-			dwSectorOffsetSize = (pMPQ->dwSectorCount + 1) * sizeof(DWORD);
-			pMPQ->pSectorOffsets = (DWORD*)malloc(dwSectorOffsetSize);
-
-			// Read the sector offsets
-
-		}
-	}
-
-	if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED)
-	{	// we don't support encrypted files...
-		return dwBufferLen;
-	}
-
-	// Decrypt and decompress all of the sectors
-	for (int i = 0; i < dwSectorsToRead; i++)
+	if (pBlock->dwFlags & MPQ_FILE_IMPLODE || pBlock->dwFlags & MPQ_FILE_COMPRESS)
 	{
-		DWORD dwBytesInSector = pMPQ->wSectorSize;
-		DWORD dwRawBytesInSector = pMPQ->wSectorSize;
-		
-		if (dwBytesInSector > dwBufferLen - dwReadPosition)
-		{	// This last one will be a sector with a smaller chunk of data
-			dwBytesInSector = dwBufferLen - dwReadPosition;
-			dwRawBytesInSector = dwBufferLen - dwReadPosition;
+		dwNumBlocks = ((pBlock->dwFSize - 1) / pMPQ->wSectorSize) + 2;
+
+		FS_Seek(pMPQ->f, pBlock->dwFilePos, FS_SEEK_SET);
+		FS_Read(pMPQ->f, gdwFileHeaderBuffer, sizeof(DWORD), dwNumBlocks);
+
+		if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
+		{	// FIXME: apply fixes from Paul's code here
+			free(pTempBuffer);
+			return 0;
 		}
 
-		if (pBlock->dwFlags & MPQ_FILE_COMPRESS_MASK)
+		for (int i = 0; i < dwNumBlocks - 1; i++)
 		{
-//			dwRawBytesInSector = hf->SectorOffsets[dwIndex + 1] - hf->SectorOffsets[dwIndex];
-		}
+			DWORD dwBlockLengthRead = gdwFileHeaderBuffer[i + 1] - gdwFileHeaderBuffer[i];
+			BYTE nMethod;
 
-		dwReadPosition += dwBytesInSector;
+			FS_Read(pMPQ->f, pTempBuffer + dwBufferHead, sizeof(BYTE), dwBlockLengthRead);
+
+			if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
+			{	// FIXME: apply fixes from Paul's code here
+				free(pTempBuffer);
+				return 0;
+			}
+
+			dwBufferHead += dwBlockLengthRead;
+
+			if (dwBlockLengthRead == pMPQ->wSectorSize)
+			{	// not compressed (?)
+				dwNumRead += dwBufferHead;
+				continue;
+			}
+			
+			if(pBlock->dwFlags & MPQ_FILE_IMPLODE)
+			{	// Diablo 1 style compression (PKWARE)
+				nMethod = MPQ_COMPRESSION_PKWARE;
+			}
+			else if (pBlock->dwFlags & MPQ_FILE_COMPRESS)
+			{	// StarCraft and Diablo 2 style compression (mixed method)
+				nMethod = *(buffer + dwBufferHead);
+			}
+
+			for (int j = 0; CompressionModels[j].pFunc != nullptr; j++)
+			{
+				if (nMethod == CompressionModels[j].nCompressionType)
+				{
+					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer, &dwBufferHead);
+					dwNumRead += dwBufferHead;
+					break;
+				}
+			}
+		}
 	}
 
-	return 0;
+	free(pTempBuffer);
+
+	return dwNumRead;
 }

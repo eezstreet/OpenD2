@@ -311,13 +311,8 @@ int InitGame(int argc, char** argv, DWORD pid)
 	D2MPQArchive* pDataMPQ = FSMPQ_AddSearchPath("D2DATA", "d2data.mpq");
 	D2MPQArchive* pCharsMPQ = FSMPQ_AddSearchPath("D2CHAR", "d2char.mpq");
 	D2MPQArchive* pExpTalkMPQ = FSMPQ_AddSearchPath("D2XTALK", "d2xtalk.mpq");
-	D2MPQArchive* pExpMPQ = FSMPQ_AddSearchPath("D2EXP", "d2exp.mpq");*/
-	D2MPQArchive* pPatchMPQ = FSMPQ_AddSearchPath("PATCH", "Patch_D2.mpq");
-
-	// lets try this!
-	char wayBiggerThanWeNeed[65535]{ 0 };
-	fs_handle f = FSMPQ_FindFile("data\\global\\excel\\levels.txt", nullptr, nullptr);
-	DWORD dwRead = MPQ_ReadFile(pPatchMPQ, f, (BYTE*)wayBiggerThanWeNeed, 65535);
+	D2MPQArchive* pExpMPQ = FSMPQ_AddSearchPath("D2EXP", "d2exp.mpq");
+	D2MPQArchive* pPatchMPQ = FSMPQ_AddSearchPath("PATCH", "Patch_D2.mpq");*/
 
 	dwRenderingMode = GetRenderingMode(&config);
 

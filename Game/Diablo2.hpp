@@ -41,10 +41,16 @@ struct D2CmdArgStrc
 /*
  *	EVERYTHING TO DO WITH MPQ FILES
  *	The structure containing data about MPQ files
- *	@author Tom Amigo/Paul Siramy/eezstreet
+ *	@author Tom Amigo/Paul Siramy/eezstreet/Zezula
  */
 
- // Flags for SFileAddFile
+ // Compression types for multiple compressions
+#define MPQ_COMPRESSION_HUFFMANN          0x01  // Huffmann compression (used on WAVE files only)
+#define MPQ_COMPRESSION_PKWARE            0x08  // PKWARE DCL compression
+#define MPQ_COMPRESSION_ADPCM_MONO        0x40  // IMA ADPCM compression (mono)
+#define MPQ_COMPRESSION_ADPCM_STEREO      0x80  // IMA ADPCM compression (stereo)
+#define MPQ_COMPRESSION_NEXT_SAME   0xFFFFFFFF  // Same compression
+
 #define MPQ_FILE_IMPLODE            0x00000100  // Implode method (By PKWARE Data Compression Library)
 #define MPQ_FILE_COMPRESS           0x00000200  // Compress methods (By multiple methods)
 #define MPQ_FILE_ENCRYPTED          0x00010000  // Indicates whether file is encrypted 
