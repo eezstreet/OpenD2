@@ -139,6 +139,10 @@ struct D2MPQArchive
 //
 //	Functions
 
+// DC6.cpp
+void DC6_LoadImage(char* szPath, DC6Image* pImage);
+void DC6_UnloadImage(DC6Image* pImage);
+
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
 
@@ -168,7 +172,7 @@ void MPQ_OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
 void MPQ_CloseMPQ(D2MPQArchive* pMPQ);
 fs_handle MPQ_FetchHandle(D2MPQArchive* pMPQ, char* szFileName);
 size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
-size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
+void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);

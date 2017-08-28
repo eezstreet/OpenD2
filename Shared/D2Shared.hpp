@@ -167,6 +167,46 @@ struct OpenD2ConfigStrc
 	BYTE bNoRenderText;
 };
 
+/*
+*	DC6 Files
+*/
+#pragma pack(push,enter_include)
+#pragma pack(1)
+struct DC6Frame
+{
+	DWORD	dwFlip;				// If true, it's encoded top to bottom instead of bottom to top
+	DWORD	dwWidth;			// Width of this frame
+	DWORD	dwHeight;			// Height of this frame
+	DWORD	dwOffsetX;			// X offset
+	DWORD	dwOffsetY;			// Y offset
+	DWORD	dwUnknown;
+	DWORD	dwNextBlock;
+	DWORD	dwLength;			// Number of blocks to decode
+};
+
+struct DC6ImageHeader
+{
+	DWORD	dwVersion;			// Version; always '6'
+	DWORD	dwUnk1;				// Unknown; always '1'
+	DWORD	dwUnk2;				// Unknown; always '0'
+	DWORD	dwTermination;		// Termination code - usually 0xEEEEEEEE or 0xCDCDCDCD
+	DWORD	dwDirections;		// Number of directions
+	DWORD	dwFrames;			// Number of frames per direction
+};
+#pragma pack(pop, enter_include)
+
+struct DC6Image
+{
+	void*			mpq;			// The MPQ we found it in
+	fs_handle		f;				// The file handle from within the MPQ
+	DC6ImageHeader	header;
+};
+
+/*
+*	DCC Files
+*/
+
+
 //////////////////////////////////////////////////
 //
 // Library Functions

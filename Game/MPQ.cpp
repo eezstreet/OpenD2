@@ -308,6 +308,11 @@ fs_handle MPQ_FetchHandle(D2MPQArchive* pMPQ, char* szFileName)
 	DWORD dwName2 = HashStringSlash(pMPQ, szFileName, MPQ_HASH_NAME_B);
 	DWORD dwIndex;
 
+	if (!pMPQ->bOpen)
+	{	// Didn't load, don't try to load from it
+		return (fs_handle)-1;
+	}
+
 	dwStartIndex = dwIndex = (dwStartIndex & dwHashIndexMask);
 
 	while (true)
@@ -465,8 +470,8 @@ struct D2MPQCompression {
 };
 
 static D2MPQCompression CompressionModels[] = {
-	{MPQ_COMPRESSION_HUFFMANN, MPQDecompress_Huffmann},
 	{MPQ_COMPRESSION_PKWARE, MPQDecompress_PKWare},
+	{MPQ_COMPRESSION_HUFFMANN, MPQDecompress_Huffmann},
 	{MPQ_COMPRESSION_ADPCM_MONO, MPQDecompress_PCMMono},
 	{MPQ_COMPRESSION_ADPCM_STEREO, MPQDecompress_PCMStereo},
 	{0, nullptr},
@@ -476,42 +481,42 @@ static D2MPQCompression CompressionModels[] = {
  *	Reads a file from an archive into a memory buffer
  *	@author	Paul Siramy/eezstreet
  */
-size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
+void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
 {
 	DWORD dwNumBlocks;
-	DWORD dwBufferHead = 0;
-	DWORD dwNumRead = 0;
 
 	char* pTempBuffer;
+	char* pTempBufferOld;
 
 	if (fFile == (fs_handle)-1)
 	{	// invalid file
-		return 0;
+		return;
 	}
 
 	if (!pMPQ || pMPQ->f == (fs_handle)-1)
 	{	// bad MPQ pointer or MPQ is not opened
-		return 0;
+		return;
 	}
 
 	if (!buffer || dwBufferLen <= 0)
 	{	// bad buffer or buffer length
-		return 0;
+		return;
 	}
 
 	MPQBlock* pBlock = &pMPQ->pBlockTable[fFile];
 
 	if (dwBufferLen < pBlock->dwFSize)
 	{	// not enough room in the buffer to fit the file - should probably complain about this
-		return 0;
+		return;
 	}
 
 	pTempBuffer = (char*)malloc(pBlock->dwFSize);
+	pTempBufferOld = pTempBuffer;
 
 	if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 	{
 		// FIXME: apply fixes from Paul's code here
-		return 0;
+		return;
 	}
 
 	if (pBlock->dwFlags & MPQ_FILE_IMPLODE || pBlock->dwFlags & MPQ_FILE_COMPRESS)
@@ -523,29 +528,29 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 
 		if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 		{	// FIXME: apply fixes from Paul's code here
-			free(pTempBuffer);
-			return 0;
+			free(pTempBufferOld);
+			return;
 		}
 
 		for (int i = 0; i < dwNumBlocks - 1; i++)
 		{
 			DWORD dwBlockLengthRead = gdwFileHeaderBuffer[i + 1] - gdwFileHeaderBuffer[i];
 			BYTE nMethod;
+			size_t dwAmountRead = FS_Read(pMPQ->f, pTempBuffer, sizeof(BYTE), dwBlockLengthRead);
+			DWORD dwBufferSize = dwBlockLengthRead;
 
-			FS_Read(pMPQ->f, pTempBuffer + dwBufferHead, sizeof(BYTE), dwBlockLengthRead);
+			if (dwAmountRead == pMPQ->wSectorSize 
+				|| (i == dwNumBlocks - 2 && dwAmountRead == (pBlock->dwFSize & (pMPQ->wSectorSize - 1))))
+			{
+				memcpy(buffer, pTempBuffer, pMPQ->wSectorSize);
+				pTempBuffer += dwBlockLengthRead;
+				continue;
+			}
 
 			if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 			{	// FIXME: apply fixes from Paul's code here
-				free(pTempBuffer);
-				return 0;
-			}
-
-			dwBufferHead += dwBlockLengthRead;
-
-			if (dwBlockLengthRead == pMPQ->wSectorSize)
-			{	// not compressed (?)
-				dwNumRead += dwBufferHead;
-				continue;
+				free(pTempBufferOld);
+				return;
 			}
 			
 			if(pBlock->dwFlags & MPQ_FILE_IMPLODE)
@@ -554,22 +559,24 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 			}
 			else if (pBlock->dwFlags & MPQ_FILE_COMPRESS)
 			{	// StarCraft and Diablo 2 style compression (mixed method)
-				nMethod = *(buffer + dwBufferHead);
+				nMethod = *(pTempBuffer);
+				pTempBuffer++;
+				dwBlockLengthRead--;
 			}
 
 			for (int j = 0; CompressionModels[j].pFunc != nullptr; j++)
 			{
-				if (nMethod == CompressionModels[j].nCompressionType)
+				if (nMethod & CompressionModels[j].nCompressionType)
 				{
-					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer, &dwBufferHead);
-					dwNumRead += dwBufferHead;
-					break;
+					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer, &dwBufferSize);
+					// Pipe previous output into new input
+					memcpy(pTempBuffer, buffer, dwBlockLengthRead);
 				}
 			}
+
+			pTempBuffer += dwBlockLengthRead;
 		}
 	}
 
-	free(pTempBuffer);
-
-	return dwNumRead;
+	free(pTempBufferOld);
 }

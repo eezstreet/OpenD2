@@ -117,7 +117,8 @@ fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArch
 	{
 		if (szMPQName == nullptr || !D2_stricmp(szMPQName, pCurrent->szName))
 		{
-			if (f = MPQ_FetchHandle(pCurrent->pArchive, szFileName))
+			f = MPQ_FetchHandle(pCurrent->pArchive, szFileName);
+			if (f != (fs_handle)-1)
 			{
 				if (pArchiveOut != nullptr)
 				{
@@ -128,5 +129,5 @@ fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArch
 		}
 		pCurrent = pCurrent->pNext;
 	}
-	return 0;	// invalid handle
+	return (fs_handle)-1;	// invalid handle
 }

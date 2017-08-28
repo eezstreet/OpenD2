@@ -350,6 +350,9 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS_Init(&openD2Config);
 
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
+
+	DC6Image IMAGE;
+	DC6_LoadImage("data\\global\\ui\\CURSOR\\gaunt.DC6", &IMAGE);
 #if 0
 
 	dwRenderingMode = GetRenderingMode(&config);
