@@ -162,6 +162,9 @@ struct OpenD2ConfigStrc
 	char szBasePath[MAX_D2PATH_ABSOLUTE];
 	char szHomePath[MAX_D2PATH_ABSOLUTE];
 	char szModPath[MAX_D2PATH_ABSOLUTE];
+	BYTE bNoSDLAccel;
+	BYTE bBorderless;
+	BYTE bNoRenderText;
 };
 
 //////////////////////////////////////////////////

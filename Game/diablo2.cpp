@@ -101,6 +101,9 @@ static D2CmdArgStrc OpenD2CommandArguments[] = {
 	{"FILEIO",		"BASEPATH",		"basepath",		CMD_STRING,		co(szBasePath),		MAX_D2PATH_ABSOLUTE},
 	{"FILEIO",		"HOMEPATH",		"homepath",		CMD_STRING,		co(szHomePath),		MAX_D2PATH_ABSOLUTE},
 	{"FILEIO",		"MODPATH",		"modpath",		CMD_STRING,		co(szModPath),		MAX_D2PATH_ABSOLUTE},
+	{"VIDEO",		"SDLNOACCEL",	"sdlnoaccel",	CMD_BOOLEAN,	co(bNoSDLAccel),	0x00},
+	{"VIDEO",		"BORDERLESS",	"borderless",	CMD_BOOLEAN,	co(bBorderless),	0x00},
+	{"VIDEO",		"NORENDERTEXT",	"norendertext",	CMD_BOOLEAN,	co(bNoRenderText),	0x00},
 	{"",			"",				"",				0,				0x0000,				0x00},
 };
 #undef co
@@ -139,16 +142,16 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 	{
 		case CMD_BOOLEAN:
 		default:
-			*(BYTE*)(config + pArg->nOffset) = true;
+			*(BYTE*)((BYTE*)config + pArg->nOffset) = 1;
 			break;
 		case CMD_DWORD:
-			*(DWORD*)(config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
+			*(DWORD*)((BYTE*)config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_WORD:
-			*(WORD*)(config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
+			*(WORD*)((BYTE*)config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_BYTE:
-			*(BYTE*)(config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
+			*(BYTE*)((BYTE*)config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_STRING:
 			if (*(arg + strlen(pArg->szCmdName)) == '=')
@@ -190,16 +193,16 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 	{
 		case CMD_BOOLEAN:
 		default:
-			*(BYTE*)(config + pArg->nOffset) = true;
+			*(BYTE*)((BYTE*)config + pArg->nOffset) = 1;
 			break;
 		case CMD_DWORD:
-			*(DWORD*)(config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
+			*(DWORD*)((BYTE*)config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_WORD:
-			*(WORD*)(config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
+			*(WORD*)((BYTE*)config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_BYTE:
-			*(BYTE*)(config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
+			*(BYTE*)((BYTE*)config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
 			break;
 		case CMD_STRING:
 			// in OpenD2 we take the default argument type as meaning the size of the string to copy into
@@ -345,7 +348,9 @@ int InitGame(int argc, char** argv, DWORD pid)
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
 	FS_Init(&openD2Config);
-	FSMPQ_Init();
+
+	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
+#if 0
 
 	dwRenderingMode = GetRenderingMode(&config);
 
@@ -444,8 +449,10 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FOG_10090();			// destroy async data
 	//D2MCPCLIENT_10001();	// destroy MCP client (FIXME: kind of a bad place for this..)
 	FOG_10143(nullptr);		// kill fog memory
+#endif
 
-	FSMPQ_Shutdown();
+	D2Win_ShutdownSDL();	// renderer also gets shut down here
+
 	FS_Shutdown();
 
 	return 0;

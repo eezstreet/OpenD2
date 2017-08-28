@@ -124,6 +124,9 @@ void FS_Init(OpenD2ConfigStrc* pConfig)
 	FS_SanitizeSearchPath(gszHomePath);
 	FS_SanitizeSearchPath(gszBasePath);
 	FS_SanitizeSearchPath(gszModPath);
+
+	// Init extensions
+	FSMPQ_Init();
 }
 
 /*
@@ -132,9 +135,13 @@ void FS_Init(OpenD2ConfigStrc* pConfig)
  */
 void FS_Shutdown()
 {
+	// Shut down any extensions that need closing
+	FSMPQ_Shutdown();
+
 	FSHandleStore* pRecord = glFileHandles;
 	FSHandleStore* pPrev = nullptr;
 
+	// Kill any files that were opened that weren't closed
 	while (pRecord != nullptr)
 	{
 		pPrev = pRecord;
