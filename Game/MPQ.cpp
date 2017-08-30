@@ -481,42 +481,56 @@ static D2MPQCompression CompressionModels[] = {
  *	Reads a file from an archive into a memory buffer
  *	@author	Paul Siramy/eezstreet
  */
-void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
+static char* gpTempBuffer = nullptr;
+size_t gpTempBufferSize = 0;
+
+size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
 {
 	DWORD dwNumBlocks;
 
 	char* pTempBuffer;
-	char* pTempBufferOld;
 
 	if (fFile == (fs_handle)-1)
 	{	// invalid file
-		return;
+		return 0;
 	}
 
 	if (!pMPQ || pMPQ->f == (fs_handle)-1)
 	{	// bad MPQ pointer or MPQ is not opened
-		return;
+		return 0;
 	}
 
 	if (!buffer || dwBufferLen <= 0)
 	{	// bad buffer or buffer length
-		return;
+		return 0;
 	}
 
 	MPQBlock* pBlock = &pMPQ->pBlockTable[fFile];
 
 	if (dwBufferLen < pBlock->dwFSize)
 	{	// not enough room in the buffer to fit the file - should probably complain about this
-		return;
+		return 0;
 	}
 
-	pTempBuffer = (char*)malloc(pBlock->dwFSize);
-	pTempBufferOld = pTempBuffer;
+	// We use a global buffer to cut down on the number of memory allocations
+	// This is important if we're loading lots of files at once (ie, palettes)
+	if (gpTempBuffer == nullptr)
+	{
+		gpTempBuffer = (char*)malloc(pBlock->dwFSize);
+		gpTempBufferSize = pBlock->dwFSize;
+	}
+	else if (gpTempBufferSize < pBlock->dwFSize)
+	{
+		gpTempBuffer = (char*)realloc(gpTempBuffer, pBlock->dwFSize);
+		gpTempBufferSize = pBlock->dwFSize;
+	}
+
+	pTempBuffer = gpTempBuffer;
 
 	if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 	{
 		// FIXME: apply fixes from Paul's code here
-		return;
+		return 0;
 	}
 
 	if (pBlock->dwFlags & MPQ_FILE_IMPLODE || pBlock->dwFlags & MPQ_FILE_COMPRESS)
@@ -528,8 +542,7 @@ void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBuf
 
 		if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 		{	// FIXME: apply fixes from Paul's code here
-			free(pTempBufferOld);
-			return;
+			return 0;
 		}
 
 		for (int i = 0; i < dwNumBlocks - 1; i++)
@@ -537,20 +550,18 @@ void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBuf
 			DWORD dwBlockLengthRead = gdwFileHeaderBuffer[i + 1] - gdwFileHeaderBuffer[i];
 			BYTE nMethod;
 			size_t dwAmountRead = FS_Read(pMPQ->f, pTempBuffer, sizeof(BYTE), dwBlockLengthRead);
-			DWORD dwBufferSize = dwBlockLengthRead;
 
 			if (dwAmountRead == pMPQ->wSectorSize 
 				|| (i == dwNumBlocks - 2 && dwAmountRead == (pBlock->dwFSize & (pMPQ->wSectorSize - 1))))
 			{
-				memcpy(buffer, pTempBuffer, pMPQ->wSectorSize);
+				memcpy(buffer, pTempBuffer, dwAmountRead);
 				pTempBuffer += dwBlockLengthRead;
 				continue;
 			}
 
 			if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 			{	// FIXME: apply fixes from Paul's code here
-				free(pTempBufferOld);
-				return;
+				return 0;
 			}
 			
 			if(pBlock->dwFlags & MPQ_FILE_IMPLODE)
@@ -568,7 +579,7 @@ void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBuf
 			{
 				if (nMethod & CompressionModels[j].nCompressionType)
 				{
-					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer, &dwBufferSize);
+					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer, &dwBufferLen);
 					// Pipe previous output into new input
 					memcpy(pTempBuffer, buffer, dwBlockLengthRead);
 				}
@@ -578,5 +589,15 @@ void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBuf
 		}
 	}
 
-	free(pTempBufferOld);
+	return pBlock->dwFSize;
+}
+
+/*
+ * Frees the temporary block decompression buffer
+ */
+void MPQ_Cleanup()
+{
+	free(gpTempBuffer);
+	gpTempBuffer = nullptr;
+	gpTempBufferSize = 0;
 }

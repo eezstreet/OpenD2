@@ -15,10 +15,6 @@ enum OpenD2RenderTargets
 	OD2RT_MAX
 };
 
-// Functions that get called from the renderer
-typedef void(*RFInit)(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
-typedef void(*RFShutdown)();
-
 ///////////////////////////////////////////////////////////////////////
 //
 //	FUNCTIONS
@@ -26,6 +22,11 @@ typedef void(*RFShutdown)();
 // Renderer_SDL.cpp
 void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
 void Renderer_SDL_Shutdown();
+void Renderer_SDL_Present();
+tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD dwHeight);
+void Renderer_SDL_SetTexturePixels(tex_handle texture, BYTE* pPixels, int nPalette);
+void Renderer_SDL_DrawTexture(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
+
 
 // Renderer_SDL_Software.cpp
 

@@ -353,6 +353,15 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	DC6Image IMAGE;
 	DC6_LoadImage("data\\global\\ui\\CURSOR\\gaunt.DC6", &IMAGE);
+	DWORD dwWidth = 0, dwHeight = 0;
+	DC6_PollFrame(&IMAGE, 0, 0, &dwWidth, &dwHeight, nullptr, nullptr);
+	tex_handle dc6Tex = RenderTarget->RF_RegisterTexture("gaunt.dc6", dwWidth, dwHeight);
+	BYTE* pixels = DC6_GetPixelsAtFrame(&IMAGE, 0, 0, nullptr);
+	RenderTarget->RF_SetTexturePixels(dc6Tex, pixels, PAL_UNITS);
+	RenderTarget->RF_DrawTexture(dc6Tex, 20, 20, dwWidth, dwHeight, 0, 0);
+	RenderTarget->RF_Present();
+
+	SDL_Delay(10000);
 #if 0
 
 	dwRenderingMode = GetRenderingMode(&config);

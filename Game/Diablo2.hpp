@@ -134,6 +134,24 @@ struct D2MPQArchive
 	fs_handle		f;						// FS file handle
 };
 
+/*
+ *	Renderer related structures
+ */
+struct D2Renderer
+{
+	//
+	void		(*RF_Init)(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
+	void		(*RF_Shutdown)();
+	void		(*RF_Present)();
+
+	//
+	tex_handle	(*RF_RegisterTexture)(char* handleName, DWORD dwWidth, DWORD dwHeight);
+	void		(*RF_SetTexturePixels)(tex_handle texture, BYTE* pPixels, int nPalette);
+	void		(*RF_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
+	// TODO: version of RF_DrawTexture that handles palshifted cels
+};
+
+extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
 
 /////////////////////////////////////////////////////////
 //
@@ -142,9 +160,16 @@ struct D2MPQArchive
 // DC6.cpp
 void DC6_LoadImage(char* szPath, DC6Image* pImage);
 void DC6_UnloadImage(DC6Image* pImage);
+BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
+void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
+	DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
+
+// Palette.cpp
+bool Pal_Init();
+D2Palette* Pal_GetPalette(int nIndex);
 
 // Platform_*.cpp
 void Sys_InitModules();
@@ -172,7 +197,8 @@ void MPQ_OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
 void MPQ_CloseMPQ(D2MPQArchive* pMPQ);
 fs_handle MPQ_FetchHandle(D2MPQArchive* pMPQ, char* szFileName);
 size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
-void MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
+size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
+void MPQ_Cleanup();
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
@@ -180,7 +206,6 @@ void D2Win_ShutdownSDL();
 
 // Renderer.cpp
 void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
-void Render_Shutdown();
 
 /////////////////////////////////////////////////////////
 //

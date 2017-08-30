@@ -63,6 +63,8 @@ void FSMPQ_Shutdown()
 		free(pPrev);
 		pPrev = nullptr;
 	}
+
+	MPQ_Cleanup();
 }
 
 /*

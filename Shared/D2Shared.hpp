@@ -35,7 +35,14 @@ typedef unsigned long DWORD;
 typedef unsigned short WORD;
 typedef unsigned char BYTE;
 
-typedef DWORD fs_handle;
+#define INVALID_HANDLE (handle)-1
+
+typedef DWORD handle;
+typedef handle fs_handle;
+typedef handle tex_handle;
+
+typedef BYTE pixel[3];
+typedef pixel D2Palette[256];
 
 enum OpenD2Paths
 {
@@ -58,6 +65,28 @@ enum OpenD2FileSeekModes
 	FS_SEEK_SET,
 	FS_SEEK_CUR,
 	FS_SEEK_END,
+};
+
+enum D2Palettes
+{
+	PAL_ACT1,
+	PAL_ACT2,
+	PAL_ACT3,
+	PAL_ACT4,
+	PAL_ACT5,
+	PAL_ENDGAME,
+	PAL_FECHAR,
+	PAL_LOADING,
+	PAL_MENU0,
+	PAL_MENU1,
+	PAL_MENU2,
+	PAL_MENU3,
+	PAL_MENU4,
+	PAL_SKY,
+	PAL_STATIC,
+	PAL_TRADEMARK,
+	PAL_UNITS,
+	PAL_MAX_PALETTES,
 };
 
 
@@ -200,6 +229,8 @@ struct DC6Image
 	void*			mpq;			// The MPQ we found it in
 	fs_handle		f;				// The file handle from within the MPQ
 	DC6ImageHeader	header;
+	DC6Frame*		pFrames;
+	BYTE*			pPixels;
 };
 
 /*
@@ -214,4 +245,4 @@ struct DC6Image
 int D2_stricmpn(char* s1, char* s2, int n);
 int D2_stricmp(char* s1, char* s2);
 void D2_strncpyz(char *dest, const char *src, int destsize);
-char *D2_ParseExt(const char **data_p, bool allowLineBreaks);
+DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);

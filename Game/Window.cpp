@@ -28,6 +28,7 @@ static SDL_Window* D2Win_CreateWindow(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 		dwWindowFlags |= SDL_WINDOW_OPENGL;
 	}
 
+	// TODO: make the size based on resolution
 	pWin = SDL_CreateWindow("Diablo II", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, dwWindowFlags);
 
 	return pWin;
@@ -52,7 +53,7 @@ void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
  */
 void D2Win_ShutdownSDL()
 {
-	Render_Shutdown();
+	RenderTarget->RF_Shutdown();
 	SDL_DestroyWindow(gpWindow);
 	SDL_Quit();
 }

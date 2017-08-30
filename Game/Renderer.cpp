@@ -14,23 +14,45 @@
  *	(by default we will use software since it works on literally everything)
  */
 
-// Gets called on init
-static RFInit RendererInitFunctions[] = {
-	Renderer_SDL_Init,	// Renderer_SDL
-	nullptr,	// Renderer_SDL_Software
-	nullptr,	// Renderer_DirectX
-	nullptr,	// Renderer_OpenGL
-};
+D2Renderer* RenderTarget = nullptr;
 
-// Gets called on shutdown
-static RFShutdown RendererShutdownFunctions[] = {
-	Renderer_SDL_Shutdown,	// Renderer_SDL
-	nullptr,	// Renderer_SDL_Software
-	nullptr,	// Renderer_DirectX
-	nullptr,	// Renderer_OpenGL
-};
+static D2Renderer RenderTargets[OD2RT_MAX] = {
+	{	// SDL Hardware-Accelerated Renderer
+		Renderer_SDL_Init,
+		Renderer_SDL_Shutdown,
+		Renderer_SDL_Present,
+		Renderer_SDL_RegisterTexture,
+		Renderer_SDL_SetTexturePixels,
+		Renderer_SDL_DrawTexture,
+	},
 
-static OpenD2RenderTargets RenderTarget = OD2RT_SDL;
+	{	// SDL Software Renderer
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+	},
+
+	{	// DirectX Renderer (Windows-only)
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+	},
+
+	{	// OpenGL Renderer
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+		nullptr,
+	},
+};
 
 /*
  *	Initializes the renderer.
@@ -38,39 +60,29 @@ static OpenD2RenderTargets RenderTarget = OD2RT_SDL;
  */
 void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow)
 {
+	OpenD2RenderTargets DesiredRenderTarget = OD2RT_SDL;
+
 	// Determine which render target to go with
 	if (pConfig->bOpenGL)
 	{
-		RenderTarget = OD2RT_OPENGL;
+		DesiredRenderTarget = OD2RT_OPENGL;
 	}
 	else if (pConfig->bD3D)
 	{
-		RenderTarget = OD2RT_DIRECTX;
+		DesiredRenderTarget = OD2RT_DIRECTX;
 	}
 	else if (pOpenConfig->bNoSDLAccel)
 	{
-		RenderTarget = OD2RT_SDL_SOFTWARE;
+		DesiredRenderTarget = OD2RT_SDL_SOFTWARE;
 	}
 	else
 	{
-		RenderTarget = OD2RT_SDL;
+		DesiredRenderTarget = OD2RT_SDL;
 	}
 
-	// Initialize it!
-	if (RendererInitFunctions[RenderTarget] != nullptr)
-	{
-		RendererInitFunctions[RenderTarget](pConfig, pOpenConfig, pWindow);
-	}
-}
+	RenderTarget = &RenderTargets[DesiredRenderTarget];
+	RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);
 
-/*
- *	Shuts down the renderer.
- *	Call before the window has been destroyed.
- */
-void Render_Shutdown()
-{
-	if (RendererShutdownFunctions[RenderTarget] != nullptr)
-	{
-		RendererShutdownFunctions[RenderTarget]();
-	}
+	// Load palettes
+	Pal_Init();
 }
