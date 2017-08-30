@@ -277,9 +277,9 @@ void Renderer_SDL_SetTexturePixels(tex_handle texture, BYTE* pPixels, int nPalet
 			else
 			{
 				dwColor = 
-					(((*pPal)[nPixelColor][2] << 24) | 
+					(((*pPal)[nPixelColor][2] << 8) | 
 					((*pPal)[nPixelColor][1] << 16) | 
-						((*pPal)[nPixelColor][0] << 8));
+						((*pPal)[nPixelColor][0] << 24));
 			}
 
 			pWriteToPixels[dwPixelPosition] = dwColor;

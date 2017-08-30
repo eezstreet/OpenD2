@@ -46,7 +46,7 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
 		{
 			while (pixel--)
 			{
-				pOutPixels[(y * pFrame->dwWidth) + x++] = pPixels[i++];
+				pOutPixels[(y * pFrame->dwWidth) + x++] = pPixels[++i];
 			}
 		}
 	}
@@ -56,6 +56,9 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
  *	Loads a DC6 from an MPQ
  *	@author	eezstreet
  */
+static BYTE* gpDecodeBuffer = nullptr;
+static size_t gdwDecodeBufferSize = 0;
+
 void DC6_LoadImage(char* szPath, DC6Image* pImage)
 {
 	pImage->f = FSMPQ_FindFile(szPath, nullptr, (D2MPQArchive**)&pImage->mpq);
@@ -66,14 +69,32 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 
 	// Now comes the fun part: reading and decoding the actual thing
 	size_t dwFileSize = MPQ_FileSize((D2MPQArchive*)pImage->mpq, pImage->f);
-	BYTE* pBytes = (BYTE*)malloc(dwFileSize);
-	BYTE* pByteReadHead = pBytes;
-	if (pBytes == nullptr)
-	{	// couldn't allocate space to read from
-		return;
+	if (gpDecodeBuffer == nullptr)
+	{
+		gdwDecodeBufferSize = dwFileSize;
+		gpDecodeBuffer = (BYTE*)malloc(gdwDecodeBufferSize);
+		if (gpDecodeBuffer == nullptr)
+		{
+			// couldn't allocate DC6 decode buffer. die?
+			return;
+		}
+	}
+	else if (gdwDecodeBufferSize < dwFileSize)
+	{
+		gdwDecodeBufferSize = dwFileSize;
+		BYTE* temp = (BYTE*)realloc(gpDecodeBuffer, gdwDecodeBufferSize);
+		if (temp == nullptr)
+		{
+			// couldn't reallocate DC6 decode buffer. die?
+			free(gpDecodeBuffer);
+			return;
+		}
+		gpDecodeBuffer = temp;
 	}
 
-	MPQ_ReadFile((D2MPQArchive*)pImage->mpq, pImage->f, pBytes, dwFileSize);
+	BYTE* pByteReadHead = gpDecodeBuffer;
+
+	MPQ_ReadFile((D2MPQArchive*)pImage->mpq, pImage->f, gpDecodeBuffer, dwFileSize);
 
 	memcpy(&pImage->header, pByteReadHead, sizeof(pImage->header));
 	pByteReadHead += sizeof(pImage->header);
@@ -81,7 +102,6 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 	// Validate the header
 	if (pImage->header.dwVersion != DC6_HEADER_VERSION)
 	{	// bad dc6 - die?
-		free(pBytes);
 		return;
 	}
 
@@ -105,7 +125,7 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 		for (j = 0; j < pImage->header.dwFrames; j++)
 		{
 			dwFramePos = (i * pImage->header.dwFrames) + j;
-			memcpy(&pImage->pFrames[dwFramePos], pBytes + pFramePointers[dwFramePos], sizeof(DC6Frame));
+			memcpy(&pImage->pFrames[dwFramePos], gpDecodeBuffer + pFramePointers[dwFramePos], sizeof(DC6Frame));
 			pImage->pFrames[dwFramePos].dwNextBlock = dwTotalPixels * sizeof(BYTE);
 			dwTotalPixels += pImage->pFrames[dwFramePos].dwWidth * pImage->pFrames[dwFramePos].dwHeight;
 		}
@@ -121,12 +141,10 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 		{
 			dwFramePos = (i * pImage->header.dwFrames) + j;
 			DC6Frame* pFrame = &pImage->pFrames[dwFramePos];
-			pByteReadHead = pBytes + pFramePointers[dwFramePos] + sizeof(DC6Frame);
+			pByteReadHead = gpDecodeBuffer + pFramePointers[dwFramePos] + sizeof(DC6Frame);
 			DC6_DecodeFrame(pByteReadHead, pImage->pPixels + pFrame->dwNextBlock, pFrame);
 		}
 	}
-
-	free(pBytes);
 }
 
 /*
@@ -210,4 +228,12 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	{
 		*dwOffsetY = pFrame->dwOffsetY;
 	}
+}
+
+/*
+ *	Wipes DC6 decoding buffer
+ */
+void DC6_Cleanup()
+{
+	free(gpDecodeBuffer);
 }

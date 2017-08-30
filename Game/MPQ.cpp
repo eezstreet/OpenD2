@@ -487,6 +487,8 @@ size_t gpTempBufferSize = 0;
 size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
 {
 	DWORD dwNumBlocks;
+	size_t dwTotalAmountRead = 0;
+	DWORD dwBufferFilled = 0;
 
 	char* pTempBuffer;
 
@@ -516,13 +518,25 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 	// This is important if we're loading lots of files at once (ie, palettes)
 	if (gpTempBuffer == nullptr)
 	{
-		gpTempBuffer = (char*)malloc(pBlock->dwFSize);
 		gpTempBufferSize = pBlock->dwFSize;
+		gpTempBuffer = (char*)malloc(gpTempBufferSize);
+		if (gpTempBuffer == nullptr)
+		{
+			// global buffer couldn't be allocated. die?
+			return 0;
+		}
 	}
 	else if (gpTempBufferSize < pBlock->dwFSize)
 	{
-		gpTempBuffer = (char*)realloc(gpTempBuffer, pBlock->dwFSize);
 		gpTempBufferSize = pBlock->dwFSize;
+		char* temp = (char*)realloc(gpTempBuffer, gpTempBufferSize);
+		if (temp == nullptr)
+		{
+			free(gpTempBuffer);
+			gpTempBuffer = nullptr;
+			return 0;
+		}
+		gpTempBuffer = temp;
 	}
 
 	pTempBuffer = gpTempBuffer;
@@ -579,17 +593,19 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 			{
 				if (nMethod & CompressionModels[j].nCompressionType)
 				{
-					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer, &dwBufferLen);
+					dwBufferFilled = dwBufferLen;
+					CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer + dwTotalAmountRead, &dwBufferFilled);
 					// Pipe previous output into new input
 					memcpy(pTempBuffer, buffer, dwBlockLengthRead);
 				}
 			}
 
 			pTempBuffer += dwBlockLengthRead;
+			dwTotalAmountRead += dwBufferFilled;
 		}
 	}
 
-	return pBlock->dwFSize;
+	return dwTotalAmountRead;
 }
 
 /*

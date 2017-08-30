@@ -163,6 +163,7 @@ void DC6_UnloadImage(DC6Image* pImage);
 BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
 void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
+void DC6_Cleanup();
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);

@@ -352,13 +352,13 @@ int InitGame(int argc, char** argv, DWORD pid)
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
 
 	DC6Image IMAGE;
-	DC6_LoadImage("data\\global\\ui\\CURSOR\\gaunt.DC6", &IMAGE);
+	DC6_LoadImage("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", &IMAGE);
 	DWORD dwWidth = 0, dwHeight = 0;
 	DC6_PollFrame(&IMAGE, 0, 0, &dwWidth, &dwHeight, nullptr, nullptr);
-	tex_handle dc6Tex = RenderTarget->RF_RegisterTexture("gaunt.dc6", dwWidth, dwHeight);
+	tex_handle dc6Tex = RenderTarget->RF_RegisterTexture("trademarkscreenEXP.dc6", dwWidth, dwHeight);
 	BYTE* pixels = DC6_GetPixelsAtFrame(&IMAGE, 0, 0, nullptr);
 	RenderTarget->RF_SetTexturePixels(dc6Tex, pixels, PAL_UNITS);
-	RenderTarget->RF_DrawTexture(dc6Tex, 20, 20, dwWidth, dwHeight, 0, 0);
+	RenderTarget->RF_DrawTexture(dc6Tex, 0, 0, dwWidth, dwHeight, 0, 0);
 	RenderTarget->RF_Present();
 
 	SDL_Delay(10000);
@@ -462,7 +462,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 	//D2MCPCLIENT_10001();	// destroy MCP client (FIXME: kind of a bad place for this..)
 	FOG_10143(nullptr);		// kill fog memory
 #endif
-
+	DC6_Cleanup();
 	D2Win_ShutdownSDL();	// renderer also gets shut down here
 
 	FS_Shutdown();
