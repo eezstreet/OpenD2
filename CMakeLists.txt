@@ -21,22 +21,24 @@ if(BUILD_GAME)
 
 	file(GLOB_RECURSE GAME_SRC Game/*.h Game/*.hpp Game/*.c Game/*.cpp)
 
-	file(GLOB_RECURSE SDL_SRC Game/Libraries/sdl/*)
-	file(GLOB_RECURSE ADPCM_SRC Game/Libraries/adpcm/*)
-	file(GLOB_RECURSE HUFFMAN_SRC Game/Libraries/huffman/*)
-	file(GLOB_RECURSE PKWARE_SRC Game/Libraries/pkware/*)
+	file(GLOB_RECURSE SDL_SRC Libraries/sdl/*)
+	file(GLOB_RECURSE ADPCM_SRC Libraries/adpcm/*)
+	file(GLOB_RECURSE HUFFMAN_SRC Libraries/huffman/*)
+	file(GLOB_RECURSE PKWARE_SRC Libraries/pkware/*)
 
-	source_group("adpcm" FILES ${ADPCM_SRC})
-	source_group("huffman" FILES ${HUFFMAN_SRC})
 	source_group("Game" FILES ${GAME_SRC})
-	source_group("pkware" FILES ${PKWARE_SRC})
-	source_group("SDL" FILES ${SDL_SRC})
+	source_group("Libraries\\adpcm" FILES ${ADPCM_SRC})
+	source_group("Libraries\\huffman" FILES ${HUFFMAN_SRC})
+	source_group("Libraries\\pkware" FILES ${PKWARE_SRC})
+	source_group("Libraries\\SDL" FILES ${SDL_SRC})
 	source_group("Shared" FILES ${SHARED_SRC})
 
-	set(GAME_SRC ${GAME_SRC} ${SHARED_SRC})
+	set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC})
+
+	set(GAME_SRC ${GAME_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
 
 	link_directories("Shared")
-	link_directories("Game/Libraries/sdl/x86")
+	link_directories("Libraries/sdl/x86")
 
 	add_executable(game WIN32 ${GAME_SRC})
 	set_target_properties(game PROPERTIES OUTPUT_NAME game)
