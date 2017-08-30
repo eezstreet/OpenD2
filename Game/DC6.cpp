@@ -56,8 +56,7 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
  *	Loads a DC6 from an MPQ
  *	@author	eezstreet
  */
-static BYTE* gpDecodeBuffer = nullptr;
-static size_t gdwDecodeBufferSize = 0;
+static BYTE gpDecodeBuffer[2048 * 2048];
 
 void DC6_LoadImage(char* szPath, DC6Image* pImage)
 {
@@ -69,28 +68,6 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 
 	// Now comes the fun part: reading and decoding the actual thing
 	size_t dwFileSize = MPQ_FileSize((D2MPQArchive*)pImage->mpq, pImage->f);
-	if (gpDecodeBuffer == nullptr)
-	{
-		gdwDecodeBufferSize = dwFileSize;
-		gpDecodeBuffer = (BYTE*)malloc(gdwDecodeBufferSize);
-		if (gpDecodeBuffer == nullptr)
-		{
-			// couldn't allocate DC6 decode buffer. die?
-			return;
-		}
-	}
-	else if (gdwDecodeBufferSize < dwFileSize)
-	{
-		gdwDecodeBufferSize = dwFileSize;
-		BYTE* temp = (BYTE*)realloc(gpDecodeBuffer, gdwDecodeBufferSize);
-		if (temp == nullptr)
-		{
-			// couldn't reallocate DC6 decode buffer. die?
-			free(gpDecodeBuffer);
-			return;
-		}
-		gpDecodeBuffer = temp;
-	}
 
 	BYTE* pByteReadHead = gpDecodeBuffer;
 
@@ -228,12 +205,4 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	{
 		*dwOffsetY = pFrame->dwOffsetY;
 	}
-}
-
-/*
- *	Wipes DC6 decoding buffer
- */
-void DC6_Cleanup()
-{
-	free(gpDecodeBuffer);
 }

@@ -462,7 +462,6 @@ int InitGame(int argc, char** argv, DWORD pid)
 	//D2MCPCLIENT_10001();	// destroy MCP client (FIXME: kind of a bad place for this..)
 	FOG_10143(nullptr);		// kill fog memory
 #endif
-	DC6_Cleanup();
 	D2Win_ShutdownSDL();	// renderer also gets shut down here
 
 	FS_Shutdown();
