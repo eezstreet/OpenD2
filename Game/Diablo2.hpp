@@ -145,7 +145,6 @@ struct D2Renderer
 	//
 	tex_handle	(*RF_RegisterTexture)(char* handleName, DWORD dwWidth, DWORD dwHeight);
 	tex_handle	(*RF_TextureFromStitchedDC6)(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
-	void		(*RF_SetTexturePixels)(tex_handle texture, BYTE* pPixels, int nPalette);
 	void		(*RF_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
 	// TODO: version of RF_DrawTexture that handles palshifted cels
 };

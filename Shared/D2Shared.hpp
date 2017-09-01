@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #ifdef WIN32
 #include "IgnoreWarnings.h"
 #endif

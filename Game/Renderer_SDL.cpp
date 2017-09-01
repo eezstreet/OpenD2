@@ -1,63 +1,16 @@
-#include "Renderer.hpp"
-#include <assert.h>
-#include <memory>
+#include "Renderer_SDL.hpp"
 
 ///////////////////////////////////////////////////////////////////////
 //
 //	HARDWARE-ACCELERATED SDL RENDERER
 
 static SDL_Renderer* gpRenderer = nullptr;
-static SDL_Texture* gpScreenTexture = nullptr;
 
-/*
- *	Render commands
- *
- *	Each "action" send to the renderer gets sent in a queue to be performed later.
- */
+static SDLPaletteEntry PaletteCache[PAL_MAX_PALETTES]{ 0 };
 
-enum SDLHardwareCommandType
-{
-	RCMD_DRAWTEXTURE,
-	RCMD_MAX,
-};
-
-struct SDLDrawTextureCommand
-{
-	tex_handle tex;
-	SDL_Rect src;
-	SDL_Rect dst;
-};
-
-struct SDLCommand
-{
-	SDLHardwareCommandType cmdType;
-	union
-	{
-		SDLDrawTextureCommand DrawTexture;
-	};
-};
-
-#define MAX_SDL_DRAWCOMMANDS_PER_FRAME	0x1000
 static SDLCommand gdrawCommands[MAX_SDL_DRAWCOMMANDS_PER_FRAME];
 static DWORD numDrawCommandsThisFrame = 0;
 
-/*
- *	Texture cache
- *
- *	Used for atlases, as well as static textures
- */
-
-struct SDLHardwareTextureCacheItem
-{
-	DWORD dwWidth;
-	DWORD dwHeight;
-	DWORD dwOriginalHash;
-	SDL_Texture* pTexture;
-	bool bHasDC6;		// optional - dc6 image
-	DC6Image dc6;		// optional - dc6 image
-};
-
-#define MAX_SDL_TEXTURECACHE_SIZE	0x100
 static SDLHardwareTextureCacheItem TextureCache[MAX_SDL_TEXTURECACHE_SIZE]{ 0 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -77,8 +30,9 @@ static void RB_DrawTexture(SDLCommand* pCmd)
 	SDL_RenderCopy(gpRenderer, TextureCache[pCmd->DrawTexture.tex].pTexture, &pCmd->DrawTexture.src, &pCmd->DrawTexture.dst);
 }
 
-// All of the commands which get processed on the command queue
-typedef void(*RenderProcessCommand)(SDLCommand* pCmd);
+/*
+ *	Backend - All functions enumerated
+ */
 static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_DrawTexture,
 };
@@ -88,8 +42,53 @@ static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 //	FRONTEND FUNCTIONS
 
 /*
- *	Clears out the texture cache
- */
+*	Initializes the HW-Accelerated SDL renderer
+*	@author	eezstreet
+*/
+void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow)
+{
+	DWORD dwFlags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
+
+	if (pConfig->bVSync)
+	{
+		dwFlags |= SDL_RENDERER_PRESENTVSYNC;
+	}
+
+	gpRenderer = SDL_CreateRenderer(pWindow, -1, dwFlags);
+
+	// Make sure that the renderer got created with the info that we want
+	SDL_RendererInfo ri;
+	SDL_GetRendererInfo(gpRenderer, &ri);
+	if (!(ri.flags & SDL_RENDERER_TARGETTEXTURE))
+	{	// We -must- support render to texture, otherwise we will need to fall back to software
+		SDL_DestroyRenderer(gpRenderer);
+		return;
+	}
+
+	Log_ErrorAssert(gpRenderer);
+
+	// Build palettes
+	for (int i = 0; i < PAL_MAX_PALETTES; i++)
+	{
+		D2Palette* pPal = Pal_GetPalette(i);
+
+		PaletteCache[i].pPal = SDL_AllocPalette(256);
+
+		for (int j = 0; j < 256; j++)
+		{
+			pixel* pal = &((*pPal)[j]);
+			PaletteCache[i].palette[j].r = (*pal)[2];
+			PaletteCache[i].palette[j].g = (*pal)[1];
+			PaletteCache[i].palette[j].b = (*pal)[0];
+		}
+
+		SDL_SetPaletteColors(PaletteCache[i].pPal, PaletteCache[i].palette, 0, 256);
+	}
+}
+
+/*
+*	Clears out the texture cache
+*/
 static void Renderer_SDL_ClearTextureCache()
 {
 	for (int i = 0; i < MAX_SDL_TEXTURECACHE_SIZE; i++)
@@ -108,9 +107,68 @@ static void Renderer_SDL_ClearTextureCache()
 }
 
 /*
+*	Shuts down the HW-Accelerated SDL renderer
+*	@author	eezstreet
+*/
+void Renderer_SDL_Shutdown()
+{
+	// Free palettes
+	for (int i = 0; i < PAL_MAX_PALETTES; i++)
+	{
+		SDL_FreePalette(PaletteCache[i].pPal);
+	}
+
+	Renderer_SDL_ClearTextureCache();
+	SDL_DestroyRenderer(gpRenderer);
+}
+
+/*
+*	Presents the screen
+*	@author	eezstreet
+*/
+void Renderer_SDL_Present()
+{
+	// Clear backbuffer
+	SDL_RenderClear(gpRenderer);
+
+	// Process all render commands on the queue and clear it
+	for (int i = 0; i < numDrawCommandsThisFrame; i++)
+	{
+		SDLCommand* pCmd = &gdrawCommands[i];
+
+		RenderingCommands[pCmd->cmdType](pCmd);
+	}
+	numDrawCommandsThisFrame = 0;
+
+	// Finally, present the renderer
+	SDL_RenderPresent(gpRenderer);
+}
+
+/*
+*	Registers a tex_handle which we can use later in texture manipulation functions
+*	@author	eezstreet
+*/
+tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD dwHeight)
+{
+	// HACK
+	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandleName, dwWidth, dwHeight);
+	if (tex == INVALID_HANDLE)
+	{
+		return tex;
+	}
+
+	// the texture handle is already guaranteed to be accurate at this point, so we can insert it here
+	SDL_Texture* pTexture =
+		SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_INDEX8, SDL_TEXTUREACCESS_STREAMING, dwWidth, dwHeight);
+
+	TextureCache[tex].pTexture = pTexture;
+	return tex;
+}
+
+/*
  *	Adds a new texture to the texture cache
  */
-static tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight)
+tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight)
 {
 	DWORD dwHash = D2_strhash(str, 32, MAX_SDL_TEXTURECACHE_SIZE);
 	DWORD dwOriginalHash = dwHash;
@@ -148,97 +206,6 @@ static tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* st
 }
 
 /*
- *	Initializes the HW-Accelerated SDL renderer
- *	@author	eezstreet
- */
-void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow)
-{
-	DWORD dwFlags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
-
-	if (pConfig->bVSync)
-	{
-		dwFlags |= SDL_RENDERER_PRESENTVSYNC;
-	}
-
-	gpRenderer = SDL_CreateRenderer(pWindow, -1, dwFlags);
-
-	// Make sure that the renderer got created with the info that we want
-	SDL_RendererInfo ri;
-	SDL_GetRendererInfo(gpRenderer, &ri);
-	if (!(ri.flags & SDL_RENDERER_TARGETTEXTURE))
-	{	// We -must- support render to texture, otherwise we will need to fall back to software
-		SDL_DestroyRenderer(gpRenderer);
-		return;
-	}
-
-	assert(gpRenderer);
-
-	// TODO: make the size based on resolution
-	//gpScreenTexture = SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_BGRA8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
-	//SDL_SetRenderTarget(gpRenderer, gpScreenTexture);
-}
-
-/*
- *	Shuts down the HW-Accelerated SDL renderer
- *	@author	eezstreet
- */
-void Renderer_SDL_Shutdown()
-{
-	Renderer_SDL_ClearTextureCache();
-	SDL_DestroyRenderer(gpRenderer);
-}
-
-/*
- *	Presents the screen
- *	@author	eezstreet
- */
-void Renderer_SDL_Present()
-{
-	// Lock screen target texture
-	void* pPixels = nullptr;
-	int nPitch = 0;
-
-	//SDL_RenderClear(gpRenderer);
-
-	//SDL_LockTexture(gpScreenTexture, nullptr, &pPixels, &nPitch); // pPixels now contains the screen pixels - write only!
-
-	// Process all render commands on the queue and clear it
-	for (int i = 0; i < numDrawCommandsThisFrame; i++)
-	{
-		SDLCommand* pCmd = &gdrawCommands[i];
-
-		RenderingCommands[pCmd->cmdType](pCmd);
-	}
-	numDrawCommandsThisFrame = 0;
-
-	// Unlock screen target texture
-	//SDL_UnlockTexture(gpScreenTexture);
-
-	// Finally, present the renderer
-	SDL_RenderPresent(gpRenderer);
-}
-
-/*
- *	Registers a tex_handle which we can use later in texture manipulation functions
- *	@author	eezstreet
- */
-tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD dwHeight)
-{
-	// HACK
-	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandleName, dwWidth, dwHeight);
-	if (tex == INVALID_HANDLE)
-	{
-		return tex;
-	}
-
-	// the texture handle is already guaranteed to be accurate at this point, so we can insert it here
-	SDL_Texture* pTexture = 
-		SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_BGRA8888, SDL_TEXTUREACCESS_STREAMING, dwWidth, dwHeight);
-	TextureCache[tex].pTexture = pTexture;
-	return tex;
-}
-
-/*
  *	Registers a tex_handle based on a stitched-together DC6. The DC6 is not animated.
  */
 tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette)
@@ -263,14 +230,13 @@ tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, 
 
 	DWORD dwRMask = 0, dwGMask = 0, dwBMask = 0, dwAMask = 0;
 	int bpp = 0;
-	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_BGRA8888, &bpp, 
+	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_INDEX8, &bpp, 
 		(Uint32*)&dwRMask, (Uint32*)&dwGMask, (Uint32*)&dwBMask, (Uint32*)&dwAMask);
 
 	DC6_StitchStats(&pCache->dc6, dwStart, dwEnd, &dwStitchCols, &dwStitchRows, &dwTotalWidth, &dwTotalHeight);
 
-	SDL_Surface* pSurface = SDL_CreateRGBSurface(0, 256, 256, bpp, dwRMask, dwGMask, dwBMask, dwAMask);
 	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, dwTotalWidth, dwTotalHeight, bpp, dwRMask, dwGMask, dwBMask, dwAMask);
-	SDL_SetSurfaceBlendMode(pSurface, SDL_BLENDMODE_NONE);
+	SDL_SetSurfacePalette(pBigSurface, PaletteCache[nPalette].pPal);
 	SDL_SetSurfaceBlendMode(pBigSurface, SDL_BLENDMODE_NONE);
 
 	for (int i = 0; i <= dwEnd - dwStart; i++)
@@ -278,23 +244,19 @@ tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, 
 		DC6Frame* pFrame = &pCache->dc6.pFrames[dwStart + i];
 
 		DWORD dwBlitToX = (i % dwStitchCols) * 256;
-		DWORD dwBlitToY = floor(i / dwStitchCols) * 255;
-		
-		for (int y = 0; y < pFrame->fh.dwHeight; y++)
-		{
-			for (int x = 0; x < pFrame->fh.dwWidth; x++)
-			{
-				BYTE nPixelColor = pFrame->pFramePixels[(y * pFrame->fh.dwWidth) + x];
-				DWORD* outPixels = (DWORD*)pSurface->pixels;
-				outPixels[(y * 256) + x] = (((*pPal)[nPixelColor][2] << 8) |
-					((*pPal)[nPixelColor][1] << 16) |
-					((*pPal)[nPixelColor][0] << 24));
-			}
-		}
+		DWORD dwBlitToY = floor(i / (float)dwStitchCols) * 255;
 
-		SDL_Rect srcRect = { 0, 1, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
+		SDL_Surface* pSmallSurface = SDL_CreateRGBSurface(0, pFrame->fh.dwWidth, pFrame->fh.dwHeight,
+			bpp, dwRMask, dwGMask, dwBMask, dwAMask);
+		SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
+		SDL_SetSurfaceBlendMode(pSmallSurface, SDL_BLENDMODE_NONE);
+
+		memcpy(pSmallSurface->pixels, pFrame->pFramePixels, pFrame->fh.dwWidth * pFrame->fh.dwHeight);
+
 		SDL_Rect dstRect = { dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
-		SDL_BlitSurface(pSurface, &srcRect, pBigSurface, &dstRect);
+		SDL_Rect srcRect = { 0 , 1, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
+		SDL_BlitSurface(pSmallSurface, &srcRect, pBigSurface, &dstRect);
+		SDL_FreeSurface(pSmallSurface);
 	}
 
 	SDL_Texture* pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
@@ -303,66 +265,9 @@ tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, 
 	pCache->dwHeight = dwTotalHeight;
 	pCache->pTexture = pTexture;
 
-	SDL_FreeSurface(pSurface);
 	SDL_FreeSurface(pBigSurface);
 
 	return tex;
-}
-
-/*
- *	Sets a texture's pixels and palette.
- *	This is fine for static images that won't really change. We'll need to use atlasing for things like items, etc
- *	@author	eezstreet
- */
-void Renderer_SDL_SetTexturePixels(tex_handle texture, BYTE* pPixels, int nPalette)
-{
-	D2Palette* pPal = Pal_GetPalette(nPalette);
-	if (pPal == nullptr)
-	{	// bad palette
-		return;
-	}
-
-	if (texture == INVALID_HANDLE)
-	{	// bad handle
-		return;
-	}
-
-	// note: we assume that the pixels provided are of the same width/height as the texture says...
-	DWORD* pWriteToPixels;
-	int nPitch = 0;
-
-	SDLHardwareTextureCacheItem* pCache = &TextureCache[texture];
-	if (pCache->pTexture == nullptr)
-	{	// bad texture assigned to this item
-		return;
-	}
-
-	// Lock the texture (so the VRAM is in RAM) and copy each individual pixel color (mapped from the palette) to the texture
-	SDL_LockTexture(pCache->pTexture, NULL, (void**)&pWriteToPixels, &nPitch);
-	for (int i = 0; i < pCache->dwHeight; i++)
-	{
-		for (int j = 0; j < pCache->dwWidth; j++)
-		{
-			BYTE nPixelColor = pPixels[(i * pCache->dwWidth) + j];
-			DWORD dwPixelPosition = i * (nPitch / sizeof(DWORD)) + j;
-			DWORD dwColor;
-
-			if (nPixelColor == 0x80)
-			{
-				dwColor = 0xFF;	// fully transparent pixels
-			}
-			else
-			{
-				dwColor = 
-					(((*pPal)[nPixelColor][2] << 8) | 
-					((*pPal)[nPixelColor][1] << 16) | 
-						((*pPal)[nPixelColor][0] << 24));
-			}
-
-			pWriteToPixels[dwPixelPosition] = dwColor;
-		}
-	}
-	SDL_UnlockTexture(pCache->pTexture);
 }
 
 /*

@@ -23,12 +23,10 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_Present,
 		Renderer_SDL_RegisterTexture,
 		Renderer_SDL_TextureFromStitchedDC6,
-		Renderer_SDL_SetTexturePixels,
 		Renderer_SDL_DrawTexture,
 	},
 
 	{	// SDL Software Renderer
-		nullptr,
 		nullptr,
 		nullptr,
 		nullptr,
@@ -44,11 +42,9 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		nullptr,
 		nullptr,
 		nullptr,
-		nullptr,
 	},
 
 	{	// OpenGL Renderer
-		nullptr,
 		nullptr,
 		nullptr,
 		nullptr,
@@ -84,9 +80,9 @@ void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_W
 		DesiredRenderTarget = OD2RT_SDL;
 	}
 
-	RenderTarget = &RenderTargets[DesiredRenderTarget];
-	RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);
-
 	// Load palettes
 	Pal_Init();
+
+	RenderTarget = &RenderTargets[DesiredRenderTarget];
+	RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);
 }
