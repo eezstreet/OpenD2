@@ -59,20 +59,14 @@ static bool ParseMPQHeader(D2MPQArchive* pMPQ)
 	FS_Read(pMPQ->f, &dwFirstByte);
 	FS_Read(pMPQ->f, &dwSecondByte);
 
-	if (dwFirstByte != gdwFirstHeader || dwSecondByte != gdwSecondHeader)
-	{
-		return false;
-	}
+	Log_ErrorAssert(dwFirstByte == gdwFirstHeader && dwSecondByte == gdwSecondHeader, false);
 
 	// Read length of file data
 	FS_Read(pMPQ->f, &pMPQ->dwArchiveSize);
 	
 	// Read the version number. This HAS to be 0.
 	FS_Read(pMPQ->f, &wVersion, sizeof(WORD));
-	if (wVersion != 0)
-	{	// Burning Crusade (or newer version) MPQ detected!
-		return false;
-	}
+	Log_ErrorAssert(wVersion == 0, false);
 
 	// Read sector size
 	FS_Read(pMPQ->f, &pMPQ->wSectorSize, sizeof(WORD));
@@ -362,9 +356,9 @@ size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile)
 //
 // MPQ COMPRESSION
 
-#include "Libraries/adpcm/adpcm.h"
-#include "Libraries/huffman/huff.h"
-#include "Libraries/pkware/pklib.h"
+#include "../Libraries/adpcm/adpcm.h"
+#include "../Libraries/huffman/huff.h"
+#include "../Libraries/pkware/pklib.h"
 
 /*
  *	Compression functions

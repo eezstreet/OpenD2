@@ -4,25 +4,32 @@
 #include <stdlib.h>
 #include <cstdio>
 #include <shlobj.h>
+#include <crtdbg.h>
 
 #define D2REGISTRY_BETA_KEY	"SOFTWARE\\Blizzard Entertainment\\Diablo II Beta"
 #define D2REGISTRY_KEY		"SOFTWARE\\Blizzard Entertainment\\Diablo II"
 
-#define REGISTRY_KEY_SIZE	16384
+#define REGISTRY_KEY_SIZE	2048
 
-/*
- *	Global variables
- */
+//////////////////////////////////////////////////////////////
+//
+//	Data Structures
 
-static const char* gszInterfaces[D2I_MAX] = {
-	nullptr,
-	"D2Client.dll",
-	"D2Server.dll",
-	"D2Multi.dll",
-	"D2Launch.dll",
+struct D2ModuleInternal
+{
+	HMODULE dwModule;
+	D2ModuleExportStrc* pExports;
 };
 
-run_t gpfModules[D2I_MAX] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+//////////////////////////////////////////////////////////////
+//
+//	Global variables
+
+static D2ModuleInternal gModules[MODULE_MAX]{ 0 };
+
+//////////////////////////////////////////////////////////////
+//
+//	Platform-Specific Functions
 
 /*
  *	Copy registry keys (and delete them) from the Diablo II beta to the retail game.
@@ -36,7 +43,7 @@ void Sys_CopyBetaRegistryKeys()
 	int i;
 	DWORD type;
 	BYTE data;
-	DWORD cbdata;
+	DWORD cbdata = 0;
 	LSTATUS status;
 	char keybuffer[REGISTRY_KEY_SIZE]{ 0 };
 	DWORD keybufferSize = REGISTRY_KEY_SIZE;
@@ -90,22 +97,161 @@ void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen)
 }
 
 /*
- *	Load all of the modules
- *	@author Necrolis (modified by eezstreet)
+ *	Given a buffer and an amount of memory, writes to the buffer "X MB (Y GB)"
  */
-void Sys_InitModules()
+static void Sys_FormatMemory(char* buffer, DWORD dwBufferLen, DWORDLONG ullMemory)
 {
-	for (int i = 1; i < 5; i++)
+	double fMemoryKB = ullMemory / 1024.0;
+	double fMemoryMB = fMemoryKB / 1024.0;
+	double fMemoryGB = fMemoryMB / 1024.0;
+
+	snprintf(buffer, dwBufferLen, "%.0f MB (%.2f GB)", fMemoryMB, fMemoryGB);
+}
+
+/*
+ *	Get system info from the operating system
+ *	@author	eezstreet
+ */
+void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo)
+{
+	DWORD dwWriteSize;
+	OSVERSIONINFO osi;
+
+	osi.dwOSVersionInfoSize = sizeof(osi);
+
+	Sys_GetWorkingDirectory(pInfo->szWorkingDirectory, MAX_D2PATH_ABSOLUTE);
+
+	dwWriteSize = 64;
+	GetComputerName(pInfo->szComputerName, &dwWriteSize);
+
+	dwWriteSize = 128;
+	GetVersionEx(&osi);
+
+	// Version string is tricky because Microsoft is bad at numbering
+	switch (osi.dwPlatformId)
 	{
-		HMODULE hLib = LoadLibrary(gszInterfaces[i]);
-		if (hLib)
-		{
-			interface_t pfInterface = (interface_t)GetProcAddress(hLib, "QueryInterface");
-			if (pfInterface != nullptr)
-			{
-				gpfModules[i] = *pfInterface();
-			}
-		}
+		case VER_PLATFORM_WIN32s:
+			D2_strncpyz(pInfo->szOSName, "Windows 3.x", dwWriteSize);
+			break;
+		case VER_PLATFORM_WIN32_NT:
+			snprintf(pInfo->szOSName, dwWriteSize,
+				"Windows NT (Version %i.%i) %s",
+				osi.dwMajorVersion, osi.dwMinorVersion, osi.szCSDVersion);
+			break;
+		case VER_PLATFORM_WIN32_WINDOWS:
+			D2_strncpyz(pInfo->szOSName, osi.dwMinorVersion == 0 ? "Windows 95" : "Windows 98", dwWriteSize);
+			break;
+		default:
+			D2_strncpyz(pInfo->szOSName, "{unknown}", dwWriteSize);
+			break;
+	}
+
+	// RAM is pretty straightforward
+	MEMORYSTATUSEX ms;
+	ms.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&ms);
+
+	dwWriteSize = 64;
+	Sys_FormatMemory(pInfo->szRAMPhysical, dwWriteSize, ms.ullTotalPhys);
+	Sys_FormatMemory(pInfo->szRAMPaging, dwWriteSize, ms.ullTotalPageFile);
+	Sys_FormatMemory(pInfo->szRAMVirtual, dwWriteSize, ms.ullTotalVirtual);
+
+	// Windows Strikes Again with the poor options to grab processor information.
+	// The best way seems to be to pull it out of the registry, so we'll go with that.
+	HKEY key = 0;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
+		"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+		0, KEY_QUERY_VALUE, &key) == 0)
+	{
+		DWORD MHz = 0;
+
+		dwWriteSize = 32;
+		RegQueryValueEx(key, "VendorIdentifier", NULL, NULL, (LPBYTE)pInfo->szProcessorVendor, &dwWriteSize);
+
+		dwWriteSize = 64;
+		RegQueryValueEx(key, "ProcessorNameString", NULL, NULL, (LPBYTE)pInfo->szProcessorModel, &dwWriteSize);
+		RegQueryValueEx(key, "Identifier", NULL, NULL, (LPBYTE)pInfo->szProcessorIdentifier, &dwWriteSize);
+
+		dwWriteSize = sizeof(DWORD);
+		RegQueryValueEx(key, "~MHz", NULL, NULL, (LPBYTE)&MHz, &dwWriteSize);
+		RegCloseKey(key);
+
+		dwWriteSize = 64;
+		snprintf(pInfo->szProcessorSpeed, dwWriteSize, "~%i MHz (approx.)", MHz);
+	}
+	else
+	{
+		D2_strncpyz(pInfo->szProcessorVendor, "{unknown}", 32);
+		D2_strncpyz(pInfo->szProcessorModel, "{unknown}", 64);
+		D2_strncpyz(pInfo->szProcessorSpeed, "{unknown}", 64);
+	}
+}
+
+/*
+ *	Create directory if it doesn't already exist
+ */
+void Sys_CreateDirectory(char* szPath)
+{
+	CreateDirectory(szPath, NULL);
+}
+
+/*
+ *	Gets the API of a module
+ *	Note: This doesn't validate the API version etc, we need to do this manually afterward.
+ */
+D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports)
+{
+	char szModulePath[MAX_D2PATH_ABSOLUTE]{ 0 };
+	bool bModuleFound = false;
+
+	if (gModules[nModule].dwModule != 0)
+	{
+		return gModules[nModule].pExports;
+	}
+
+	if (nModule == MODULE_CLIENT)
+	{
+		bModuleFound = FS_Find("D2Client.dll", szModulePath, MAX_D2PATH_ABSOLUTE);
+	}
+	else if (nModule == MODULE_SERVER)
+	{
+		bModuleFound = FS_Find("D2Game.dll", szModulePath, MAX_D2PATH_ABSOLUTE);
+	}
+	Log_ErrorAssert(bModuleFound, nullptr);
+
+	gModules[nModule].dwModule = LoadLibrary(szModulePath);
+	Log_ErrorAssert(gModules[nModule].dwModule != 0, nullptr);
+
+	GetAPIType ModuleAPI;
+
+	ModuleAPI = (GetAPIType)GetProcAddress(gModules[nModule].dwModule, "GetModuleAPI");
+	Log_ErrorAssert(ModuleAPI != nullptr, nullptr);
+
+	return ModuleAPI(pImports);
+}
+
+/*
+ *	Closes a single module
+ */
+void Sys_CloseModule(OpenD2Modules nModule)
+{
+	if (gModules[nModule].dwModule == 0)
+	{
+		return;
+	}
+
+	FreeLibrary(gModules[nModule].dwModule);
+	memset(&gModules[nModule], 0, sizeof(D2ModuleInternal));
+}
+
+/*
+ *	Cleans up (stops executing) modules after we're through with them
+ */
+void Sys_CloseModules()
+{
+	for (int i = 0; i < MODULE_MAX; i++)
+	{
+		Sys_CloseModule((OpenD2Modules)i);
 	}
 }
 
@@ -114,6 +260,7 @@ void Sys_InitModules()
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char* szCmdLine, int nShowCmd)
 {
+	// TODO: copy fields from registry and put them in D2.ini, which we also need to load and parse..
 	Sys_CopyBetaRegistryKeys();
 
 	return InitGame(__argc, __argv, (DWORD)hInstance);

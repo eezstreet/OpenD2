@@ -1,25 +1,6 @@
 #pragma once
 #include "../Shared/D2Shared.hpp"
-#include "Libraries/sdl/SDL.h"
-
-
-/////////////////////////////////////////////////////////
-//
-//	Types
-
-enum D2InterfaceModules
-{
-	D2I_NONE,
-	D2I_CLIENT,
-	D2I_SERVER,
-	D2I_MULTI,
-	D2I_LAUNCH,
-	D2I_MAX,
-};
-
-typedef D2InterfaceModules(__fastcall *run_t)(D2GameConfigStrc*);
-typedef run_t*(__fastcall *interface_t)();
-
+#include "../Libraries/sdl/SDL.h"
 
 /////////////////////////////////////////////////////////
 //
@@ -40,6 +21,23 @@ struct D2CmdArgStrc
 };							// +3C
 
 /*
+ *	The structure containing information about the system running the game
+ */
+struct D2SystemInfoStrc
+{
+	char szComputerName[64];
+	char szOSName[128];
+	char szProcessorVendor[32];
+	char szProcessorModel[64];
+	char szProcessorSpeed[64];	// maybe not present on linux?
+	char szProcessorIdentifier[64];
+	char szRAMPhysical[64];
+	char szRAMVirtual[64];
+	char szRAMPaging[64];
+	char szWorkingDirectory[MAX_D2PATH_ABSOLUTE];
+};
+
+/*
  *	EVERYTHING TO DO WITH MPQ FILES
  *	The structure containing data about MPQ files
  *	@author Tom Amigo/Paul Siramy/eezstreet/Zezula
@@ -57,8 +55,8 @@ struct D2CmdArgStrc
 #define MPQ_FILE_ENCRYPTED          0x00010000  // Indicates whether file is encrypted 
 #define MPQ_FILE_FIX_KEY            0x00020000  // File decryption key has to be fixed
 #define MPQ_FILE_PATCH_FILE         0x00100000  // The file is a patch file. Raw file data begin with TPatchInfo structure
-#define MPQ_FILE_SINGLE_UNIT        0x01000000  // File is stored as a single unit, rather than split into sectors (Thx, Quantam)
-#define MPQ_FILE_DELETE_MARKER      0x02000000  // File is a deletion marker. Used in MPQ patches, indicating that the file no longer exists.
+#define MPQ_FILE_SINGLE_UNIT        0x01000000  // File is stored as a single unit, not sectors
+#define MPQ_FILE_DELETE_MARKER      0x02000000  // File is a deletion marker.
 #define MPQ_FILE_SECTOR_CRC         0x04000000  // File has checksums for each sector.
  // Ignored if file is not compressed or imploded.
 #define MPQ_FILE_SIGNATURE          0x10000000  // Present on STANDARD.SNP\(signature). The only occurence ever observed
@@ -167,24 +165,40 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
 
+// Logging.cpp
+void Log_InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);
+void Log_Shutdown();
+void Log_Print(OpenD2LogFlags nPriority, char* szFormat, ...);
+void Log_Warning(char* szFile, int nLine, char* szCondition);
+void Log_Error(char* szFile, int nLine, char* szCondition);
+#define Log_WarnAssert(x, y) if(!(x)) { Log_Warning(__FILE__, __LINE__, "" #x); return y; }
+#define Log_ErrorAssert(x, y) if(!(x)) { Log_Error(__FILE__, __LINE__, "" #x); return y; }
+
 // Palette.cpp
 bool Pal_Init();
 D2Palette* Pal_GetPalette(int nIndex);
 
 // Platform_*.cpp
-void Sys_InitModules();
 void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
 void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
+void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
+void Sys_CreateDirectory(char* szPath);
+D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
+void Sys_CloseModule(OpenD2Modules nModule);
+void Sys_CloseModules();
 
 // FileSystem.cpp
 void FS_Init(OpenD2ConfigStrc* pConfig);
 void FS_Shutdown();
+void FS_LogSearchPaths();
 size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false);
 size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen = 4, size_t dwCount = 1);
 size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen = 1, size_t dwCount = 1);
+size_t FS_WritePlaintext(fs_handle f, char* text);
 void FS_CloseFile(fs_handle f);
 void FS_Seek(fs_handle f, size_t offset, int nSeekType);
 size_t FS_Tell(fs_handle f);
+bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen);
 
 // FileSystem_MPQ.cpp
 void FSMPQ_Init();
@@ -203,12 +217,7 @@ void MPQ_Cleanup();
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
 void D2Win_ShutdownSDL();
+void D2Win_ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage);
 
 // Renderer.cpp
 void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
-
-/////////////////////////////////////////////////////////
-//
-//	Variables
-
-extern run_t gpfModules[];

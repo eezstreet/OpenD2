@@ -35,3 +35,5 @@
 Build/*
 Win32/*
 game.dir/*
+D2Client.dir/*
+D2Common.dir/*

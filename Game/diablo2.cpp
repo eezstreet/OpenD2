@@ -17,18 +17,6 @@ enum D2CommandType
 	CMD_WORD
 };
 
-enum D2RenderMode
-{
-	RENDER_NONE,
-	RENDER_GDI,
-	RENDER_SOFTWARE,
-	RENDER_DIRECTDRAW,
-	RENDER_GLIDE,
-	RENDER_OPENGL,
-	RENDER_DIRECT3D,
-	RENDER_RAVE,
-};
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define co(x)	offsetof(D2GameConfigStrc, x)
@@ -51,7 +39,7 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"NETWORK",		"GAMENAME",		"gamename",		CMD_STRING,		co(szGameName),		0x00},
 	{"NETWORK",		"BATTLENETIP",	"bn",			CMD_STRING,		co(szBNetIP),		0x00},
 	{"NETWORK",		"MCPIP",		"mcpip",		CMD_STRING,		co(szMCPIP),		0x00},
-	{"CHARACTER",	"AMAZON",		"ama",			CMD_BOOLEAN,	co(bAmazon),		0x01},
+	{"CHARACTER",	"AMAZON",		"ama",			CMD_BOOLEAN,	co(bAmazon),		0x00},
 	{"CHARACTER",	"PALADIN",		"pal",			CMD_BOOLEAN,	co(bPaladin),		0x00},
 	{"CHARACTER",	"SORCERESS",	"sor",			CMD_BOOLEAN,	co(bSorceress),		0x00},
 	{"CHARACTER",	"NECROMANCER",	"nec",			CMD_BOOLEAN,	co(bNecromancer),	0x00},
@@ -69,7 +57,7 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"ITEM",		"RARE",			"rare",			CMD_BOOLEAN,	co(bRare),			0x00},
 	{"ITEM",		"UNIQUE",		"unique",		CMD_BOOLEAN,	co(bUnique),		0x00},
 	{"INTERFACE",	"ACT",			"act",			CMD_DWORD,		co(dwAct),			0x01},
-	{"INTERFACE",	"DIFF",			"diff",			CMD_BYTE,		co(nDifficulty),	0x03},
+	{"INTERFACE",	"DIFF",			"diff",			CMD_BYTE,		co(nDifficulty),	0x00},
 	{"DEBUG",		"LOG",			"log",			CMD_BOOLEAN,	co(bLog),			0x00},
 	{"DEBUG",		"MSGLOG",		"msglog",		CMD_BOOLEAN,	co(bMsgLog),		0x00},
 	{"DEBUG",		"SAFEMODE",		"safe",			CMD_BOOLEAN,	co(bSafeMode),		0x00},
@@ -83,7 +71,6 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"FILEIO",		"DIRECT",		"direct",		CMD_BOOLEAN,	co(bDirect),		0x00},
 	{"FILEIO",		"LOWEND",		"lem",			CMD_BOOLEAN,	co(bLowEnd),		0x00},
 	{"DEBUG",		"QuEsTs",		"questall",		CMD_BOOLEAN,	co(bQuests),		0x00},
-	{"DEBUG",		"CHOICE",		"choice",		CMD_BOOLEAN,	0x03CC,				0x00},	// FIXME
 	{"NETWORK",		"COMINT",		"comint",		CMD_DWORD,		co(pInterface),		0x00},
 	{"NETWORK",		"SKIPTOBNET",	"skiptobnet",	CMD_BOOLEAN,	co(bSkipToBNet),	0x00},
 	{"NETWORK",		"OEPNC",		"openc",		CMD_BOOLEAN,	co(bOpenC),			0x00},
@@ -104,11 +91,34 @@ static D2CmdArgStrc OpenD2CommandArguments[] = {
 	{"VIDEO",		"SDLNOACCEL",	"sdlnoaccel",	CMD_BOOLEAN,	co(bNoSDLAccel),	0x00},
 	{"VIDEO",		"BORDERLESS",	"borderless",	CMD_BOOLEAN,	co(bBorderless),	0x00},
 	{"VIDEO",		"NORENDERTEXT",	"norendertext",	CMD_BOOLEAN,	co(bNoRenderText),	0x00},
+	{"FILEIO",		"LOGFLAGS",		"logflags",		CMD_DWORD,		co(dwLogFlags),		PRIORITY_ALL},
 	{"",			"",				"",				0,				0x0000,				0x00},
 };
 #undef co
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static D2ModuleImportStrc exports = {
+	D2CLIENTAPI_VERSION,
+
+	Log_Print,
+	Log_Warning,
+	Log_Error,
+
+	FS_Open,
+	FS_Read,
+	FS_Write,
+	FS_WritePlaintext,
+	FS_CloseFile,
+	FS_Seek,
+	FS_Tell,
+
+	FSMPQ_FindFile,
+	MPQ_FileSize,
+	MPQ_ReadFile,
+};
+
+static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
 
 /*
  *	Processes a single commandline argument
@@ -215,45 +225,6 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 }
 
 /*
- *	Get the rendering mode
- */
-inline DWORD GetRenderingMode(D2GameConfigStrc* pConfig)
-{
-	DWORD dwRenderingMode = RENDER_NONE;
-	if (pConfig->b3DFX)
-	{
-		dwRenderingMode = RENDER_GLIDE;
-	}
-	else if (pConfig->bWindowed)
-	{
-		dwRenderingMode = RENDER_GDI;
-	}
-	else if (pConfig->bD3D)
-	{
-		dwRenderingMode = RENDER_DIRECT3D;
-	}
-	else
-	{
-		dwRenderingMode = RENDER_DIRECTDRAW;
-	}
-
-	// NOTE: OpenGL and Software rendering modes cannot occur!!
-	return dwRenderingMode;
-}
-
-/*
- *	Pump a single frame from the module
- */
-D2InterfaceModules PumpModuleFrame(D2InterfaceModules dwInterface, D2GameConfigStrc* pConfig)
-{
-	if (gpfModules[dwInterface] != nullptr)
-	{
-		return gpfModules[dwInterface](pConfig);
-	}
-	return D2I_NONE;
-}
-
-/*
  *	Parse commandline arguments
  */
 void ParseCommandline(int argc, char** argv, D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
@@ -287,29 +258,22 @@ static void PopulateDefaultValues(D2CmdArgStrc* paCommandArguments, void* pvInpu
 	D2CmdArgStrc* pArg = paCommandArguments;
 	while (pArg != nullptr && pArg->szKeyName[0] != '\0')
 	{
+		BYTE* address = (BYTE*)pvInput + pArg->nOffset;
 		switch (pArg->dwType)
 		{
 			case CMD_BOOLEAN:
 			case CMD_BYTE:
-				*((BYTE*)pvInput + pArg->nOffset) = (BYTE)pArg->dwDefault;
+				*address = (BYTE)pArg->dwDefault;
 				break;
 			case CMD_WORD:
-				*((WORD*)pvInput + pArg->nOffset) = (WORD)pArg->dwDefault;
+				*(WORD*)address = (WORD)pArg->dwDefault;
 				break;
 			case CMD_DWORD:
-				*((DWORD*)pvInput + pArg->nOffset) = pArg->dwDefault;
+				*(DWORD*)address = pArg->dwDefault;
 				break;
 		}
 		++pArg;
 	}
-}
-
-/*
- *	A (tiny) callback that is needed by the game for some reason
- */
-int __stdcall LoadExpansionMPQ()
-{
-	return 1;
 }
 
 /*
@@ -322,148 +286,59 @@ static void PopulateConfiguration(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* p
 #endif
 
 	// Push the default values from the commandline settings for both OpenD2 and the retail game
-	//PopulateDefaultValues(CommandArguments, pConfig);
-	//PopulateDefaultValues(OpenD2CommandArguments, pOpenConfig);
-
-	// Set the default MPQ callback
-#if GAME_MINOR_VERSION >= 13	// In 1.13 we apply a +1 offset to keep it kosher
-	*(void**)((BYTE*)&pConfig->pfMPQFunc + 1) = LoadExpansionMPQ;
-#else
-	pConfig->pfMPQFunc = LoadExpansionMPQ;
-#endif
+	PopulateDefaultValues(CommandArguments, pConfig);
+	PopulateDefaultValues(OpenD2CommandArguments, pOpenConfig);
 }
 
 /*
  *	Initialize the game (from main entrypoint)
  */
+OpenD2Modules currentModule = MODULE_CLIENT;
+
 int InitGame(int argc, char** argv, DWORD pid)
 {
 	D2GameConfigStrc config{ 0 };
 	OpenD2ConfigStrc openD2Config{ 0 };
-	bool bSuccess;
-	DWORD dwRenderingMode;
-	D2InterfaceModules dwCurrentModule;
 
 	PopulateConfiguration(&config, &openD2Config);
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
 	FS_Init(&openD2Config);
+	Log_InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
+	FS_LogSearchPaths();
 
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
-
-	DC6Image IMAGE;
-	DC6_LoadImage("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", &IMAGE);
-	DWORD dwWidth = 0, dwHeight = 0;
-	DC6_PollFrame(&IMAGE, 0, 0, &dwWidth, &dwHeight, nullptr, nullptr);
-	tex_handle dc6Tex = RenderTarget->RF_RegisterTexture("trademarkscreenEXP.dc6", dwWidth, dwHeight);
-	BYTE* pixels = DC6_GetPixelsAtFrame(&IMAGE, 0, 0, nullptr);
-	RenderTarget->RF_SetTexturePixels(dc6Tex, pixels, PAL_UNITS);
-	RenderTarget->RF_DrawTexture(dc6Tex, 0, 0, dwWidth, dwHeight, 0, 0);
-	RenderTarget->RF_Present();
-
-	SDL_Delay(10000);
-#if 0
-
-	dwRenderingMode = GetRenderingMode(&config);
-
-	/*
-	 *	BIG HUGE TODO LIST
-	 *	- Rewrite all of Fog (in Shared/*)
-	 *	- Rewrite all of Storm (in Shared/* and Game/*)
-	 *	- Rewrite all of D2Win and make this function more platform-agnostic
-	 */
-
-	FOG_10021(GAME_LOG_PATH);	// Init log manager
-	FOG_10019(GAME_NAME, 0, "v" GAME_VERSION, GAME_MAJOR_VERSION);	// Init system
-
-#if GAME_MINOR_VERSION >= 13
-	// set up the ignore list
-#endif
-
-	FOG_10101(config.bDirect, 0);	// Set working directory
-	FOG_10089(1, 0);	// Init async data
-	FOG_10218();	// Init mask table
-
-	bSuccess = D2WIN_10037();	// load archives
-	if (!bSuccess)
+	
+	// Main loop: execute modules until one of the modules has had enough
+	while (currentModule != MODULE_NONE)
 	{
-		D2WIN_10036();	// unload archives
-		return -1;
+		OpenD2Modules previousModule = currentModule;
+
+		if (imports[currentModule] == nullptr)
+		{
+			imports[currentModule] = Sys_OpenModule(currentModule, &exports);
+			if (imports[currentModule] == nullptr || 
+				imports[currentModule]->nApiVersion != D2CLIENTAPI_VERSION)
+			{
+				break;
+			}
+		}
+
+		currentModule = imports[currentModule]->RunModuleFrame(&config, &openD2Config);
+
+		if (currentModule == MODULE_CLEAN)
+		{	// module requested to be cleaned
+			Sys_CloseModule(previousModule);
+			imports[previousModule] = nullptr;
+			currentModule = MODULE_CLIENT;
+		}
 	}
 
-	bSuccess = D2WIN_10171(D2WIN_10174, D2WIN_10205, 0, &config);	// load expansion archives
-	if (!bSuccess)
-	{
-		D2WIN_10036();	// unload archives
-		return -1;
-	}
+	Sys_CloseModules();
 
-	// Create the window
-	bSuccess = D2WIN_10000((HINSTANCE)pid, dwRenderingMode, config.bWindowed, !config.bNoCompress);
-	if (!bSuccess)
-	{
-		D2WIN_10036();	// unload archives
-		return -1;
-	}
-
-	if (config.bPerspective && dwRenderingMode >= RENDER_GLIDE)
-	{	// set perspective mode
-		D2GFX_10011(true);
-	}
-
-	bSuccess = D2WIN_10001(config.bWindowed, config.bWindowed ? 2 : 0);	// init sprite cache
-	if (!bSuccess)
-	{
-		D2GFX_10001();	// destroy window
-		D2WIN_10036();	// unload archives
-		return -1;
-	}
-
-	if (config.bLowEnd)
-	{	// enable low-end graphics
-		D2GFX_10015();
-	}
-
-	if (config.dwGamma != 0)
-	{	// set gamma
-		D2GFX_10018(config.dwGamma);
-	}
-
-	if (config.bVSync)
-	{	// enable vsync
-		D2GFX_10020();
-	}
-
-#if GAME_MINOR_VERSION >= 13
-	// set the fixed aspect ratio
-#endif
-
-	if (!config.bNoSound)
-	{	// initialize the sound system
-		D2SOUND_10000(config.dwExpansion);
-	}
-
-	// Initialize the external modules.
-	Sys_InitModules();
-
-	// Starting with Launch, ping-pong between all of the different modules until one of them dies
-	dwCurrentModule = D2I_LAUNCH;
-	while (dwCurrentModule = PumpModuleFrame(dwCurrentModule, &config));
-
-	if (!config.bNoSound)
-	{	// kill the sound system
-		D2SOUND_10001();
-	}
-
-	D2WIN_10002();			// destroy sprite cache
-	D2GFX_10001();			// destroy window
-	D2WIN_10036();			// destroy archives
-	FOG_10090();			// destroy async data
-	//D2MCPCLIENT_10001();	// destroy MCP client (FIXME: kind of a bad place for this..)
-	FOG_10143(nullptr);		// kill fog memory
-#endif
 	D2Win_ShutdownSDL();	// renderer also gets shut down here
 
+	Log_Shutdown();
 	FS_Shutdown();
 
 	return 0;

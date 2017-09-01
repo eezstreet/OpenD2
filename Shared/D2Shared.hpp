@@ -17,6 +17,7 @@
 #define EXPANSION			// If not present, we are compiling D2 Classic!
 
 #define GAME_LOG_PATH		"Debug"
+#define GAME_LOG_HEADER		"D2"
 #define GAME_HOMEPATH		"Diablo II"
 
 //////////////////////////////////////////////////
@@ -26,6 +27,16 @@
 #define MAX_TOKEN_CHARS		1024
 #define	MAX_D2PATH_ABSOLUTE	1024
 #define	MAX_D2PATH			64
+
+//////////////////////////////////////////////////
+//
+// Platform-specific Definitions
+
+#ifdef WIN32
+#define NL "\r\n"
+#else
+#define NL "\n"
+#endif
 
 //////////////////////////////////////////////////
 //
@@ -43,6 +54,8 @@ typedef handle tex_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
+
+struct D2MPQArchive;
 
 enum OpenD2Paths
 {
@@ -66,6 +79,17 @@ enum OpenD2FileSeekModes
 	FS_SEEK_CUR,
 	FS_SEEK_END,
 };
+
+enum OpenD2LogFlags
+{
+	PRIORITY_CRASH		= 0x01,
+	PRIORITY_MESSAGE	= 0x02,
+	PRIORITY_DEBUG		= 0x04,
+	PRIORITY_SYSTEMINFO	= 0x08,
+	PRIORITY_VISUALS	= 0x10,
+};
+
+#define PRIORITY_ALL (PRIORITY_CRASH | PRIORITY_MESSAGE | PRIORITY_DEBUG | PRIORITY_SYSTEMINFO | PRIORITY_VISUALS)
 
 enum D2Palettes
 {
@@ -188,12 +212,13 @@ struct D2GameConfigStrc     // size 0x3C7
 struct OpenD2ConfigStrc
 {
 	// See documentation in FileSystem.cpp regarding these three settings
-	char szBasePath[MAX_D2PATH_ABSOLUTE];
-	char szHomePath[MAX_D2PATH_ABSOLUTE];
-	char szModPath[MAX_D2PATH_ABSOLUTE];
-	BYTE bNoSDLAccel;
-	BYTE bBorderless;
-	BYTE bNoRenderText;
+	char	szBasePath[MAX_D2PATH_ABSOLUTE];
+	char	szHomePath[MAX_D2PATH_ABSOLUTE];
+	char	szModPath[MAX_D2PATH_ABSOLUTE];
+	BYTE	bNoSDLAccel;
+	BYTE	bBorderless;
+	BYTE	bNoRenderText;
+	DWORD	dwLogFlags;
 };
 
 /*
@@ -203,14 +228,19 @@ struct OpenD2ConfigStrc
 #pragma pack(1)
 struct DC6Frame
 {
-	DWORD	dwFlip;				// If true, it's encoded top to bottom instead of bottom to top
-	DWORD	dwWidth;			// Width of this frame
-	DWORD	dwHeight;			// Height of this frame
-	DWORD	dwOffsetX;			// X offset
-	DWORD	dwOffsetY;			// Y offset
-	DWORD	dwUnknown;
-	DWORD	dwNextBlock;
-	DWORD	dwLength;			// Number of blocks to decode
+	struct DC6FrameHeader
+	{
+		DWORD	dwFlip;				// If true, it's encoded top to bottom instead of bottom to top
+		DWORD	dwWidth;			// Width of this frame
+		DWORD	dwHeight;			// Height of this frame
+		DWORD	dwOffsetX;			// X offset
+		DWORD	dwOffsetY;			// Y offset
+		DWORD	dwUnknown;
+		DWORD	dwNextBlock;
+		DWORD	dwLength;			// Number of blocks to decode
+	};
+	DC6FrameHeader fh;
+	BYTE* pFramePixels;
 };
 
 struct DC6ImageHeader
@@ -237,10 +267,64 @@ struct DC6Image
 *	DCC Files
 */
 
+//////////////////////////////////////////////////
+//
+//	Module Exports
+
+#define D2CLIENTAPI_VERSION	1
+
+#ifdef WIN32
+#define D2EXPORT	__declspec(dllexport)
+#else
+#define D2EXPORT	__attribute__((visibility("default")))
+#endif
+
+enum OpenD2Modules
+{
+	MODULE_CLIENT,	// Submodule: D2Client
+	MODULE_SERVER,	// Submodule: D2Game
+	MODULE_MAX,
+	MODULE_NONE,
+	MODULE_CLEAN,
+};
+
+struct D2ModuleImportStrc
+{	// These get imported from the engine
+	int nApiVersion;
+
+	// Basic functions
+	void		(*Print)(OpenD2LogFlags nPriority, char* szFormat, ...);
+	void		(*Warning)(char* szFile, int nLine, char* szCondition);
+	void		(*Error)(char* szFile, int nLine, char* szCondition);
+
+	// Filesystem calls
+	size_t		(*FS_Open)(char* szFileName, fs_handle* f, OpenD2FileModes mode, bool bBinary);
+	size_t		(*FS_Read)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
+	size_t		(*FS_Write)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
+	size_t		(*FS_WritePlaintext)(fs_handle f, char* text);
+	void		(*FS_CloseFile)(fs_handle f);
+	void		(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
+	size_t		(*FS_Tell)(fs_handle f);
+
+	// MPQ calls
+	fs_handle	(*MPQ_FindFile)(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+	size_t		(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
+	size_t		(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
+};
+
+struct D2ModuleExportStrc
+{	// These get exported to the engine
+	int nApiVersion;
+
+	OpenD2Modules	(*RunModuleFrame)(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
+};
+
+typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports);
+
 
 //////////////////////////////////////////////////
 //
-// Library Functions
+//	Library Functions
 
 int D2_stricmpn(char* s1, char* s2, int n);
 int D2_stricmp(char* s1, char* s2);

@@ -12,22 +12,22 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
 {
 	DWORD x = 0, y;
 
-	if (pFrame->dwFlip > 0)
+	if (pFrame->fh.dwFlip > 0)
 	{
 		y = 0;
 	}
 	else
 	{
-		y = pFrame->dwHeight;
+		y = pFrame->fh.dwHeight;
 	}
 
-	for (size_t i = 0; i < pFrame->dwLength; i++)
+	for (size_t i = 0; i < pFrame->fh.dwLength; i++)
 	{
 		BYTE pixel = pPixels[i];
 		if (pixel == 0x80)
 		{	// pixel row termination
 			x = 0;
-			if (pFrame->dwFlip > 0)
+			if (pFrame->fh.dwFlip > 0)
 			{
 				y++;
 			}
@@ -38,15 +38,13 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
 		}
 		else if (pixel & 0x80)
 		{	// Write PIXEL & 0x7F transparent pixels
-			// No DC6 pixel can physically *be* 0x80 since it's the mapping for pixel row termination.
-			// Ergo, we will use that as the color key for transparency
-			memset(&pOutPixels[(y * pFrame->dwWidth) + x++], 0x80, pixel & 0x7F);
+			x += pixel & 0x7F;
 		}
 		else
 		{
 			while (pixel--)
 			{
-				pOutPixels[(y * pFrame->dwWidth) + x++] = pPixels[++i];
+				pOutPixels[(y * pFrame->fh.dwWidth) + x++] = pPixels[++i];
 			}
 		}
 	}
@@ -56,60 +54,60 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
  *	Loads a DC6 from an MPQ
  *	@author	eezstreet
  */
-static BYTE gpDecodeBuffer[2048 * 2048];
+#define DECODE_BUFFER_SIZE	2048 * 2048
+static BYTE gpDecodeBuffer[DECODE_BUFFER_SIZE];
+static BYTE gpReadBuffer[DECODE_BUFFER_SIZE];
 
 void DC6_LoadImage(char* szPath, DC6Image* pImage)
 {
+	memset(pImage, 0, sizeof(DC6Image));
+
 	pImage->f = FSMPQ_FindFile(szPath, nullptr, (D2MPQArchive**)&pImage->mpq);
-	if (pImage->f == (fs_handle)-1)
-	{
-		return;
-	}
+	Log_WarnAssert(pImage->f != (fs_handle)-1);
 
 	// Now comes the fun part: reading and decoding the actual thing
 	size_t dwFileSize = MPQ_FileSize((D2MPQArchive*)pImage->mpq, pImage->f);
 
-	BYTE* pByteReadHead = gpDecodeBuffer;
+	BYTE* pByteReadHead = gpReadBuffer;
 
-	MPQ_ReadFile((D2MPQArchive*)pImage->mpq, pImage->f, gpDecodeBuffer, dwFileSize);
+	Log_WarnAssert(MPQ_FileSize((D2MPQArchive*)pImage->mpq, pImage->f) < DECODE_BUFFER_SIZE);
+	MPQ_ReadFile((D2MPQArchive*)pImage->mpq, pImage->f, gpReadBuffer, dwFileSize);
 
 	memcpy(&pImage->header, pByteReadHead, sizeof(pImage->header));
 	pByteReadHead += sizeof(pImage->header);
 
 	// Validate the header
-	if (pImage->header.dwVersion != DC6_HEADER_VERSION)
-	{	// bad dc6 - die?
-		return;
-	}
+	Log_WarnAssert(pImage->header.dwVersion == DC6_HEADER_VERSION);
 
 	// Table of pointers
 	DWORD* pFramePointers = (DWORD*)pByteReadHead;
-	pByteReadHead += sizeof(DWORD) * pImage->header.dwDirections * pImage->header.dwFrames;
+	DWORD dwNumFrames = pImage->header.dwDirections * pImage->header.dwFrames;
+	pByteReadHead += sizeof(DWORD) * dwNumFrames;
 
-	pImage->pFrames = (DC6Frame*)malloc(sizeof(DC6Frame) * pImage->header.dwDirections * pImage->header.dwFrames);
-	if (pImage->pFrames == nullptr)
-	{	// couldn't allocate space, die?
-		return;
-	}
+	pImage->pFrames = (DC6Frame*)malloc(sizeof(DC6Frame) * dwNumFrames);
+	Log_ErrorAssert(pImage->pFrames != nullptr);
 
 	// Copy frame headers. Compute the total number of pixels that we need to allocate in the process.
 	DWORD dwTotalPixels = 0;
 	int i, j;
 	DWORD dwFramePos;
+	DWORD dwOffset = 0;
+
+	pImage->pPixels = (BYTE*)malloc(dwTotalPixels);
+	Log_ErrorAssert(pImage->pPixels != nullptr);
 
 	for (i = 0; i < pImage->header.dwDirections; i++)
 	{
 		for (j = 0; j < pImage->header.dwFrames; j++)
 		{
 			dwFramePos = (i * pImage->header.dwFrames) + j;
-			memcpy(&pImage->pFrames[dwFramePos], gpDecodeBuffer + pFramePointers[dwFramePos], sizeof(DC6Frame));
-			pImage->pFrames[dwFramePos].dwNextBlock = dwTotalPixels * sizeof(BYTE);
-			dwTotalPixels += pImage->pFrames[dwFramePos].dwWidth * pImage->pFrames[dwFramePos].dwHeight;
+			memcpy(&pImage->pFrames[dwFramePos].fh, gpReadBuffer + pFramePointers[dwFramePos], 
+				sizeof(DC6Frame::DC6FrameHeader));
+			pImage->pFrames[dwFramePos].fh.dwNextBlock = dwTotalPixels * sizeof(BYTE);
+			pImage->pFrames[dwFramePos].pFramePixels = pImage->pPixels + dwTotalPixels;
+			dwTotalPixels += pImage->pFrames[dwFramePos].fh.dwWidth * pImage->pFrames[dwFramePos].fh.dwHeight;
 		}
 	}
-
-	pImage->pPixels = (BYTE*)malloc(dwTotalPixels);
-	memset(pImage->pPixels, 0, dwTotalPixels);
 
 	// Decode all of the blocks
 	for (i = 0; i < pImage->header.dwDirections; i++)
@@ -118,10 +116,13 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 		{
 			dwFramePos = (i * pImage->header.dwFrames) + j;
 			DC6Frame* pFrame = &pImage->pFrames[dwFramePos];
-			pByteReadHead = gpDecodeBuffer + pFramePointers[dwFramePos] + sizeof(DC6Frame);
-			DC6_DecodeFrame(pByteReadHead, pImage->pPixels + pFrame->dwNextBlock, pFrame);
+			pByteReadHead = gpReadBuffer + pFramePointers[dwFramePos] + sizeof(DC6Frame);
+			DC6_DecodeFrame(pByteReadHead, gpDecodeBuffer + dwOffset, pFrame);
+			dwOffset += pFrame->fh.dwWidth * pFrame->fh.dwHeight;
 		}
 	}
+
+	memcpy(pImage->pPixels, gpDecodeBuffer, dwTotalPixels);
 }
 
 /*
@@ -158,10 +159,10 @@ BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t*
 
 	if (pNumPixels != nullptr)
 	{
-		*pNumPixels = pFrame->dwWidth * pFrame->dwHeight;
+		*pNumPixels = pFrame->fh.dwWidth * pFrame->fh.dwHeight;
 	}
 
-	return pImage->pPixels + pFrame->dwNextBlock;
+	return pFrame->pFramePixels;
 }
 
 /*
@@ -188,21 +189,21 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	DC6Frame* pFrame = &pImage->pFrames[(nDirection * pImage->header.dwFrames) + nFrame];
 	if (dwWidth != nullptr)
 	{
-		*dwWidth = pFrame->dwWidth;
+		*dwWidth = pFrame->fh.dwWidth;
 	}
 
 	if (dwHeight != nullptr)
 	{
-		*dwHeight = pFrame->dwHeight;
+		*dwHeight = pFrame->fh.dwHeight;
 	}
 
 	if (dwOffsetX != nullptr)
 	{
-		*dwOffsetX = pFrame->dwOffsetX;
+		*dwOffsetX = pFrame->fh.dwOffsetX;
 	}
 
 	if (dwOffsetY != nullptr)
 	{
-		*dwOffsetY = pFrame->dwOffsetY;
+		*dwOffsetY = pFrame->fh.dwOffsetY;
 	}
 }

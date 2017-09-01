@@ -43,6 +43,19 @@ struct FSHandleStore
 static FSHandleStore* glFileHandles = nullptr;
 
 /*
+ *	Log the searchpaths
+ */
+void FS_LogSearchPaths()
+{
+	Log_Print(PRIORITY_VISUALS, "------------------------------------------------------");
+	Log_Print(PRIORITY_MESSAGE, "Search Paths:");
+	Log_Print(PRIORITY_MESSAGE, "- %s", gszHomePath);
+	Log_Print(PRIORITY_MESSAGE, "- %s", gszBasePath);
+	Log_Print(PRIORITY_MESSAGE, "- %s", gszModPath);
+	Log_Print(PRIORITY_VISUALS, "------------------------------------------------------");
+}
+
+/*
  *	Cleanses a filesystem search path
  */
 static void FS_SanitizeSearchPath(char* path)
@@ -100,6 +113,9 @@ static void FS_SanitizeSearchPath(char* path)
 			path[dwPathLen + 1] = '\0';
 		}
 	}
+
+	// If path doesn't exist, create it
+	Sys_CreateDirectory(path);
 }
 
 /*
@@ -268,6 +284,7 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 
 	if (*f == 0)
 	{	// file could not be found
+		*f = INVALID_HANDLE;
 		return 0;
 	}
 
@@ -337,6 +354,11 @@ size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
  */
 size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
 {
+	if (f == INVALID_HANDLE)
+	{
+		return 0;
+	}
+
 	FSHandleStore* pRecord = FS_GetFileRecord(f);
 	if (!pRecord || pRecord->mode == FS_READ)
 	{
@@ -350,6 +372,15 @@ size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
 	}
 
 	return fwrite(buffer, dwCount, dwBufferLen, (FILE*)f);
+}
+
+/*
+ *	Writes plaintext to a file
+ */
+size_t FS_WritePlaintext(fs_handle f, char* text)
+{
+	size_t dwLen = strlen(text);
+	return FS_Write(f, text, dwLen);
 }
 
 /*
@@ -395,4 +426,32 @@ void FS_Seek(fs_handle f, size_t offset, int nSeekType)
 size_t FS_Tell(fs_handle f)
 {
 	return ftell((FILE*)f);
+}
+
+/*
+ *	Finds the (absolute) path of a file, anywhere in our search paths.
+ */
+bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen)
+{
+	FILE* f;
+
+	if (dwBufferLen < MAX_D2PATH_ABSOLUTE)
+	{
+		return false;
+	}
+
+	FS_SanitizeFilePath(szFileName);
+
+	for (int i = FS_MAXPATH-1; i >= FS_MAXPATH; i--)	// go in reverse since we're reading
+	{
+		D2_strncpyz(szBuffer, szFileName, dwBufferLen);
+		strcat(szBuffer, szFileName);
+		f = fopen(szBuffer, "r");
+		if (f != nullptr)
+		{	// at this point, szBuffer will point to the correct file path
+			fclose(f);
+			return true;
+		}
+	}
+	return false;	// didn't find it
 }

@@ -79,15 +79,12 @@ D2MPQArchive* FSMPQ_AddSearchPath(char* szMPQName, char* szMPQPath)
 	}
 
 	MPQSearchPath* pNew = (MPQSearchPath*)malloc(sizeof(MPQSearchPath));
-	if (pNew == nullptr)
-	{	// couldn't allocate memory - die?
-		return nullptr;
-	}
+	Log_ErrorAssert(pNew != nullptr, nullptr);
 
 	pNew->pArchive = (D2MPQArchive*)malloc(sizeof(D2MPQArchive));
 	if (pNew->pArchive == nullptr)
-	{	// couldn't allocate memory - die?
-		return nullptr;
+	{	// couldn't allocate memory
+		Log_ErrorAssert(!"Ran out of memory when adding MPQ search path.", nullptr);
 	}
 
 	D2_strncpyz(pNew->szName, szMPQName, MAX_D2PATH);

@@ -29,7 +29,7 @@ static SDL_Window* D2Win_CreateWindow(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	}
 
 	// TODO: make the size based on resolution
-	pWin = SDL_CreateWindow("Diablo II", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, dwWindowFlags);
+	pWin = SDL_CreateWindow("Diablo II", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, dwWindowFlags);
 
 	return pWin;
 }
@@ -43,7 +43,7 @@ void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
 
 	gpWindow = D2Win_CreateWindow(pConfig, pOpenConfig);
 
-	assert(gpWindow);
+	Log_ErrorAssert(gpWindow != nullptr);
 
 	Render_Init(pConfig, pOpenConfig, gpWindow);
 }
@@ -56,4 +56,12 @@ void D2Win_ShutdownSDL()
 	RenderTarget->RF_Shutdown();
 	SDL_DestroyWindow(gpWindow);
 	SDL_Quit();
+}
+
+/*
+ *	Wrapper for SDL_ShowSimpleMessageBox
+ */
+void D2Win_ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage)
+{
+	SDL_ShowSimpleMessageBox(nMessageBoxType, szTitle, szMessage, gpWindow);
 }
