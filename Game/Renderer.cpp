@@ -86,3 +86,15 @@ void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_W
 	RenderTarget = &RenderTargets[DesiredRenderTarget];
 	RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);
 }
+
+/*
+ *	Map rendertarget exports to game module exports
+ *	@author	eezstreet
+ */
+void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
+{
+	pExport->R_RegisterTexture = RenderTarget->RF_RegisterTexture;
+	pExport->R_StitchedDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
+	pExport->R_DrawTexture = RenderTarget->RF_DrawTexture;
+	pExport->R_Present = RenderTarget->RF_Present;
+}

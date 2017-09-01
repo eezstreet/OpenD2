@@ -26,7 +26,7 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"VIDEO",		"QUALITY",		"lq",			CMD_BOOLEAN,	co(bQuality),		0x00},
 	{"VIDEO",		"GAMMA",		"gamma",		CMD_BOOLEAN,	co(dwGamma),		0x00},
 	{"VIDEO",		"VSYNC",		"vsync",		CMD_BOOLEAN,	co(bVSync),			0x00},
-	{"VIDEO",		"FRAMERATE",	"fr",			CMD_DWORD,		co(dwFramerate),	0x00},
+	{"VIDEO",		"FRAMERATE",	"fr",			CMD_DWORD,		co(dwFramerate),	0x7D},
 	{"NETWORK",		"SERVERIP",		"s",			CMD_STRING,		co(szServerIP),		0x00},
 	{"NETWORK",		"GAMETYPE",		"gametype",		CMD_DWORD,		co(dwGameType),		0x00},
 	{"NETWORK",		"ARENA",		"arena",		CMD_DWORD,		co(dwArena),		0x00},
@@ -315,13 +315,14 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS_LogSearchPaths();
 
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
-	tex_handle trademark = 
-		RenderTarget->RF_TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", "trademark", 0, 11, PAL_UNITS);
+	Render_MapRenderTargetExports(&exports);
 	
 	// Main loop: execute modules until one of the modules has had enough
 	while (currentModule != MODULE_NONE)
 	{
 		OpenD2Modules previousModule = currentModule;
+		DWORD dwPreTick = SDL_GetTicks();
+		DWORD dwPostTick, dwFrameMsec;
 
 		if (imports[currentModule] == nullptr)
 		{
@@ -342,10 +343,13 @@ int InitGame(int argc, char** argv, DWORD pid)
 			currentModule = MODULE_CLIENT;
 		}
 
-		RenderTarget->RF_DrawTexture(trademark, 0, 0, 800, 600, 0, 0);
-		RenderTarget->RF_Present();
-
-		SDL_Delay(1000);
+		// Lock the framerate
+		dwPostTick = SDL_GetTicks();
+		dwFrameMsec = dwPostTick - dwPreTick;
+		if (config.dwFramerate > 0 && dwFrameMsec < (1000 / config.dwFramerate))
+		{
+			SDL_Delay((1000 / config.dwFramerate) - dwFrameMsec);
+		}
 	}
 
 	Sys_CloseModules();

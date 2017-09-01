@@ -6,6 +6,23 @@ OpenD2ConfigStrc* openConfig = nullptr;
 bool bLocalServer = false;
 
 /*
+ *	Initializes the client
+ */
+static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
+{
+	config = pConfig;
+	openConfig = pOpenConfig;
+}
+
+/*
+ *	Runs a single frame on the client.
+ */
+static void D2Client_RunClientFrame()
+{
+
+}
+
+/*
  *	This gets called every frame. We return the next module to run after this one.
  */
 static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
@@ -13,7 +30,10 @@ static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
 	if (config == nullptr && openConfig == nullptr && pConfig != nullptr && pOpenConfig != nullptr)
 	{
 		// now is our chance! initialize!
+		D2Client_InitializeClient(pConfig, pOpenConfig);
 	}
+
+	D2Client_RunClientFrame();
 
 	if (bLocalServer)
 	{	// If we're running a local server, we need to run that next (it will *always* run the client in the next step)

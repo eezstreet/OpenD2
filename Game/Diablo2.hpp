@@ -216,10 +216,11 @@ size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
 size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
 void MPQ_Cleanup();
 
+// Renderer.cpp
+void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
+void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport);
+
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
 void D2Win_ShutdownSDL();
 void D2Win_ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage);
-
-// Renderer.cpp
-void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);

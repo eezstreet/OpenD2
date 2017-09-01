@@ -312,6 +312,12 @@ struct D2ModuleImportStrc
 	fs_handle	(*MPQ_FindFile)(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
 	size_t		(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
 	size_t		(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
+
+	// Renderer calls
+	tex_handle	(*R_RegisterTexture)(char* szHandleName, DWORD dwWidth, DWORD dwHeight);
+	tex_handle	(*R_StitchedDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
+	void		(*R_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
+	void		(*R_Present)();
 };
 
 struct D2ModuleExportStrc
