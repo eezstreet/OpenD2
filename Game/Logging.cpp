@@ -165,5 +165,6 @@ void Log_Error(char* szFile, int nLine, char* szCondition)
 	D2Win_ShowMessageBox(SDL_MESSAGEBOX_ERROR, GAME_NAME " Error", szErrorMessage);
 	Log_Print(PRIORITY_CRASH, szErrorMessage);
 
+	// pull us out of the main game loop
 	currentModule = MODULE_NONE;
 }

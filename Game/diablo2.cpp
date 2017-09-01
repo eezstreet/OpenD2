@@ -166,7 +166,7 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 		case CMD_STRING:
 			if (*(arg + strlen(pArg->szCmdName)) == '=')
 			{
-				D2_strncpyz((char*)(config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, 32);
+				D2_strncpyz(((char*)config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, 32);
 			}
 			break;
 	}
@@ -218,7 +218,7 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 			// in OpenD2 we take the default argument type as meaning the size of the string to copy into
 			if (*(arg + strlen(pArg->szCmdName)) == '=')
 			{
-				D2_strncpyz((char*)(config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, pArg->dwDefault);
+				D2_strncpyz(((char*)config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, pArg->dwDefault);
 			}
 			break;
 	}
