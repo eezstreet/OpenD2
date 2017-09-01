@@ -51,4 +51,4 @@ struct SDLHardwareTextureCacheItem
 //
 //	Functions
 
-tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight);
+tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight, bool* bExists);

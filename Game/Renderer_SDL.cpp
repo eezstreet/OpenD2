@@ -151,7 +151,7 @@ void Renderer_SDL_Present()
 tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD dwHeight)
 {
 	// HACK
-	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandleName, dwWidth, dwHeight);
+	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandleName, dwWidth, dwHeight, nullptr);
 	if (tex == INVALID_HANDLE)
 	{
 		return tex;
@@ -168,7 +168,7 @@ tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD
 /*
  *	Adds a new texture to the texture cache
  */
-tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight)
+tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight, bool* bExists)
 {
 	DWORD dwHash = D2_strhash(str, 32, MAX_SDL_TEXTURECACHE_SIZE);
 	DWORD dwOriginalHash = dwHash;
@@ -180,6 +180,10 @@ tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWOR
 		if(pCache->dwOriginalHash == dwOriginalHash)
 		{
 			// We already added this item to the texture cache, no need to do so again
+			if (bExists != nullptr)
+			{
+				*bExists = true;
+			}
 			return (tex_handle)dwHash;
 		}
 
@@ -190,6 +194,10 @@ tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWOR
 			pCache->dwOriginalHash = dwOriginalHash;
 			pCache->dwWidth = dwWidth;
 			pCache->dwHeight = dwHeight;
+			if (bExists != nullptr)
+			{
+				*bExists = false;
+			}
 			return (tex_handle)dwHash;
 		}
 
@@ -211,10 +219,16 @@ tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWOR
 tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette)
 {
 	D2Palette* pPal = Pal_GetPalette(nPalette);
+	bool bExists = false;
 
-	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandle, 0, 0);
+	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandle, 0, 0, &bExists);
 	if (tex == INVALID_HANDLE)
 	{
+		return tex;
+	}
+
+	if (bExists)
+	{	// If this texture was registered already, there's no need to do any of this again.
 		return tex;
 	}
 

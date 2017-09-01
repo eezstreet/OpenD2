@@ -1,9 +1,10 @@
 #include "D2Client.hpp"
+#include "D2Menu_Trademark.hpp"
 
 D2ModuleImportStrc* trap = nullptr;
 D2GameConfigStrc* config = nullptr;
 OpenD2ConfigStrc* openConfig = nullptr;
-bool bLocalServer = false;
+D2Client cl;
 
 /*
  *	Initializes the client
@@ -12,6 +13,11 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 {
 	config = pConfig;
 	openConfig = pOpenConfig;
+
+	memset(&cl, 0, sizeof(D2Client));
+
+	// Set first menu to be trademark menu
+	cl.pActiveMenu = new D2Menu_Trademark();
 }
 
 /*
@@ -19,7 +25,12 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
  */
 static void D2Client_RunClientFrame()
 {
+	if (cl.pActiveMenu != nullptr)
+	{
+		cl.pActiveMenu->Draw();
+	}
 
+	trap->R_Present();
 }
 
 /*
@@ -35,7 +46,7 @@ static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
 
 	D2Client_RunClientFrame();
 
-	if (bLocalServer)
+	if (cl.bLocalServer)
 	{	// If we're running a local server, we need to run that next (it will *always* run the client in the next step)
 		return MODULE_SERVER;
 	}
