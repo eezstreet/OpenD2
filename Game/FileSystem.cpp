@@ -442,9 +442,9 @@ bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen)
 
 	FS_SanitizeFilePath(szFileName);
 
-	for (int i = FS_MAXPATH-1; i >= FS_MAXPATH; i--)	// go in reverse since we're reading
+	for (int i = FS_MAXPATH-1; i >= 0; i--)	// go in reverse since we're reading
 	{
-		D2_strncpyz(szBuffer, szFileName, dwBufferLen);
+		D2_strncpyz(szBuffer, pszPaths[i], dwBufferLen);
 		strcat(szBuffer, szFileName);
 		f = fopen(szBuffer, "r");
 		if (f != nullptr)

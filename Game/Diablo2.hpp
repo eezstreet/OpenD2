@@ -144,6 +144,7 @@ struct D2Renderer
 
 	//
 	tex_handle	(*RF_RegisterTexture)(char* handleName, DWORD dwWidth, DWORD dwHeight);
+	tex_handle	(*RF_TextureFromStitchedDC6)(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
 	void		(*RF_SetTexturePixels)(tex_handle texture, BYTE* pPixels, int nPalette);
 	void		(*RF_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
 	// TODO: version of RF_DrawTexture that handles palshifted cels
@@ -161,6 +162,8 @@ void DC6_UnloadImage(DC6Image* pImage);
 BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
 void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
+void DC6_StitchStats(DC6Image* pImage, 
+	DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);

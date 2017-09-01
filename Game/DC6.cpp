@@ -93,9 +93,6 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 	DWORD dwFramePos;
 	DWORD dwOffset = 0;
 
-	pImage->pPixels = (BYTE*)malloc(dwTotalPixels);
-	Log_ErrorAssert(pImage->pPixels != nullptr);
-
 	for (i = 0; i < pImage->header.dwDirections; i++)
 	{
 		for (j = 0; j < pImage->header.dwFrames; j++)
@@ -104,10 +101,12 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 			memcpy(&pImage->pFrames[dwFramePos].fh, gpReadBuffer + pFramePointers[dwFramePos], 
 				sizeof(DC6Frame::DC6FrameHeader));
 			pImage->pFrames[dwFramePos].fh.dwNextBlock = dwTotalPixels * sizeof(BYTE);
-			pImage->pFrames[dwFramePos].pFramePixels = pImage->pPixels + dwTotalPixels;
 			dwTotalPixels += pImage->pFrames[dwFramePos].fh.dwWidth * pImage->pFrames[dwFramePos].fh.dwHeight;
 		}
 	}
+
+	pImage->pPixels = (BYTE*)malloc(dwTotalPixels);
+	Log_ErrorAssert(pImage->pPixels != nullptr);
 
 	// Decode all of the blocks
 	for (i = 0; i < pImage->header.dwDirections; i++)
@@ -116,8 +115,9 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 		{
 			dwFramePos = (i * pImage->header.dwFrames) + j;
 			DC6Frame* pFrame = &pImage->pFrames[dwFramePos];
-			pByteReadHead = gpReadBuffer + pFramePointers[dwFramePos] + sizeof(DC6Frame);
+			pByteReadHead = gpReadBuffer + pFramePointers[dwFramePos] + sizeof(DC6Frame::DC6FrameHeader);
 			DC6_DecodeFrame(pByteReadHead, gpDecodeBuffer + dwOffset, pFrame);
+			pFrame->pFramePixels = pImage->pPixels + dwOffset;
 			dwOffset += pFrame->fh.dwWidth * pFrame->fh.dwHeight;
 		}
 	}
@@ -205,5 +205,49 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	if (dwOffsetY != nullptr)
 	{
 		*dwOffsetY = pFrame->fh.dwOffsetY;
+	}
+}
+
+/*
+ *	Retrieve row width and height (for stitched DC6)
+ */
+#define MAX_DC6_CELL_SIZE	256
+void DC6_StitchStats(DC6Image* pImage, 
+	DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight)
+{
+	DC6Frame* pFrame;
+
+	Log_WarnAssert(dwStart >= 0 && dwStart <= dwEnd && dwStart < pImage->header.dwFrames);
+	Log_WarnAssert(dwEnd >= 0 && dwEnd < pImage->header.dwFrames);
+	Log_WarnAssert(pWidth && pHeight);
+	Log_WarnAssert(pTotalWidth && pTotalHeight);
+
+	*pWidth = 0;
+	*pHeight = 0;
+
+	for (int i = dwStart; i < dwEnd; i++)
+	{
+		pFrame = &pImage->pFrames[i];
+
+		(*pWidth)++;
+		(*pTotalWidth) += pFrame->fh.dwWidth;
+
+		if (pFrame->fh.dwWidth != MAX_DC6_CELL_SIZE)
+		{
+			break;
+		}
+	}
+
+	for (int i = dwStart; i < dwEnd; i += (*pWidth))
+	{
+		pFrame = &pImage->pFrames[i];
+
+		(*pHeight)++;
+		(*pTotalHeight) += pFrame->fh.dwHeight;
+
+		if (pFrame->fh.dwHeight != MAX_DC6_CELL_SIZE)
+		{
+			break;
+		}
 	}
 }

@@ -1,11 +1,6 @@
 #include "Diablo2.hpp"
 #include <cstdlib>
 #include <string>
-#include "../Shared/Fog.h"
-#include "../Shared/D2Win.h"
-#include "../Shared/D2Gfx.h"
-#include "../Shared/D2Sound.h"
-#include "../Shared/D2MCPClient.h"
 
 
 enum D2CommandType
@@ -58,7 +53,7 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"ITEM",		"UNIQUE",		"unique",		CMD_BOOLEAN,	co(bUnique),		0x00},
 	{"INTERFACE",	"ACT",			"act",			CMD_DWORD,		co(dwAct),			0x01},
 	{"INTERFACE",	"DIFF",			"diff",			CMD_BYTE,		co(nDifficulty),	0x00},
-	{"DEBUG",		"LOG",			"log",			CMD_BOOLEAN,	co(bLog),			0x00},
+	{"DEBUG",		"LOG",			"log",			CMD_BOOLEAN,	co(bLog),			0x01},
 	{"DEBUG",		"MSGLOG",		"msglog",		CMD_BOOLEAN,	co(bMsgLog),		0x00},
 	{"DEBUG",		"SAFEMODE",		"safe",			CMD_BOOLEAN,	co(bSafeMode),		0x00},
 	{"DEBUG",		"NOSAVE",		"nosave",		CMD_BOOLEAN,	co(bNoSave),		0x00},
@@ -178,6 +173,7 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 {
 	D2CmdArgStrc* pArg;
+	DWORD dwArgLen = 0;
 
 	if (arg[0] == '\0')
 	{	// some smart-alec decided to put just a regular old + here
@@ -199,6 +195,8 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 		return;
 	}
 
+	dwArgLen = strlen(pArg->szCmdName);
+
 	switch (pArg->dwType)
 	{
 		case CMD_BOOLEAN:
@@ -206,19 +204,28 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 			*(BYTE*)((BYTE*)config + pArg->nOffset) = 1;
 			break;
 		case CMD_DWORD:
-			*(DWORD*)((BYTE*)config + pArg->nOffset) = (DWORD)atoi(arg + strlen(pArg->szCmdName));
+			if (*(arg + dwArgLen) == '=')
+			{
+				*(DWORD*)((BYTE*)config + pArg->nOffset) = (DWORD)atoi(arg + dwArgLen + 1);
+			}
 			break;
 		case CMD_WORD:
-			*(WORD*)((BYTE*)config + pArg->nOffset) = (WORD)atoi(arg + strlen(pArg->szCmdName));
+			if (*(arg + dwArgLen) == '=')
+			{
+				*(WORD*)((BYTE*)config + pArg->nOffset) = (WORD)atoi(arg + dwArgLen + 1);
+			}
 			break;
 		case CMD_BYTE:
-			*(BYTE*)((BYTE*)config + pArg->nOffset) = (BYTE)atoi(arg + strlen(pArg->szCmdName));
+			if (*(arg + dwArgLen) == '=')
+			{
+				*(BYTE*)((BYTE*)config + pArg->nOffset) = (BYTE)atoi(arg + dwArgLen + 1);
+			}
 			break;
 		case CMD_STRING:
 			// in OpenD2 we take the default argument type as meaning the size of the string to copy into
-			if (*(arg + strlen(pArg->szCmdName)) == '=')
+			if (*(arg + dwArgLen) == '=')
 			{
-				D2_strncpyz(((char*)config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, pArg->dwDefault);
+				D2_strncpyz(((char*)config + pArg->nOffset), arg + dwArgLen + 1, pArg->dwDefault);
 			}
 			break;
 	}
@@ -308,6 +315,8 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS_LogSearchPaths();
 
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
+	tex_handle trademark = 
+		RenderTarget->RF_TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", "trademark", 0, 11, PAL_UNITS);
 	
 	// Main loop: execute modules until one of the modules has had enough
 	while (currentModule != MODULE_NONE)
@@ -332,6 +341,11 @@ int InitGame(int argc, char** argv, DWORD pid)
 			imports[previousModule] = nullptr;
 			currentModule = MODULE_CLIENT;
 		}
+
+		RenderTarget->RF_DrawTexture(trademark, 0, 0, 800, 600, 0, 0);
+		RenderTarget->RF_Present();
+
+		SDL_Delay(1000);
 	}
 
 	Sys_CloseModules();

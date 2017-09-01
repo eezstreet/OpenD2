@@ -53,6 +53,8 @@ struct SDLHardwareTextureCacheItem
 	DWORD dwHeight;
 	DWORD dwOriginalHash;
 	SDL_Texture* pTexture;
+	bool bHasDC6;		// optional - dc6 image
+	DC6Image dc6;		// optional - dc6 image
 };
 
 #define MAX_SDL_TEXTURECACHE_SIZE	0x100
@@ -96,6 +98,10 @@ static void Renderer_SDL_ClearTextureCache()
 		if (pCache->pTexture != nullptr)
 		{
 			SDL_DestroyTexture(pCache->pTexture);
+		}
+		if (pCache->bHasDC6)
+		{
+			DC6_UnloadImage(&pCache->dc6);
 		}
 		memset(pCache, 0, sizeof(SDLHardwareTextureCacheItem));
 	}
@@ -192,7 +198,7 @@ void Renderer_SDL_Present()
 	void* pPixels = nullptr;
 	int nPitch = 0;
 
-	SDL_RenderClear(gpRenderer);
+	//SDL_RenderClear(gpRenderer);
 
 	//SDL_LockTexture(gpScreenTexture, nullptr, &pPixels, &nPitch); // pPixels now contains the screen pixels - write only!
 
@@ -233,6 +239,77 @@ tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD
 }
 
 /*
+ *	Registers a tex_handle based on a stitched-together DC6. The DC6 is not animated.
+ */
+tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette)
+{
+	D2Palette* pPal = Pal_GetPalette(nPalette);
+
+	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandle, 0, 0);
+	if (tex == INVALID_HANDLE)
+	{
+		return tex;
+	}
+
+	SDLHardwareTextureCacheItem* pCache = &TextureCache[tex];
+	DC6_LoadImage(szDc6Path, &pCache->dc6);
+	pCache->bHasDC6 = true;
+
+	// Calculate how wide it should be
+	DWORD dwStitchRows = 0;
+	DWORD dwStitchCols = 0;
+	DWORD dwTotalWidth = 0;
+	DWORD dwTotalHeight = 0;
+
+	DWORD dwRMask = 0, dwGMask = 0, dwBMask = 0, dwAMask = 0;
+	int bpp = 0;
+	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_BGRA8888, &bpp, 
+		(Uint32*)&dwRMask, (Uint32*)&dwGMask, (Uint32*)&dwBMask, (Uint32*)&dwAMask);
+
+	DC6_StitchStats(&pCache->dc6, dwStart, dwEnd, &dwStitchCols, &dwStitchRows, &dwTotalWidth, &dwTotalHeight);
+
+	SDL_Surface* pSurface = SDL_CreateRGBSurface(0, 256, 256, bpp, dwRMask, dwGMask, dwBMask, dwAMask);
+	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, dwTotalWidth, dwTotalHeight, bpp, dwRMask, dwGMask, dwBMask, dwAMask);
+	SDL_SetSurfaceBlendMode(pSurface, SDL_BLENDMODE_NONE);
+	SDL_SetSurfaceBlendMode(pBigSurface, SDL_BLENDMODE_NONE);
+
+	for (int i = 0; i <= dwEnd - dwStart; i++)
+	{
+		DC6Frame* pFrame = &pCache->dc6.pFrames[dwStart + i];
+
+		DWORD dwBlitToX = (i % dwStitchCols) * 256;
+		DWORD dwBlitToY = floor(i / dwStitchCols) * 255;
+		
+		for (int y = 0; y < pFrame->fh.dwHeight; y++)
+		{
+			for (int x = 0; x < pFrame->fh.dwWidth; x++)
+			{
+				BYTE nPixelColor = pFrame->pFramePixels[(y * pFrame->fh.dwWidth) + x];
+				DWORD* outPixels = (DWORD*)pSurface->pixels;
+				outPixels[(y * 256) + x] = (((*pPal)[nPixelColor][2] << 8) |
+					((*pPal)[nPixelColor][1] << 16) |
+					((*pPal)[nPixelColor][0] << 24));
+			}
+		}
+
+		SDL_Rect srcRect = { 0, 1, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
+		SDL_Rect dstRect = { dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
+		SDL_BlitSurface(pSurface, &srcRect, pBigSurface, &dstRect);
+	}
+
+	SDL_Texture* pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
+
+	pCache->dwWidth = dwTotalWidth;
+	pCache->dwHeight = dwTotalHeight;
+	pCache->pTexture = pTexture;
+
+	SDL_FreeSurface(pSurface);
+	SDL_FreeSurface(pBigSurface);
+
+	return tex;
+}
+
+/*
  *	Sets a texture's pixels and palette.
  *	This is fine for static images that won't really change. We'll need to use atlasing for things like items, etc
  *	@author	eezstreet
@@ -261,7 +338,7 @@ void Renderer_SDL_SetTexturePixels(tex_handle texture, BYTE* pPixels, int nPalet
 	}
 
 	// Lock the texture (so the VRAM is in RAM) and copy each individual pixel color (mapped from the palette) to the texture
-	DWORD dwLock = SDL_LockTexture(pCache->pTexture, NULL, (void**)&pWriteToPixels, &nPitch);
+	SDL_LockTexture(pCache->pTexture, NULL, (void**)&pWriteToPixels, &nPitch);
 	for (int i = 0; i < pCache->dwHeight; i++)
 	{
 		for (int j = 0; j < pCache->dwWidth; j++)

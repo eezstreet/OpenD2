@@ -22,11 +22,13 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_Shutdown,
 		Renderer_SDL_Present,
 		Renderer_SDL_RegisterTexture,
+		Renderer_SDL_TextureFromStitchedDC6,
 		Renderer_SDL_SetTexturePixels,
 		Renderer_SDL_DrawTexture,
 	},
 
 	{	// SDL Software Renderer
+		nullptr,
 		nullptr,
 		nullptr,
 		nullptr,
@@ -42,9 +44,11 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		nullptr,
 		nullptr,
 		nullptr,
+		nullptr,
 	},
 
 	{	// OpenGL Renderer
+		nullptr,
 		nullptr,
 		nullptr,
 		nullptr,

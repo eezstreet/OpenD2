@@ -27,22 +27,25 @@ static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
  *	GetModuleAPI allows us to exchange a series of function pointers with the engine.
  */
 static D2ModuleExportStrc gExports{ 0 };
-D2EXPORT D2ModuleExportStrc* GetModuleAPI(D2ModuleImportStrc* pImports)
+extern "C"
 {
-	if (pImports == nullptr)
+	D2EXPORT D2ModuleExportStrc* GetModuleAPI(D2ModuleImportStrc* pImports)
 	{
-		return nullptr;
+		if (pImports == nullptr)
+		{
+			return nullptr;
+		}
+
+		if (pImports->nApiVersion != D2CLIENTAPI_VERSION)
+		{ // not the right API version
+			return nullptr;
+		}
+
+		trap = pImports;
+
+		gExports.nApiVersion = D2CLIENTAPI_VERSION;
+		gExports.RunModuleFrame = D2Client_RunModuleFrame;
+
+		return &gExports;
 	}
-
-	if (pImports->nApiVersion != D2CLIENTAPI_VERSION)
-	{ // not the right API version
-		return nullptr;
-	}
-
-	trap = pImports;
-
-	gExports.nApiVersion = D2CLIENTAPI_VERSION;
-	gExports.RunModuleFrame = D2Client_RunModuleFrame;
-
-	return &gExports;
 }
