@@ -166,18 +166,68 @@ tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD
 }
 
 /*
+ *	Deregisters a texture, wiping it out from the game. We can re-register it later.
+ *	@param	szHandleName	The handle name of the texture. You can supply this with nullptr if you don't know it or need it.
+ *	@param	texture			The handle of the texture. It's always faster to use the handle.
+ */
+void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture)
+{
+	SDLHardwareTextureCacheItem* pCache;
+
+	if (texture == INVALID_HANDLE && szHandleName == nullptr)
+	{	// We don't know *either* the handle or the handle name. Very bad.
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{	// get the texture from the handle name
+		DWORD dwChecked = 0;
+		DWORD dwTextureHash = D2_strhash(szHandleName, 32, MAX_SDL_TEXTURECACHE_SIZE);
+		
+		while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
+		{
+			pCache = &TextureCache[dwTextureHash];
+			if (!D2_stricmp(pCache->szHandleName, szHandleName))
+			{
+				break;
+			}
+			
+			dwTextureHash++;
+			dwTextureHash %= MAX_SDL_TEXTURECACHE_SIZE;
+
+			dwChecked++;
+		}
+
+		if (dwChecked == MAX_SDL_TEXTURECACHE_SIZE)
+		{	// didn't find a texture with that handle name
+			return;
+		}
+
+		texture = (tex_handle)dwTextureHash;
+	}
+
+	pCache = &TextureCache[texture];
+	
+	SDL_DestroyTexture(pCache->pTexture);
+	if (pCache->bHasDC6)
+	{
+		DC6_UnloadImage(&pCache->dc6);
+	}
+	memset(pCache, 0, sizeof(SDLHardwareTextureCacheItem));
+}
+
+/*
  *	Adds a new texture to the texture cache
  */
 tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight, bool* bExists)
 {
 	DWORD dwHash = D2_strhash(str, 32, MAX_SDL_TEXTURECACHE_SIZE);
-	DWORD dwOriginalHash = dwHash;
 	DWORD dwChecked = 1;
 	SDLHardwareTextureCacheItem* pCache = &TextureCache[dwHash];
 
 	while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
 	{
-		if(pCache->dwOriginalHash == dwOriginalHash)
+		if(!D2_stricmp(pCache->szHandleName, str))
 		{
 			// We already added this item to the texture cache, no need to do so again
 			if (bExists != nullptr)
@@ -191,7 +241,7 @@ tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWOR
 		{
 			// Empty cache entry, add this item to the texture cache
 			pCache->pTexture = pTexture;
-			pCache->dwOriginalHash = dwOriginalHash;
+			D2_strncpyz(pCache->szHandleName, str, 32);
 			pCache->dwWidth = dwWidth;
 			pCache->dwHeight = dwHeight;
 			if (bExists != nullptr)

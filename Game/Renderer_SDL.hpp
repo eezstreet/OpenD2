@@ -41,7 +41,7 @@ struct SDLHardwareTextureCacheItem
 {
 	DWORD dwWidth;
 	DWORD dwHeight;
-	DWORD dwOriginalHash;
+	char szHandleName[32];
 	SDL_Texture* pTexture;
 	bool bHasDC6;		// optional - dc6 image
 	DC6Image dc6;		// optional - dc6 image

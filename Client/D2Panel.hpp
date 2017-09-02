@@ -24,5 +24,8 @@ public:
 	D2Menu* GetOwner() { return m_pOwner; }
 	void DrawWidgets();
 
+	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY) = 0;
+	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY) = 0;
+
 	friend class D2Menu;
 };

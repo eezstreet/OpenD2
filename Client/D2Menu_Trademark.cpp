@@ -1,5 +1,9 @@
 #include "D2Menu_Trademark.hpp"
 
+/*
+ *	Creates the trademark menu
+ *	@author	eezstreet
+ */
 D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 {
 	// The trademark screen background
@@ -17,11 +21,19 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	// 3. Copyright Text
 }
 
+/*
+ *	Destroys the trademark menu
+ *	@author	eezstreet
+ */
 D2Menu_Trademark::~D2Menu_Trademark()
 {
-	// should maybe purge the trademark background from memory
+	trap->R_DeregisterTexture(nullptr, backgroundTexture);
 }
 
+/*
+ *	Draws the trademark menu
+ *	@author	eezstreet
+ */
 void D2Menu_Trademark::Draw()
 {
 	// Draw the background

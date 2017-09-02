@@ -26,7 +26,7 @@ void Renderer_SDL_Present();
 tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD dwHeight);
 tex_handle Renderer_SDL_TextureFromStitchedDC6(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
 void Renderer_SDL_DrawTexture(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
-
+void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture);
 
 // Renderer_SDL_Software.cpp
 

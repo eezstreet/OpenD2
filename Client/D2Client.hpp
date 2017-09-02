@@ -16,6 +16,7 @@ class D2Widget;
 // What "gamestate" we are in
 enum D2Client_GameState
 {
+	GS_TRADEMARK,
 	GS_MAINMENU,	// main menu, or anything in between main menu and ingame (charselect, bnet, etc)
 	GS_INGAME,		// in the actual game itself
 };
@@ -25,6 +26,12 @@ struct D2Client
 {
 	D2Client_GameState	gamestate;
 	bool				bLocalServer;
+	DWORD				dwMouseX;
+	DWORD				dwMouseY;
+	bool				bMouseClicked;
+	bool				bMouseDown;
+	DWORD				dwMS;
+	DWORD				dwStartMS;
 
 	D2Menu*				pActiveMenu;
 };

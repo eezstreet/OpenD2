@@ -84,6 +84,12 @@ DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize)
 {
 	DWORD hash = 0;
 	int c;
+	size_t stringLen = strlen(szString);
+
+	if (dwLen > stringLen)
+	{
+		dwLen = stringLen;
+	}
 
 	for (int i = 0; i < dwLen; i++)
 	{

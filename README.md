@@ -30,12 +30,10 @@ The core game engine communicates with all of the other components and drives ev
 - Archive (.mpq) management
 - Networking
 - Sound
+- Rendering
 
-#### Graphics (D2Gfx.dll)
-The graphics are driven by a modular renderer.
-
-#### Common Code (D2Game.dll/D2Client.dll)
-Instead of a D2Common.dll, the common code is compiled right into the D2Game.dll and D2Client.dll. This reduces overhead dramatically.
+#### Common Code (D2Common.dll)
+D2Common contains common routines needed by both the serverside and clientside. This includes things such as dungeon-building from random seeds, skill logic, .TXT -> .BIN compilation, and more.
 
 #### Serverside (D2Game.dll)
 The serverside is responsible for quest management, AI, and more. Ideally, this should be allowed to mismatch the client DLL and have custom game server logic.

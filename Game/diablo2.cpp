@@ -99,6 +99,7 @@ static D2ModuleImportStrc exports = {
 	Log_Print,
 	Log_Warning,
 	Log_Error,
+	GetMilliseconds,
 
 	FS_Open,
 	FS_Read,
@@ -108,12 +109,23 @@ static D2ModuleImportStrc exports = {
 	FS_Seek,
 	FS_Tell,
 
+	In_PumpEvents,
+
 	FSMPQ_FindFile,
 	MPQ_FileSize,
 	MPQ_ReadFile,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
+
+/*
+ *	Get the current number of milliseconds.
+ *	Wrapper for SDL_GetTicks
+ */
+DWORD GetMilliseconds()
+{
+	return SDL_GetTicks();
+}
 
 /*
  *	Processes a single commandline argument
@@ -324,6 +336,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 		DWORD dwPreTick = SDL_GetTicks();
 		DWORD dwPostTick, dwFrameMsec;
 
+		// Open the desired module if it does not exist
 		if (imports[currentModule] == nullptr)
 		{
 			imports[currentModule] = Sys_OpenModule(currentModule, &exports);
@@ -334,6 +347,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 			}
 		}
 
+		// Run the module frame
 		currentModule = imports[currentModule]->RunModuleFrame(&config, &openD2Config);
 
 		if (currentModule == MODULE_CLEAN)

@@ -132,6 +132,53 @@ struct D2MPQArchive
 	fs_handle		f;						// FS file handle
 };
 
+
+/*
+*	DC6 Files
+*/
+#pragma pack(push,enter_include)
+#pragma pack(1)
+struct DC6Frame
+{
+	struct DC6FrameHeader
+	{
+		DWORD	dwFlip;				// If true, it's encoded top to bottom instead of bottom to top
+		DWORD	dwWidth;			// Width of this frame
+		DWORD	dwHeight;			// Height of this frame
+		DWORD	dwOffsetX;			// X offset
+		DWORD	dwOffsetY;			// Y offset
+		DWORD	dwUnknown;
+		DWORD	dwNextBlock;
+		DWORD	dwLength;			// Number of blocks to decode
+	};
+	DC6FrameHeader fh;
+	BYTE* pFramePixels;
+};
+
+struct DC6ImageHeader
+{
+	DWORD	dwVersion;			// Version; always '6'
+	DWORD	dwUnk1;				// Unknown; always '1'
+	DWORD	dwUnk2;				// Unknown; always '0'
+	DWORD	dwTermination;		// Termination code - usually 0xEEEEEEEE or 0xCDCDCDCD
+	DWORD	dwDirections;		// Number of directions
+	DWORD	dwFrames;			// Number of frames per direction
+};
+#pragma pack(pop, enter_include)
+
+struct DC6Image
+{
+	void*			mpq;			// The MPQ we found it in
+	fs_handle		f;				// The file handle from within the MPQ
+	DC6ImageHeader	header;
+	DC6Frame*		pFrames;
+	BYTE*			pPixels;
+};
+
+/*
+*	DCC Files
+*/
+
 /*
  *	Renderer related structures
  */
@@ -146,6 +193,7 @@ struct D2Renderer
 	tex_handle	(*RF_RegisterTexture)(char* handleName, DWORD dwWidth, DWORD dwHeight);
 	tex_handle	(*RF_TextureFromStitchedDC6)(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
 	void		(*RF_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
+	void		(*RF_DeregisterTexture)(char* handleName, tex_handle texture);
 	// TODO: version of RF_DrawTexture that handles palshifted cels
 };
 
@@ -166,6 +214,10 @@ void DC6_StitchStats(DC6Image* pImage,
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
+DWORD GetMilliseconds();
+
+// Input.cpp
+void In_PumpEvents(OpenD2ConfigStrc* pOpenConfig);
 
 // Logging.cpp
 void Log_InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);

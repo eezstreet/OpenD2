@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <inttypes.h>
 
 #ifdef WIN32
 #include "IgnoreWarnings.h"
@@ -44,9 +45,15 @@
 //
 // Standard Types
 
+#ifndef WIN32
+typedef uint32_t DWORD;
+typedef uint16_t WORD;
+typedef uint8_t BYTE;
+#else
 typedef unsigned long DWORD;
 typedef unsigned short WORD;
 typedef unsigned char BYTE;
+#endif
 
 #define INVALID_HANDLE (handle)-1
 
@@ -115,6 +122,293 @@ enum D2Palettes
 	PAL_MAX_PALETTES,
 };
 
+enum D2InputCommand
+{
+	IN_MOUSEMOVE,
+	IN_MOUSEDOWN,
+	IN_MOUSEUP,
+	IN_MOUSEWHEEL,
+	IN_KEYDOWN,
+	IN_KEYUP,
+	IN_TEXT,
+	IN_QUIT,
+};
+
+// This is a direct mapping of the SDL scancodes, with a few extra things thrown in
+enum D2InputButton
+{
+	B_UNKNOWN = 0,
+	B_A = 4,
+	B_B = 5,
+	B_C = 6,
+	B_D = 7,
+	B_E = 8,
+	B_F = 9,
+	B_G = 10,
+	B_H = 11,
+	B_I = 12,
+	B_J = 13,
+	B_K = 14,
+	B_L = 15,
+	B_M = 16,
+	B_N = 17,
+	B_O = 18,
+	B_P = 19,
+	B_Q = 20,
+	B_R = 21,
+	B_S = 22,
+	B_T = 23,
+	B_U = 24,
+	B_V = 25,
+	B_W = 26,
+	B_X = 27,
+	B_Y = 28,
+	B_Z = 29,
+
+	B_1 = 30,
+	B_2 = 31,
+	B_3 = 32,
+	B_4 = 33,
+	B_5 = 34,
+	B_6 = 35,
+	B_7 = 36,
+	B_8 = 37,
+	B_9 = 38,
+	B_0 = 39,
+
+	B_RETURN = 40,
+	B_ESCAPE = 41,
+	B_BACKSPACE = 42,
+	B_TAB = 43,
+	B_SPACE = 44,
+
+	B_MINUS = 45,
+	B_EQUALS = 46,
+	B_LEFTBRACKET = 47,
+	B_RIGHTBRACKET = 48,
+	B_BACKSLASH = 49,
+	B_NONUSHASH = 50,
+	B_SEMICOLON = 51,
+	B_APOSTROPHE = 52,
+	B_GRAVE = 53,
+	B_COMMA = 54,
+	B_PERIOD = 55,
+	B_SLASH = 56,
+
+	B_CAPSLOCK = 57,
+
+	B_F1 = 58,
+	B_F2 = 59,
+	B_F3 = 60,
+	B_F4 = 61,
+	B_F5 = 62,
+	B_F6 = 63,
+	B_F7 = 64,
+	B_F8 = 65,
+	B_F9 = 66,
+	B_F10 = 67,
+	B_F11 = 68,
+	B_F12 = 69,
+
+	B_PRINTSCREEN = 70,
+	B_SCROLLLOCK = 71,
+	B_PAUSE = 72,
+	B_INSERT = 73,
+	B_HOME = 74,
+	B_PAGEUP = 75,
+	B_DELETE = 76,
+	B_END = 77,
+	B_PAGEDOWN = 78,
+	B_RIGHT = 79,
+	B_LEFT = 80,
+	B_DOWN = 81,
+	B_UP = 82,
+	B_NUMLOCKCLEAR = 83,
+
+	B_KP_DIVIDE = 84,
+	B_KP_MULTIPLY = 85,
+	B_KP_MINUS = 86,
+	B_KP_PLUS = 87,
+	B_KP_ENTER = 88,
+	B_KP_1 = 89,
+	B_KP_2 = 90,
+	B_KP_3 = 91,
+	B_KP_4 = 92,
+	B_KP_5 = 93,
+	B_KP_6 = 94,
+	B_KP_7 = 95,
+	B_KP_8 = 96,
+	B_KP_9 = 97,
+	B_KP_0 = 98,
+	B_KP_PERIOD = 99,
+
+	B_NONUSBACKSLASH = 100,
+	B_APPLICATION = 101,
+	B_POWER = 102,
+
+	B_KP_EQUALS = 103,
+	B_F13 = 104,
+	B_F14 = 105,
+	B_F15 = 106,
+	B_F16 = 107,
+	B_F17 = 108,
+	B_F18 = 109,
+	B_F19 = 110,
+	B_F20 = 111,
+	B_F21 = 112,
+	B_F22 = 113,
+	B_F23 = 114,
+	B_F24 = 115,
+	B_EXECUTE = 116,
+	B_HELP = 117,
+	B_MENU = 118,
+	B_SELECT = 119,
+	B_STOP = 120,
+	B_AGAIN = 121,
+	B_UNDO = 122,
+	B_CUT = 123,
+	B_COPY = 124,
+	B_PASTE = 125,
+	B_FIND = 126,
+	B_MUTE = 127,
+	B_VOLUMEUP = 128,
+	B_VOLUMEDOWN = 129,
+	B_KP_COMMA = 133,
+	B_KP_EQUALSAS400 = 134,
+	B_INTERNATIONAL1 = 135,
+	B_INTERNATIONAL2 = 136,
+	B_INTERNATIONAL3 = 137, /**< Yen */
+	B_INTERNATIONAL4 = 138,
+	B_INTERNATIONAL5 = 139,
+	B_INTERNATIONAL6 = 140,
+	B_INTERNATIONAL7 = 141,
+	B_INTERNATIONAL8 = 142,
+	B_INTERNATIONAL9 = 143,
+	B_LANG1 = 144, /**< Hangul/English toggle */
+	B_LANG2 = 145, /**< Hanja conversion */
+	B_LANG3 = 146, /**< Katakana */
+	B_LANG4 = 147, /**< Hiragana */
+	B_LANG5 = 148, /**< Zenkaku/Hankaku */
+	B_LANG6 = 149, /**< reserved */
+	B_LANG7 = 150, /**< reserved */
+	B_LANG8 = 151, /**< reserved */
+	B_LANG9 = 152, /**< reserved */
+
+	B_ALTERASE = 153, /**< Erase-Eaze */
+	B_SYSREQ = 154,
+	B_CANCEL = 155,
+	B_CLEAR = 156,
+	B_PRIOR = 157,
+	B_RETURN2 = 158,
+	B_SEPARATOR = 159,
+	B_OUT = 160,
+	B_OPER = 161,
+	B_CLEARAGAIN = 162,
+	B_CRSEL = 163,
+	B_EXSEL = 164,
+
+	B_KP_00 = 176,
+	B_KP_000 = 177,
+	B_THOUSANDSSEPARATOR = 178,
+	B_DECIMALSEPARATOR = 179,
+	B_CURRENCYUNIT = 180,
+	B_CURRENCYSUBUNIT = 181,
+	B_KP_LEFTPAREN = 182,
+	B_KP_RIGHTPAREN = 183,
+	B_KP_LEFTBRACE = 184,
+	B_KP_RIGHTBRACE = 185,
+	B_KP_TAB = 186,
+	B_KP_BACKSPACE = 187,
+	B_KP_A = 188,
+	B_KP_B = 189,
+	B_KP_C = 190,
+	B_KP_D = 191,
+	B_KP_E = 192,
+	B_KP_F = 193,
+	B_KP_XOR = 194,
+	B_KP_POWER = 195,
+	B_KP_PERCENT = 196,
+	B_KP_LESS = 197,
+	B_KP_GREATER = 198,
+	B_KP_AMPERSAND = 199,
+	B_KP_DBLAMPERSAND = 200,
+	B_KP_VERTICALBAR = 201,
+	B_KP_DBLVERTICALBAR = 202,
+	B_KP_COLON = 203,
+	B_KP_HASH = 204,
+	B_KP_SPACE = 205,
+	B_KP_AT = 206,
+	B_KP_EXCLAM = 207,
+	B_KP_MEMSTORE = 208,
+	B_KP_MEMRECALL = 209,
+	B_KP_MEMCLEAR = 210,
+	B_KP_MEMADD = 211,
+	B_KP_MEMSUBTRACT = 212,
+	B_KP_MEMMULTIPLY = 213,
+	B_KP_MEMDIVIDE = 214,
+	B_KP_PLUSMINUS = 215,
+	B_KP_CLEAR = 216,
+	B_KP_CLEARENTRY = 217,
+	B_KP_BINARY = 218,
+	B_KP_OCTAL = 219,
+	B_KP_DECIMAL = 220,
+	B_KP_HEXADECIMAL = 221,
+
+	B_LCTRL = 224,
+	B_LSHIFT = 225,
+	B_LALT = 226, /**< alt, option */
+	B_LGUI = 227, /**< windows, command (apple), meta */
+	B_RCTRL = 228,
+	B_RSHIFT = 229,
+	B_RALT = 230, /**< alt gr, option */
+	B_RGUI = 231, /**< windows, command (apple), meta */
+
+	B_MODE = 257,
+		
+	B_AUDIONEXT = 258,
+	B_AUDIOPREV = 259,
+	B_AUDIOSTOP = 260,
+	B_AUDIOPLAY = 261,
+	B_AUDIOMUTE = 262,
+	B_MEDIASELECT = 263,
+	B_WWW = 264,
+	B_MAIL = 265,
+	B_CALCULATOR = 266,
+	B_COMPUTER = 267,
+	B_AC_SEARCH = 268,
+	B_AC_HOME = 269,
+	B_AC_BACK = 270,
+	B_AC_FORWARD = 271,
+	B_AC_STOP = 272,
+	B_AC_REFRESH = 273,
+	B_AC_BOOKMARKS = 274,
+
+	B_BRIGHTNESSDOWN = 275,
+	B_BRIGHTNESSUP = 276,
+	B_DISPLAYSWITCH = 277,
+
+	B_KBDILLUMTOGGLE = 278,
+	B_KBDILLUMDOWN = 279,
+	B_KBDILLUMUP = 280,
+	B_EJECT = 281,
+	B_SLEEP = 282,
+
+	B_APP1 = 283,
+	B_APP2 = 284,
+
+	B_MOUSE1 = 300,	// left mouse
+	B_MOUSE2 = 301,	// right mouse
+	B_MOUSE3 = 302,	// middle mouse
+	B_MOUSE4 = 303,	// extra mouse
+	B_MOUSE5 = 304,	// extra mouse
+};
+
+enum D2InputModifiers
+{
+	KEYMOD_SHIFT	= 0x01,
+	KEYMOD_CTRL		= 0x02,
+	KEYMOD_ALT		= 0x04
+};
 
 //////////////////////////////////////////////////
 //
@@ -208,66 +502,49 @@ struct D2GameConfigStrc     // size 0x3C7
 #pragma pack(pop,enter_include)
 
 /*
+ *	The command queue is iterated through on the client, and filled in by the engine when requested.
+ */
+struct D2CommandQueue
+{
+	D2InputCommand cmdType;
+
+	struct MouseMotionEvent
+	{
+		DWORD x;
+		DWORD y;
+	};
+
+	struct ButtonEvent
+	{
+		D2InputButton		buttonID;
+		DWORD				mod;
+	};
+
+	union
+	{
+		MouseMotionEvent	motion;
+		ButtonEvent			button;
+	} cmdData;
+};
+
+/*
  *	The structure which contains OpenD2-specific data
  *	@author	eezstreet
  */
 struct OpenD2ConfigStrc
 {
 	// See documentation in FileSystem.cpp regarding these three settings
-	char	szBasePath[MAX_D2PATH_ABSOLUTE];
-	char	szHomePath[MAX_D2PATH_ABSOLUTE];
-	char	szModPath[MAX_D2PATH_ABSOLUTE];
-	BYTE	bNoSDLAccel;
-	BYTE	bBorderless;
-	BYTE	bNoRenderText;
-	DWORD	dwLogFlags;
-};
+	char			szBasePath[MAX_D2PATH_ABSOLUTE];
+	char			szHomePath[MAX_D2PATH_ABSOLUTE];
+	char			szModPath[MAX_D2PATH_ABSOLUTE];
 
-/*
-*	DC6 Files
-*/
-#pragma pack(push,enter_include)
-#pragma pack(1)
-struct DC6Frame
-{
-	struct DC6FrameHeader
-	{
-		DWORD	dwFlip;				// If true, it's encoded top to bottom instead of bottom to top
-		DWORD	dwWidth;			// Width of this frame
-		DWORD	dwHeight;			// Height of this frame
-		DWORD	dwOffsetX;			// X offset
-		DWORD	dwOffsetY;			// Y offset
-		DWORD	dwUnknown;
-		DWORD	dwNextBlock;
-		DWORD	dwLength;			// Number of blocks to decode
-	};
-	DC6FrameHeader fh;
-	BYTE* pFramePixels;
+	BYTE			bNoSDLAccel;
+	BYTE			bBorderless;
+	BYTE			bNoRenderText;
+	DWORD			dwLogFlags;
+	D2CommandQueue*	pCmds;
+	DWORD			dwNumPendingCommands;
 };
-
-struct DC6ImageHeader
-{
-	DWORD	dwVersion;			// Version; always '6'
-	DWORD	dwUnk1;				// Unknown; always '1'
-	DWORD	dwUnk2;				// Unknown; always '0'
-	DWORD	dwTermination;		// Termination code - usually 0xEEEEEEEE or 0xCDCDCDCD
-	DWORD	dwDirections;		// Number of directions
-	DWORD	dwFrames;			// Number of frames per direction
-};
-#pragma pack(pop, enter_include)
-
-struct DC6Image
-{
-	void*			mpq;			// The MPQ we found it in
-	fs_handle		f;				// The file handle from within the MPQ
-	DC6ImageHeader	header;
-	DC6Frame*		pFrames;
-	BYTE*			pPixels;
-};
-
-/*
-*	DCC Files
-*/
 
 //////////////////////////////////////////////////
 //
@@ -298,6 +575,7 @@ struct D2ModuleImportStrc
 	void		(*Print)(OpenD2LogFlags nPriority, char* szFormat, ...);
 	void		(*Warning)(char* szFile, int nLine, char* szCondition);
 	void		(*Error)(char* szFile, int nLine, char* szCondition);
+	DWORD		(__cdecl *Milliseconds)();
 
 	// Filesystem calls
 	size_t		(*FS_Open)(char* szFileName, fs_handle* f, OpenD2FileModes mode, bool bBinary);
@@ -307,6 +585,9 @@ struct D2ModuleImportStrc
 	void		(*FS_CloseFile)(fs_handle f);
 	void		(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
 	size_t		(*FS_Tell)(fs_handle f);
+
+	// Input calls
+	void		(*In_PumpEvents)(OpenD2ConfigStrc* pOpenConfig);
 
 	// MPQ calls
 	fs_handle	(*MPQ_FindFile)(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
@@ -318,6 +599,7 @@ struct D2ModuleImportStrc
 	tex_handle	(*R_StitchedDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
 	void		(*R_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
 	void		(*R_Present)();
+	void		(*R_DeregisterTexture)(char* szTexName, tex_handle texture);
 };
 
 struct D2ModuleExportStrc

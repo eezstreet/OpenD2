@@ -90,3 +90,37 @@ void D2Menu::Draw()
 		pCurrent = pCurrent->m_pNextVisible;
 	}
 }
+
+/*
+ *	Handle a mouse down event
+ */
+bool D2Menu::HandleMouseDown(DWORD dwX, DWORD dwY)
+{
+	D2Panel* pPanel = m_visiblePanels;
+	while (pPanel != nullptr)
+	{
+		if (pPanel->HandleMouseDown(dwX, dwY))
+		{
+			return true;
+		}
+		pPanel = pPanel->GetNextVisible();
+	}
+	return false;
+}
+
+/*
+ *	Handle a mouse up (click) event
+ */
+bool D2Menu::HandleMouseClicked(DWORD dwX, DWORD dwY)
+{
+	D2Panel* pPanel = m_visiblePanels;
+	while (pPanel != nullptr)
+	{
+		if (pPanel->HandleMouseClicked(dwX, dwY))
+		{
+			return true;
+		}
+		pPanel = pPanel->GetNextVisible();
+	}
+	return false;
+}

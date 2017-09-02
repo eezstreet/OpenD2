@@ -24,9 +24,11 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_RegisterTexture,
 		Renderer_SDL_TextureFromStitchedDC6,
 		Renderer_SDL_DrawTexture,
+		Renderer_SDL_DeregisterTexture,
 	},
 
 	{	// SDL Software Renderer
+		nullptr,
 		nullptr,
 		nullptr,
 		nullptr,
@@ -42,9 +44,11 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		nullptr,
 		nullptr,
 		nullptr,
+		nullptr,
 	},
 
 	{	// OpenGL Renderer
+		nullptr,
 		nullptr,
 		nullptr,
 		nullptr,
@@ -97,4 +101,5 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_StitchedDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
 	pExport->R_DrawTexture = RenderTarget->RF_DrawTexture;
 	pExport->R_Present = RenderTarget->RF_Present;
+	pExport->R_DeregisterTexture = RenderTarget->RF_DeregisterTexture;
 }
