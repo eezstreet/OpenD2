@@ -3,6 +3,8 @@
 
 #define MAX_SDL_DRAWCOMMANDS_PER_FRAME	0x1000
 #define MAX_SDL_TEXTURECACHE_SIZE	0x100
+#define MAX_SDL_ANIMCACHE_SIZE	0x100
+#define MAX_SDL_ANIM_FRAMES	0x40
 
 /////////////////////////////////////////////////////////////////
 //
@@ -16,6 +18,10 @@ struct SDLPaletteEntry {
 enum SDLHardwareCommandType
 {
 	RCMD_DRAWTEXTURE,
+	RCMD_DRAWTEXTUREFRAMES,
+	RCMD_DRAWTEXTUREFRAME,
+	RCMD_ANIMATE,
+	RCMD_SETANIMFRAME,
 	RCMD_MAX,
 };
 
@@ -26,12 +32,47 @@ struct SDLDrawTextureCommand
 	SDL_Rect dst;
 };
 
+struct SDLDrawTextureFramesCommand
+{
+	tex_handle tex;
+	int dwDstX;
+	int dwDstY;
+	DWORD dwStart;
+	DWORD dwEnd;
+};
+
+struct SDLDrawTextureFrameCommand
+{
+	tex_handle tex;
+	int dwDstX;
+	int dwDstY;
+	DWORD dwFrame;
+};
+
+struct SDLAnimateCommand
+{
+	anim_handle anim;
+	DWORD dwFramerate;
+	int dwX;
+	int dwY;
+};
+
+struct SDLSetAnimFrameCommand
+{
+	anim_handle anim;
+	DWORD dwAnimFrame;
+};
+
 struct SDLCommand
 {
 	SDLHardwareCommandType cmdType;
 	union
 	{
 		SDLDrawTextureCommand DrawTexture;
+		SDLDrawTextureFramesCommand	DrawTextureFrames;
+		SDLDrawTextureFrameCommand DrawTextureFrame;
+		SDLAnimateCommand Animate;
+		SDLSetAnimFrameCommand SetAnimFrame;
 	};
 };
 
@@ -43,8 +84,25 @@ struct SDLHardwareTextureCacheItem
 	DWORD dwHeight;
 	char szHandleName[32];
 	SDL_Texture* pTexture;
-	bool bHasDC6;		// optional - dc6 image
-	DC6Image dc6;		// optional - dc6 image
+
+	bool bHasDC6;			// optional - dc6 image
+	DC6Image dc6;			// optional - dc6 image
+};
+
+struct SDLHardwareAnimationCacheItem
+{
+	DWORD dwFrame;
+	tex_handle texture;
+	struct AnimationFrame
+	{
+		DWORD x, y, w, h;
+		int dwOffsetX;
+		int dwOffsetY;
+	};
+	char szHandleName[32];
+	AnimationFrame frames[MAX_SDL_ANIM_FRAMES];
+	DWORD dwFrameCount;
+	DWORD dwLastTick;
 };
 
 //////////////////////////////////////////////////////////////

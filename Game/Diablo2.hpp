@@ -192,9 +192,16 @@ struct D2Renderer
 	//
 	tex_handle	(*RF_RegisterTexture)(char* handleName, DWORD dwWidth, DWORD dwHeight);
 	tex_handle	(*RF_TextureFromStitchedDC6)(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
-	void		(*RF_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
+	tex_handle	(*RF_TextureFromAnimatedDC6)(char* szDc6Path, char* szHandle, int nPalette);
+	void		(*RF_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
+	void		(*RF_DrawTextureFrames)(tex_handle texture, int x, int y, DWORD dwStartFrame, DWORD dwEndFrame);
+	void		(*RF_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
 	void		(*RF_DeregisterTexture)(char* handleName, tex_handle texture);
-	// TODO: version of RF_DrawTexture that handles palshifted cels
+	void		(*RF_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
+	anim_handle	(*RF_RegisterAnimation)(tex_handle texture, char* szHandleName, DWORD dwStartingFrame);
+	void		(*RF_DeregisterAnimation)(anim_handle anim);
+	void		(*RF_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
+	void		(*RF_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target

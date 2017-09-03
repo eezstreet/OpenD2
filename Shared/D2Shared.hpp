@@ -60,6 +60,7 @@ typedef unsigned char BYTE;
 typedef DWORD handle;
 typedef handle fs_handle;
 typedef handle tex_handle;
+typedef handle anim_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
@@ -120,6 +121,14 @@ enum D2Palettes
 	PAL_TRADEMARK,
 	PAL_UNITS,
 	PAL_MAX_PALETTES,
+};
+
+enum D2ColorBlending
+{
+	BLEND_NONE,
+	BLEND_ALPHA,
+	BLEND_ADD,
+	BLEND_MOD,
 };
 
 enum D2InputCommand
@@ -596,10 +605,18 @@ struct D2ModuleImportStrc
 
 	// Renderer calls
 	tex_handle	(*R_RegisterTexture)(char* szHandleName, DWORD dwWidth, DWORD dwHeight);
-	tex_handle	(*R_StitchedDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
-	void		(*R_DrawTexture)(tex_handle texture, DWORD x, DWORD y, DWORD w, DWORD h, DWORD u, DWORD v);
+	tex_handle	(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
+	tex_handle	(*R_RegisterAnimatedDC6)(char *szFileName, char* szHandleName, int nPalette);
+	void		(*R_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
+	void		(*R_DrawTextureFrames)(tex_handle texture, int x, int y, DWORD dwStart, DWORD dwEnd);
+	void		(*R_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
+	void		(*R_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
 	void		(*R_Present)();
 	void		(*R_DeregisterTexture)(char* szTexName, tex_handle texture);
+	anim_handle	(*R_RegisterAnimation)(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
+	void		(*R_DeregisterAnimation)(anim_handle anim);
+	void		(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
+	void		(*R_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
 };
 
 struct D2ModuleExportStrc

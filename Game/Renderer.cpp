@@ -22,38 +22,28 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_Shutdown,
 		Renderer_SDL_Present,
 		Renderer_SDL_RegisterTexture,
-		Renderer_SDL_TextureFromStitchedDC6,
+		Renderer_SDL_TextureFromDC6,
+		Renderer_SDL_TextureFromAnimatedDC6,
 		Renderer_SDL_DrawTexture,
+		Renderer_SDL_DrawTextureFrames,
+		Renderer_SDL_DrawTextureFrame,
 		Renderer_SDL_DeregisterTexture,
+		Renderer_SDL_SetTextureBlendMode,
+		Renderer_SDL_RegisterAnimation,
+		Renderer_SDL_DeregisterAnimation,
+		Renderer_SDL_Animate,
+		Renderer_SDL_SetAnimFrame,
 	},
 
 	{	// SDL Software Renderer
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
 		nullptr,
 	},
 
 	{	// DirectX Renderer (Windows-only)
 		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
 	},
 
 	{	// OpenGL Renderer
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
-		nullptr,
 		nullptr,
 	},
 };
@@ -98,8 +88,16 @@ void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_W
 void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 {
 	pExport->R_RegisterTexture = RenderTarget->RF_RegisterTexture;
-	pExport->R_StitchedDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
+	pExport->R_RegisterDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
+	pExport->R_RegisterAnimatedDC6 = RenderTarget->RF_TextureFromAnimatedDC6;
 	pExport->R_DrawTexture = RenderTarget->RF_DrawTexture;
+	pExport->R_DrawTextureFrame = RenderTarget->RF_DrawTextureFrame;
+	pExport->R_DrawTextureFrames = RenderTarget->RF_DrawTextureFrames;
+	pExport->R_SetTextureBlendMode = RenderTarget->RF_SetTextureBlendMode;
 	pExport->R_Present = RenderTarget->RF_Present;
 	pExport->R_DeregisterTexture = RenderTarget->RF_DeregisterTexture;
+	pExport->R_RegisterAnimation = RenderTarget->RF_RegisterAnimation;
+	pExport->R_DeregisterAnimation = RenderTarget->RF_DeregisterAnimation;
+	pExport->R_Animate = RenderTarget->RF_Animate;
+	pExport->R_SetAnimFrame = RenderTarget->RF_SetAnimFrame;
 }

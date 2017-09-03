@@ -61,6 +61,7 @@ static BYTE gpReadBuffer[DECODE_BUFFER_SIZE];
 void DC6_LoadImage(char* szPath, DC6Image* pImage)
 {
 	memset(pImage, 0, sizeof(DC6Image));
+	memset(gpDecodeBuffer, 0, sizeof(BYTE) * DECODE_BUFFER_SIZE);
 
 	pImage->f = FSMPQ_FindFile(szPath, nullptr, (D2MPQArchive**)&pImage->mpq);
 	Log_WarnAssert(pImage->f != (fs_handle)-1);
