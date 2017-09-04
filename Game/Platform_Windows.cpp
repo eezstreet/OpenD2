@@ -245,17 +245,6 @@ void Sys_CloseModule(OpenD2Modules nModule)
 }
 
 /*
- *	Cleans up (stops executing) modules after we're through with them
- */
-void Sys_CloseModules()
-{
-	for (int i = 0; i < MODULE_MAX; i++)
-	{
-		Sys_CloseModule((OpenD2Modules)i);
-	}
-}
-
-/*
  *	The main entrypoint of the program (on Windows)
  */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char* szCmdLine, int nShowCmd)

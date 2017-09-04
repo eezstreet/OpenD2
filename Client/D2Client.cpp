@@ -64,6 +64,9 @@ static void D2Client_HandleInput()
 				break;
 			case IN_MOUSEWHEEL:
 				break;
+			case IN_QUIT:
+				cl.bKillGame = true;
+				break;
 		}
 	}
 
@@ -133,12 +136,28 @@ static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
 
 	D2Client_RunClientFrame();
 
+	if (cl.bKillGame)
+	{
+		return MODULE_NONE;
+	}
+
 	if (cl.bLocalServer)
 	{	// If we're running a local server, we need to run that next (it will *always* run the client in the next step)
 		return MODULE_SERVER;
 	}
 
 	return MODULE_CLIENT;
+}
+
+/*
+ *	This gets called whenever the module is cleaned up.
+ */
+static void D2Client_Shutdown()
+{
+	if (cl.pActiveMenu != nullptr)
+	{
+		delete cl.pActiveMenu;
+	}
 }
 
 /*
@@ -163,6 +182,7 @@ extern "C"
 
 		gExports.nApiVersion = D2CLIENTAPI_VERSION;
 		gExports.RunModuleFrame = D2Client_RunModuleFrame;
+		gExports.CleanupModule = D2Client_Shutdown;
 
 		return &gExports;
 	}

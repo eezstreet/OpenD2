@@ -623,6 +623,7 @@ struct D2ModuleExportStrc
 	int nApiVersion;
 
 	OpenD2Modules	(*RunModuleFrame)(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
+	void			(*CleanupModule)();
 };
 
 typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports);

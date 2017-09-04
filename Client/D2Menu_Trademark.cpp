@@ -58,8 +58,5 @@ void D2Menu_Trademark::Draw()
 	trap->R_Animate(flameLeftAnim, 25, 400, -50);
 	trap->R_Animate(flameRightAnim, 25, 400, -57);
 
-	// Draw the widgets
-	D2Menu::Draw();
-
 	// Note: on this menu, we don't draw the mouse cursor
 }

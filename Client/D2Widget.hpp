@@ -5,7 +5,7 @@ class D2Widget
 {
 private:
 	// relative to panel
-	D2Panel* pParent;
+	D2Panel* m_pOwner;
 	int x, y;
 	int w, h;
 
@@ -15,9 +15,10 @@ private:
 	bool m_bVisible;
 
 public:
-	D2Widget(int x, int y, int w, int h, D2Panel* pParent);
+	D2Widget(int x, int y, int w, int h);
 	~D2Widget();
 
+	bool IsVisible() { return m_bVisible; }
 	void Show() { m_bVisible = true; }
 	void Hide() { m_bVisible = false; }
 

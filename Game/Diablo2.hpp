@@ -251,7 +251,6 @@ void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
 void Sys_CreateDirectory(char* szPath);
 D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
 void Sys_CloseModule(OpenD2Modules nModule);
-void Sys_CloseModules();
 
 // FileSystem.cpp
 void FS_Init(OpenD2ConfigStrc* pConfig);

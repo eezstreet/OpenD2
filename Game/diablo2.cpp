@@ -310,6 +310,29 @@ static void PopulateConfiguration(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* p
 }
 
 /*
+ *	Kills a game module and cleans up its memory
+ */
+static void CleanupModule(OpenD2Modules module)
+{
+	if (imports[module] != nullptr)
+	{
+		imports[module]->CleanupModule();
+	}
+	Sys_CloseModule(module);
+}
+
+/*
+ *	Cleans up all of the game modules
+ */
+static void CleanupAllModules()
+{
+	for (int i = MODULE_CLIENT; i < MODULE_MAX; i++)
+	{
+		CleanupModule((OpenD2Modules)i);
+	}
+}
+
+/*
  *	Initialize the game (from main entrypoint)
  */
 OpenD2Modules currentModule = MODULE_CLIENT;
@@ -352,7 +375,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 		if (currentModule == MODULE_CLEAN)
 		{	// module requested to be cleaned
-			Sys_CloseModule(previousModule);
+			CleanupModule(previousModule);
 			imports[previousModule] = nullptr;
 			currentModule = MODULE_CLIENT;
 		}
@@ -366,7 +389,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 		}
 	}
 
-	Sys_CloseModules();
+	CleanupAllModules();
 
 	D2Win_ShutdownSDL();	// renderer also gets shut down here
 

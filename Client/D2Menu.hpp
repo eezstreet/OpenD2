@@ -16,13 +16,20 @@ protected:
 	D2Panel* m_panels;
 	D2Panel* m_visiblePanels;
 
-	D2Menu();
+	void DrawAllPanels();
 
 public:
+	// Panel management
 	void AddPanel(D2Panel* pPanel);
+	void HidePanel(D2Panel* pPanel);
+	void ShowPanel(D2Panel* pPanel);
+	void HideAllPanels();
+	void ShowAllPanels();
+
 	bool HandleMouseDown(DWORD dwX, DWORD dwY);
 	bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual void Draw() = 0;
 
+	D2Menu();
 	~D2Menu();
 };

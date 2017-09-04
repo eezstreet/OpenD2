@@ -57,4 +57,6 @@ void D2Menu_Main::Draw()
 	trap->R_Animate(blackRightAnim, 25, 400, -7);
 	trap->R_Animate(flameLeftAnim, 25, 400, -50);
 	trap->R_Animate(flameRightAnim, 25, 400, -57);
+
+	DrawAllPanels();
 }

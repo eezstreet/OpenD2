@@ -41,6 +41,11 @@ void D2Menu::AddPanel(D2Panel* pPanel)
 
 	Log_WarnAssert(pPanel);
 
+	if (pPanel->m_pOwner == this)
+	{	// already own it
+		return;
+	}
+
 	pPanel->m_pOwner = this;
 
 	// Add it to the list of panels
@@ -57,36 +62,125 @@ void D2Menu::AddPanel(D2Panel* pPanel)
 		}
 		pCurrent->m_pNextPanel = pPanel;
 	}
-
-	// Add it to the list of visible panels
-	if (pPanel->IsVisible())
-	{
-		if (m_visiblePanels == nullptr)
-		{
-			m_visiblePanels = pPanel;
-		}
-		else
-		{
-			pCurrent = m_visiblePanels;
-			while (pCurrent->GetNext() != nullptr)
-			{
-				pCurrent = pCurrent->GetNextVisible();
-			}
-			pCurrent->m_pNextVisible = pPanel;
-		}
-	}
 }
 
 /*
- *	Draws the menu. Note that this should be subclassed for better functionality.
+*	Show a specific panel.
+*/
+void D2Menu::ShowPanel(D2Panel* pPanel)
+{
+	// Don't show it if it's already visible, it might fire off unwanted events
+	if (pPanel->IsVisible())
+	{
+		return;
+	}
+
+	// Show it, firing off its events
+	pPanel->Show();
+
+	// Most recently shown panel is shown on the bottom.
+	pPanel->m_pNextVisible = m_visiblePanels;
+	m_visiblePanels = pPanel;
+}
+
+/*
+ *	Hides a specific panel
  */
-void D2Menu::Draw()
+void D2Menu::HidePanel(D2Panel* pPanel)
+{
+	D2Panel* pCurrent;
+	D2Panel* pLast = nullptr;
+
+	// Don't hide it if it's already invisible, this might trigger unwanted things
+	if (!pPanel->IsVisible())
+	{
+		return;
+	}
+
+	pPanel->Hide();
+
+	// Remove it from the list of visible panels
+	pCurrent = m_visiblePanels;
+	if (pPanel == m_visiblePanels)
+	{
+		m_visiblePanels = pPanel->m_pNextVisible;
+		pPanel->m_pNextVisible = nullptr;
+		return;
+	}
+
+	while (pCurrent != nullptr && pCurrent != pPanel)
+	{
+		pLast = pCurrent;
+		pCurrent = pCurrent->m_pNextVisible;
+	}
+
+	pLast->m_pNextVisible = pCurrent->m_pNextVisible;
+}
+
+/*
+*	Show all of the panels.
+*/
+void D2Menu::ShowAllPanels()
+{
+	D2Panel* pCurrent;
+	D2Panel* pLast = nullptr;
+
+	pCurrent = m_panels;
+	while (pCurrent != nullptr)
+	{
+		pCurrent->Show();
+
+		if (pLast != nullptr)
+		{
+			pLast->m_pNextVisible = pCurrent;
+		}
+		pLast = pCurrent;
+		pCurrent = pCurrent->m_pNextPanel;
+	}
+
+	m_visiblePanels = m_panels;
+}
+
+/*
+ *	Hides all of the panels.
+ */
+void D2Menu::HideAllPanels()
+{
+	D2Panel* pCurrent;
+	D2Panel* pLast = nullptr;
+
+	pCurrent = m_visiblePanels;
+	while (pCurrent != nullptr)
+	{
+		// Hide it
+		pCurrent->Hide();
+
+		if (pLast != nullptr)
+		{
+			pLast->m_pNextVisible = nullptr;
+		}
+
+		pLast = pCurrent;
+		pCurrent = pCurrent->m_pNextVisible;
+	}
+
+	if (pLast != nullptr)
+	{
+		pLast->m_pNextVisible = nullptr;
+	}
+	m_visiblePanels = nullptr;
+}
+
+/*
+ *	Draws all of the panels for the menu.
+ */
+void D2Menu::DrawAllPanels()
 {
 	D2Panel* pCurrent = m_visiblePanels;
 
 	while (pCurrent != nullptr)
 	{
-		pCurrent->DrawWidgets();
+		pCurrent->Draw();
 		pCurrent = pCurrent->m_pNextVisible;
 	}
 }
