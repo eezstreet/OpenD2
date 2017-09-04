@@ -124,9 +124,9 @@ static void RB_Animate(SDLCommand* pCmd)
 
 	// draw it
 	s.x = pCache->frames[pCache->dwFrame].x;
-	s.y = pCache->frames[pCache->dwFrame].y;
+	s.y = pCache->frames[pCache->dwFrame].y + 1;
 	s.w = pCache->frames[pCache->dwFrame].w;
-	s.h = pCache->frames[pCache->dwFrame].h;
+	s.h = pCache->frames[pCache->dwFrame].h - 1;
 	d.x = pCmd->Animate.dwX + pCache->frames[pCache->dwFrame].dwOffsetX;
 	d.y = pCmd->Animate.dwY + pCache->frames[pCache->dwFrame].dwOffsetY;
 	d.w = s.w;
@@ -201,6 +201,14 @@ void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig,
 			PaletteCache[i].palette[j].r = (*pal)[2];
 			PaletteCache[i].palette[j].g = (*pal)[1];
 			PaletteCache[i].palette[j].b = (*pal)[0];
+			if (j == 0)
+			{
+				PaletteCache[i].palette[j].a = 0;
+			}
+			else
+			{
+				PaletteCache[i].palette[j].a = 255;
+			}
 		}
 
 		SDL_SetPaletteColors(PaletteCache[i].pPal, PaletteCache[i].palette, 0, 256);
@@ -474,14 +482,16 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 			d.w = pFrame->fh.dwWidth;
 			d.h = pFrame->fh.dwHeight;
 
-			SDL_Surface* pSmallSurface = 
-				SDL_CreateRGBSurfaceFrom(DC6_GetPixelsAtFrame(pImg, i, j, nullptr), 
-					pFrame->fh.dwWidth, pFrame->fh.dwHeight, 
+			SDL_Surface* pSmallSurface =
+				SDL_CreateRGBSurfaceFrom(DC6_GetPixelsAtFrame(pImg, i, j, nullptr),
+					pFrame->fh.dwWidth, pFrame->fh.dwHeight,
 					8, pFrame->fh.dwWidth, 0, 0, 0, 0);
 			SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
-			SDL_SetColorKey(pSmallSurface, 1, 0);
 
-			SDL_BlitSurface(pSmallSurface, &s, pBigSurface, &d);
+			SDL_Surface* pConvertedSurface = SDL_ConvertSurfaceFormat(pSmallSurface, SDL_PIXELFORMAT_BGRA8888, 0);
+
+			SDL_BlitSurface(pConvertedSurface, &s, pBigSurface, &d);
+			SDL_FreeSurface(pConvertedSurface);
 			SDL_FreeSurface(pSmallSurface);
 
 			// Advance the cursor
