@@ -604,7 +604,6 @@ struct D2ModuleImportStrc
 	size_t		(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
 
 	// Renderer calls
-	tex_handle	(*R_RegisterTexture)(char* szHandleName, DWORD dwWidth, DWORD dwHeight);
 	tex_handle	(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
 	tex_handle	(*R_RegisterAnimatedDC6)(char *szFileName, char* szHandleName, int nPalette);
 	void		(*R_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);

@@ -14,6 +14,8 @@ static DWORD numDrawCommandsThisFrame = 0;
 static SDLHardwareTextureCacheItem TextureCache[MAX_SDL_TEXTURECACHE_SIZE]{ 0 };
 static SDLHardwareAnimationCacheItem AnimCache[MAX_SDL_ANIMCACHE_SIZE]{ 0 };
 
+static SDL_Texture* gpRenderTexture = nullptr;
+
 ///////////////////////////////////////////////////////////////////////
 //
 //	BACKEND FUNCTIONS
@@ -210,26 +212,8 @@ void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig,
 	{
 		AnimCache[i].texture = INVALID_HANDLE;
 	}
-}
 
-/*
-*	Clears out the texture cache
-*/
-static void Renderer_SDL_ClearTextureCache()
-{
-	for (int i = 0; i < MAX_SDL_TEXTURECACHE_SIZE; i++)
-	{
-		SDLHardwareTextureCacheItem* pCache = &TextureCache[i];
-		if (pCache->pTexture != nullptr)
-		{
-			SDL_DestroyTexture(pCache->pTexture);
-		}
-		if (pCache->bHasDC6)
-		{
-			DC6_UnloadImage(&pCache->dc6);
-		}
-		memset(pCache, 0, sizeof(SDLHardwareTextureCacheItem));
-	}
+	gpRenderTexture = SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 800, 600);
 }
 
 /*
@@ -244,6 +228,7 @@ void Renderer_SDL_Shutdown()
 		SDL_FreePalette(PaletteCache[i].pPal);
 	}
 
+	SDL_DestroyTexture(gpRenderTexture);
 	Renderer_SDL_ClearTextureCache();
 	SDL_DestroyRenderer(gpRenderer);
 }
@@ -257,6 +242,9 @@ void Renderer_SDL_Present()
 	// Clear backbuffer
 	SDL_RenderClear(gpRenderer);
 
+	// Set render target to be render texture
+	SDL_SetRenderTarget(gpRenderer, gpRenderTexture);
+
 	// Process all render commands on the queue and clear it
 	for (int i = 0; i < numDrawCommandsThisFrame; i++)
 	{
@@ -266,29 +254,40 @@ void Renderer_SDL_Present()
 	}
 	numDrawCommandsThisFrame = 0;
 
+	// Copy the render target texture to the main renderer
+	SDL_SetRenderTarget(gpRenderer, nullptr);
+	SDL_RenderCopy(gpRenderer, gpRenderTexture, nullptr, nullptr);
+
 	// Finally, present the renderer
 	SDL_RenderPresent(gpRenderer);
 }
 
 /*
-*	Registers a tex_handle which we can use later in texture manipulation functions
-*	@author	eezstreet
-*/
-tex_handle Renderer_SDL_RegisterTexture(char* szHandleName, DWORD dwWidth, DWORD dwHeight)
+ *	Finds a texture handle, but does not register it
+ */
+static tex_handle Renderer_SDL_GetTextureInCache(char* szHandleName)
 {
-	// HACK
-	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandleName, dwWidth, dwHeight, nullptr);
-	if (tex == INVALID_HANDLE)
+	DWORD dwChecked = 0;
+	DWORD dwTextureHash = D2_strhash(szHandleName, CACHEHANDLE_LEN, MAX_SDL_TEXTURECACHE_SIZE);
+
+	while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
 	{
-		return tex;
+		if (!D2_stricmp(TextureCache[dwTextureHash].szHandleName, szHandleName))
+		{
+			return dwTextureHash;
+		}
+		else if (TextureCache[dwTextureHash].pTexture == nullptr)
+		{
+			return dwTextureHash;
+		}
+
+		dwTextureHash++;
+		dwTextureHash %= MAX_SDL_TEXTURECACHE_SIZE;
+
+		dwChecked++;
 	}
 
-	// the texture handle is already guaranteed to be accurate at this point, so we can insert it here
-	SDL_Texture* pTexture =
-		SDL_CreateTexture(gpRenderer, SDL_PIXELFORMAT_INDEX8, SDL_TEXTUREACCESS_STREAMING, dwWidth, dwHeight);
-
-	TextureCache[tex].pTexture = pTexture;
-	return tex;
+	return INVALID_HANDLE;
 }
 
 /*
@@ -307,29 +306,12 @@ void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture)
 
 	if (texture == INVALID_HANDLE)
 	{	// get the texture from the handle name
-		DWORD dwChecked = 0;
-		DWORD dwTextureHash = D2_strhash(szHandleName, 32, MAX_SDL_TEXTURECACHE_SIZE);
-		
-		while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
-		{
-			pCache = &TextureCache[dwTextureHash];
-			if (!D2_stricmp(pCache->szHandleName, szHandleName))
-			{
-				break;
-			}
-			
-			dwTextureHash++;
-			dwTextureHash %= MAX_SDL_TEXTURECACHE_SIZE;
+		texture = Renderer_SDL_GetTextureInCache(szHandleName);
+	}
 
-			dwChecked++;
-		}
-
-		if (dwChecked == MAX_SDL_TEXTURECACHE_SIZE)
-		{	// didn't find a texture with that handle name
-			return;
-		}
-
-		texture = (tex_handle)dwTextureHash;
+	if (texture == INVALID_HANDLE)
+	{	// still couldn't find it
+		return;
 	}
 
 	pCache = &TextureCache[texture];
@@ -343,50 +325,23 @@ void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture)
 }
 
 /*
- *	Adds a new texture to the texture cache
- */
-tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight, bool* bExists)
+*	Clears out the texture cache
+*/
+void Renderer_SDL_ClearTextureCache()
 {
-	DWORD dwHash = D2_strhash(str, 32, MAX_SDL_TEXTURECACHE_SIZE);
-	DWORD dwChecked = 1;
-	SDLHardwareTextureCacheItem* pCache = &TextureCache[dwHash];
-
-	while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
+	for (int i = 0; i < MAX_SDL_TEXTURECACHE_SIZE; i++)
 	{
-		if(!D2_stricmp(pCache->szHandleName, str))
+		SDLHardwareTextureCacheItem* pCache = &TextureCache[i];
+		if (pCache->pTexture != nullptr)
 		{
-			// We already added this item to the texture cache, no need to do so again
-			if (bExists != nullptr)
-			{
-				*bExists = true;
-			}
-			return (tex_handle)dwHash;
+			SDL_DestroyTexture(pCache->pTexture);
 		}
-
-		if (pCache->pTexture == nullptr)
+		if (pCache->bHasDC6)
 		{
-			// Empty cache entry, add this item to the texture cache
-			pCache->pTexture = pTexture;
-			D2_strncpyz(pCache->szHandleName, str, 32);
-			pCache->dwWidth = dwWidth;
-			pCache->dwHeight = dwHeight;
-			if (bExists != nullptr)
-			{
-				*bExists = false;
-			}
-			return (tex_handle)dwHash;
+			DC6_UnloadImage(&pCache->dc6);
 		}
-
-		dwHash++;
-		dwChecked++;
-		if (dwHash >= MAX_SDL_TEXTURECACHE_SIZE)
-		{	// the hash value might have rolled over, correct this appropriately
-			dwHash %= MAX_SDL_TEXTURECACHE_SIZE;
-		}
+		memset(pCache, 0, sizeof(SDLHardwareTextureCacheItem));
 	}
-
-	// we didn't add the texture to the texture cache because it's full. die?
-	return INVALID_HANDLE;
 }
 
 /*
@@ -396,19 +351,23 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 {
 	D2Palette* pPal = Pal_GetPalette(nPalette);
 	bool bExists = false;
+	tex_handle tex = Renderer_SDL_GetTextureInCache(szHandle);
+	SDLHardwareTextureCacheItem* pCache;
+	SDL_Surface* pBigSurface;
+	SDL_Texture* pTexture;
 
-	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandle, 0, 0, &bExists);
 	if (tex == INVALID_HANDLE)
 	{
 		return tex;
 	}
 
-	if (bExists)
-	{	// If this texture was registered already, there's no need to do any of this again.
-		return tex;
+	pCache = &TextureCache[tex];
+
+	if (pCache->pTexture != nullptr)
+	{
+		return tex; // already registered
 	}
 
-	SDLHardwareTextureCacheItem* pCache = &TextureCache[tex];
 	DC6_LoadImage(szDc6Path, &pCache->dc6);
 	pCache->bHasDC6 = true;
 
@@ -418,16 +377,10 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 	DWORD dwTotalWidth = 0;
 	DWORD dwTotalHeight = 0;
 
-	DWORD dwRMask = 0, dwGMask = 0, dwBMask = 0, dwAMask = 0;
-	int bpp = 0;
-	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_INDEX8, &bpp, 
-		(Uint32*)&dwRMask, (Uint32*)&dwGMask, (Uint32*)&dwBMask, (Uint32*)&dwAMask);
-
 	DC6_StitchStats(&pCache->dc6, dwStart, dwEnd, &dwStitchCols, &dwStitchRows, &dwTotalWidth, &dwTotalHeight);
 
-	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, dwTotalWidth, dwTotalHeight, bpp, dwRMask, dwGMask, dwBMask, dwAMask);
+	pBigSurface = SDL_CreateRGBSurface(0, dwTotalWidth, dwTotalHeight, 8, 0, 0, 0, 0);
 	SDL_SetSurfacePalette(pBigSurface, PaletteCache[nPalette].pPal);
-	SDL_SetSurfaceBlendMode(pBigSurface, SDL_BLENDMODE_NONE);
 
 	for (int i = 0; i <= dwEnd - dwStart; i++)
 	{
@@ -437,11 +390,12 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		int dwBlitToY = floor(i / (float)dwStitchCols) * 255;
 
 		SDL_Surface* pSmallSurface = SDL_CreateRGBSurface(0, pFrame->fh.dwWidth, pFrame->fh.dwHeight,
-			bpp, dwRMask, dwGMask, dwBMask, dwAMask);
+			8, 0, 0, 0, 0);
 		SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
-		SDL_SetSurfaceBlendMode(pSmallSurface, SDL_BLENDMODE_NONE);
 
-		memcpy(pSmallSurface->pixels, pFrame->pFramePixels, pFrame->fh.dwWidth * pFrame->fh.dwHeight);
+		memcpy(pSmallSurface->pixels, 
+			DC6_GetPixelsAtFrame(&pCache->dc6, 0, i + dwStart, nullptr), 
+			pFrame->fh.dwWidth * pFrame->fh.dwHeight);
 
 		SDL_Rect dstRect = { dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
 		SDL_Rect srcRect = { 0 , 1, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
@@ -449,7 +403,7 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		SDL_FreeSurface(pSmallSurface);
 	}
 
-	SDL_Texture* pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
+	pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
 
 	pCache->dwWidth = dwTotalWidth;
 	pCache->dwHeight = dwTotalHeight;
@@ -467,61 +421,33 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 {
 	D2Palette* pPal = Pal_GetPalette(nPalette);
 	bool bExists = false;
+	tex_handle tex = Renderer_SDL_GetTextureInCache(szHandle);
+	SDLHardwareTextureCacheItem* pCache;
+	int bpp = 0;
+	Uint32 dwRMask, dwGMask, dwBMask, dwAMask;
 
-	tex_handle tex = Renderer_SDL_AddTextureToCache(nullptr, szHandle, 0, 0, &bExists);
+	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_BGRA8888, &bpp, &dwRMask, &dwGMask, &dwBMask, &dwAMask);
+
 	if (tex == INVALID_HANDLE)
 	{
 		return tex;
 	}
 
-	if (bExists)
-	{	// If this texture was registered already, there's no need to do any of this again.
-		return tex;
+	pCache = &TextureCache[tex];
+
+	if (pCache->pTexture != nullptr)
+	{
+		return tex; // already been registered
 	}
 
-	SDLHardwareTextureCacheItem* pCache = &TextureCache[tex];
 	DC6_LoadImage(szDc6Path, &pCache->dc6);
 	pCache->bHasDC6 = true;
 
-	DWORD dwRMask = 0, dwGMask = 0, dwBMask = 0, dwAMask = 0;
-	int bpp = 0;
-	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_INDEX8, &bpp,
-		(Uint32*)&dwRMask, (Uint32*)&dwGMask, (Uint32*)&dwBMask, (Uint32*)&dwAMask);
-
 	DC6Image* pImg = &pCache->dc6;
 
-	DWORD dwTotalWidth = 0;
-	DWORD dwTotalHeight = 0;
-
-	// Calculate overall width of texture
-	for (int i = 0; i < pImg->header.dwDirections; i++)
-	{	// Each direction uses up a row
-		DWORD dwDirectionWidth = 0;
-		DWORD dwDirectionHeight = 0;
-
-		for (int j = 0; j < pImg->header.dwFrames; j++)
-		{	// Each column spans horizontally
-			DWORD dwFrame = (i * pImg->header.dwFrames) + j;
-			dwDirectionWidth += pImg->pFrames[dwFrame].fh.dwWidth;
-
-			if (pImg->pFrames[dwFrame].fh.dwHeight > dwDirectionHeight)
-			{
-				dwDirectionHeight = pImg->pFrames[dwFrame].fh.dwHeight;
-			}
-		}
-
-		if (dwDirectionWidth > dwTotalWidth)
-		{
-			dwTotalWidth = dwDirectionWidth;
-		}
-
-		dwTotalHeight += dwDirectionHeight;
-	}
-
 	// Create the big texture that we will blit into
-	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, dwTotalWidth, dwTotalHeight, bpp, dwRMask, dwGMask, dwBMask, dwAMask);
-	SDL_SetSurfacePalette(pBigSurface, PaletteCache[nPalette].pPal);
-	SDL_SetSurfaceBlendMode(pBigSurface, SDL_BLENDMODE_NONE);
+	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, pImg->dwTotalWidth, pImg->dwTotalHeight, 
+		bpp, dwRMask, dwGMask, dwBMask, dwAMask);
 
 	// Add each frame into the surface
 	DWORD dwCursorX = 0;
@@ -549,13 +475,11 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 			d.h = pFrame->fh.dwHeight;
 
 			SDL_Surface* pSmallSurface = 
-				SDL_CreateRGBSurfaceFrom(pImg->pPixels, pFrame->fh.dwWidth, pFrame->fh.dwHeight, 
-					bpp, pFrame->fh.dwWidth, dwRMask, dwGMask, dwBMask, dwAMask);
-
+				SDL_CreateRGBSurfaceFrom(DC6_GetPixelsAtFrame(pImg, i, j, nullptr), 
+					pFrame->fh.dwWidth, pFrame->fh.dwHeight, 
+					8, pFrame->fh.dwWidth, 0, 0, 0, 0);
 			SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
-			SDL_SetSurfaceBlendMode(pSmallSurface, SDL_BLENDMODE_NONE);
-
-			memcpy(pSmallSurface->pixels, pFrame->pFramePixels, pFrame->fh.dwWidth * pFrame->fh.dwHeight);
+			SDL_SetColorKey(pSmallSurface, 1, 0);
 
 			SDL_BlitSurface(pSmallSurface, &s, pBigSurface, &d);
 			SDL_FreeSurface(pSmallSurface);
@@ -572,11 +496,9 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 	}
 
 	// Now that the big surface contains all the pixels, the last step here is to create an SDL_Texture from the surface
-	pCache->dwWidth = dwTotalWidth;
-	pCache->dwHeight = dwTotalHeight;
+	pCache->dwWidth = pImg->dwTotalWidth;
+	pCache->dwHeight = pImg->dwTotalHeight;
 	pCache->pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
-
-	SDL_SaveBMP(pBigSurface, szHandle);
 
 	SDL_FreeSurface(pBigSurface);
 	return tex;
@@ -604,7 +526,7 @@ static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, c
 	DC6Image* pDC6 = &TextureCache[texture].dc6;
 	DWORD dwCenterPos[64]{ 0 };
 
-	D2_strncpyz(pCache->szHandleName, szHandle, 32);
+	D2_strncpyz(pCache->szHandleName, szHandle, CACHEHANDLE_LEN);
 	pCache->texture = texture;
 	pCache->dwFrame = dwStartingFrame;
 	pCache->dwFrameCount = pDC6->header.dwDirections * pDC6->header.dwFrames;
@@ -628,6 +550,7 @@ static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, c
 			pCache->frames[dwFramePos].h = pDC6->pFrames[dwFramePos].fh.dwHeight;
 			pCache->frames[dwFramePos].dwOffsetX = pDC6->pFrames[dwFramePos].fh.dwOffsetX;
 			pCache->frames[dwFramePos].dwOffsetY = pDC6->pFrames[dwFramePos].fh.dwOffsetY;
+			pCache->frames[dwFramePos].dwOffsetY += (pDC6->dwDirectionHeights[i] - pCache->frames[dwFramePos].h);
 			
 			dwCursorX += pDC6->pFrames[dwFramePos].fh.dwWidth;
 
@@ -641,18 +564,6 @@ static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, c
 		dwCursorY += dwDirectionY;
 		dwCenterPos[i] = dwDirectionY;
 	}
-
-	// Center each frame along Y
-	for (int i = 0; i < pDC6->header.dwDirections; i++)
-	{
-		for (int j = 0; j < pDC6->header.dwFrames; j++)
-		{
-			DWORD dwFramePos = (i * pDC6->header.dwFrames) + j;
-			int nDifference = (dwCenterPos[i] - pDC6->pFrames[dwFramePos].fh.dwHeight);
-
-			pCache->frames[dwFramePos].dwOffsetY += nDifference;
-		}
-	}
 }
 
 /*
@@ -660,7 +571,7 @@ static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, c
  */
 anim_handle Renderer_SDL_RegisterAnimation(tex_handle texture, char* szHandle, DWORD dwStartingFrame)
 {
-	DWORD dwHash = D2_strhash(szHandle, 32, MAX_SDL_ANIMCACHE_SIZE);
+	DWORD dwHash = D2_strhash(szHandle, CACHEHANDLE_LEN, MAX_SDL_ANIMCACHE_SIZE);
 	DWORD dwIterations = 0;
 
 	while (dwIterations < MAX_SDL_ANIMCACHE_SIZE)

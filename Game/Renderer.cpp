@@ -4,10 +4,9 @@
  *	The renderer in OpenD2 is significantly different from the one in retail Diablo 2.
  *
  *	For starters, the window management and rendering are totally separated.
- *	There are three main render targets that we want to work with:
- *	- Software Renderer (SDL)
- *	- DirectX (d3d)
- *	- OpenGL (opengl)
+ *	There are two main render targets that we want to work with:
+ *	- SDL
+ *	- OpenGL
  *
  *	The render target can be changed in D2.ini, registry, or commandline.
  *	Later on we will want to create a VideoTest.exe that can be used to set optimal video settings.
@@ -21,7 +20,6 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_Init,
 		Renderer_SDL_Shutdown,
 		Renderer_SDL_Present,
-		Renderer_SDL_RegisterTexture,
 		Renderer_SDL_TextureFromDC6,
 		Renderer_SDL_TextureFromAnimatedDC6,
 		Renderer_SDL_DrawTexture,
@@ -33,14 +31,6 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_DeregisterAnimation,
 		Renderer_SDL_Animate,
 		Renderer_SDL_SetAnimFrame,
-	},
-
-	{	// SDL Software Renderer
-		nullptr,
-	},
-
-	{	// DirectX Renderer (Windows-only)
-		nullptr,
 	},
 
 	{	// OpenGL Renderer
@@ -57,17 +47,9 @@ void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_W
 	OpenD2RenderTargets DesiredRenderTarget = OD2RT_SDL;
 
 	// Determine which render target to go with
-	if (pConfig->bOpenGL)
+	if (pConfig->bOpenGL || pConfig->bD3D || pOpenConfig->bNoSDLAccel)
 	{
 		DesiredRenderTarget = OD2RT_OPENGL;
-	}
-	else if (pConfig->bD3D)
-	{
-		DesiredRenderTarget = OD2RT_DIRECTX;
-	}
-	else if (pOpenConfig->bNoSDLAccel)
-	{
-		DesiredRenderTarget = OD2RT_SDL_SOFTWARE;
 	}
 	else
 	{
@@ -87,7 +69,6 @@ void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_W
  */
 void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 {
-	pExport->R_RegisterTexture = RenderTarget->RF_RegisterTexture;
 	pExport->R_RegisterDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
 	pExport->R_RegisterAnimatedDC6 = RenderTarget->RF_TextureFromAnimatedDC6;
 	pExport->R_DrawTexture = RenderTarget->RF_DrawTexture;

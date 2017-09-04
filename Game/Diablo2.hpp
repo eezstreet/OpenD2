@@ -136,6 +136,8 @@ struct D2MPQArchive
 /*
 *	DC6 Files
 */
+#define MAX_DC6_CELL_SIZE	256
+
 #pragma pack(push,enter_include)
 #pragma pack(1)
 struct DC6Frame
@@ -152,7 +154,8 @@ struct DC6Frame
 		DWORD	dwLength;			// Number of blocks to decode
 	};
 	DC6FrameHeader fh;
-	BYTE* pFramePixels;
+
+	DWORD dwDeltaY; // delta from previous frame (0 on first frame in direction)
 };
 
 struct DC6ImageHeader
@@ -173,6 +176,9 @@ struct DC6Image
 	DC6ImageHeader	header;
 	DC6Frame*		pFrames;
 	BYTE*			pPixels;
+	DWORD			dwDirectionHeights[32];
+	DWORD			dwTotalWidth;
+	DWORD			dwTotalHeight;
 };
 
 /*
@@ -190,7 +196,6 @@ struct D2Renderer
 	void		(*RF_Present)();
 
 	//
-	tex_handle	(*RF_RegisterTexture)(char* handleName, DWORD dwWidth, DWORD dwHeight);
 	tex_handle	(*RF_TextureFromStitchedDC6)(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
 	tex_handle	(*RF_TextureFromAnimatedDC6)(char* szDc6Path, char* szHandle, int nPalette);
 	void		(*RF_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
@@ -216,7 +221,7 @@ void DC6_UnloadImage(DC6Image* pImage);
 BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
 void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
-void DC6_StitchStats(DC6Image* pImage, 
+void DC6_StitchStats(DC6Image* pImage,
 	DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
 
 // Diablo2.cpp

@@ -82,7 +82,7 @@ struct SDLHardwareTextureCacheItem
 {
 	DWORD dwWidth;
 	DWORD dwHeight;
-	char szHandleName[32];
+	char szHandleName[CACHEHANDLE_LEN];
 	SDL_Texture* pTexture;
 
 	bool bHasDC6;			// optional - dc6 image
@@ -99,7 +99,7 @@ struct SDLHardwareAnimationCacheItem
 		int dwOffsetX;
 		int dwOffsetY;
 	};
-	char szHandleName[32];
+	char szHandleName[CACHEHANDLE_LEN];
 	AnimationFrame frames[MAX_SDL_ANIM_FRAMES];
 	DWORD dwFrameCount;
 	DWORD dwLastTick;
@@ -109,4 +109,4 @@ struct SDLHardwareAnimationCacheItem
 //
 //	Functions
 
-tex_handle Renderer_SDL_AddTextureToCache(SDL_Texture* pTexture, char* str, DWORD dwWidth, DWORD dwHeight, bool* bExists);
+void Renderer_SDL_ClearTextureCache();
