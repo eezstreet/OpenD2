@@ -137,7 +137,7 @@ struct D2MPQArchive
  */
 
 /*
- *	Archive TBLs
+ *	String Archive TBLs
  *	@author kambala/eezstreet
  */
 
@@ -146,6 +146,7 @@ struct D2MPQArchive
 
 #pragma pack(push,enter_include)
 #pragma pack(1)
+
 struct TBLHeader // header of string *.tbl file
 {
 	WORD  CRC;             // +0x00 - CRC value for string table
@@ -188,6 +189,41 @@ struct TBLFile
 	size_t dwFileSize; // the size of the whole TBL file
 	char16_t* szStringTable; // a table that contains all of the string data
 };
+
+#pragma pack(pop, enter_include)
+
+/*
+ *	Font TBLs
+ *	@author	Necrolis
+ */
+
+#pragma pack(push,enter_include)
+#pragma pack(1)
+
+// FIXME: there's a lot of unknowns here, they need to be properly investigated with a debugger
+struct TBLFontGlyph
+{
+	WORD			wChar;
+	BYTE			nUnknown1;
+	BYTE			nWidth;
+	BYTE			nHeight;
+	BYTE			nUnknown2;
+	WORD			wUnknown3;
+	BYTE			nImageIndex;
+	BYTE			nChar;
+	DWORD			dwUnknown4;
+};
+
+struct TBLFontFile
+{
+	BYTE			magic[4];	// always "Woo!", this exclamation appears in the save file format too
+	WORD			wVersion;
+	DWORD			dwLocale;	// 1 = english, 5 = russian, ...?
+	BYTE			nHeight;	// interline spacing
+	BYTE			nWidth;		// cap height (?)
+	TBLFontGlyph	glyphs[256];
+};
+
 #pragma pack(pop, enter_include)
 
 /*
@@ -340,6 +376,9 @@ void Sys_CloseModule(OpenD2Modules nModule);
 // Renderer.cpp
 void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
 void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport);
+
+// TBL_Font.cpp
+tbl_handle TBLFont_RegisterFont(char* szFontName);
 
 // TBL_Text.cpp
 tbl_handle TBL_Register(char* szTblFile);

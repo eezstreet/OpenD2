@@ -1,12 +1,16 @@
 #include "Diablo2.hpp"
 
-#define MAX_TBL_FILES	8
-#define TBL_VERSION		1
-
 ////////////////////////////////////////////////////////
 //
 //	Text-Based .TBL files store the game's strings.
 //	These should not be confused with Font-Based TBLs.
+
+#define MAX_TBL_FILES	8
+#define TBL_VERSION		1
+
+#define TBL_EXPANSION_OFFSET	20000
+#define TBL_PATCH_OFFSET		10000
+#define TBL_CLASSIC_OFFSET		0
 
 static TBLFile TBLFiles[MAX_TBL_FILES]{ 0 };
 static int gnLastUsedTBL = 0;
@@ -14,10 +18,6 @@ static int gnLastUsedTBL = 0;
 static tbl_handle gBaseStrings;
 static tbl_handle gExpansionStrings;
 static tbl_handle gPatchStrings;
-
-#define TBL_EXPANSION_OFFSET	20000
-#define TBL_PATCH_OFFSET		10000
-#define TBL_CLASSIC_OFFSET		0
 
 /*
  *	Registers a TBL file
