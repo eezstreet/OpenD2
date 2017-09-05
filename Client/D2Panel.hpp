@@ -43,5 +43,7 @@ public:
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY) = 0;
 	virtual void Draw() = 0;
 
+	int x, y;
+
 	friend class D2Menu;
 };

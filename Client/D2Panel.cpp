@@ -28,6 +28,8 @@ void D2Panel::AddWidget(D2Widget* pWidget)
 	}
 
 	pWidget->m_pOwner = this;
+	pWidget->x += x;
+	pWidget->y += y;
 
 	// Add it to the list of panels
 	if (m_widgets == nullptr)

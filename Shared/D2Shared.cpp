@@ -99,3 +99,181 @@ DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize)
 
 	return hash % dwMaxHashSize;
 }
+
+/*
+ *	Compares two strings for inequality, char16_t version.
+ *	Case-insensitive. Searches up to a fixed length of characters.
+ */
+int D2_qstricmpn(char16_t* s1, char16_t* s2, int n)
+{
+	int		c1, c2;
+
+	do {
+		c1 = *s1++;
+		c2 = *s2++;
+
+		if (!n--) {
+			return 0;		// strings are equal until end point
+		}
+
+		if (c1 != c2) {
+			if (c1 >= 'a' && c1 <= 'z')
+			{
+				if (c1 - 'a' == c2 - 'A')
+				{
+					continue; // not actually different (case insensitivity)
+				}
+			}
+			return c1 < c2 ? -1 : 1;
+		}
+	} while (c1);
+
+	return 0;		// strings are equal
+}
+
+/*
+ *	Compares two strings for inequality, char16_t version. Unlimited length, case insensitive.
+ */
+int D2_qstricmp(char16_t* s1, char16_t* s2)
+{
+	return D2_qstricmpn(s1, s2, 99999);
+}
+
+/*
+ *	Compares two strings for inequality. char16_t version.
+ *	Case sensitive. Searches up to a fixed length of characters.
+ */
+int D2_qstrcmpn(char16_t* s1, char16_t* s2, int n)
+{
+	int		c1, c2;
+
+	do {
+		c1 = *s1++;
+		c2 = *s2++;
+
+		if (!n--) {
+			return 0;		// strings are equal until end point
+		}
+
+		if (c1 != c2) {
+			return c1 < c2 ? -1 : 1;
+		}
+	} while (c1);
+
+	return 0;		// strings are equal
+}
+
+/*
+ *	Compares two strings for inequality. char16_t version.
+ *	Case sensitive. Unlimited length.
+ */
+int D2_qstrcmp(char16_t* s1, char16_t* s2)
+{
+	return D2_qstrcmpn(s1, s2, 99999);
+}
+
+/*
+ *	Safe string copy for char16_t
+ */
+size_t D2_qstrncpyz(char16_t* dest, char16_t* src, size_t destLen)
+{
+	size_t len = 0;
+
+	if (!dest)
+	{
+		return 0;
+	}
+
+	if (!src)
+	{
+		return 0;
+	}
+
+	if (destLen == 0)
+	{
+		return 0;
+	}
+
+	while (len <= destLen && src[len] > 0)
+	{
+		dest[len] = src[len];
+		len++;
+	}
+	dest[len++] = 0;
+	return len;
+}
+
+/*
+ *	Finds the length of a char16_t string.
+ */
+size_t D2_qstrlen(char16_t* s1)
+{
+	size_t len = 0;
+	while (*s1++) len++;
+	return len;
+}
+
+/*
+ *	Converts a char string to a char16_t string.
+ */
+size_t D2_qmbtowc(char16_t* dest, size_t destLen, char* src)
+{
+	size_t len = 0;
+	while (len < destLen && src[len] > 0)
+	{
+		dest[len] = src[len];
+		len++;
+	}
+	dest[len++] = 0;
+	return len;
+}
+
+/*
+ *	Converts a char16_t string to char string.
+ *	Note that any non-representable characters will be transformed into code point 1.
+ */
+size_t D2_qwctomb(char* dest, size_t destLen, char16_t* src)
+{
+	size_t len = 0;
+	while (len < destLen && src[len] > 0)
+	{
+		if (src[len] >= 256)
+		{
+			dest[len] = 1;
+		}
+		else
+		{
+			dest[len] = src[len];
+		}
+		len++;
+	}
+	dest[len++] = 0;
+	return len;
+}
+
+/*
+ *	Hashes a char16_t. Based on SVR's code. Compatible with TBL files for lookup.
+ *	Note that this uses a different algorithm than D2_strhash.
+ */
+DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize)
+{
+	DWORD hash = 0;
+	char16_t curChar;
+	DWORD carry;
+
+	while (curChar = *str++)
+	{
+		hash *= 0x10;
+		hash += curChar;
+		carry = hash & 0xF0000000;
+		if (carry != 0)
+		{
+			carry /= 0x01000000;
+			hash &= 0x0FFFFFFF;
+			hash ^= carry;
+		}
+	}
+
+	hash %= dwMaxHashSize;
+	return hash;
+}

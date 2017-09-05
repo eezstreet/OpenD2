@@ -114,6 +114,11 @@ static D2ModuleImportStrc exports = {
 	FSMPQ_FindFile,
 	MPQ_FileSize,
 	MPQ_ReadFile,
+
+	TBL_Register,
+	TBL_FindStringFromIndex,
+	TBL_FindStringIndexFromKey,
+	TBL_FindStringText,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
@@ -348,6 +353,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS_Init(&openD2Config);
 	Log_InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
 	FS_LogSearchPaths();
+	TBL_Init();
 
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
 	Render_MapRenderTargetExports(&exports);
@@ -393,6 +399,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	D2Win_ShutdownSDL();	// renderer also gets shut down here
 
+	TBL_Cleanup();
 	Log_Shutdown();
 	FS_Shutdown();
 

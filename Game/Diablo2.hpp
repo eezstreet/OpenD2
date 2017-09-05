@@ -132,10 +132,68 @@ struct D2MPQArchive
 	fs_handle		f;						// FS file handle
 };
 
+/*
+ *	ALL OTHER FILE FORMATS
+ */
 
 /*
-*	DC6 Files
-*/
+ *	Archive TBLs
+ *	@author kambala/eezstreet
+ */
+
+#define MAX_TBL_FILE_HANDLE	16
+#define MAX_TBL_KEY_SIZE	64
+
+#pragma pack(push,enter_include)
+#pragma pack(1)
+struct TBLHeader // header of string *.tbl file
+{
+	WORD  CRC;             // +0x00 - CRC value for string table
+	WORD  NodesNumber;     // +0x02 - size of Indices array
+	DWORD HashTableSize;   // +0x04 - size of TblHashNode array
+	BYTE  Version;         // +0x08 - file version, either 0 or 1, doesn't matter
+	DWORD DataStartOffset; // +0x09 - string table start offset
+	DWORD HashMaxTries;    // +0x0D - max number of collisions for string key search based on its hash value
+	DWORD FileSize;        // +0x11 - size of the file
+};
+
+struct TBLHashNode // node of the hash table in string *.tbl file
+{
+	BYTE  Active;          // +0x00 - shows if the entry is used. if 0, then it has been "deleted" from the table
+	WORD  Index;           // +0x01 - index in Indices array
+	DWORD HashValue;       // +0x03 - hash value of the current string key
+	DWORD StringKeyOffset; // +0x07 - offset of the current string key
+	DWORD StringValOffset; // +0x0B - offset of the current string value
+	WORD  StringValLength; // +0x0F - length of the current string value
+};
+
+struct TBLDataNode
+{
+	BYTE		bActive;
+	char16_t	key[MAX_TBL_KEY_SIZE];
+	char16_t*	str;
+};
+
+struct TBLFile
+{
+	TBLHeader header;
+	TBLHashNode* pHashNodes;
+	TBLDataNode* pDataNodes;
+	WORD* pIndices;
+
+	char szHandle[MAX_TBL_FILE_HANDLE];
+	D2MPQArchive* pArchive;	// the archive that this file was found in
+	fs_handle archiveHandle;	// the file inside the archive
+
+	size_t dwFileSize; // the size of the whole TBL file
+	char16_t* szStringTable; // a table that contains all of the string data
+};
+#pragma pack(pop, enter_include)
+
+/*
+ *	DC6 Files
+ *	@author eezstreet (w. help from Paul Siramy)
+ */
 #define MAX_DC6_CELL_SIZE	256
 
 #pragma pack(push,enter_include)
@@ -228,30 +286,6 @@ void DC6_StitchStats(DC6Image* pImage,
 int InitGame(int argc, char** argv, DWORD pid);
 DWORD GetMilliseconds();
 
-// Input.cpp
-void In_PumpEvents(OpenD2ConfigStrc* pOpenConfig);
-
-// Logging.cpp
-void Log_InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);
-void Log_Shutdown();
-void Log_Print(OpenD2LogFlags nPriority, char* szFormat, ...);
-void Log_Warning(char* szFile, int nLine, char* szCondition);
-void Log_Error(char* szFile, int nLine, char* szCondition);
-#define Log_WarnAssert(x, y) if(!(x)) { Log_Warning(__FILE__, __LINE__, "" #x); return y; }
-#define Log_ErrorAssert(x, y) if(!(x)) { Log_Error(__FILE__, __LINE__, "" #x); return y; }
-
-// Palette.cpp
-bool Pal_Init();
-D2Palette* Pal_GetPalette(int nIndex);
-
-// Platform_*.cpp
-void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
-void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
-void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
-void Sys_CreateDirectory(char* szPath);
-D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
-void Sys_CloseModule(OpenD2Modules nModule);
-
 // FileSystem.cpp
 void FS_Init(OpenD2ConfigStrc* pConfig);
 void FS_Shutdown();
@@ -271,6 +305,18 @@ void FSMPQ_Shutdown();
 D2MPQArchive* FSMPQ_AddSearchPath(char* szMPQName, char* szMPQPath);
 fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
 
+// Input.cpp
+void In_PumpEvents(OpenD2ConfigStrc* pOpenConfig);
+
+// Logging.cpp
+void Log_InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);
+void Log_Shutdown();
+void Log_Print(OpenD2LogFlags nPriority, char* szFormat, ...);
+void Log_Warning(char* szFile, int nLine, char* szCondition);
+void Log_Error(char* szFile, int nLine, char* szCondition);
+#define Log_WarnAssert(x, y) if(!(x)) { Log_Warning(__FILE__, __LINE__, "" #x); return y; }
+#define Log_ErrorAssert(x, y) if(!(x)) { Log_Error(__FILE__, __LINE__, "" #x); return y; }
+
 // MPQ.cpp
 void MPQ_OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
 void MPQ_CloseMPQ(D2MPQArchive* pMPQ);
@@ -279,9 +325,29 @@ size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
 size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
 void MPQ_Cleanup();
 
+// Palette.cpp
+bool Pal_Init();
+D2Palette* Pal_GetPalette(int nIndex);
+
+// Platform_*.cpp
+void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
+void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
+void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
+void Sys_CreateDirectory(char* szPath);
+D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
+void Sys_CloseModule(OpenD2Modules nModule);
+
 // Renderer.cpp
 void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
 void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport);
+
+// TBL_Text.cpp
+tbl_handle TBL_Register(char* szTblFile);
+char16_t* TBL_FindStringFromIndex(DWORD dwIndex);
+tbl_handle TBL_FindStringIndexFromKey(tbl_handle tbl, char16_t* szReference);
+char16_t* TBL_FindStringText(char16_t* szReference);
+void TBL_Init();
+void TBL_Cleanup();
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);

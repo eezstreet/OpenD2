@@ -4,9 +4,11 @@
 class D2Widget_Button : public D2Widget
 {
 private:
-	tex_handle texture;
 	bool bDisabled;
+	
 
 public:
-	virtual void Draw();
+	virtual void Draw() = 0;
+
+	tex_handle texture;
 };

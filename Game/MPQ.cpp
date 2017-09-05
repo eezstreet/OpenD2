@@ -562,8 +562,9 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 			if (dwAmountRead == pMPQ->wSectorSize 
 				|| (i == dwNumBlocks - 2 && dwAmountRead == (pBlock->dwFSize & (pMPQ->wSectorSize - 1))))
 			{
-				memcpy(buffer, pTempBuffer, dwAmountRead);
+				memcpy(buffer + dwTotalAmountRead, pTempBuffer, dwAmountRead);
 				pTempBuffer += dwBlockLengthRead;
+				dwTotalAmountRead += dwBlockLengthRead;
 				continue;
 			}
 

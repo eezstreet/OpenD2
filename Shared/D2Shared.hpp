@@ -23,6 +23,22 @@
 #define GAME_LOG_HEADER		"D2"
 #define GAME_HOMEPATH		"Diablo II"
 
+/*
+ *	The following languages are known to exist:
+ *	CHI	DEU	ENG	ESP
+ *	FRA	ITA	JPN	KOR
+ *	POL	POR	RUS
+ *
+ *	The following charsets are known to exist:
+ *	LATIN (base game)
+ *	CHINESE (requires d2delta.mpq)
+ *	JAPAN (requires d2delta.mpq)
+ *	RUSSIAN	(requires d2delta.mpq)
+ *	KOREAN (requires d2delta.mpq and d2kfixup.mpq)
+ */
+#define GAME_LANGUAGE		"ENG"
+#define GAME_CHARSET		"LATIN"
+
 //////////////////////////////////////////////////
 //
 // Hardcoded limitations
@@ -61,6 +77,7 @@ typedef DWORD handle;
 typedef handle fs_handle;
 typedef handle tex_handle;
 typedef handle anim_handle;
+typedef handle tbl_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
@@ -603,7 +620,13 @@ struct D2ModuleImportStrc
 	size_t		(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
 	size_t		(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
 
-	// Renderer calls
+	// TBL calls
+	tbl_handle	(*TBL_Register)(char* szTBLFile);
+	char16_t*	(*TBL_FindStringFromIndex)(tbl_handle dwIndex);
+	tbl_handle	(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
+	char16_t*	(*TBL_FindStringFromText)(char16_t* szReference);
+
+	// Renderer calls (should always be last)
 	tex_handle	(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
 	tex_handle	(*R_RegisterAnimatedDC6)(char *szFileName, char* szHandleName, int nPalette);
 	void		(*R_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
@@ -637,3 +660,12 @@ int D2_stricmpn(char* s1, char* s2, int n);
 int D2_stricmp(char* s1, char* s2);
 void D2_strncpyz(char *dest, const char *src, int destsize);
 DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);
+int D2_qstricmpn(char16_t* s1, char16_t* s2, int n);
+int D2_qstricmp(char16_t* s1, char16_t* s2);
+int D2_qstrcmpn(char16_t* s1, char16_t* s2, int n);
+int D2_qstrcmp(char16_t* s1, char16_t* s2);
+size_t D2_qstrncpyz(char16_t* dest, char16_t* src, size_t destLen);
+size_t D2_qstrlen(char16_t* s1);
+size_t D2_qmbtowc(char16_t* dest, size_t destLen, char* src);
+size_t D2_qwctomb(char* dest, size_t destLen, char16_t* src);
+DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
