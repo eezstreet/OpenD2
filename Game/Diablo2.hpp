@@ -211,7 +211,7 @@ struct TBLFontGlyph
 	WORD			wUnknown3;
 	BYTE			nImageIndex;
 	BYTE			nChar;
-	DWORD			dwUnknown4;
+	DWORD			dwUnknown4;	// NOTE: on SDL renderer this gets set to the X offset of the glyph on atlas
 };
 
 struct TBLFontFile
@@ -301,6 +301,10 @@ struct D2Renderer
 	void		(*RF_DeregisterAnimation)(anim_handle anim);
 	void		(*RF_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
 	void		(*RF_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
+	font_handle	(*RF_RegisterFont)(char* szFontName);
+	void		(*RF_DeregisterFont)(font_handle font);
+	void		(*RF_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
+		D2TextAlignment alignHorz, D2TextAlignment alignVert);
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
@@ -379,6 +383,7 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport);
 
 // TBL_Font.cpp
 tbl_handle TBLFont_RegisterFont(char* szFontName);
+TBLFontFile* TBLFont_GetPointerFromHandle(tbl_handle handle);
 
 // TBL_Text.cpp
 tbl_handle TBL_Register(char* szTblFile);

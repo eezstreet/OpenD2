@@ -22,6 +22,8 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	// Set first menu to be trademark menu
 	cl.gamestate = GS_TRADEMARK;
 	cl.pActiveMenu = new D2Menu_Trademark();
+
+	cl.fontFormal12 = trap->R_RegisterFont("fontformal12");
 }
 
 /*
@@ -116,6 +118,8 @@ static void D2Client_RunClientFrame()
 	{
 		cl.pActiveMenu->Draw();
 	}
+
+	trap->R_DrawText(cl.fontFormal12, u"Diablo II 1.10f", 20, 560, 0, 0, ALIGN_LEFT, ALIGN_TOP);
 
 	trap->R_Present();
 

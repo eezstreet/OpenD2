@@ -13,6 +13,7 @@ static DWORD numDrawCommandsThisFrame = 0;
 
 static SDLHardwareTextureCacheItem TextureCache[MAX_SDL_TEXTURECACHE_SIZE]{ 0 };
 static SDLHardwareAnimationCacheItem AnimCache[MAX_SDL_ANIMCACHE_SIZE]{ 0 };
+static SDLFontCacheItem FontCache[MAX_SDL_FONTCACHE_SIZE]{ 0 };
 
 static SDL_Texture* gpRenderTexture = nullptr;
 
@@ -148,6 +149,82 @@ static void RB_SetAnimationFrame(SDLCommand* pCmd)
 }
 
 /*
+ *	Backend - Draws a bit of text
+ */
+static void RB_DrawText(SDLCommand* pCmd)
+{
+	DWORD dwTextWidth = 0;
+	DWORD dwTextHeight = 0;
+	SDLFontCacheItem* pCache;
+	char c;
+	size_t len;
+	DWORD dwOffsetX = 0, dwOffsetY = 0;
+
+	pCache = &FontCache[pCmd->DrawText.font];
+	len = D2_qstrlen(pCmd->DrawText.text);
+
+	if (len <= 0)
+	{	// no sense in drawing a blank string
+		return;
+	}
+
+	// We need to acquire the width and height of the text that's being drawn before we can figure out what to do
+	if (pCmd->DrawText.horzAlign != ALIGN_LEFT || pCmd->DrawText.vertAlign != ALIGN_TOP)
+	{
+		for (int i = 0; i < len; i++)
+		{
+			TBLFontGlyph* pGlyph;
+
+			c = (char)pCmd->DrawText.text[i];
+			pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
+
+			dwTextWidth += pGlyph->nWidth;
+			if (pGlyph->nHeight > dwTextHeight)
+			{
+				dwTextHeight = pGlyph->nHeight;
+			}
+		}
+	}
+	
+	// Adjust font drawing based on alignment... TODO
+	if (pCmd->DrawText.horzAlign == ALIGN_CENTER)
+	{
+	}
+	else if (pCmd->DrawText.horzAlign == ALIGN_RIGHT)
+	{
+
+	}
+
+	if (pCmd->DrawText.vertAlign == ALIGN_CENTER)
+	{
+
+	}
+	else if (pCmd->DrawText.vertAlign == ALIGN_BOTTOM)
+	{
+
+	}
+
+	// Preprocess the string (transform newlines and color codes).... TODO
+
+	// Draw the string by iterating through each character
+	for (int i = 0; i < len; i++)
+	{
+		TBLFontGlyph* pGlyph;
+
+		c = (char)pCmd->DrawText.text[i];
+		pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
+		
+
+		SDL_Rect s{ pGlyph->dwUnknown4, 0, pGlyph->nWidth, pGlyph->nHeight };
+		SDL_Rect d{ pCmd->DrawText.x + dwOffsetX, pCmd->DrawText.y + dwOffsetY, pGlyph->nWidth, pGlyph->nHeight };
+
+		SDL_RenderCopy(gpRenderer, pCache->pTexture, &s, &d);
+
+		dwOffsetX += pGlyph->nWidth;
+	}
+}
+
+/*
  *	Backend - All functions enumerated
  */
 static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
@@ -156,6 +233,7 @@ static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_DrawTextureFrame,
 	RB_Animate,
 	RB_SetAnimationFrame,
+	RB_DrawText,
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -238,6 +316,7 @@ void Renderer_SDL_Shutdown()
 
 	SDL_DestroyTexture(gpRenderTexture);
 	Renderer_SDL_ClearTextureCache();
+	Renderer_SDL_DeregisterAllFonts();
 	SDL_DestroyRenderer(gpRenderer);
 }
 
@@ -616,6 +695,144 @@ void Renderer_SDL_DeregisterAnimation(anim_handle anim)
 }
 
 /*
+ *	Creates a font instance
+ */
+font_handle Renderer_SDL_RegisterFont(char* szFontName)
+{
+	font_handle handle = D2_strhash(szFontName, CACHEHANDLE_LEN, MAX_SDL_FONTCACHE_SIZE);
+	DWORD dwHashTries = 0;
+	char filename[MAX_D2PATH]{ 0 };
+	tbl_handle tbl;
+	SDL_Surface* pBigSurface;
+	SDLFontCacheItem* pCache;
+	int bpp;
+	Uint32 dwRMask, dwGMask, dwBMask, dwAMask;
+	DWORD dwXCounter = 0;
+	
+	// Find a free hash table entry
+	while (dwHashTries < MAX_SDL_FONTCACHE_SIZE)
+	{
+		if (!D2_stricmp(FontCache[handle].szHandleName, szFontName))
+		{	// we already registered this font? return it
+			return handle;
+		}
+		else if (FontCache[handle].szHandleName[0] == '\0')
+		{
+			break;
+		}
+
+		handle++;
+		handle %= MAX_SDL_FONTCACHE_SIZE;
+
+		dwHashTries++;
+	}
+
+	if (dwHashTries >= MAX_SDL_FONTCACHE_SIZE)
+	{	// maybe couldn't find it
+		return INVALID_HANDLE;
+	}
+
+	/*
+	 *	OK LISTEN UP
+	 *	For Latin fonts we only load two files (the DC6 and the TBL files themselves - TBL goes in slot 0)
+	 *
+	 *	I haven't coded support here for non-Latin fonts. If someone can find either d2delta.mpq or d2kfixup.mpq,
+	 *	I might be able to figure out how those are rendered. For now, Latin we go!
+	 */
+	
+	// Register the font TBL file
+	pCache = &FontCache[handle];
+	tbl = TBLFont_RegisterFont(szFontName);
+	pCache->pFontData[0] = TBLFont_GetPointerFromHandle(tbl);
+
+	// Load the DC6 file
+	snprintf(filename, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.dc6", GAME_CHARSET, szFontName);
+	DC6_LoadImage(filename, &pCache->dc6[0]);
+
+	// Create the big surface that we need to blit into
+	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_BGRA8888, &bpp, &dwRMask, &dwGMask, &dwBMask, &dwAMask);
+	pBigSurface = SDL_CreateRGBSurface(0, pCache->dc6[0].dwTotalWidth, pCache->dc6->dwTotalHeight, 
+		32, dwRMask, dwGMask, dwBMask, dwAMask);
+
+	// Blit each freaking sprite into the big font surface
+	// Idea: maybe do this only on the first load, and save in a more convenient format elsewhere?
+	// Seems a bit crummy to make this renderer-specific behavior though.
+	for (int i = 0; i < pCache->dc6[0].header.dwFrames; i++)
+	{
+		DWORD dwFrameWidth = pCache->dc6[0].pFrames[i].fh.dwWidth;
+		DWORD dwFrameHeight = pCache->dc6[0].pFrames[i].fh.dwHeight;
+		SDL_Surface* pTinySurface = SDL_CreateRGBSurfaceFrom(DC6_GetPixelsAtFrame(&pCache->dc6[0], 0, i, nullptr),
+			dwFrameWidth, dwFrameHeight, 8, dwFrameWidth, 0, 0, 0, 0);
+		
+		SDL_Rect dst{ dwXCounter, -(dwFrameHeight / 2), dwFrameWidth, dwFrameHeight };
+
+		// Every font uses units palette.
+		SDL_SetSurfacePalette(pTinySurface, PaletteCache[PAL_UNITS].pPal);
+
+		// Blit the actual surface after making it
+		SDL_BlitSurface(pTinySurface, nullptr, pBigSurface, &dst);
+		SDL_FreeSurface(pTinySurface);
+
+		// little hack here to make this run better later on
+		pCache->pFontData[0]->glyphs[i].dwUnknown4 = dwXCounter;
+
+		dwXCounter += dwFrameWidth;
+	}
+
+	SDL_SaveBMP(pBigSurface, "fonttest.bmp");
+
+	// Create the texture from the big surface
+	pCache->pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
+	SDL_FreeSurface(pBigSurface);
+
+	// There is no reason we should be blending a font in anything besides alpha mode
+	SDL_SetTextureBlendMode(pCache->pTexture, SDL_BLENDMODE_BLEND);
+
+	return handle;
+}
+
+/*
+ *	Deletes a font handle
+ */
+void Renderer_SDL_DeregisterFont(font_handle font)
+{
+	SDLFontCacheItem* pCache;
+
+	if (font == INVALID_HANDLE)
+	{	// not valid?
+		return;
+	}
+
+	pCache = &FontCache[font];
+
+	if (pCache->szHandleName[0] == '\0')
+	{	// never registered in the first place?
+		return;
+	}
+
+	memset(pCache->szHandleName, 0, CACHEHANDLE_LEN);
+	pCache->pFontData[0] = nullptr;
+	pCache->pFontData[1] = nullptr;
+	SDL_DestroyTexture(pCache->pTexture);
+}
+
+/*
+ *	Kills all font handles
+ */
+void Renderer_SDL_DeregisterAllFonts()
+{
+	for (int i = 0; i < MAX_SDL_FONTCACHE_SIZE; i++)
+	{
+		if (FontCache[i].pTexture != nullptr)
+		{
+			SDL_DestroyTexture(FontCache[i].pTexture);
+		}
+	}
+
+	memset(FontCache, 0, sizeof(SDLFontCacheItem) * MAX_SDL_FONTCACHE_SIZE);
+}
+
+/*
  *	Draws the texture by creating a render command.
  *	@author eezstreet
  */
@@ -744,5 +961,35 @@ void Renderer_SDL_SetAnimFrame(anim_handle anim, DWORD dwFrame)
 	pCommand->cmdType = RCMD_SETANIMFRAME;
 	pCommand->SetAnimFrame.anim = anim;
 	pCommand->SetAnimFrame.dwAnimFrame = dwFrame;
+	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Renders a bit of text
+ *	@author	eezstreet
+ */
+void Renderer_SDL_DrawText(font_handle font, char16_t* szText, int x, int y, int w, int h,
+	D2TextAlignment alignHorz, D2TextAlignment alignVert)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (font == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_DRAWTEXT;
+	pCommand->DrawText.font = font;
+	pCommand->DrawText.x = x;
+	pCommand->DrawText.y = y;
+	pCommand->DrawText.w = w;
+	pCommand->DrawText.h = h;
+	pCommand->DrawText.horzAlign = alignHorz;
+	pCommand->DrawText.vertAlign = alignVert;
+	D2_qstrncpyz(pCommand->DrawText.text, szText, MAX_TEXT_DRAW_LINE);
 	numDrawCommandsThisFrame++;
 }

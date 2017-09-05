@@ -2,9 +2,12 @@
 #include "Renderer.hpp"
 
 #define MAX_SDL_DRAWCOMMANDS_PER_FRAME	0x1000
-#define MAX_SDL_TEXTURECACHE_SIZE	0x100
-#define MAX_SDL_ANIMCACHE_SIZE	0x100
-#define MAX_SDL_ANIM_FRAMES	0x40
+#define MAX_SDL_TEXTURECACHE_SIZE		0x100
+#define MAX_SDL_ANIMCACHE_SIZE			0x100
+#define MAX_SDL_ANIM_FRAMES				0x40
+#define MAX_SDL_FONTCACHE_SIZE			0x20
+
+#define MAX_TEXT_DRAW_LINE				128
 
 /////////////////////////////////////////////////////////////////
 //
@@ -22,6 +25,7 @@ enum SDLHardwareCommandType
 	RCMD_DRAWTEXTUREFRAME,
 	RCMD_ANIMATE,
 	RCMD_SETANIMFRAME,
+	RCMD_DRAWTEXT,
 	RCMD_MAX,
 };
 
@@ -63,6 +67,18 @@ struct SDLSetAnimFrameCommand
 	DWORD dwAnimFrame;
 };
 
+struct SDLDrawTextCommand
+{
+	char16_t text[MAX_TEXT_DRAW_LINE];
+	font_handle font;
+	int x;
+	int y;
+	int w;
+	int h;
+	D2TextAlignment horzAlign;
+	D2TextAlignment vertAlign;
+};
+
 struct SDLCommand
 {
 	SDLHardwareCommandType cmdType;
@@ -73,6 +89,7 @@ struct SDLCommand
 		SDLDrawTextureFrameCommand DrawTextureFrame;
 		SDLAnimateCommand Animate;
 		SDLSetAnimFrameCommand SetAnimFrame;
+		SDLDrawTextCommand DrawText;
 	};
 };
 
@@ -105,8 +122,17 @@ struct SDLHardwareAnimationCacheItem
 	DWORD dwLastTick;
 };
 
+struct SDLFontCacheItem
+{
+	SDL_Texture* pTexture;
+	TBLFontFile* pFontData[2];
+	char szHandleName[CACHEHANDLE_LEN];
+	DC6Image dc6[2];
+};
+
 //////////////////////////////////////////////////////////////
 //
 //	Functions
 
 void Renderer_SDL_ClearTextureCache();
+void Renderer_SDL_DeregisterAllFonts();

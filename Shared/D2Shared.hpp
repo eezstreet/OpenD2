@@ -78,6 +78,7 @@ typedef handle fs_handle;
 typedef handle tex_handle;
 typedef handle anim_handle;
 typedef handle tbl_handle;
+typedef handle font_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
@@ -146,6 +147,15 @@ enum D2ColorBlending
 	BLEND_ALPHA,
 	BLEND_ADD,
 	BLEND_MOD,
+};
+
+enum D2TextAlignment
+{
+	ALIGN_LEFT = 0,		// text draws from left at x all the way to w
+	ALIGN_TOP = 0,
+	ALIGN_CENTER = 1,	// text draws centered between x and w
+	ALIGN_RIGHT = 2,	// text draws from right at w going to x
+	ALIGN_BOTTOM = 2,
 };
 
 enum D2InputCommand
@@ -639,6 +649,10 @@ struct D2ModuleImportStrc
 	void		(*R_DeregisterAnimation)(anim_handle anim);
 	void		(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
 	void		(*R_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
+	font_handle	(*R_RegisterFont)(char* szFontName);
+	void		(*R_DeregisterFont)(font_handle font);
+	void		(*R_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
+		D2TextAlignment alignHorz, D2TextAlignment alignVert);
 };
 
 struct D2ModuleExportStrc

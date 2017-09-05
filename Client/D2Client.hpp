@@ -34,6 +34,8 @@ struct D2Client
 	DWORD				dwMS;
 	DWORD				dwStartMS;
 
+	font_handle			fontFormal12;
+
 	D2Menu*				pActiveMenu;
 };
 

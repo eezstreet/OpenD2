@@ -30,3 +30,18 @@ tbl_handle TBLFont_RegisterFont(char* szFontName)
 
 	return current;
 }
+
+TBLFontFile* TBLFont_GetPointerFromHandle(tbl_handle handle)
+{
+	if (handle == INVALID_HANDLE)
+	{	// literally impossible but whatever
+		return nullptr;
+	}
+
+	if (handle >= MAX_TBL_FONTS)
+	{	// also literally impossible
+		return nullptr;
+	}
+
+	return &FontTable[handle];
+}
