@@ -22,6 +22,7 @@
 #define GAME_LOG_PATH		"Debug"
 #define GAME_LOG_HEADER		"D2"
 #define GAME_HOMEPATH		"Diablo II"
+#define	GAME_CONFIG_PATH	"D2.ini"
 
 /*
  *	The following languages are known to exist:

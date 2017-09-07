@@ -6,6 +6,15 @@
 //
 //	Structures
 
+enum D2CommandType
+{
+	CMD_BOOLEAN,
+	CMD_DWORD,
+	CMD_STRING,
+	CMD_BYTE,
+	CMD_WORD
+};
+
 /*
  *	The structure containing information about parsing commandline arguments
  *	@author	Necrolis
@@ -344,6 +353,10 @@ void FSMPQ_Init();
 void FSMPQ_Shutdown();
 D2MPQArchive* FSMPQ_AddSearchPath(char* szMPQName, char* szMPQPath);
 fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+
+// INI.cpp
+void INI_WriteConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig);
+void INI_ReadConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig);
 
 // Input.cpp
 void In_PumpEvents(OpenD2ConfigStrc* pOpenConfig);

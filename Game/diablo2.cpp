@@ -2,20 +2,10 @@
 #include <cstdlib>
 #include <string>
 
-
-enum D2CommandType
-{
-	CMD_BOOLEAN,
-	CMD_DWORD,
-	CMD_STRING,
-	CMD_BYTE,
-	CMD_WORD
-};
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define co(x)	offsetof(D2GameConfigStrc, x)
-static D2CmdArgStrc CommandArguments[] = {
+D2CmdArgStrc CommandArguments[] = {
 //	INI section		INI key			cmdline arg		type			offset				default value
 	{"VIDEO",		"WINDOW",		"w",			CMD_BOOLEAN,	co(bWindowed),		0x00},
 	{"VIDEO",		"3DFX",			"3dfx",			CMD_BOOLEAN,	co(b3DFX),			0x00},
@@ -68,7 +58,7 @@ static D2CmdArgStrc CommandArguments[] = {
 	{"DEBUG",		"QuEsTs",		"questall",		CMD_BOOLEAN,	co(bQuests),		0x00},
 	{"NETWORK",		"COMINT",		"comint",		CMD_DWORD,		co(pInterface),		0x00},
 	{"NETWORK",		"SKIPTOBNET",	"skiptobnet",	CMD_BOOLEAN,	co(bSkipToBNet),	0x00},
-	{"NETWORK",		"OEPNC",		"openc",		CMD_BOOLEAN,	co(bOpenC),			0x00},
+	{"NETWORK",		"OPENC",		"openc",		CMD_BOOLEAN,	co(bOpenC),			0x00},
 	{"FILEIO",		"NOCOMPRESS",	"nocompress",	CMD_BOOLEAN,	co(bNoCompress),	0x00},
 	{"TXT",			"TXT",			"txt",			CMD_BOOLEAN,	co(bTXT),			0x00},
 	{"BUILD",		"BUILD",		"build",		CMD_BOOLEAN,	co(bBuild),			0x00},
@@ -79,7 +69,7 @@ static D2CmdArgStrc CommandArguments[] = {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define co(x)	offsetof(OpenD2ConfigStrc, x)
-static D2CmdArgStrc OpenD2CommandArguments[] = {
+D2CmdArgStrc OpenD2CommandArguments[] = {
 	{"FILEIO",		"BASEPATH",		"basepath",		CMD_STRING,		co(szBasePath),		MAX_D2PATH_ABSOLUTE},
 	{"FILEIO",		"HOMEPATH",		"homepath",		CMD_STRING,		co(szHomePath),		MAX_D2PATH_ABSOLUTE},
 	{"FILEIO",		"MODPATH",		"modpath",		CMD_STRING,		co(szModPath),		MAX_D2PATH_ABSOLUTE},
@@ -338,6 +328,39 @@ static void CleanupAllModules()
 }
 
 /*
+ *	Write all game config options to D2.ini
+ */
+static void WriteGameConfig(D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig)
+{
+	fs_handle f;
+
+	FS_Open(GAME_CONFIG_PATH, &f, FS_WRITE);
+	Log_ErrorAssert(f != INVALID_HANDLE);
+
+	INI_WriteConfig(&f, pGameConfig, pOpenConfig);
+
+	FS_CloseFile(f);
+}
+
+/*
+ *	Read all game config options from D2.ini
+ */
+static void ReadGameConfig(D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig)
+{
+	fs_handle f;
+
+	FS_Open(GAME_CONFIG_PATH, &f, FS_READ);
+	if (f == INVALID_HANDLE)
+	{	// the config file doesn't exist. WE NEED TO COPY FROM THE REGISTRY!
+		return;
+	}
+
+	INI_ReadConfig(&f, pGameConfig, pOpenConfig);
+
+	FS_CloseFile(f);
+}
+
+/*
  *	Initialize the game (from main entrypoint)
  */
 OpenD2Modules currentModule = MODULE_CLIENT;
@@ -353,6 +376,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS_Init(&openD2Config);
 	Log_InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
 	FS_LogSearchPaths();
+	ReadGameConfig(&config, &openD2Config);
 	TBL_Init();
 
 	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
@@ -399,6 +423,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	D2Win_ShutdownSDL();	// renderer also gets shut down here
 
+	WriteGameConfig(&config, &openD2Config);
 	TBL_Cleanup();
 	Log_Shutdown();
 	FS_Shutdown();
