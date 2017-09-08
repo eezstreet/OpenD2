@@ -103,6 +103,12 @@ static void D2Client_RunClientFrame()
 {
 	cl.dwMS = trap->Milliseconds();
 
+	// Clear out menu signals
+	if (cl.pActiveMenu)
+	{
+		cl.pActiveMenu->RefreshInputFrame();
+	}
+
 	// Pipe in input events
 	D2Client_HandleInput();
 
@@ -113,6 +119,12 @@ static void D2Client_RunClientFrame()
 		delete cl.pActiveMenu;
 		cl.pActiveMenu = new D2Menu_Main();
 		cl.gamestate = GS_MAINMENU;
+	}
+
+	// Process any waiting signals from the menus
+	if (cl.pActiveMenu && cl.pActiveMenu->WaitingSignal())
+	{
+		D2Menu::ProcessMenuSignals(cl.pActiveMenu);
 	}
 
 	// Draw stuff

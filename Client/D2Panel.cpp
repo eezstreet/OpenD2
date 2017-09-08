@@ -1,3 +1,4 @@
+#include "D2Menu.hpp"
 #include "D2Panel.hpp"
 
 /*
@@ -172,6 +173,14 @@ void D2Panel::DrawAllWidgets()
 		pCurrent->Draw();
 		pCurrent = pCurrent->m_pNextVisibleWidget;
 	}
+}
+
+/*
+ *	This panel received a notification that a widget wants to send a signal. Send it!
+ */
+void D2Panel::NotifySignalReady(MenuSignal pSignal, D2Widget* pCaller)
+{
+	m_pOwner->NotifySignalReady(pSignal, this, pCaller);
 }
 
 /*

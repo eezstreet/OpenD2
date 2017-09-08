@@ -4,7 +4,7 @@
 /*
  *	Main constructor for the abstract D2Menu class.
  */
-D2Menu::D2Menu() : m_panels(nullptr), m_visiblePanels(nullptr)
+D2Menu::D2Menu() : m_panels(nullptr), m_visiblePanels(nullptr), bSignalReady(false)
 {
 
 }
@@ -188,6 +188,43 @@ void D2Menu::DrawAllPanels()
 		pCurrent->Draw();
 		pCurrent = pCurrent->m_pNextVisible;
 	}
+}
+
+/*
+ *	Notify the menu that there is a signal waiting to be processed.
+ */
+void D2Menu::NotifySignalReady(MenuSignal pSignal, D2Panel* pCallingPanel, D2Widget* pCallingWidget)
+{
+	bSignalReady = true;
+	m_pWaitingSignal = pSignal;
+	m_pSignalCallingPanel = pCallingPanel;
+	m_pSignalCallingWidget = pCallingWidget;
+}
+
+/*
+ *	Get any signal on this menu that's waiting to be executed.
+ *	This should be performed every frame on the active menu.
+ */
+MenuSignal D2Menu::GetWaitingSignal(D2Panel** pCallingPanel, D2Widget** pCallingWidget)
+{
+	*pCallingPanel = m_pSignalCallingPanel;
+	*pCallingWidget = m_pSignalCallingWidget;
+	return m_pWaitingSignal;
+}
+
+/*
+ *	Handle all waiting signals on the menu.
+ *	NOTE: static method
+ */
+void D2Menu::ProcessMenuSignals(D2Menu* pMenu)
+{
+	D2Panel* pCallingPanel = nullptr;
+	D2Widget* pCallingWidget = nullptr;
+	MenuSignal signal;
+
+	signal = pMenu->GetWaitingSignal(&pCallingPanel, &pCallingWidget);
+
+	signal(pCallingPanel, pCallingWidget);
 }
 
 /*

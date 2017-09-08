@@ -44,6 +44,20 @@ D2Panel_Main::D2Panel_Main() : D2Panel()
 	// Closed Battle.net is not allowed in OpenD2.
 	m_battleNetButton->Disable();
 	m_gatewayButton->Disable();
+
+	// Attach identifiers to literally everything on this menu
+	m_singleplayerButton->AttachIdentifier("b_sp");
+	m_multiplayerButton->AttachIdentifier("b_mul");
+	m_creditsButton->AttachIdentifier("b_cred");
+	m_cinematicsButton->AttachIdentifier("b_cin");
+	m_exitButton->AttachIdentifier("b_exit");
+
+	// Attach signals to buttons
+	m_singleplayerButton->AttachClickSignal(PanelSignal);
+	m_multiplayerButton->AttachClickSignal(PanelSignal);
+	m_creditsButton->AttachClickSignal(PanelSignal);
+	m_cinematicsButton->AttachClickSignal(PanelSignal);
+	m_exitButton->AttachClickSignal(PanelSignal);
 }
 
 /*
@@ -66,4 +80,39 @@ D2Panel_Main::~D2Panel_Main()
 void D2Panel_Main::Draw()
 {
 	DrawAllWidgets();
+}
+
+/*
+ *	The main signal handler for this panel.
+ *	Whenever a button is clicked on the main menu, this function gets called globally
+ *	NOTE: static method
+ */
+void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
+{
+	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
+	{	// singleplayer button got clicked
+		return;
+	}
+	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_mul"))
+	{	// multiplayer button got clicked
+		return;
+	}
+	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_cred"))
+	{	// credits button got clicked
+		return;
+	}
+	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_cin"))
+	{	// cinematics button got clicked
+		return;
+	}
+	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_exit"))
+	{	// exit button got clicked
+		cl.bKillGame = true;
+		return;
+	}
+	else
+	{	// ? not sure how else this got called
+		trap->Warning(__FILE__, __LINE__,
+			"D2Panel_Main::PanelSignal got called but the widget identifier was not understood.");
+	}
 }

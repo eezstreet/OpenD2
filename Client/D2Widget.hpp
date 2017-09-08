@@ -11,6 +11,9 @@ protected:
 
 	bool m_bVisible;
 
+	char identifier[64];
+	bool bHasIdentifier;
+
 private:
 	D2Widget* m_pNextWidget;
 	D2Widget* m_pNextVisibleWidget;
@@ -26,6 +29,10 @@ public:
 
 	D2Widget* GetNextWidget() { return m_pNextWidget; }
 	D2Widget* GetNextVisible() { return m_pNextVisibleWidget; }
+
+	void AttachIdentifier(char* szIdentifier);
+	void RemoveIdentifier();
+	char* GetIdentifier();
 
 	virtual void Draw() = 0;
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY) = 0;

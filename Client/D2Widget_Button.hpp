@@ -7,8 +7,10 @@ private:
 	bool bDisabled;
 	bool bDown;
 	bool bHasText;
+	bool bHasClickSignal;
 
 	char16_t buttonTextBuffer[64]{ 0 };
+	MenuSignal clickSignal;
 	
 	tex_handle texture_up;
 	tex_handle texture_down;
@@ -25,6 +27,9 @@ public:
 
 	void Disable() { bDisabled = true; }
 	void Enable() { bDisabled = false; }
+
+	void AttachClickSignal(MenuSignal pClickSignal);
+	void RemoveClickSignal() { bHasClickSignal = false; }
 
 	virtual void Draw();
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);

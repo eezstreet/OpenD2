@@ -45,6 +45,9 @@ public:
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual void Draw() = 0;
 
+	// Signals
+	void NotifySignalReady(MenuSignal pSignal, D2Widget* pCallingWidget);
+
 	int x, y;
 
 	friend class D2Menu;

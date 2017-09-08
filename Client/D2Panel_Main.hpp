@@ -18,6 +18,8 @@ private:
 	D2Widget_Button* m_cinematicsButton;
 	D2Widget_Button* m_exitButton;
 
+	static void PanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget);
+
 public:
 	D2Panel_Main();
 	~D2Panel_Main();

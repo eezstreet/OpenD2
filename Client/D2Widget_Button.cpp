@@ -25,6 +25,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 
 	bDisabled = false;
 	bDown = false;
+	bHasClickSignal = false;
 }
 
 /*
@@ -86,6 +87,15 @@ void D2Widget_Button::DetachText()
 }
 
 /*
+ *	Adds a click signal to this button
+ */
+void D2Widget_Button::AttachClickSignal(MenuSignal pClickSignal)
+{
+	bHasClickSignal = true;
+	clickSignal = pClickSignal;
+}
+
+/*
  *	Handles a mouse down
  */
 bool D2Widget_Button::HandleMouseDown(DWORD dwX, DWORD dwY)
@@ -123,9 +133,12 @@ bool D2Widget_Button::HandleMouseClick(DWORD dwX, DWORD dwY)
 
 	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
 	{
-		// TODO: handle the actual button click here
 		if (bWasDown)
 		{
+			if (bHasClickSignal)
+			{
+				m_pOwner->NotifySignalReady(clickSignal, this);
+			}
 			return true;
 		}
 	}

@@ -18,6 +18,11 @@ protected:
 
 	void DrawAllPanels();
 
+	bool bSignalReady;
+	MenuSignal m_pWaitingSignal;
+	D2Panel* m_pSignalCallingPanel;
+	D2Widget* m_pSignalCallingWidget;
+
 public:
 	// Panel management
 	void AddPanel(D2Panel* pPanel, bool bVisible = true);
@@ -29,6 +34,13 @@ public:
 	bool HandleMouseDown(DWORD dwX, DWORD dwY);
 	bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual void Draw() = 0;
+
+	void RefreshInputFrame() { bSignalReady = false; }
+	void NotifySignalReady(MenuSignal signal, D2Panel* pCallingPanel, D2Widget* pCallingWidget);
+	bool WaitingSignal() { return bSignalReady; }
+	MenuSignal GetWaitingSignal(D2Panel** pCallingPanel, D2Widget** pCallingWidget);
+
+	static void ProcessMenuSignals(D2Menu* pMenu);
 
 	D2Menu();
 	~D2Menu();

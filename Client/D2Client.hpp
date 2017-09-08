@@ -11,6 +11,13 @@ class D2Widget;
 
 /////////////////////////////////////////////////
 //
+//	Types
+
+// Menu signals can be passed to the 
+typedef void (*MenuSignal)(D2Panel* pCallingPanel, D2Widget* pCallingWidget);
+
+/////////////////////////////////////////////////
+//
 //	Data structures
 
 // What "gamestate" we are in
