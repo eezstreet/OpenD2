@@ -34,6 +34,7 @@ struct D2Client
 	DWORD				dwMS;
 	DWORD				dwStartMS;
 
+	font_handle			fontExocet10;
 	font_handle			font16;
 	font_handle			fontFormal12;
 

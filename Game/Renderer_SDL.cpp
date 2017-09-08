@@ -663,6 +663,27 @@ void Renderer_SDL_SetTextureBlendMode(tex_handle texture, D2ColorBlending blendM
 }
 
 /*
+ *	Gets stats about a texture
+ */
+void Renderer_SDL_PollTexture(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight)
+{
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	if (dwWidth != nullptr)
+	{
+		*dwWidth = TextureCache[texture].dwWidth;
+	}
+	
+	if (dwHeight != nullptr)
+	{
+		*dwHeight = TextureCache[texture].dwHeight;
+	}
+}
+
+/*
  *	Creates an animation at the specified hash location
  */
 static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, char* szHandle, DWORD dwStartingFrame)

@@ -25,6 +25,7 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 
 	cl.font16 = trap->R_RegisterFont("font16");
 	cl.fontFormal12 = trap->R_RegisterFont("fontformal12");
+	cl.fontExocet10 = trap->R_RegisterFont("fontExocet10");
 }
 
 /*
@@ -119,8 +120,6 @@ static void D2Client_RunClientFrame()
 	{
 		cl.pActiveMenu->Draw();
 	}
-
-	trap->R_DrawText(cl.font16, u"Diablo II 1.10f", 20, 560, 0, 0, ALIGN_LEFT, ALIGN_TOP);
 
 	trap->R_Present();
 

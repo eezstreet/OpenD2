@@ -15,9 +15,9 @@ void D2Panel::DrawWidgets()
 }
 
 /*
-*	Add a widget to the panel
-*/
-void D2Panel::AddWidget(D2Widget* pWidget)
+ *	Add a widget to the panel
+ */
+void D2Panel::AddWidget(D2Widget* pWidget, bool bShow)
 {
 	D2Widget* pCurrent;
 
@@ -31,7 +31,7 @@ void D2Panel::AddWidget(D2Widget* pWidget)
 	pWidget->x += x;
 	pWidget->y += y;
 
-	// Add it to the list of panels
+	// Add it to the list of widgets
 	if (m_widgets == nullptr)
 	{
 		m_widgets = pWidget;
@@ -45,11 +45,16 @@ void D2Panel::AddWidget(D2Widget* pWidget)
 		}
 		pCurrent->m_pNextWidget = pWidget;
 	}
+
+	if (bShow)
+	{
+		ShowWidget(pWidget);
+	}
 }
 
 /*
-*	Show a specific panel.
-*/
+ *	Show a specific widget.
+ */
 void D2Panel::ShowWidget(D2Widget* pWidget)
 {
 	// Don't show it if it's already visible, it might fire off unwanted events
@@ -61,14 +66,14 @@ void D2Panel::ShowWidget(D2Widget* pWidget)
 	// Show it, firing off its events
 	pWidget->Show();
 
-	// Most recently shown panel is shown on the bottom.
+	// Most recently shown widget is shown on the bottom.
 	pWidget->m_pNextVisibleWidget = m_visibleWidgets;
 	m_visibleWidgets = pWidget;
 }
 
 /*
-*	Hides a specific panel
-*/
+ *	Hides a specific widget
+ */
 void D2Panel::HideWidget(D2Widget* pWidget)
 {
 	D2Widget* pCurrent;
@@ -101,8 +106,8 @@ void D2Panel::HideWidget(D2Widget* pWidget)
 }
 
 /*
-*	Show all of the panels.
-*/
+ *	Show all of the widgets.
+ */
 void D2Panel::ShowAllWidgets()
 {
 	D2Widget* pCurrent;
@@ -125,8 +130,8 @@ void D2Panel::ShowAllWidgets()
 }
 
 /*
-*	Hides all of the panels.
-*/
+ *	Hides all of the widgets.
+ */
 void D2Panel::HideAllWidgets()
 {
 	D2Widget* pCurrent;
@@ -152,4 +157,57 @@ void D2Panel::HideAllWidgets()
 		pLast->m_pNextVisibleWidget = nullptr;
 	}
 	m_visibleWidgets = nullptr;
+}
+
+/*
+ *	Draws all of the widgets
+ */
+void D2Panel::DrawAllWidgets()
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		pCurrent->Draw();
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+}
+
+/*
+ *	Handle a mouse down in the vicinity
+ */
+bool D2Panel::HandleMouseDown(DWORD dwX, DWORD dwY)
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->HandleMouseDown(dwX, dwY))
+		{
+			return true;
+		}
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+	return false;
+}
+
+/*
+ *	Handle a mouse click in the vicinity
+ */
+bool D2Panel::HandleMouseClicked(DWORD dwX, DWORD dwY)
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->HandleMouseClick(dwX, dwY))
+		{
+			return true;
+		}
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+	return false;
 }

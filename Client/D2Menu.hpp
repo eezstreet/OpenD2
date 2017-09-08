@@ -20,7 +20,7 @@ protected:
 
 public:
 	// Panel management
-	void AddPanel(D2Panel* pPanel);
+	void AddPanel(D2Panel* pPanel, bool bVisible = true);
 	void HidePanel(D2Panel* pPanel);
 	void ShowPanel(D2Panel* pPanel);
 	void HideAllPanels();

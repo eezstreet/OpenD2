@@ -251,7 +251,7 @@ void DC6_StitchStats(DC6Image* pImage,
 	*pWidth = 0;
 	*pHeight = 0;
 
-	for (int i = dwStart; i < dwEnd; i++)
+	for (int i = dwStart; i <= dwEnd; i++)
 	{
 		pFrame = &pImage->pFrames[i];
 

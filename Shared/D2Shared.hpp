@@ -646,6 +646,7 @@ struct D2ModuleImportStrc
 	void		(*R_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
 	void		(*R_Present)();
 	void		(*R_DeregisterTexture)(char* szTexName, tex_handle texture);
+	void		(*R_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
 	anim_handle	(*R_RegisterAnimation)(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
 	void		(*R_DeregisterAnimation)(anim_handle anim);
 	void		(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);

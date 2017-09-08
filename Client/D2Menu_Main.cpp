@@ -32,6 +32,9 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 	backgroundTexture =
 		trap->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\gameselectscreen.dc6", "mainbg", 0, 11, PAL_UNITS);
 #endif
+
+	pMainPanel = new D2Panel_Main();
+	AddPanel(pMainPanel);
 }
 
 /*
@@ -41,6 +44,7 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 D2Menu_Main::~D2Menu_Main()
 {
 	// We don't kill the game select background, because we might need it again later
+	delete pMainPanel;
 }
 
 /*
@@ -57,6 +61,10 @@ void D2Menu_Main::Draw()
 	trap->R_Animate(blackRightAnim, 25, 400, -7);
 	trap->R_Animate(flameLeftAnim, 25, 400, -50);
 	trap->R_Animate(flameRightAnim, 25, 400, -57);
+
+	// Draw the version number
+	trap->R_ColorModFont(cl.font16, 255, 255, 255);
+	trap->R_DrawText(cl.font16, u"Diablo II 1.10f", 20, 560, 0, 0, ALIGN_LEFT, ALIGN_TOP);
 
 	DrawAllPanels();
 }

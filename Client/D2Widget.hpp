@@ -3,20 +3,22 @@
 
 class D2Widget
 {
-private:
+protected:
 	// relative to panel
 	D2Panel* m_pOwner;
 	int x, y;
 	int w, h;
 
+	bool m_bVisible;
+
+private:
 	D2Widget* m_pNextWidget;
 	D2Widget* m_pNextVisibleWidget;
-
-	bool m_bVisible;
 
 public:
 	D2Widget(int x, int y, int w, int h);
 	~D2Widget();
+	D2Widget();
 
 	bool IsVisible() { return m_bVisible; }
 	void Show() { m_bVisible = true; }

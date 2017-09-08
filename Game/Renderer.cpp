@@ -27,6 +27,7 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_DrawTextureFrame,
 		Renderer_SDL_DeregisterTexture,
 		Renderer_SDL_SetTextureBlendMode,
+		Renderer_SDL_PollTexture,
 		Renderer_SDL_RegisterAnimation,
 		Renderer_SDL_DeregisterAnimation,
 		Renderer_SDL_Animate,
@@ -84,6 +85,7 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_SetTextureBlendMode = RenderTarget->RF_SetTextureBlendMode;
 	pExport->R_Present = RenderTarget->RF_Present;
 	pExport->R_DeregisterTexture = RenderTarget->RF_DeregisterTexture;
+	pExport->R_PollTexture = RenderTarget->RF_PollTexture;
 	pExport->R_RegisterAnimation = RenderTarget->RF_RegisterAnimation;
 	pExport->R_DeregisterAnimation = RenderTarget->RF_DeregisterAnimation;
 	pExport->R_Animate = RenderTarget->RF_Animate;

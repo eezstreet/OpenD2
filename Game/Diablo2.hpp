@@ -306,14 +306,18 @@ struct D2Renderer
 	void		(*RF_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
 	void		(*RF_DeregisterTexture)(char* handleName, tex_handle texture);
 	void		(*RF_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
+	void		(*RF_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
+
 	anim_handle	(*RF_RegisterAnimation)(tex_handle texture, char* szHandleName, DWORD dwStartingFrame);
 	void		(*RF_DeregisterAnimation)(anim_handle anim);
 	void		(*RF_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
 	void		(*RF_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
+
 	font_handle	(*RF_RegisterFont)(char* szFontName);
 	void		(*RF_DeregisterFont)(font_handle font);
 	void		(*RF_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
 		D2TextAlignment alignHorz, D2TextAlignment alignVert);
+
 	void		(*RF_AlphaModTexture)(tex_handle texture, int nAlpha);
 	void		(*RF_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
 	void		(*RF_AlphaModFont)(font_handle font, int nAlpha);

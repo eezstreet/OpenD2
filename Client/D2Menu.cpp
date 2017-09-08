@@ -35,7 +35,7 @@ D2Menu::~D2Menu()
 /*
  *	Add a panel to the menu
  */
-void D2Menu::AddPanel(D2Panel* pPanel)
+void D2Menu::AddPanel(D2Panel* pPanel, bool bVisible)
 {
 	D2Panel* pCurrent;
 
@@ -61,6 +61,11 @@ void D2Menu::AddPanel(D2Panel* pPanel)
 			pCurrent = pCurrent->GetNext();
 		}
 		pCurrent->m_pNextPanel = pPanel;
+	}
+
+	if (bVisible)
+	{
+		ShowPanel(pPanel);
 	}
 }
 
