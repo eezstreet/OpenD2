@@ -159,6 +159,7 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 
 	// set us up to not have anything highlighted
 	m_nHighlightedClass = D2CLASS_MAX;
+	m_nSelectedClass = D2CLASS_MAX;
 }
 
 /*
@@ -201,21 +202,46 @@ void D2Menu_CharCreate::Draw()
 	trap->R_DrawText(cl.font30, szChooseClassStr, 0, 25, 800, 600, ALIGN_CENTER, ALIGN_TOP);
 
 	// draw the characters in each of their position
+	m_nHighlightedClass = D2CLASS_MAX;
 	for (int i = 0; i < D2CLASS_MAX; i++)
 	{
-		if (trap->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
-			cl.dwMouseX, cl.dwMouseY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
-		{	// mouse is over this thing
-			m_nHighlightedClass = i;
-			CreateData[i].status = CCA_IdleBackSel;
+		if (CreateData[i].status == CCA_IdleBack || CreateData[i].status == CCA_IdleBackSel)
+		{
+			if (trap->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
+				cl.dwMouseX, cl.dwMouseY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
+			{	// mouse is over this thing
+				m_nHighlightedClass = i;
+				if (CreateData[i].status == CCA_IdleBack)
+				{
+					// set new status frame to be the same as current
+					trap->R_SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel],
+						trap->R_GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack]));
+				}
+				CreateData[i].status = CCA_IdleBackSel;
+			}
+			else
+			{
+				if (CreateData[i].status == CCA_IdleBackSel)
+				{
+					// set new status frame to be the same as current
+					trap->R_SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack],
+						trap->R_GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel]));
+				}
+				CreateData[i].status = CCA_IdleBack;
+			}
+			trap->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
+				8, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos);
 		}
 		else
 		{
-			CreateData[i].status = CCA_IdleBack;
+			trap->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
+				25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos);
 		}
+	}
 
-		trap->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status], 
-			8, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos);
+	if (m_nSelectedClass != D2CLASS_MAX && m_nHighlightedClass == D2CLASS_MAX)
+	{	// if we have selected a class and have none highlighted, use that one for its text
+		m_nHighlightedClass = m_nSelectedClass;
 	}
 
 	// draw current class text
@@ -232,4 +258,40 @@ void D2Menu_CharCreate::Draw()
 
 	// draw fire
 	trap->R_Animate(fireAnim, 25, 380, 150);
+}
+
+/*
+ *	Handle mouse down event on the character creation screen
+ */
+bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
+{
+	// check to see if we clicked on any of the characters
+	for (int i = 0; i < D2CLASS_MAX; i++)
+	{
+		if (m_nSelectedClass == i)
+		{	// selected class ALWAYS uses alpha in per pixel collision
+			if (trap->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
+				dwX, dwY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, false))
+			{
+				// we clicked inside its bounds
+				CreateData[m_nSelectedClass].status = CCA_FrontToBack;
+				return true;
+			}
+		}
+		else
+		{
+			if (trap->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
+				dwX, dwY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
+			{	// we selected a class
+				if (m_nSelectedClass != D2CLASS_MAX)
+				{	// tell the other class to go to transition
+					CreateData[m_nSelectedClass].status = CCA_FrontToBack;
+				}
+				CreateData[i].status = CCA_BackToFront;
+				m_nSelectedClass = i;
+				return true;
+			}
+		}
+	}
+	return D2Menu::HandleMouseClicked(dwX, dwY);
 }

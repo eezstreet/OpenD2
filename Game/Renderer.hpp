@@ -36,6 +36,7 @@ anim_handle Renderer_SDL_RegisterAnimation(tex_handle texture, char* szHandle, D
 void Renderer_SDL_DeregisterAnimation(anim_handle anim);
 void Renderer_SDL_Animate(anim_handle anim, DWORD dwFramerate, int x, int y);
 void Renderer_SDL_SetAnimFrame(anim_handle anim, DWORD dwFrame);
+DWORD Renderer_SDL_GetAnimFrame(anim_handle anim);
 font_handle Renderer_SDL_RegisterFont(char* szFontName);
 void Renderer_SDL_DeregisterFont(font_handle font);
 void Renderer_SDL_DrawText(font_handle font, char16_t* szText, int x, int y, int w, int h,

@@ -31,8 +31,8 @@ public:
 	void HideAllPanels();
 	void ShowAllPanels();
 
-	bool HandleMouseDown(DWORD dwX, DWORD dwY);
-	bool HandleMouseClicked(DWORD dwX, DWORD dwY);
+	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
+	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual void Draw() = 0;
 
 	void RefreshInputFrame() { bSignalReady = false; }

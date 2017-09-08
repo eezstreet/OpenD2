@@ -655,6 +655,7 @@ struct D2ModuleImportStrc
 	void		(*R_DeregisterAnimation)(anim_handle anim);
 	void		(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
 	void		(*R_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
+	DWORD		(*R_GetAnimFrame)(anim_handle anim);
 	font_handle	(*R_RegisterFont)(char* szFontName);
 	void		(*R_DeregisterFont)(font_handle font);
 	void		(*R_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,

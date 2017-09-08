@@ -146,6 +146,7 @@ static void RB_Animate(SDLCommand* pCmd)
 static void RB_SetAnimationFrame(SDLCommand* pCmd)
 {
 	AnimCache[pCmd->SetAnimFrame.anim].dwFrame = pCmd->SetAnimFrame.dwAnimFrame;
+	AnimCache[pCmd->SetAnimFrame.anim].dwLastTick = SDL_GetTicks();
 }
 
 /*
@@ -929,6 +930,19 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 	SDL_SetTextureBlendMode(pCache->pTexture, SDL_BLENDMODE_BLEND);
 
 	return handle;
+}
+
+/*
+ *	Gets the frame that an animation is on
+ */
+DWORD Renderer_SDL_GetAnimFrame(anim_handle anim)
+{
+	if (anim == INVALID_HANDLE)
+	{
+		return 0;
+	}
+
+	return AnimCache[anim].dwFrame;
 }
 
 /*

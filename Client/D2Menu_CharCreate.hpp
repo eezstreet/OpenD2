@@ -36,6 +36,7 @@ private:
 	anim_handle fireAnim;
 
 	int m_nHighlightedClass;
+	int m_nSelectedClass;
 
 	D2Panel_CharCreate_Static* pStaticPanel;
 	D2Panel_CharCreate_Dynamic* pDynamicPanel;
@@ -48,4 +49,5 @@ public:
 	~D2Menu_CharCreate();
 
 	virtual void Draw();
+	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 };
