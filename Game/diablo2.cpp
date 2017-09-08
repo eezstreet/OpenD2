@@ -98,6 +98,8 @@ static D2ModuleImportStrc exports = {
 	FS_CloseFile,
 	FS_Seek,
 	FS_Tell,
+	FS_ListFilesInDirectory,
+	FS_FreeFileList,
 
 	In_PumpEvents,
 

@@ -196,6 +196,32 @@ void Sys_CreateDirectory(char* szPath)
 }
 
 /*
+ *	Build a list of files with an extension filter.
+ *	If the extension filter is *.*, there is essentially no filter.
+ *	@author	eezstreet
+ */
+void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, int* nFiles, char** szList)
+{
+	char szFullPath[MAX_D2PATH_ABSOLUTE]{ 0 };
+	HANDLE hFile;
+	WIN32_FIND_DATA findData;
+	
+	snprintf(szFullPath, MAX_D2PATH_ABSOLUTE, "%s%s", szPath, szExtensionFilter);
+
+	hFile = FindFirstFile(szFullPath, &findData);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		return;
+	}
+
+	do
+	{
+		D2_strncpyz(szList[*nFiles], findData.cFileName, MAX_D2PATH);
+		*nFiles = *nFiles + 1;
+	} while (FindNextFile(hFile, &findData) == TRUE);
+}
+
+/*
  *	Gets the API of a module
  *	Note: This doesn't validate the API version etc, we need to do this manually afterward.
  */

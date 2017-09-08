@@ -104,7 +104,7 @@ static void D2Client_RunClientFrame()
 	cl.dwMS = trap->Milliseconds();
 
 	// Clear out menu signals
-	if (cl.pActiveMenu)
+	if (cl.pActiveMenu != nullptr)
 	{
 		cl.pActiveMenu->RefreshInputFrame();
 	}
@@ -122,7 +122,7 @@ static void D2Client_RunClientFrame()
 	}
 
 	// Process any waiting signals from the menus
-	if (cl.pActiveMenu && cl.pActiveMenu->WaitingSignal())
+	if (cl.pActiveMenu != nullptr && cl.pActiveMenu->WaitingSignal())
 	{
 		D2Menu::ProcessMenuSignals(cl.pActiveMenu);
 	}

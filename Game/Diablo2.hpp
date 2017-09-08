@@ -355,6 +355,8 @@ void FS_CloseFile(fs_handle f);
 void FS_Seek(fs_handle f, size_t offset, int nSeekType);
 size_t FS_Tell(fs_handle f);
 bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen);
+char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles);
+void FS_FreeFileList(char** pszFileList);
 
 // FileSystem_MPQ.cpp
 void FSMPQ_Init();
@@ -395,6 +397,7 @@ void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
 void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
 void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
 void Sys_CreateDirectory(char* szPath);
+void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, int* nFiles, char** szList);
 D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
 void Sys_CloseModule(OpenD2Modules nModule);
 

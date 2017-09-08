@@ -2,6 +2,30 @@
 #include "D2Panel.hpp"
 
 /*
+ *	Deletes the panel and all of its widgets
+ */
+D2Panel::~D2Panel()
+{
+	D2Widget* pCurrent = m_widgets;
+	D2Widget* pPrev = nullptr;
+
+	while (pCurrent != nullptr)
+	{
+		if (pPrev != nullptr)
+		{
+			delete pPrev;
+		}
+		pPrev = pCurrent;
+		pCurrent = pCurrent->m_pNextWidget;
+	}
+	
+	if (pPrev != nullptr)
+	{
+		delete pPrev;
+	}
+}
+
+/*
  *	Draws all of the widgets for this panel.
  */
 void D2Panel::DrawWidgets()

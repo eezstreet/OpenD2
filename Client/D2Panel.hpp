@@ -50,5 +50,7 @@ public:
 
 	int x, y;
 
+	~D2Panel();
+
 	friend class D2Menu;
 };

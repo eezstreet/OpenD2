@@ -1,4 +1,5 @@
 #include "D2Panel_Main.hpp"
+#include "D2Menu_CharCreate.hpp"
 
 #define TBLTEXT_SINGLEPLAYER	5106
 #define TBLTEXT_BATTLENET		5107
@@ -83,6 +84,25 @@ void D2Panel_Main::Draw()
 }
 
 /*
+ *	Tries to advance to the character select screen.
+ *	If there's no save files present, it advances to the character creation screen instead.
+ */
+static void D2PanelMain_AdvanceToCharSelect()
+{
+	int nNumFiles = 0;
+	char** szFileList = trap->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
+	if (nNumFiles <= 0)
+	{
+		// there's no need to free the list if no files are found (rollsafe.jpg)
+		delete cl.pActiveMenu;
+		cl.pActiveMenu = new D2Menu_CharCreate();
+		return;
+	}
+
+	trap->FS_FreeFileList(szFileList);
+}
+
+/*
  *	The main signal handler for this panel.
  *	Whenever a button is clicked on the main menu, this function gets called globally
  *	NOTE: static method
@@ -91,6 +111,7 @@ void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
 	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
 	{	// singleplayer button got clicked
+		D2PanelMain_AdvanceToCharSelect();
 		return;
 	}
 	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_mul"))

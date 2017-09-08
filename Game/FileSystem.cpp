@@ -455,3 +455,49 @@ bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen)
 	}
 	return false;	// didn't find it
 }
+
+/*
+ *	Gets a list of files available in a directory.
+ *	The file list must be freed after use with FS_FreeFileList
+ *	The extension filter may use an asterisk (*) as a wild card (this is handled by the OS-specific code)
+ *	@author	eezstreet
+ */
+char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles)
+{
+	char szFiles[MAX_FILE_LIST_SIZE][MAX_D2PATH]{ 0 };
+	char** szOutFiles;
+	int i;
+	char szCurrentSearchPath[MAX_D2PATH_ABSOLUTE]{ 0 };
+
+	FS_SanitizeFilePath(szDirectory);
+
+	// cycle through all of the search paths
+	for (i = 0; i < FS_MAXPATH; i++)
+	{
+		snprintf(szCurrentSearchPath, MAX_D2PATH_ABSOLUTE, "%s%s", pszPaths[i], szDirectory);
+		Sys_ListFilesInDirectory(szCurrentSearchPath, szExtensionFilter, nFiles, (char**)szFiles);
+	}
+
+	if (*nFiles == 0)
+	{
+		return nullptr;
+	}
+
+	// copy the temporary files into the output files
+	szOutFiles = (char**)malloc(MAX_D2PATH * (*nFiles));
+	for (i = 0; i < *nFiles; i++)
+	{
+		D2_strncpyz(szOutFiles[i], szFiles[i], MAX_D2PATH);
+	}
+
+	return szOutFiles;
+}
+
+/*
+ *	Frees a file list. Don't forget to do this once you're done with a file list!
+ *	@author	eezstreet
+ */
+void FS_FreeFileList(char** pszFileList)
+{
+	free(pszFileList);
+}
