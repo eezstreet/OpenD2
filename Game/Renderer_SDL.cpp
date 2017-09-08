@@ -168,7 +168,8 @@ static void RB_DrawText(SDLCommand* pCmd)
 		return;
 	}
 
-	// We need to acquire the width and height of the text that's being drawn before we can figure out what to do
+	// We need to acquire the width and height of the text that's being drawn ..
+	// but only in alignments that aren't left/top !
 	if (pCmd->DrawText.horzAlign != ALIGN_LEFT || pCmd->DrawText.vertAlign != ALIGN_TOP)
 	{
 		for (int i = 0; i < len; i++)
@@ -184,24 +185,24 @@ static void RB_DrawText(SDLCommand* pCmd)
 				dwTextHeight = pGlyph->nHeight;
 			}
 		}
-	}
-	
-	// Adjust font drawing based on alignment... TODO
-	if (pCmd->DrawText.horzAlign == ALIGN_CENTER)
-	{
-	}
-	else if (pCmd->DrawText.horzAlign == ALIGN_RIGHT)
-	{
 
-	}
+		if (pCmd->DrawText.horzAlign == ALIGN_CENTER)
+		{
+			pCmd->DrawText.x += (pCmd->DrawText.w / 2) - (dwTextWidth / 2);
+		}
+		else if (pCmd->DrawText.horzAlign == ALIGN_RIGHT)
+		{
+			pCmd->DrawText.x += pCmd->DrawText.w - dwTextWidth;
+		}
 
-	if (pCmd->DrawText.vertAlign == ALIGN_CENTER)
-	{
-
-	}
-	else if (pCmd->DrawText.vertAlign == ALIGN_BOTTOM)
-	{
-
+		if (pCmd->DrawText.vertAlign == ALIGN_CENTER)
+		{
+			pCmd->DrawText.y += (pCmd->DrawText.h / 2) - (dwTextHeight / 2);
+		}
+		else if (pCmd->DrawText.vertAlign == ALIGN_BOTTOM)
+		{
+			pCmd->DrawText.y += pCmd->DrawText.h - dwTextHeight;
+		}
 	}
 
 	// Preprocess the string (transform newlines and color codes).... TODO
@@ -215,8 +216,9 @@ static void RB_DrawText(SDLCommand* pCmd)
 		pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
 		
 
-		SDL_Rect s{ pGlyph->dwUnknown4, 0, pGlyph->nWidth, pGlyph->nHeight };
-		SDL_Rect d{ pCmd->DrawText.x + dwOffsetX, pCmd->DrawText.y + dwOffsetY, pGlyph->nWidth, pGlyph->nHeight };
+		SDL_Rect s{ pGlyph->dwUnknown4, (pGlyph->nHeight / 2) - 1, pGlyph->nWidth, pCache->pFontData[0]->nHeight };
+		SDL_Rect d{ pCmd->DrawText.x + dwOffsetX, pCmd->DrawText.y + dwOffsetY, 
+				pGlyph->nWidth, pCache->pFontData[0]->nHeight };
 
 		SDL_RenderCopy(gpRenderer, pCache->pTexture, &s, &d);
 
@@ -225,7 +227,57 @@ static void RB_DrawText(SDLCommand* pCmd)
 }
 
 /*
+ *	Backend - alpha modulate a texture
+ */
+static void RB_AlphaModulateTexture(SDLCommand* pCmd)
+{
+	tex_handle texture = pCmd->AlphaModulate.texture;
+	int nAlpha = pCmd->AlphaModulate.nAlpha;
+
+	SDL_SetTextureAlphaMod(TextureCache[texture].pTexture, nAlpha);
+}
+
+/*
+ *	Backend - color modulate a texture
+ */
+static void RB_ColorModulateTexture(SDLCommand* pCmd)
+{
+	tex_handle texture = pCmd->ColorModulate.texture;
+	int nRed = pCmd->ColorModulate.nRed;
+	int nGreen = pCmd->ColorModulate.nGreen;
+	int nBlue = pCmd->ColorModulate.nBlue;
+
+	SDL_SetTextureColorMod(TextureCache[texture].pTexture, nRed, nGreen, nBlue);
+}
+
+/*
+ *	Backend - alpha modulate a font
+ */
+static void RB_AlphaModulateFont(SDLCommand* pCmd)
+{
+	font_handle font = pCmd->AlphaModulate.texture;
+	int nAlpha = pCmd->AlphaModulate.nAlpha;
+
+	SDL_SetTextureAlphaMod(FontCache[font].pTexture, nAlpha);
+}
+
+/*
+ *	Backend - color modulate a font
+ */
+static void RB_ColorModulateFont(SDLCommand* pCmd)
+{
+	font_handle font = pCmd->ColorModulate.texture;
+	int nRed = pCmd->ColorModulate.nRed;
+	int nGreen = pCmd->ColorModulate.nGreen;
+	int nBlue = pCmd->ColorModulate.nBlue;
+
+	SDL_SetTextureColorMod(FontCache[font].pTexture, nRed, nGreen, nBlue);
+}
+
+/*
+ *
  *	Backend - All functions enumerated
+ *
  */
 static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_DrawTexture,
@@ -234,6 +286,10 @@ static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_Animate,
 	RB_SetAnimationFrame,
 	RB_DrawText,
+	RB_AlphaModulateTexture,
+	RB_ColorModulateTexture,
+	RB_AlphaModulateFont,
+	RB_ColorModulateFont,
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -764,7 +820,7 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 		SDL_Surface* pTinySurface = SDL_CreateRGBSurfaceFrom(DC6_GetPixelsAtFrame(&pCache->dc6[0], 0, i, nullptr),
 			dwFrameWidth, dwFrameHeight, 8, dwFrameWidth, 0, 0, 0, 0);
 		
-		SDL_Rect dst{ dwXCounter, -(dwFrameHeight / 2), dwFrameWidth, dwFrameHeight };
+		SDL_Rect dst{ dwXCounter, -1, dwFrameWidth, dwFrameHeight };
 
 		// Every font uses units palette.
 		SDL_SetSurfacePalette(pTinySurface, PaletteCache[PAL_UNITS].pPal);
@@ -991,5 +1047,97 @@ void Renderer_SDL_DrawText(font_handle font, char16_t* szText, int x, int y, int
 	pCommand->DrawText.horzAlign = alignHorz;
 	pCommand->DrawText.vertAlign = alignVert;
 	D2_qstrncpyz(pCommand->DrawText.text, szText, MAX_TEXT_DRAW_LINE);
+	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Alter the alpha modulation on a texture
+ */
+void Renderer_SDL_AlphaModulateTexture(tex_handle texture, int nAlpha)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_ALPHAMODULATE;
+	pCommand->AlphaModulate.texture = texture;
+	pCommand->AlphaModulate.nAlpha = nAlpha;
+	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Alter the color modulation on a texture
+ */
+void Renderer_SDL_ColorModulateTexture(tex_handle texture, int nRed, int nGreen, int nBlue)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_COLORMODULATE;
+	pCommand->ColorModulate.texture = texture;
+	pCommand->ColorModulate.nRed = nRed;
+	pCommand->ColorModulate.nGreen = nGreen;
+	pCommand->ColorModulate.nBlue = nBlue;
+	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Alter the alpha modulation on a font
+ */
+void Renderer_SDL_AlphaModulateFont(font_handle font, int nAlpha)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (font == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_ALPHAMODULATEFONT;
+	pCommand->AlphaModulate.texture = font;
+	pCommand->AlphaModulate.nAlpha = nAlpha;
+	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Alter the color modulation on a font
+ */
+void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int nBlue)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (font == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_COLORMODULATEFONT;
+	pCommand->ColorModulate.texture = font;
+	pCommand->ColorModulate.nRed = nRed;
+	pCommand->ColorModulate.nGreen = nGreen;
+	pCommand->ColorModulate.nBlue = nBlue;
 	numDrawCommandsThisFrame++;
 }

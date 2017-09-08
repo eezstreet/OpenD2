@@ -34,6 +34,10 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_RegisterFont,
 		Renderer_SDL_DeregisterFont,
 		Renderer_SDL_DrawText,
+		Renderer_SDL_AlphaModulateTexture,
+		Renderer_SDL_ColorModulateTexture,
+		Renderer_SDL_AlphaModulateFont,
+		Renderer_SDL_ColorModulateFont,
 	},
 
 	{	// OpenGL Renderer
@@ -87,4 +91,8 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_RegisterFont = RenderTarget->RF_RegisterFont;
 	pExport->R_DeregisterFont = RenderTarget->RF_DeregisterFont;
 	pExport->R_DrawText = RenderTarget->RF_DrawText;
+	pExport->R_AlphaModTexture = RenderTarget->RF_AlphaModTexture;
+	pExport->R_ColorModTexture = RenderTarget->RF_ColorModTexture;
+	pExport->R_AlphaModFont = RenderTarget->RF_AlphaModFont;
+	pExport->R_ColorModFont = RenderTarget->RF_ColorModFont;
 }

@@ -38,5 +38,9 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName);
 void Renderer_SDL_DeregisterFont(font_handle font);
 void Renderer_SDL_DrawText(font_handle font, char16_t* szText, int x, int y, int w, int h,
 	D2TextAlignment alignHorz, D2TextAlignment alignVert);
+void Renderer_SDL_AlphaModulateTexture(tex_handle texture, int nAlpha);
+void Renderer_SDL_ColorModulateTexture(tex_handle texture, int nRed, int nGreen, int nBlue);
+void Renderer_SDL_AlphaModulateFont(font_handle font, int nAlpha);
+void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int nBlue);
 
 // Renderer_OpenGL.cpp

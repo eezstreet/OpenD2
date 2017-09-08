@@ -314,6 +314,10 @@ struct D2Renderer
 	void		(*RF_DeregisterFont)(font_handle font);
 	void		(*RF_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
 		D2TextAlignment alignHorz, D2TextAlignment alignVert);
+	void		(*RF_AlphaModTexture)(tex_handle texture, int nAlpha);
+	void		(*RF_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
+	void		(*RF_AlphaModFont)(font_handle font, int nAlpha);
+	void		(*RF_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target

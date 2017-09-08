@@ -1,5 +1,8 @@
 #include "D2Menu_Trademark.hpp"
 
+#define TBLINDEX_COPYRIGHT	5104
+#define	TBLINDEX_ALLRIGHTS	5105
+
 /*
  *	Creates the trademark menu
  *	@author	eezstreet
@@ -32,6 +35,9 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	backgroundTexture = 
 		trap->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\trademark.dc6", "trademark", 0, 11, PAL_UNITS);
 #endif
+
+	szCopyrightText = trap->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
+	szAllRightsReservedText = trap->TBL_FindStringFromIndex(TBLINDEX_ALLRIGHTS);
 }
 
 /*
@@ -57,6 +63,12 @@ void D2Menu_Trademark::Draw()
 	trap->R_Animate(blackRightAnim, 25, 400, -7);
 	trap->R_Animate(flameLeftAnim, 25, 400, -50);
 	trap->R_Animate(flameRightAnim, 25, 400, -57);
+
+	// Draw the trademark text
+	trap->R_ColorModFont(cl.fontFormal12, 150, 135, 100);
+	trap->R_DrawText(cl.fontFormal12, szCopyrightText, 0, 500, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+	trap->R_DrawText(cl.fontFormal12, szAllRightsReservedText, 0, 525, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+	trap->R_ColorModFont(cl.fontFormal12, 255, 255, 255);
 
 	// Note: on this menu, we don't draw the mouse cursor
 }

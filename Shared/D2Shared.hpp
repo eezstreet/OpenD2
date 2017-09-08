@@ -654,6 +654,10 @@ struct D2ModuleImportStrc
 	void		(*R_DeregisterFont)(font_handle font);
 	void		(*R_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
 		D2TextAlignment alignHorz, D2TextAlignment alignVert);
+	void		(*R_AlphaModTexture)(tex_handle texture, int nAlpha);
+	void		(*R_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
+	void		(*R_AlphaModFont)(font_handle font, int nAlpha);
+	void		(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
 };
 
 struct D2ModuleExportStrc

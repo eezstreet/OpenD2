@@ -26,6 +26,10 @@ enum SDLHardwareCommandType
 	RCMD_ANIMATE,
 	RCMD_SETANIMFRAME,
 	RCMD_DRAWTEXT,
+	RCMD_ALPHAMODULATE,
+	RCMD_COLORMODULATE,
+	RCMD_ALPHAMODULATEFONT,
+	RCMD_COLORMODULATEFONT,
 	RCMD_MAX,
 };
 
@@ -79,6 +83,20 @@ struct SDLDrawTextCommand
 	D2TextAlignment vertAlign;
 };
 
+struct SDLAlphaModulateCommand
+{
+	tex_handle texture;
+	int nAlpha;
+};
+
+struct SDLColorModulateCommand
+{
+	tex_handle texture;
+	int nRed;
+	int nGreen;
+	int nBlue;
+};
+
 struct SDLCommand
 {
 	SDLHardwareCommandType cmdType;
@@ -90,6 +108,8 @@ struct SDLCommand
 		SDLAnimateCommand Animate;
 		SDLSetAnimFrameCommand SetAnimFrame;
 		SDLDrawTextCommand DrawText;
+		SDLAlphaModulateCommand AlphaModulate;
+		SDLColorModulateCommand ColorModulate;
 	};
 };
 
