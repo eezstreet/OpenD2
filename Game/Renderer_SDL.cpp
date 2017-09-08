@@ -511,6 +511,8 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		return tex; // already registered
 	}
 
+	D2_strncpyz(pCache->szHandleName, szHandle, 32);
+
 	DC6_LoadImage(szDc6Path, &pCache->dc6);
 	pCache->bHasDC6 = true;
 
@@ -582,6 +584,8 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 	{
 		return tex; // already been registered
 	}
+
+	D2_strncpyz(pCache->szHandleName, szHandle, 32);
 
 	DC6_LoadImage(szDc6Path, &pCache->dc6);
 	pCache->bHasDC6 = true;
@@ -821,6 +825,7 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 	pCache = &FontCache[handle];
 	tbl = TBLFont_RegisterFont(szFontName);
 	pCache->pFontData[0] = TBLFont_GetPointerFromHandle(tbl);
+	D2_strncpyz(pCache->szHandleName, szFontName, 32);
 
 	// Load the DC6 file
 	snprintf(filename, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.dc6", GAME_CHARSET, szFontName);
@@ -903,6 +908,14 @@ void Renderer_SDL_DeregisterAllFonts()
 		if (FontCache[i].pTexture != nullptr)
 		{
 			SDL_DestroyTexture(FontCache[i].pTexture);
+		}
+		if (FontCache[i].dc6[0].pPixels != nullptr)
+		{
+			free(FontCache[i].dc6[0].pPixels);
+		}
+		if (FontCache[i].dc6[0].pFrames != nullptr)
+		{
+			free(FontCache[i].dc6[0].pFrames);
 		}
 	}
 

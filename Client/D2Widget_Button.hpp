@@ -8,6 +8,7 @@ private:
 	bool bDown;
 	bool bHasText;
 	bool bHasClickSignal;
+	bool bAlphaModulateDisable;
 
 	char16_t buttonTextBuffer[64]{ 0 };
 	MenuSignal clickSignal;

@@ -26,6 +26,15 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	bDisabled = false;
 	bDown = false;
 	bHasClickSignal = false;
+
+	if (dwStartDisabled == dwStartEnabled)
+	{
+		bAlphaModulateDisable = true;
+	}
+	else
+	{
+		bAlphaModulateDisable = false;
+	}
 }
 
 /*
@@ -43,7 +52,15 @@ void D2Widget_Button::Draw()
 {
 	if (bDisabled)
 	{
+		if (bAlphaModulateDisable)
+		{
+			trap->R_ColorModTexture(texture_disabled, 122, 122, 122);
+		}
 		trap->R_DrawTexture(texture_disabled, x, y, w, h, 0, 0);
+		if (bAlphaModulateDisable)
+		{
+			trap->R_ColorModTexture(texture_disabled, 255, 255, 255);
+		}
 	}
 	else if (bDown)
 	{
