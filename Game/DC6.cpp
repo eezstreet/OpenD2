@@ -149,6 +149,7 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 	Log_ErrorAssert(pImage->pPixels != nullptr);
 
 	memcpy(pImage->pPixels, gpDecodeBuffer, dwTotalPixels);
+	pImage->bPixelsFreed = false;
 }
 
 /*
@@ -157,8 +158,25 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
  */
 void DC6_UnloadImage(DC6Image* pImage)
 {
-	free(pImage->pPixels);
+	if (!pImage->bPixelsFreed)
+	{
+		free(pImage->pPixels);
+	}
 	free(pImage->pFrames);
+}
+
+/*
+ *	Frees up a DC6's pixels. They won't be accessible after this, so be careful!
+ *	@author	eezstreet
+ */
+void DC6_FreePixels(DC6Image* pImage)
+{
+	if (pImage->bPixelsFreed)
+	{
+		return;
+	}
+	free(pImage->pPixels);
+	pImage->bPixelsFreed = true;
 }
 
 /*

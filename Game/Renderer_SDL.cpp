@@ -555,6 +555,7 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 	pCache->pTexture = pTexture;
 
 	SDL_FreeSurface(pBigSurface);
+	DC6_FreePixels(&pCache->dc6);
 
 	return tex;
 }
@@ -651,6 +652,63 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 
 	SDL_FreeSurface(pBigSurface);
 	return tex;
+}
+
+/*
+ *	Determines if a point is within an animation's pixels.
+ */
+bool Renderer_SDL_PixelPerfectDetect(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha)
+{
+	SDLHardwareAnimationCacheItem* pAnimCache;
+	SDLHardwareTextureCacheItem* pTexCache;
+	int nDrawWidth;
+	int nDrawHeight;
+	DC6Frame* pFrame;
+	int nOffsetX, nOffsetY;
+	BYTE* pPixels;
+
+	if (anim == INVALID_HANDLE)
+	{
+		return false;
+	}
+	pAnimCache = &AnimCache[anim];
+
+	if (pAnimCache->texture == INVALID_HANDLE)
+	{
+		return false;
+	}
+	pTexCache = &TextureCache[pAnimCache->texture];
+
+	if (pTexCache->bHasDC6)
+	{
+		pFrame = &pTexCache->dc6.pFrames[pAnimCache->dwFrame];
+		nDrawX += pFrame->fh.dwOffsetX;
+		nDrawY += pFrame->fh.dwOffsetY;
+		nDrawWidth = pFrame->fh.dwWidth;
+		nDrawHeight = pFrame->fh.dwHeight;
+		nOffsetX = nSrcX - nDrawX;
+		nOffsetY = nSrcY - nDrawY;
+
+		if (nOffsetX > nDrawWidth || nOffsetX < 0 ||
+			nOffsetY > nDrawHeight || nOffsetY < 0)
+		{
+			return false;
+		}
+
+		if (bAllowAlpha)
+		{
+			// not actually pixel perfect collision but w/e
+			return true;
+		}
+
+		pPixels = DC6_GetPixelsAtFrame(&pTexCache->dc6, 0, pAnimCache->dwFrame, nullptr);
+		if (pPixels[(nOffsetY * pFrame->fh.dwWidth) + nOffsetX] != 0)
+		{	// not a transparent pixel
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /*

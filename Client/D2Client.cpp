@@ -24,6 +24,7 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	cl.pActiveMenu = new D2Menu_Trademark();
 
 	cl.font16 = trap->R_RegisterFont("font16");
+	cl.font30 = trap->R_RegisterFont("font30");
 	cl.font42 = trap->R_RegisterFont("font42");
 	cl.fontFormal12 = trap->R_RegisterFont("fontformal12");
 	cl.fontExocet10 = trap->R_RegisterFont("fontExocet10");

@@ -282,6 +282,7 @@ struct DC6Image
 	DWORD			dwDirectionHeights[32];
 	DWORD			dwTotalWidth;
 	DWORD			dwTotalHeight;
+	bool			bPixelsFreed;
 };
 
 /*
@@ -307,6 +308,7 @@ struct D2Renderer
 	void		(*RF_DeregisterTexture)(char* handleName, tex_handle texture);
 	void		(*RF_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
 	void		(*RF_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
+	bool		(*RF_PixelPerfectDetect)(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
 
 	anim_handle	(*RF_RegisterAnimation)(tex_handle texture, char* szHandleName, DWORD dwStartingFrame);
 	void		(*RF_DeregisterAnimation)(anim_handle anim);
@@ -338,6 +340,7 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 	DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
 void DC6_StitchStats(DC6Image* pImage,
 	DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
+void DC6_FreePixels(DC6Image* pImage);
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);

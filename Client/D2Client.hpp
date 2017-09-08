@@ -43,6 +43,7 @@ struct D2Client
 
 	font_handle			fontExocet10;
 	font_handle			font16;
+	font_handle			font30;
 	font_handle			font42;
 	font_handle			fontFormal12;
 

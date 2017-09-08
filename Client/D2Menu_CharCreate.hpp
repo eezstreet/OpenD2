@@ -24,6 +24,9 @@ struct CharCreateData
 	anim_handle specialAnimAnimHandle[CCA_MAX];
 	char16_t* szCharClassName;
 	char16_t* szCharClassDescription;
+	CharCreateAnims status;
+	int nDrawXPos;
+	int nDrawYPos;
 };
 
 class D2Menu_CharCreate : public D2Menu
@@ -36,6 +39,9 @@ private:
 
 	D2Panel_CharCreate_Static* pStaticPanel;
 	D2Panel_CharCreate_Dynamic* pDynamicPanel;
+
+	CharCreateData CreateData[D2CLASS_MAX];
+	char16_t *szChooseClassStr;
 
 public:
 	D2Menu_CharCreate();
