@@ -34,6 +34,9 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_Animate,
 		Renderer_SDL_SetAnimFrame,
 		Renderer_SDL_GetAnimFrame,
+		Renderer_SDL_AddAnimKeyframe,
+		Renderer_SDL_RemoveAnimKeyframe,
+		Renderer_SDL_GetAnimFrameCount,
 		Renderer_SDL_RegisterFont,
 		Renderer_SDL_DeregisterFont,
 		Renderer_SDL_DrawText,
@@ -94,6 +97,9 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_Animate = RenderTarget->RF_Animate;
 	pExport->R_SetAnimFrame = RenderTarget->RF_SetAnimFrame;
 	pExport->R_GetAnimFrame = RenderTarget->RF_GetAnimFrame;
+	pExport->R_AddAnimKeyframe = RenderTarget->RF_AddAnimKeyframe;
+	pExport->R_RemoveAnimKeyframe = RenderTarget->RF_RemoveAnimKeyframe;
+	pExport->R_GetAnimFrameCount = RenderTarget->RF_GetAnimFrameCount;
 	pExport->R_RegisterFont = RenderTarget->RF_RegisterFont;
 	pExport->R_DeregisterFont = RenderTarget->RF_DeregisterFont;
 	pExport->R_DrawText = RenderTarget->RF_DrawText;

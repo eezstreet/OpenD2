@@ -69,12 +69,27 @@ void D2Panel_CharCreate_Static::Draw()
 
 D2Panel_CharCreate_Dynamic::D2Panel_CharCreate_Dynamic() : D2Panel()
 {
+	x = 320;
+	y = 490;
 
+	pNameEntry = new D2Widget_TextEntry(0, 0, true, true, true);
+	pExpansionCheckbox = new D2Widget_Checkbox(0, 35, true);
+	pHardcoreCheckbox = new D2Widget_Checkbox(0, 55, false);
+
+	AddWidget(pNameEntry);
+	AddWidget(pExpansionCheckbox);
+	AddWidget(pHardcoreCheckbox);
+
+	pNameEntry->AttachLabel(trap->TBL_FindStringFromIndex(5125));
+	pExpansionCheckbox->AttachLabel(trap->TBL_FindStringFromIndex(22731));
+	pHardcoreCheckbox->AttachLabel(trap->TBL_FindStringFromIndex(5126));
 }
 
 D2Panel_CharCreate_Dynamic::~D2Panel_CharCreate_Dynamic()
 {
-
+	delete pNameEntry;
+	delete pExpansionCheckbox;
+	delete pHardcoreCheckbox;
 }
 
 void D2Panel_CharCreate_Dynamic::Draw()

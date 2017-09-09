@@ -4,7 +4,7 @@
 #define MAX_SDL_DRAWCOMMANDS_PER_FRAME	0x1000
 #define MAX_SDL_TEXTURECACHE_SIZE		0x100
 #define MAX_SDL_ANIMCACHE_SIZE			0x100
-#define MAX_SDL_ANIM_FRAMES				0x40
+#define MAX_SDL_ANIM_FRAMES				0x80
 #define MAX_SDL_FONTCACHE_SIZE			0x20
 
 #define MAX_TEXT_DRAW_LINE				128
@@ -140,6 +140,10 @@ struct SDLHardwareAnimationCacheItem
 	AnimationFrame frames[MAX_SDL_ANIM_FRAMES];
 	DWORD dwFrameCount;
 	DWORD dwLastTick;
+	bool bKeyframePresent;
+	int nKeyframeFrame;
+	AnimKeyframeCallback keyframeCallback;
+	int nExtraInt; // extra int for keyframe callbacks
 };
 
 struct SDLFontCacheItem

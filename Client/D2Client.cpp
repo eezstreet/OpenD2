@@ -66,7 +66,10 @@ static void D2Client_HandleInput()
 				}
 				break;
 			case IN_KEYDOWN:
+				break;
 			case IN_KEYUP:
+				// FIXME: handle binds also
+				trap->Print(PRIORITY_MESSAGE, "Capture key: %i", pCmd->cmdData.button.buttonID);
 				break;
 			case IN_MOUSEWHEEL:
 				break;

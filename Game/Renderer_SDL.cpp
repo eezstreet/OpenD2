@@ -119,9 +119,18 @@ static void RB_Animate(SDLCommand* pCmd)
 	SDL_Rect s{ 0 };
 	SDL_Rect d{ 0 };
 
+	if (pCache->dwFrameCount == 0)
+	{
+		return;
+	}
+
 	// advance (and limit) frame
-	pCache->dwFrame += (dwTicks - pCache->dwLastTick) / (1000 / dwAnimRate);
-	pCache->dwFrame %= pCache->dwFrameCount;
+	if (dwAnimRate > 0)
+	{
+		pCache->dwFrame += (dwTicks - pCache->dwLastTick) / (1000 / dwAnimRate);
+		pCache->dwFrame %= pCache->dwFrameCount;
+	}
+	
 
 	// draw it
 	s.x = pCache->frames[pCache->dwFrame].x;
@@ -133,6 +142,17 @@ static void RB_Animate(SDLCommand* pCmd)
 	d.w = s.w;
 	d.h = s.h;
 	SDL_RenderCopy(gpRenderer, TextureCache[pCache->texture].pTexture, &s, &d);
+
+	if (pCache->bKeyframePresent)
+	{
+		if (dwOriginalFrame != pCache->dwFrame)
+		{
+			if (pCache->dwFrame == pCache->nKeyframeFrame)
+			{
+				pCache->keyframeCallback(pCmd->Animate.anim, pCache->nExtraInt);
+			}
+		}
+	}
 
 	if (dwOriginalFrame != pCache->dwFrame)
 	{	// Frame changed, so change the last animation tick!
@@ -549,6 +569,11 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		SDL_FreeSurface(pSmallSurface);
 	}
 
+	if (!D2_stricmp(szHandle, "textbox"))
+	{
+		SDL_SaveBMP(pBigSurface, "textbox.bmp");
+	}
+
 	pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
 
 	pCache->dwWidth = dwTotalWidth;
@@ -772,6 +797,7 @@ static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, c
 		for (int j = 0; j < pDC6->header.dwFrames; j++)
 		{
 			DWORD dwFramePos = (i * pDC6->header.dwFrames) + j;
+			Log_WarnAssert(dwFramePos < MAX_SDL_ANIM_FRAMES);
 
 			pCache->frames[dwFramePos].x = dwCursorX;
 			pCache->frames[dwFramePos].y = dwCursorY;
@@ -832,6 +858,48 @@ void Renderer_SDL_DeregisterAnimation(anim_handle anim)
 	SDLHardwareAnimationCacheItem* pCache = &AnimCache[anim];
 	memset(pCache, 0, sizeof(SDLHardwareAnimationCacheItem));
 	pCache->texture = INVALID_HANDLE;
+}
+
+/*
+ *	Adds a keyframe to an animation
+ */
+void Renderer_SDL_AddAnimKeyframe(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt)
+{
+	if (anim == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	AnimCache[anim].bKeyframePresent = true;
+	AnimCache[anim].nKeyframeFrame = nFrame;
+	AnimCache[anim].keyframeCallback = callback;
+	AnimCache[anim].nExtraInt = nExtraInt;
+}
+
+/*
+ *	Removes a keyframe from an animation
+ */
+void Renderer_SDL_RemoveAnimKeyframe(anim_handle anim)
+{
+	if (anim == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	AnimCache[anim].bKeyframePresent = false;
+}
+
+/*
+ *	Gets the number of frames in an animation
+ */
+DWORD Renderer_SDL_GetAnimFrameCount(anim_handle anim)
+{
+	if (anim == INVALID_HANDLE)
+	{
+		return 0;
+	}
+
+	return AnimCache[anim].dwFrameCount;
 }
 
 /*
@@ -919,8 +987,6 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 
 		dwXCounter += dwFrameWidth;
 	}
-
-	SDL_SaveBMP(pBigSurface, "fonttest.bmp");
 
 	// Create the texture from the big surface
 	pCache->pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);

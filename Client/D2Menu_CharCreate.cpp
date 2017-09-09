@@ -46,6 +46,7 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 	backgroundTex = trap->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", 
 		"ccback", 0, 11, PAL_FECHAR);
 	fireAnim = trap->R_RegisterAnimation(fireTex, "ccfire", 0);
+	trap->R_SetTextureBlendMode(fireTex, BLEND_ADD);
 
 	pStaticPanel = new D2Panel_CharCreate_Static();
 	pDynamicPanel = new D2Panel_CharCreate_Dynamic();
@@ -79,6 +80,7 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 		// iterate through all basic animations
 		for (int j = 0; j < CCA_MAX; j++)
 		{
+			// register regular animations
 			snprintf(szPath, MAX_D2PATH,
 				"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
 				szCharacterClassFolders[i], szCharacterClassShort[i], szAnimName[j]);
@@ -88,8 +90,15 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 			CreateData[i].animAnimHandle[j] = 
 				trap->R_RegisterAnimation(CreateData[i].animTextureHandle[j], szHandle, 0);
 
+			trap->R_PollTexture(CreateData[i].animTextureHandle[j], nullptr, (DWORD*)&CreateData[i].nDrawBaselineY[j]);
+			if (j != 0)
+			{
+				CreateData[i].nDrawBaselineY[j] -= CreateData[i].nDrawBaselineY[0];
+			}
+
 			if (CreateData[i].bSpecialAnimPresent[j])
 			{
+				// register special animations
 				snprintf(szPath, MAX_D2PATH,
 					"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
 					szCharacterClassFolders[i], szCharacterClassShort[i], szAnimNameSpecial[j]);
@@ -97,7 +106,13 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 
 				CreateData[i].specialAnimTextureHandle[j] = trap->R_RegisterAnimatedDC6(szPath, szHandle, PAL_FECHAR);
 				CreateData[i].specialAnimAnimHandle[j] = 
-					trap->R_RegisterAnimation(CreateData[i].specialAnimAnimHandle[j], szHandle, 0);
+					trap->R_RegisterAnimation(CreateData[i].specialAnimTextureHandle[j], szHandle, 0);
+
+				// special animations are additively blended for the necro and sorc
+				if (i == D2CLASS_SORCERESS || i == D2CLASS_NECROMANCER)
+				{
+					trap->R_SetTextureBlendMode(CreateData[i].specialAnimTextureHandle[j], BLEND_ADD);
+				}
 			}
 			else
 			{
@@ -111,43 +126,47 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 		{
 			case D2CLASS_AMAZON:
 				CreateData[i].nDrawXPos = 100;
-				CreateData[i].nDrawYPos = 160;
+				CreateData[i].nDrawYPos = 140;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4011);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5128);
 				break;
 			case D2CLASS_SORCERESS:
-				CreateData[i].nDrawXPos = 620;
-				CreateData[i].nDrawYPos = 200;
+				CreateData[i].nDrawXPos = 626;
+				CreateData[i].nDrawYPos = 191;
+				CreateData[i].nSpecialYOffset = 85;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4010);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5131);
 				break;
 			case D2CLASS_NECROMANCER:
-				CreateData[i].nDrawXPos = 290;
-				CreateData[i].nDrawYPos = 160;
+				CreateData[i].nDrawXPos = 301;
+				CreateData[i].nDrawYPos = 151;
+				CreateData[i].nSpecialYOffset = -60;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4009);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5129);
 				break;
 			case D2CLASS_PALADIN:
-				CreateData[i].nDrawXPos = 505;
-				CreateData[i].nDrawYPos = 170;
+				CreateData[i].nDrawXPos = 520;
+				CreateData[i].nDrawYPos = 164;
+				CreateData[i].nSpecialYOffset = 50;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4008);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5132);
 				break;
 			case D2CLASS_BARBARIAN:
-				CreateData[i].nDrawXPos = 390;
+				CreateData[i].nDrawXPos = 400;
 				CreateData[i].nDrawYPos = 150;
+				CreateData[i].nSpecialYOffset = 0;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4007);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5130);
 				break;
 			case D2CLASS_DRUID:
 				CreateData[i].nDrawXPos = 720;
-				CreateData[i].nDrawYPos = 180;
+				CreateData[i].nDrawYPos = 170;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4012);	// in classic strings, wtf? :D
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(22518);
 				break;
 			case D2CLASS_ASSASSIN:
-				CreateData[i].nDrawXPos = 225;
-				CreateData[i].nDrawYPos = 185;
+				CreateData[i].nDrawXPos = 232;
+				CreateData[i].nDrawYPos = 178;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4013);	// in classic strings, wtf? :D
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(22519);
 				break;
@@ -155,6 +174,9 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 
 		// set our state to be idle
 		CreateData[i].status = CCA_IdleBack;
+
+		// set our initial baseline to be 0
+		CreateData[i].nDrawBaselineY[0] = 0;
 	}
 
 	// set us up to not have anything highlighted
@@ -191,10 +213,32 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
 }
 
 /*
+ *	Gets called whenever an animation finishes
+ *	NOTE: static function
+ */
+void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
+{
+	D2Menu_CharCreate* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
+	
+	if (pMenu->CreateData[nExtraInt].status == CCA_FrontToBack)
+	{
+		trap->R_SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleBack], 0);
+		pMenu->CreateData[nExtraInt].status = CCA_IdleBack;
+	}
+	else if (pMenu->CreateData[nExtraInt].status == CCA_BackToFront)
+	{
+		trap->R_SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleFront], 0);
+		pMenu->CreateData[nExtraInt].status = CCA_IdleFront;
+	}
+}
+
+/*
  *	Draws the character creation menu
  */
 void D2Menu_CharCreate::Draw()
 {
+	int i = D2CLASS_BARBARIAN;
+
 	// draw background
 	trap->R_DrawTexture(backgroundTex, 0, 0, 800, 600, 0, 0);
 
@@ -203,10 +247,11 @@ void D2Menu_CharCreate::Draw()
 
 	// draw the characters in each of their position
 	m_nHighlightedClass = D2CLASS_MAX;
-	for (int i = 0; i < D2CLASS_MAX; i++)
+	while(i != D2CLASS_MAX)
 	{
 		if (CreateData[i].status == CCA_IdleBack || CreateData[i].status == CCA_IdleBackSel)
 		{
+			// Idle in the back - we need to handle whether our mouse cursor is over top of it or not
 			if (trap->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
 				cl.dwMouseX, cl.dwMouseY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
 			{	// mouse is over this thing
@@ -230,12 +275,43 @@ void D2Menu_CharCreate::Draw()
 				CreateData[i].status = CCA_IdleBack;
 			}
 			trap->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
-				8, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos);
+				8, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
 		}
 		else
 		{
 			trap->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
-				25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos);
+				25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
+			if (CreateData[i].bSpecialAnimPresent[CreateData[i].status])
+			{
+				trap->R_Animate(CreateData[i].specialAnimAnimHandle[CreateData[i].status],
+					25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos + CreateData[i].nSpecialYOffset);
+			}
+		}
+
+		// this is really horribly ugly but necessary in order to draw everything correctly
+		switch (i)
+		{
+			case D2CLASS_BARBARIAN:
+				i = D2CLASS_NECROMANCER;
+				break;
+			case D2CLASS_NECROMANCER:
+				i = D2CLASS_PALADIN;
+				break;
+			case D2CLASS_PALADIN:
+				i = D2CLASS_ASSASSIN;
+				break;
+			case D2CLASS_ASSASSIN:
+				i = D2CLASS_SORCERESS;
+				break;
+			case D2CLASS_SORCERESS:
+				i = D2CLASS_AMAZON;
+				break;
+			case D2CLASS_AMAZON:
+				i = D2CLASS_DRUID;
+				break;
+			case D2CLASS_DRUID:
+				i = D2CLASS_MAX;
+				break;
 		}
 	}
 
@@ -257,7 +333,7 @@ void D2Menu_CharCreate::Draw()
 	DrawAllPanels();
 
 	// draw fire
-	trap->R_Animate(fireAnim, 25, 380, 150);
+	trap->R_Animate(fireAnim, 25, 380, 160);
 }
 
 /*
@@ -265,6 +341,8 @@ void D2Menu_CharCreate::Draw()
  */
 bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 {
+	anim_handle anim;
+
 	// check to see if we clicked on any of the characters
 	for (int i = 0; i < D2CLASS_MAX; i++)
 	{
@@ -275,6 +353,17 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 			{
 				// we clicked inside its bounds
 				CreateData[m_nSelectedClass].status = CCA_FrontToBack;
+
+				anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_FrontToBack];
+				trap->R_SetAnimFrame(anim, 0);
+				trap->R_AddAnimKeyframe(anim, trap->R_GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
+				if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_FrontToBack])
+				{
+					trap->R_SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
+				}
+				m_nSelectedClass = D2CLASS_MAX;
+
+				HidePanel(pDynamicPanel);
 				return true;
 			}
 		}
@@ -285,10 +374,25 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 			{	// we selected a class
 				if (m_nSelectedClass != D2CLASS_MAX)
 				{	// tell the other class to go to transition
+					anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_FrontToBack];
 					CreateData[m_nSelectedClass].status = CCA_FrontToBack;
+					trap->R_SetAnimFrame(anim, 0);
+					trap->R_AddAnimKeyframe(anim, trap->R_GetAnimFrameCount(anim) - 1, AnimationKeyframe, m_nSelectedClass);
+					if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_FrontToBack])
+					{
+						trap->R_SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
+					}
 				}
 				CreateData[i].status = CCA_BackToFront;
 				m_nSelectedClass = i;
+				anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_BackToFront];
+				trap->R_SetAnimFrame(anim, 0);
+				trap->R_AddAnimKeyframe(anim, trap->R_GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
+				if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_BackToFront])
+				{
+					trap->R_SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_BackToFront], 0);
+				}
+				ShowPanel(pDynamicPanel);
 				return true;
 			}
 		}

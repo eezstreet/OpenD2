@@ -315,6 +315,9 @@ struct D2Renderer
 	void		(*RF_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
 	void		(*RF_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
 	DWORD		(*RF_GetAnimFrame)(anim_handle anim);
+	void		(*RF_AddAnimKeyframe)(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt);
+	void		(*RF_RemoveAnimKeyframe)(anim_handle anim);
+	DWORD		(*RF_GetAnimFrameCount)(anim_handle anim);
 
 	font_handle	(*RF_RegisterFont)(char* szFontName);
 	void		(*RF_DeregisterFont)(font_handle font);

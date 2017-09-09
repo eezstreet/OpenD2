@@ -27,6 +27,8 @@ struct CharCreateData
 	CharCreateAnims status;
 	int nDrawXPos;
 	int nDrawYPos;
+	int nDrawBaselineY[CCA_MAX];
+	int nSpecialYOffset;
 };
 
 class D2Menu_CharCreate : public D2Menu
@@ -43,6 +45,8 @@ private:
 
 	CharCreateData CreateData[D2CLASS_MAX];
 	char16_t *szChooseClassStr;
+
+	static void AnimationKeyframe(anim_handle anim, int nExtraInt);
 
 public:
 	D2Menu_CharCreate();

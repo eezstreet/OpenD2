@@ -7,6 +7,8 @@
 #pragma once
 #include "D2Panel.hpp"
 #include "D2Widget_Button.hpp"
+#include "D2Widget_Checkbox.hpp"
+#include "D2Widget_TextEntry.hpp"
 
 class D2Panel_CharCreate_Static : public D2Panel
 {
@@ -23,7 +25,10 @@ public:
 class D2Panel_CharCreate_Dynamic : public D2Panel
 {
 private:
-	// TODO
+	D2Widget_TextEntry* pNameEntry;
+	D2Widget_Checkbox* pExpansionCheckbox;
+	D2Widget_Checkbox* pHardcoreCheckbox;
+
 public:
 	virtual void Draw();
 
