@@ -17,6 +17,8 @@ private:
 	D2Widget_Button* pOKButton;
 public:
 	virtual void Draw();
+	void EnableOKButton() { pOKButton->Enable(); }
+	void DisableOKButton() { pOKButton->Disable(); }
 
 	D2Panel_CharCreate_Static();
 	~D2Panel_CharCreate_Static();
@@ -31,6 +33,8 @@ private:
 
 public:
 	virtual void Draw();
+	size_t GetNameLength() { return pNameEntry->GetTextLength(); }
+	char16_t* GetName() { return pNameEntry->GetText(); }
 
 	D2Panel_CharCreate_Dynamic();
 	~D2Panel_CharCreate_Dynamic();

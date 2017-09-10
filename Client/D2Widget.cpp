@@ -53,3 +53,39 @@ char* D2Widget::GetIdentifier()
 	}
 	return identifier;
 }
+
+/*
+ *	Handles a text input event
+ *	@author	eezstreet
+ */
+bool D2Widget::HandleTextInput(char* szText)
+{
+	return false;	// most widgets can't handle a text input event
+}
+
+/*
+ *	Handles a text editing event
+ *	@author	eezstreet
+ */
+bool D2Widget::HandleTextEditing(char* szText, int nStart, int nLength)
+{
+	return false;	// most widgets can't handle a text editing event
+}
+
+/*
+ *	Handles a key down event
+ *	@author	eezstreet
+ */
+bool D2Widget::HandleKeyDown(DWORD dwKey)
+{
+	return false;	// most widgets can't handle a key down event
+}
+
+/*
+ *	Handles a key up event
+ *	@author	eezstreet
+ */
+bool D2Widget::HandleKeyUp(DWORD dwKey)
+{
+	return false;	// most widgets can't handle a key up event
+}

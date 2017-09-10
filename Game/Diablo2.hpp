@@ -428,3 +428,4 @@ void TBL_Cleanup();
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
 void D2Win_ShutdownSDL();
 void D2Win_ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage);
+bool D2Win_InFocus(DWORD nWindowID);

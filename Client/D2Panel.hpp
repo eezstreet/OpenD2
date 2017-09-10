@@ -40,9 +40,13 @@ public:
 	D2Panel* GetNextVisible() { return m_pNextVisible; }
 	D2Menu* GetOwner() { return m_pOwner; }
 
-	// Virtual methods - override these!
+	// Virtual methods
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
+	virtual bool HandleKeyUp(DWORD dwKey);
+	virtual bool HandleKeyDown(DWORD dwKey);
+	virtual bool HandleTextInput(char* szText);
+	virtual bool HandleTextEditing(char* szText, int nStart, int nLength);
 	virtual void Draw() = 0;
 
 	// Signals

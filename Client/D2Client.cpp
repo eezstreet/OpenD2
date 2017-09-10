@@ -49,12 +49,14 @@ static void D2Client_HandleInput()
 				cl.dwMouseX = pCmd->cmdData.motion.x;
 				cl.dwMouseY = pCmd->cmdData.motion.y;
 				break;
+
 			case IN_MOUSEDOWN:
 				if (pCmd->cmdData.button.buttonID == B_MOUSE1)
 				{
 					cl.bMouseDown = true;
 				}
 				break;
+
 			case IN_MOUSEUP:
 				if (pCmd->cmdData.button.buttonID == B_MOUSE1)
 				{
@@ -65,14 +67,41 @@ static void D2Client_HandleInput()
 					}
 				}
 				break;
+
 			case IN_KEYDOWN:
+				if (cl.pActiveMenu != nullptr)
+				{
+					cl.pActiveMenu->HandleKeyDown(pCmd->cmdData.button.buttonID);
+				}
 				break;
+
 			case IN_KEYUP:
 				// FIXME: handle binds also
-				trap->Print(PRIORITY_MESSAGE, "Capture key: %i", pCmd->cmdData.button.buttonID);
+				if (cl.pActiveMenu != nullptr)
+				{
+					cl.pActiveMenu->HandleKeyUp(pCmd->cmdData.button.buttonID);
+				}
 				break;
+
+			case IN_TEXTEDITING:
+				// only menus need to work with text editing
+				if (cl.pActiveMenu != nullptr)
+				{
+					cl.pActiveMenu->HandleTextEditing(pCmd->cmdData.text.text, 
+						pCmd->cmdData.text.start, pCmd->cmdData.text.length);
+				}
+				break;
+
+			case IN_TEXTINPUT:
+				if (cl.pActiveMenu != nullptr)
+				{
+					cl.pActiveMenu->HandleTextInput(pCmd->cmdData.text.text);
+				}
+				break;
+
 			case IN_MOUSEWHEEL:
 				break;
+
 			case IN_QUIT:
 				cl.bKillGame = true;
 				break;

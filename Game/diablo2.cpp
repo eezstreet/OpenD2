@@ -102,6 +102,8 @@ static D2ModuleImportStrc exports = {
 	FS_FreeFileList,
 
 	In_PumpEvents,
+	SDL_StartTextInput,
+	SDL_StopTextInput,
 
 	FSMPQ_FindFile,
 	MPQ_FileSize,

@@ -48,6 +48,9 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 	fireAnim = trap->R_RegisterAnimation(fireTex, "ccfire", 0);
 	trap->R_SetTextureBlendMode(fireTex, BLEND_ADD);
 
+	// start gobbling text input events. any keystroke will be interpreted as text
+	trap->In_StartTextEditing();
+
 	pStaticPanel = new D2Panel_CharCreate_Static();
 	pDynamicPanel = new D2Panel_CharCreate_Dynamic();
 
@@ -207,6 +210,9 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
 			}
 		}
 	}
+
+	// stop gobbling text events for now
+	trap->In_StopTextEditing();
 
 	delete pStaticPanel;
 	delete pDynamicPanel;
@@ -398,4 +404,42 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 		}
 	}
 	return D2Menu::HandleMouseClicked(dwX, dwY);
+}
+
+/*
+ *	Handle a text input event
+ */
+void D2Menu_CharCreate::HandleTextInput(char* szText)
+{
+	D2Menu::HandleTextInput(szText);
+
+	// check the length of the text entry field
+	if (pDynamicPanel->GetNameLength() > 1)
+	{
+		pStaticPanel->EnableOKButton();
+	}
+	else
+	{
+		pStaticPanel->DisableOKButton();
+	}
+}
+
+/*
+ *	Handle a key down event
+ */
+bool D2Menu_CharCreate::HandleKeyDown(DWORD dwKey)
+{
+	D2Menu::HandleKeyDown(dwKey);
+
+	// check the length of the text entry field
+	if (pDynamicPanel->GetNameLength() > 1)
+	{
+		pStaticPanel->EnableOKButton();
+	}
+	else
+	{
+		pStaticPanel->DisableOKButton();
+	}
+
+	return true;
 }

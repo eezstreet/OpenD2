@@ -65,3 +65,12 @@ void D2Win_ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage)
 {
 	SDL_ShowSimpleMessageBox(nMessageBoxType, szTitle, szMessage, gpWindow);
 }
+
+/*
+ *	Determines if the current window is in focus by comparing the given window ID versus the actual window ID
+ *	@author	eezstreet
+ */
+bool D2Win_InFocus(DWORD nWindowID)
+{
+	return SDL_GetWindowID(gpWindow) == nWindowID;
+}

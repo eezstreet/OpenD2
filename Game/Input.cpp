@@ -70,46 +70,82 @@ void In_PumpEvents(OpenD2ConfigStrc* pOpenConfig)
 		switch (ev.type)
 		{
 			case SDL_MOUSEMOTION:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEMOVE;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.x = ev.motion.x;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.y = ev.motion.y;
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.motion.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEMOVE;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.x = ev.motion.x;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.y = ev.motion.y;
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEDOWN;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = In_MapButton(ev.button.button);
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_GetMappedModifiers();
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.button.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEDOWN;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = In_MapButton(ev.button.button);
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_GetMappedModifiers();
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_MOUSEBUTTONUP:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEUP;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = In_MapButton(ev.button.button);
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_GetMappedModifiers();
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.button.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEUP;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = In_MapButton(ev.button.button);
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_GetMappedModifiers();
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_MOUSEWHEEL:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEWHEEL;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.x = ev.wheel.x;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.y = ev.wheel.y;
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.wheel.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_MOUSEWHEEL;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.x = ev.wheel.x;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.motion.y = ev.wheel.y;
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_KEYDOWN:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_KEYDOWN;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = In_MapButton(ev.key.keysym.sym);
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_MapModifiers(ev.key.keysym.mod);
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.key.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_KEYDOWN;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = ev.key.keysym.sym;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_MapModifiers(ev.key.keysym.mod);
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_KEYUP:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_KEYUP;
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = In_MapButton(ev.key.keysym.sym);
-				gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_MapModifiers(ev.key.keysym.mod);
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.key.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_KEYUP;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.buttonID = ev.key.keysym.sym;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.button.mod = In_MapModifiers(ev.key.keysym.mod);
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_TEXTINPUT:
-				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_TEXT;
-				gdwNumProcessedCommands++;
+//				if (D2Win_InFocus(ev.text.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_TEXTINPUT;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.text.length = 0;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.text.start = 0;
+					D2_strncpyz(gProcessedCommands[gdwNumProcessedCommands].cmdData.text.text, ev.text.text, 32);
+					gdwNumProcessedCommands++;
+				}
+				
+				break;
+			case SDL_TEXTEDITING:
+//				if (D2Win_InFocus(ev.edit.windowID))
+				{
+					gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_TEXTEDITING;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.text.length = ev.edit.length;
+					gProcessedCommands[gdwNumProcessedCommands].cmdData.text.start = ev.edit.start;
+					D2_strncpyz(gProcessedCommands[gdwNumProcessedCommands].cmdData.text.text, ev.edit.text, 32);
+					gdwNumProcessedCommands++;
+				}
 				break;
 			case SDL_QUIT:
+				// quit events are always considered to be in focus
 				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_QUIT;
 				gdwNumProcessedCommands++;
 				break;

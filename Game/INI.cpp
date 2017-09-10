@@ -32,9 +32,9 @@ struct INIField
 
 struct INISection
 {
-	char			szSectionName[INI_MAX_SECTION_NAMELEN]{ 0 };
+	char			szSectionName[INI_MAX_SECTION_NAMELEN];
 	int				nNumberFields;
-	INIField		fields[INI_MAX_FIELDS_PER_SECTION]{ 0 };
+	INIField		fields[INI_MAX_FIELDS_PER_SECTION];
 };
 
 typedef INISection* INIFile;

@@ -33,6 +33,10 @@ public:
 
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
+	virtual bool HandleKeyUp(DWORD keyButton);
+	virtual bool HandleKeyDown(DWORD keyButton);
+	virtual void HandleTextInput(char* szText);
+	virtual void HandleTextEditing(char* szText, int nStart, int nLength);
 	virtual void Draw() = 0;
 
 	void RefreshInputFrame() { bSignalReady = false; }

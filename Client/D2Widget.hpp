@@ -35,8 +35,12 @@ public:
 	char* GetIdentifier();
 
 	virtual void Draw() = 0;
+	virtual bool HandleTextInput(char* szText);
+	virtual bool HandleTextEditing(char* szText, int nStart, int nLength);
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY) = 0;
 	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY) = 0;
+	virtual bool HandleKeyDown(DWORD dwKey);
+	virtual bool HandleKeyUp(DWORD dwKey);
 
 	friend class D2Panel;
 };

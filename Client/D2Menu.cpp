@@ -260,3 +260,69 @@ bool D2Menu::HandleMouseClicked(DWORD dwX, DWORD dwY)
 	}
 	return false;
 }
+
+/*
+ *	Handle a key up event
+ */
+bool D2Menu::HandleKeyUp(DWORD dwKey)
+{
+	D2Panel* pPanel = m_visiblePanels;
+	while (pPanel != nullptr)
+	{
+		if (pPanel->HandleKeyUp(dwKey))
+		{
+			return true;
+		}
+		pPanel = pPanel->GetNextVisible();
+	}
+	return false;
+}
+
+/*
+*	Handle a key down event
+*/
+bool D2Menu::HandleKeyDown(DWORD dwKey)
+{
+	D2Panel* pPanel = m_visiblePanels;
+	while (pPanel != nullptr)
+	{
+		if (pPanel->HandleKeyDown(dwKey))
+		{
+			return true;
+		}
+		pPanel = pPanel->GetNextVisible();
+	}
+	return false;
+}
+
+/*
+ *	Handle a text input event
+ */
+void D2Menu::HandleTextInput(char* szText)
+{
+	D2Panel* pPanel = m_visiblePanels;
+	while (pPanel != nullptr)
+	{
+		if (pPanel->HandleTextInput(szText))
+		{
+			return;
+		}
+		pPanel = pPanel->GetNextVisible();
+	}
+}
+
+/*
+ *	Handle a text editing event
+ */
+void D2Menu::HandleTextEditing(char* szText, int nStart, int nLength)
+{
+	D2Panel* pPanel = m_visiblePanels;
+	while (pPanel != nullptr)
+	{
+		if (pPanel->HandleTextEditing(szText, nStart, nLength))
+		{
+			return;
+		}
+		pPanel = pPanel->GetNextVisible();
+	}
+}

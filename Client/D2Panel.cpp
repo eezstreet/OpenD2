@@ -244,3 +244,79 @@ bool D2Panel::HandleMouseClicked(DWORD dwX, DWORD dwY)
 	}
 	return false;
 }
+
+/*
+ *	Handle a key down event
+ */
+bool D2Panel::HandleKeyDown(DWORD dwKey)
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->HandleKeyDown(dwKey))
+		{
+			return true;
+		}
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+	return false;
+}
+
+/*
+*	Handle a key up event
+*/
+bool D2Panel::HandleKeyUp(DWORD dwKey)
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->HandleKeyUp(dwKey))
+		{
+			return true;
+		}
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+	return false;
+}
+
+/*
+ *	Handle a text input event
+ */
+bool D2Panel::HandleTextInput(char* szText)
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->HandleTextInput(szText))
+		{
+			return true;
+		}
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+	return false;
+}
+
+/*
+ *	Handle a text editing event
+ */
+bool D2Panel::HandleTextEditing(char* szText, int nStart, int nLength)
+{
+	D2Widget* pCurrent;
+
+	pCurrent = m_visibleWidgets;
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->HandleTextEditing(szText, nStart, nLength))
+		{
+			return true;
+		}
+		pCurrent = pCurrent->m_pNextVisibleWidget;
+	}
+	return false;
+}
