@@ -328,6 +328,8 @@ struct D2Renderer
 	void		(*RF_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
 	void		(*RF_AlphaModFont)(font_handle font, int nAlpha);
 	void		(*RF_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
+
+	void		(*RF_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target

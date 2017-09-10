@@ -30,6 +30,7 @@ enum SDLHardwareCommandType
 	RCMD_COLORMODULATE,
 	RCMD_ALPHAMODULATEFONT,
 	RCMD_COLORMODULATEFONT,
+	RCMD_DRAWRECTANGLE,
 	RCMD_MAX,
 };
 
@@ -97,6 +98,12 @@ struct SDLColorModulateCommand
 	int nBlue;
 };
 
+struct SDLDrawRectangleCommand
+{
+	int x, y, w, h;
+	int r, g, b, a;
+};
+
 struct SDLCommand
 {
 	SDLHardwareCommandType cmdType;
@@ -110,6 +117,7 @@ struct SDLCommand
 		SDLDrawTextCommand DrawText;
 		SDLAlphaModulateCommand AlphaModulate;
 		SDLColorModulateCommand ColorModulate;
+		SDLDrawRectangleCommand DrawRectangle;
 	};
 };
 

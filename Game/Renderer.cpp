@@ -44,6 +44,7 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_ColorModulateTexture,
 		Renderer_SDL_AlphaModulateFont,
 		Renderer_SDL_ColorModulateFont,
+		Renderer_SDL_DrawRectangle,
 	},
 
 	{	// OpenGL Renderer
@@ -107,4 +108,5 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_ColorModTexture = RenderTarget->RF_ColorModTexture;
 	pExport->R_AlphaModFont = RenderTarget->RF_AlphaModFont;
 	pExport->R_ColorModFont = RenderTarget->RF_ColorModFont;
+	pExport->R_DrawRectangle = RenderTarget->RF_DrawRectangle;
 }

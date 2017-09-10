@@ -296,6 +296,20 @@ static void RB_ColorModulateFont(SDLCommand* pCmd)
 }
 
 /*
+ *	Backend - Draw a rectangle
+ */
+static void RB_DrawRectangle(SDLCommand* pCmd)
+{
+	SDLDrawRectangleCommand* pRCmd = &pCmd->DrawRectangle;
+	SDL_Rect rect{ pRCmd->x, pRCmd->y, pRCmd->w, pRCmd->h };
+
+	SDL_SetRenderDrawColor(gpRenderer, pRCmd->r, pRCmd->g, pRCmd->b, pRCmd->a);
+	SDL_RenderDrawRect(gpRenderer, &rect);
+	SDL_RenderFillRect(gpRenderer, &rect);
+	SDL_SetRenderDrawColor(gpRenderer, 0, 0, 0, 255);
+}
+
+/*
  *
  *	Backend - All functions enumerated
  *
@@ -311,6 +325,7 @@ static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_ColorModulateTexture,
 	RB_AlphaModulateFont,
 	RB_ColorModulateFont,
+	RB_DrawRectangle,
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -1311,5 +1326,23 @@ void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int 
 	pCommand->ColorModulate.nRed = nRed;
 	pCommand->ColorModulate.nGreen = nGreen;
 	pCommand->ColorModulate.nBlue = nBlue;
+	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Draws a rectangle
+ */
+void Renderer_SDL_DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a)
+{
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_DRAWRECTANGLE;
+	pCommand->DrawRectangle.x = x;
+	pCommand->DrawRectangle.y = y;
+	pCommand->DrawRectangle.w = w;
+	pCommand->DrawRectangle.h = h;
+	pCommand->DrawRectangle.r = r;
+	pCommand->DrawRectangle.g = g;
+	pCommand->DrawRectangle.b = b;
+	pCommand->DrawRectangle.a = a;
 	numDrawCommandsThisFrame++;
 }

@@ -40,6 +40,7 @@ struct D2Client
 	bool				bMouseDown;
 	DWORD				dwMS;
 	DWORD				dwStartMS;
+	int					nLoadState;
 
 	font_handle			fontExocet10;
 	font_handle			font16;

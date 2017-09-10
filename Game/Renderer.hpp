@@ -48,5 +48,6 @@ void Renderer_SDL_AlphaModulateTexture(tex_handle texture, int nAlpha);
 void Renderer_SDL_ColorModulateTexture(tex_handle texture, int nRed, int nGreen, int nBlue);
 void Renderer_SDL_AlphaModulateFont(font_handle font, int nAlpha);
 void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int nBlue);
+void Renderer_SDL_DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a);
 
 // Renderer_OpenGL.cpp

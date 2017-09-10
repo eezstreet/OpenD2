@@ -1,5 +1,6 @@
 #include "D2Panel_CharCreate.hpp"
 #include "D2Menu_Main.hpp"
+#include "D2Menu_Loading.hpp"
 
 #define TBLTEXT_EXIT			5101
 #define TBLTEXT_OK				5102
@@ -20,6 +21,8 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	}
 	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cc_ok"))
 	{
+		delete cl.pActiveMenu;
+		cl.pActiveMenu = new D2Menu_Loading();
 		return;
 	}
 }

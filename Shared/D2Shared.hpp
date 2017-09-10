@@ -432,6 +432,7 @@ struct D2ModuleImportStrc
 	void		(*R_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
 	void		(*R_AlphaModFont)(font_handle font, int nAlpha);
 	void		(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
+	void		(*R_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
 };
 
 struct D2ModuleExportStrc
