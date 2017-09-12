@@ -55,8 +55,12 @@
 
 #ifdef WIN32
 #define NL "\r\n"
+#define D2EXPORT	__declspec(dllexport)
+#define D2IMPORT	__declspec(dllimport)
 #else
 #define NL "\n"
+#define D2EXPORT	__attribute__((visibility("default")))
+#define D2IMPORT
 #endif
 
 //////////////////////////////////////////////////
@@ -353,12 +357,6 @@ struct OpenD2ConfigStrc
 
 #define D2CLIENTAPI_VERSION	1
 
-#ifdef WIN32
-#define D2EXPORT	__declspec(dllexport)
-#else
-#define D2EXPORT	__attribute__((visibility("default")))
-#endif
-
 enum OpenD2Modules
 {
 	MODULE_CLIENT,	// Submodule: D2Client
@@ -444,7 +442,6 @@ struct D2ModuleExportStrc
 };
 
 typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports);
-
 
 //////////////////////////////////////////////////
 //

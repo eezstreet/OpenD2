@@ -41,7 +41,7 @@ public:
 
 	void RefreshInputFrame() { bSignalReady = false; }
 	void NotifySignalReady(MenuSignal signal, D2Panel* pCallingPanel, D2Widget* pCallingWidget);
-	bool WaitingSignal() { return bSignalReady; }
+	virtual bool WaitingSignal() { return bSignalReady; }
 	MenuSignal GetWaitingSignal(D2Panel** pCallingPanel, D2Widget** pCallingWidget);
 
 	static void ProcessMenuSignals(D2Menu* pMenu);

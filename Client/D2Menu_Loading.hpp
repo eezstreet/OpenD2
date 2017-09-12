@@ -7,8 +7,6 @@ private:
 	tex_handle loadscreenTex;
 	anim_handle loadscreenAnim;
 
-	void AdvanceLoading();
-
 public:
 	D2Menu_Loading();
 	~D2Menu_Loading();

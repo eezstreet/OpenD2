@@ -21,8 +21,11 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	}
 	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cc_ok"))
 	{
+		// NOTE: in the Diablo 2 code, it checks if there is enough disk space available in order to create a savegame.
+		// It checks for there being exactly 5000 bytes being free on the hard drive.
 		delete cl.pActiveMenu;
 		cl.pActiveMenu = new D2Menu_Loading();
+		cl.gamestate = GS_LOADING;
 		return;
 	}
 }

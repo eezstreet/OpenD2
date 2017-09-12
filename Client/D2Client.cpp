@@ -129,6 +129,54 @@ static void D2Client_HandleInput()
 	// handle worldspace clicking here
 }
 
+/*
+ *	Load stuff between main menu and regular game
+ *	@author	eezstreet
+ */
+static void D2Client_LoadData()
+{
+	if (cl.nLoadState == 0)
+	{	// load D2Common
+		D2Common_Init(trap, config, openConfig);
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 1)
+	{	// load (and transmit, if we're on a non-local server) the savegame
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 2)
+	{	// load D2Game, if necessary
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 3)
+	{	// ??
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 4)
+	{	// ??
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 5)
+	{	// ??
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 6)
+	{	// ??
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 7)
+	{	// ??
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 8)
+	{	// ??
+		cl.nLoadState++;
+	}
+	else if (cl.nLoadState == 9)
+	{	// go ingame
+		cl.nLoadState = 0;
+	}
+}
 
 /*
  *	Runs a single frame on the client.
@@ -146,15 +194,6 @@ static void D2Client_RunClientFrame()
 	// Pipe in input events
 	D2Client_HandleInput();
 
-	// Trademark screen - if over 10 seconds have passed and we haven't clicked, advance to the main menu
-	if (cl.gamestate == GS_TRADEMARK &&
-		(cl.bMouseClicked || (cl.dwMS - cl.dwStartMS > 10000)))
-	{
-		delete cl.pActiveMenu;
-		cl.pActiveMenu = new D2Menu_Main();
-		cl.gamestate = GS_MAINMENU;
-	}
-
 	// Process any waiting signals from the menus
 	if (cl.pActiveMenu != nullptr && cl.pActiveMenu->WaitingSignal())
 	{
@@ -168,6 +207,12 @@ static void D2Client_RunClientFrame()
 	}
 
 	trap->R_Present();
+
+	// Load stuff, if we need to
+	if (cl.gamestate == GS_LOADING)
+	{
+		D2Client_LoadData();
+	}
 
 	// Clear out data
 	cl.bMouseClicked = false;

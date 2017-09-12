@@ -67,6 +67,8 @@ if(BUILD_D2CLIENT OR BUILD_D2GAME)
 
 	target_link_libraries(D2Common ${STATIC_LIBRARIES})
 	target_compile_definitions(D2Common PUBLIC D2COMMON)
+
+	link_directories(${PROJECT_BINARY_DIR})
 endif()
 
 # Build D2Client.dll
@@ -102,4 +104,4 @@ endif()
 #	set_target_properties(D2Game PROPERTIES LINKER_LANGUAGE CXX)
 #	target_link_libraries(D2Game ${STATIC_LIBRARIES})
 #	target_compile_definitions(D2Game PUBLIC D2GAME)
-#endif()
+#endif

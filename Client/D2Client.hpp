@@ -1,5 +1,5 @@
 #pragma once
-#include "../Shared/D2Shared.hpp"
+#include "../Shared/D2Common_Shared.hpp"
 
 /////////////////////////////////////////////////
 //
@@ -25,6 +25,7 @@ enum D2Client_GameState
 {
 	GS_TRADEMARK,
 	GS_MAINMENU,	// main menu, or anything in between main menu and ingame (charselect, bnet, etc)
+	GS_LOADING,
 	GS_INGAME,		// in the actual game itself
 };
 
