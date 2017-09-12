@@ -14,6 +14,10 @@ OpenD2ConfigStrc* gpOpenConfig = nullptr;
 //
 //	Functions
 
+/*
+ *	Initializes shared data in D2Common
+ *	@author	eezstreet
+ */
 D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
 {
 	if (gbCommonInitialized)
@@ -26,6 +30,22 @@ D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pCon
 	gpOpenConfig = pOpenConfig;
 
 	// Load the data tables
+	DataTables_Init();
 
 	gbCommonInitialized = true;
+}
+
+/*
+ *	Frees shared data in D2Common
+ *	@author	eezstreet
+ */
+D2COMMONAPI void D2Common_Shutdown()
+{
+	if (!gbCommonInitialized)
+	{	// don't shut down unless we've initialized the library first
+		return;
+	}
+
+	// Kill off any remaining memory in data tables
+	DataTables_Free();
 }

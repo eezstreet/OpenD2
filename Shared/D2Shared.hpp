@@ -23,6 +23,7 @@
 #define GAME_LOG_HEADER		"D2"
 #define GAME_HOMEPATH		"Diablo II"
 #define	GAME_CONFIG_PATH	"D2.ini"
+#define GAME_SAVE_PATH		"Save"
 
 /*
  *	The following languages are known to exist:
@@ -386,6 +387,7 @@ struct D2ModuleImportStrc
 	size_t		(*FS_Tell)(fs_handle f);
 	char**		(*FS_ListFilesInDirectory)(char* szDirectory, char* szExtensionFilter, int *nFiles);
 	void		(*FS_FreeFileList)(char** pszFileList);
+	void		(*FS_CreateSubdirectory)(char* szSubdirectory);
 
 	// Input calls
 	void		(*In_PumpEvents)(OpenD2ConfigStrc* pOpenConfig);

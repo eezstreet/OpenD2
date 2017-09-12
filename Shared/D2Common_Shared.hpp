@@ -40,13 +40,90 @@ enum D2CharacterClass
 
 enum D2CharacterStatus
 {
+	D2STATUS_NEWBIE = 0,
 	D2STATUS_HARDCORE = 2,
 	D2STATUS_DEAD = 3,
 	D2STATUS_EXPANSION = 5,
 };
 
+enum D2Difficulties
+{
+	D2DIFF_NORMAL,
+	D2DIFF_NIGHTMARE,
+	D2DIFF_HELL,
+	D2DIFF_MAX,
+};
+
+////////////////////////////////////////////////
+//
+//	Savegame Structs
+//
+
+#define D2SAVE_MAGIC	0xAA55AA55
+
+#if GAME_MINOR_VERSION >= 10
+#define D2SAVE_VERSION	96
+#elif GAME_MINOR_VERSION >= 9
+#define D2SAVE_VERSION	92
+#else
+#define	D2SAVE_VERSION	89
+#endif
+
+#pragma pack(1)
+struct D2SaveHeaderMercData
+{
+	BYTE	bMercDead;
+	BYTE	nMercReviveCount;
+	DWORD	dwMercControl;
+	WORD	wMercName;
+	WORD	wMercType;
+	DWORD	dwMercExperience;
+};
+
+struct D2SaveHeader
+{
+	DWORD					dwMagic;
+	DWORD					dwVersion;
+	DWORD					dwFileSize;
+	DWORD					dwCRC;
+	DWORD					dwWeaponSet;
+	char					szCharacterName[16];
+	BYTE					nCharType;
+	BYTE					nCharTitle;
+	WORD					unk1;
+	BYTE					nCharClass;
+	WORD					unk2;
+	BYTE					nCharLevel;
+	DWORD					unk3;
+	DWORD					dwCreationTime;
+	DWORD					dwModificationTime;
+	DWORD					dwSkillKey[16];
+	DWORD					dwLeftSkill1;	// left skill for weapon set 1
+	DWORD					dwRightSkill1;	// right skill for weapon set 2
+	DWORD					dwLeftSkill2;
+	DWORD					dwRightSkill2;
+	BYTE					nAppearance[16];
+	BYTE					nColor[16];
+	BYTE					nTowns[D2DIFF_MAX];
+	DWORD					dwSeed;
+	WORD					unk5;
+	D2SaveHeaderMercData	mercData;
+	BYTE					nRealmData[0x90];
+};
+
+struct D2Savegame
+{
+	D2SaveHeader			header;
+};
+#pragma pack()
+
 ////////////////////////////////////////////////
 //
 //	Functions
 
+// D2Common.cpp
 D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
+D2COMMONAPI void D2Common_Shutdown();
+
+#define Log_WarnAssert(x, y)	if(!x) { trap->Warning(__FILE__, __LINE__, #x); return y; }
+#define Log_ErrorAssert(x, y)	if(!x) { trap->Error(__FILE__, __LINE__, #x); return y; }

@@ -1,4 +1,5 @@
 #include "D2Menu_CharCreate.hpp"
+#include <time.h>
 
 static const char* szCharacterClassFolders[D2CLASS_MAX] = {
 	"Amazon",
@@ -440,6 +441,77 @@ bool D2Menu_CharCreate::HandleKeyDown(DWORD dwKey)
 	{
 		pStaticPanel->DisableOKButton();
 	}
+
+	return true;
+}
+
+/*
+ *	Tries to save the character
+ *	@author	eezstreet
+ */
+bool D2Menu_CharCreate::TrySaveCharacter()
+{
+	D2Savegame	save{ 0 };
+	char		szSavePath[MAX_D2PATH]{ 0 };
+	char		szPlayerName[16]{ 0 };
+	int			nIteration = 0;
+	const int	nMaxIterations = 10;
+	fs_handle	f;
+
+	// convert player name to ascii
+	D2_qwctomb(szPlayerName, 16, pDynamicPanel->GetName());
+
+	// create save directory
+	trap->FS_CreateSubdirectory(GAME_SAVE_PATH);
+
+	// open the savegames, starting with "name.d2s"
+	// if it already exists, append a number to the end, like "name-1.d2s"
+	snprintf(szSavePath, MAX_D2PATH, GAME_SAVE_PATH "/%s.d2s", szPlayerName);
+	do
+	{
+		trap->FS_Open(szSavePath, &f, FS_READ, true);
+		if (f == INVALID_HANDLE)
+		{
+			break;
+		}
+		trap->FS_CloseFile(f);
+		nIteration++;
+		snprintf(szSavePath, MAX_D2PATH, GAME_SAVE_PATH "/%s-%i.d2s", szPlayerName, nIteration);
+	} while (nIteration <= nMaxIterations);
+
+	if (nIteration > nMaxIterations)
+	{
+		// couldn't find a free file, should fail
+		return false;
+	}
+
+	trap->FS_Open(szSavePath, &f, FS_WRITE, true);
+
+	// set some basic flags about the save
+	save.header.dwMagic = D2SAVE_MAGIC;
+	save.header.dwVersion = D2SAVE_VERSION;
+	save.header.dwFileSize = sizeof(save.header);
+	save.header.dwCreationTime = time(nullptr);
+	save.header.dwModificationTime = save.header.dwCreationTime;
+
+	save.header.nCharType |= (1 << D2STATUS_NEWBIE);
+	if (pDynamicPanel->HardcoreChecked())
+	{
+		save.header.nCharType |= (1 << D2STATUS_HARDCORE);
+	}
+
+	save.header.nCharClass = m_nSelectedClass;
+	if (m_nSelectedClass == D2CLASS_ASSASSIN || m_nSelectedClass == D2CLASS_DRUID || pDynamicPanel->ExpansionChecked())
+	{	// FIXME: assassin and druid should probably have the expansion checkbox greyed out
+		save.header.nCharType |= (1 << D2STATUS_EXPANSION);
+	}
+
+	// write the save header!
+	// the rest of the data gets filled out later
+	trap->FS_Write(f, &save.header, sizeof(save.header), 1);
+	trap->FS_CloseFile(f);
+
+	D2_strncpyz(cl.szCurrentSave, szSavePath, MAX_D2PATH);
 
 	return true;
 }

@@ -100,6 +100,7 @@ static D2ModuleImportStrc exports = {
 	FS_Tell,
 	FS_ListFilesInDirectory,
 	FS_FreeFileList,
+	FS_CreateSubdirectory,
 
 	In_PumpEvents,
 	SDL_StartTextInput,

@@ -190,9 +190,9 @@ void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo)
 /*
  *	Create directory if it doesn't already exist
  */
-void Sys_CreateDirectory(char* szPath)
+bool Sys_CreateDirectory(char* szPath)
 {
-	CreateDirectory(szPath, NULL);
+	return CreateDirectory(szPath, NULL);
 }
 
 /*

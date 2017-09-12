@@ -36,6 +36,9 @@ public:
 	size_t GetNameLength() { return pNameEntry->GetTextLength(); }
 	char16_t* GetName() { return pNameEntry->GetText(); }
 
+	bool HardcoreChecked() { return pHardcoreCheckbox->IsChecked(); }
+	bool ExpansionChecked() { return pExpansionCheckbox->IsChecked(); }
+
 	D2Panel_CharCreate_Dynamic();
 	~D2Panel_CharCreate_Dynamic();
 };

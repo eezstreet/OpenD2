@@ -56,4 +56,5 @@ public:
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual void HandleTextInput(char* szText);
 	virtual bool HandleKeyDown(DWORD dwKey);
+	bool TrySaveCharacter();
 };

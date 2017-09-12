@@ -49,6 +49,8 @@ struct D2Client
 	font_handle			font42;
 	font_handle			fontFormal12;
 
+	char				szCurrentSave[MAX_D2PATH];
+
 	D2Menu*				pActiveMenu;
 };
 
@@ -60,6 +62,3 @@ extern D2ModuleImportStrc* trap;
 extern D2GameConfigStrc* config;
 extern OpenD2ConfigStrc* openConfig;
 extern D2Client cl;
-
-#define Log_WarnAssert(x, y)	if(!x) { trap->Warning(__FILE__, __LINE__, #x); return y; }
-#define Log_ErrorAssert(x, y)	if(!x) { trap->Error(__FILE__, __LINE__, #x); return y; }

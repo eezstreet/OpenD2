@@ -3,6 +3,12 @@
 
 ////////////////////////////////////////////
 //
+//	Preprocessor Definitions
+
+#define D2DATATABLES_DIR	"DATA\\GLOBAL\\EXCEL\\"
+
+////////////////////////////////////////////
+//
 //	Structures
 
 struct D2TxtColumnStrc
@@ -16,3 +22,18 @@ struct D2TxtColumnStrc
 ////////////////////////////////////////////
 //
 //	Functions
+
+// BinLoader.cpp
+bool BIN_Read(char* szBinName, void** pDestinationData, size_t* pFileSize);
+
+// DataTables.cpp
+void DataTables_Init();
+void DataTables_Free();
+
+////////////////////////////////////////////
+//
+//	Global Variables
+
+extern D2ModuleImportStrc* trap;
+extern D2GameConfigStrc* gpConfig;
+extern OpenD2ConfigStrc* gpOpenConfig;

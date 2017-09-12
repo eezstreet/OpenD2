@@ -245,12 +245,13 @@ static const char* FS_ModeStr(OpenD2FileModes mode, bool bBinary)
 }
 
 /*
- *	Open a file with the select mode
+ *	Open a file with the select mode.
  *	@return	The size of the file
  */
 size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 {
 	char path[MAX_D2PATH_ABSOLUTE]{ 0 };
+	char folder[MAX_D2PATH]{ 0 };
 	const char* szModeStr = FS_ModeStr(mode, bBinary);
 
 	FS_SanitizeFilePath(filename);
@@ -500,4 +501,23 @@ char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *
 void FS_FreeFileList(char** pszFileList)
 {
 	free(pszFileList);
+}
+
+/*
+ *	Creates a subdirectory at the first available searchpath
+ *	@author	eezstreet
+ */
+void FS_CreateSubdirectory(char* szSubdirectory)
+{
+	char szPath[MAX_D2PATH_ABSOLUTE]{ 0 };
+
+	for (int i = 0; i < FS_MAXPATH; i++)
+	{
+		D2_strncpyz(szPath, pszPaths[i], MAX_D2PATH_ABSOLUTE);
+		strcat(szPath, szSubdirectory);
+		if (Sys_CreateDirectory(szPath))
+		{
+			return;
+		}
+	}
 }
