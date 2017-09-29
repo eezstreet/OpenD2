@@ -69,16 +69,24 @@
 // Standard Types
 
 #ifndef WIN32
+typedef uint64_t QWORD;
 typedef uint32_t DWORD;
 typedef uint16_t WORD;
 typedef uint8_t BYTE;
 #else
-typedef unsigned long DWORD;
-typedef unsigned short WORD;
-typedef unsigned char BYTE;
+typedef unsigned long long	QWORD;
+typedef unsigned long		DWORD;
+typedef unsigned short		WORD;
+typedef unsigned char		BYTE;
 #endif
 
+#define LOWORD(_dw)     ((WORD)(((DWORD*)(_dw)) & 0xffff))
+#define HIWORD(_dw)     ((WORD)((((DWORD*)(_dw)) >> 16) & 0xffff))
+#define LODWORD(_qw)    ((DWORD)(_qw))
+#define HIDWORD(_qw)    ((DWORD)(((_qw) >> 32) & 0xffffffff))
+
 #define INVALID_HANDLE (handle)-1
+#define SEED_MAGIC		666	// Little known fact...Diablo II encodes the top 4 bytes of a seed with 666. Clearly an evil game.
 
 typedef DWORD handle;
 typedef handle fs_handle;
@@ -334,6 +342,15 @@ struct D2CommandQueue
 };
 
 /*
+ *	Seeds are used almost everywhere for random number generation
+ */
+struct D2Seed
+{
+	DWORD dwLoSeed;
+	DWORD dwHiSeed;
+};
+
+/*
  *	The structure which contains OpenD2-specific data
  *	@author	eezstreet
  */
@@ -449,6 +466,7 @@ typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports)
 //
 //	Library Functions
 
+// String Management
 int D2_stricmpn(char* s1, char* s2, int n);
 int D2_stricmp(char* s1, char* s2);
 void D2_strncpyz(char *dest, const char *src, int destsize);
@@ -462,3 +480,10 @@ size_t D2_qstrlen(char16_t* s1);
 size_t D2_qmbtowc(char16_t* dest, size_t destLen, char* src);
 size_t D2_qwctomb(char* dest, size_t destLen, char16_t* src);
 DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
+
+// Random Numbers
+DWORD D2_srand(D2Seed* pSeed);
+DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax);
+DWORD D2_srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax);
+void D2_seedcopy(D2Seed* pDest, D2Seed* pSrc);
+bool D2_sbrand(D2Seed* pSeed);

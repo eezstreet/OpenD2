@@ -149,7 +149,8 @@ static void D2Client_LoadData()
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 3)
-	{	// ??
+	{	// create the level (?)
+		DRLG_CreateAct(0, false, rand(), 0, 1);
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 4)

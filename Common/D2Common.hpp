@@ -23,9 +23,6 @@ struct D2TxtColumnStrc
 //
 //	Functions
 
-// BinLoader.cpp
-bool BIN_Read(char* szBinName, void** pDestinationData, size_t* pFileSize);
-
 // DataTables.cpp
 void DataTables_Init();
 void DataTables_Free();

@@ -745,12 +745,8 @@ struct D2LevelDefBin
 	DWORD dwQuestFlag;					//0x00
 	DWORD dwQuestFlagEx;				//0x04
 	DWORD dwLayer;						//0x08
-	DWORD dwSizeX;						//0x0C
-	DWORD dwSizeX_N;					//0x10
-	DWORD dwSizeX_H;					//0x14
-	DWORD dwSizeY;						//0x18
-	DWORD dwSizeY_N;					//0x1C
-	DWORD dwSizeY_H;					//0x20
+	DWORD dwSizeX[3];					//0x0C
+	DWORD dwSizeY[3];					//0x18
 	DWORD dwOffsetX;					//0x24
 	DWORD dwOffsetY;					//0x28
 	DWORD dwDepend;						//0x2C
@@ -760,8 +756,8 @@ struct D2LevelDefBin
 	DWORD dwSubTheme;					//0x3C
 	DWORD dwSubWaypoint;				//0x40
 	DWORD dwSubShrine;					//0x44
-	DWORD dwVis[8];						//0x48
-	DWORD dwWarp[8];					//0x68
+	int nVis[MAX_LEVEL_CONNECTIONS];	//0x48
+	int nWarp[MAX_LEVEL_CONNECTIONS];	//0x68
 	BYTE nIntensity;					//0x88
 	BYTE nRed;							//0x89
 	BYTE nGreen;						//0x8A

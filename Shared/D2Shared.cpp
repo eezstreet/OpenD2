@@ -4,7 +4,7 @@
 
 //////////////////////////////////////////////////
 //
-// Library functions
+// String Functions
 
 /*
  *	Compares two strings for case-insensitive equality, with a limited length.
@@ -276,4 +276,62 @@ DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize)
 
 	hash %= dwMaxHashSize;
 	return hash;
+}
+
+//////////////////////////////////////////////////
+//
+// Random Number Functions
+
+#define D2SEED_MAGIC	(QWORD)0x6AC690C5
+
+/*
+ *	Generates a random number, given a seed.
+ *	The seed is regenerated in the process.
+ *	@author	eezstreet
+ */
+DWORD D2_srand(D2Seed* pSeed)
+{
+	QWORD mul = (pSeed->dwLoSeed * D2SEED_MAGIC) + pSeed->dwHiSeed;
+	pSeed->dwHiSeed = LODWORD(mul);
+	pSeed->dwLoSeed = HIDWORD(mul);
+	return pSeed->dwLoSeed;
+}
+
+/*
+ *	Generate a random number, with a maximum value, given a seed.
+ *	The seed is regenerated in the process.
+ *	@author	eezstreet
+ */
+DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax)
+{
+	return D2_srand(pSeed) % dwMax;
+}
+
+/*
+ *	Generate a random number, between two values (inclusive to both the minimum and maximum), given a seed.
+ *	The seed is regenerated in the process.
+ *	@author	eezstreet
+ */
+DWORD D2_srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax)
+{
+	return D2_smrand(pSeed, dwMax - dwMin) + dwMin;
+}
+
+/*
+ *	Copies a random seed.
+ *	@author	eezstreet
+ */
+void D2_seedcopy(D2Seed* pDest, D2Seed* pSrc)
+{
+	pDest->dwHiSeed = pSrc->dwHiSeed;
+	pDest->dwLoSeed = pSrc->dwLoSeed;
+}
+
+/*
+ *	Returns a random boolean value
+ *	@author	eezstreet
+ */
+bool D2_sbrand(D2Seed* pSeed)
+{
+	return D2_srand(pSeed) & 1;
 }
