@@ -242,6 +242,14 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 	D2_seedcopy(&linkData.pSeed, &pMisc->MiscSeed);
 	linkData.pLink = pLink;
 
+	for (int i = 0; i < 15; i++)
+	{
+		linkData.nRand[0][i] = -1;
+		linkData.nRand[1][i] = -1;
+		linkData.nRand[2][i] = -1;
+		linkData.nRand[3][i] = -1;
+	}
+
 	// set size for each level in the chain
 	while (pCurrent->nLevel != -1 && pCurrent->nLevel != 0)
 	{
@@ -447,7 +455,7 @@ void DRLG_PlaceCoords(DRLGCoordBox* pCoords, DRLGCoordBox* pCoordsEx, int nDirec
 
 		case DIRECTION_SOUTHEAST:
 			pCoordsEx->nX = pCoords->nX + pCoords->nW - pCoordsEx->nW;
-			pCoordsEx->nY -= pCoordsEx->nW;
+			pCoordsEx->nY = pCoords->nY - pCoordsEx->nH;
 			if (nAdjust == 1)
 			{
 				pCoordsEx->nX += 16;
@@ -456,7 +464,7 @@ void DRLG_PlaceCoords(DRLGCoordBox* pCoords, DRLGCoordBox* pCoordsEx, int nDirec
 
 		case DIRECTION_NORTHEAST:
 			pCoordsEx->nX = pCoords->nX + pCoords->nW;
-			pCoordsEx->nY = pCoords->nH - pCoordsEx->nH + pCoordsEx->nY;
+			pCoordsEx->nY = pCoords->nY + pCoords->nH - pCoordsEx->nH;
 			if (nAdjust == 1)
 			{
 				pCoordsEx->nY += 16;
@@ -560,8 +568,8 @@ bool DRLGLink_Fixed(DRLGLevelLinkData* pLinkData)
 	}
 
 	pLevelDef = &sgptDataTables->pLevelDefBin[pLinkData->nCurrentLevel];
-	pLinkData->pLevelCoord[nIteration].nW = pLevelDef->dwOffsetX;
-	pLinkData->pLevelCoord[nIteration].nH = pLevelDef->dwOffsetY;
+	pLinkData->pLevelCoord[nIteration].nX = pLevelDef->dwOffsetX;
+	pLinkData->pLevelCoord[nIteration].nY = pLevelDef->dwOffsetY;
 	return true;
 }
 
@@ -645,6 +653,7 @@ bool DRLGLink_LinkToAct1Town(DRLGLevelLinkData* pLinkData)
 	}
 
 	pLinkData->nRand[2][nIteration] = nRand;
+
 	nLink = pLinkData->pLink[nIteration].nLevelLink;
 	pCoords = &pLinkData->pLevelCoord[nIteration];
 	pCoordsEx = &pLinkData->pLevelCoord[nLink];
@@ -700,11 +709,11 @@ bool DRLGLink_LinkFromAct1Town(DRLGLevelLinkData* pLinkData)
 
 	if (pLinkData->nRand[2][nIteration] == 1)
 	{
-		DRLG_PlaceCoords(pCoordsEx, pCoords, pLinkData->nRand[0][nIteration], 2);
+		DRLG_PlaceCoords(pCoords, pCoordsEx, pLinkData->nRand[0][nIteration], 2);
 	}
 	else
 	{
-		DRLG_PlaceCoords2(pCoordsEx, pCoords, pLinkData->nRand[0][nIteration], 2);
+		DRLG_PlaceCoords2(pCoords, pCoordsEx, pLinkData->nRand[0][nIteration], 2);
 	}
 
 	return true;
