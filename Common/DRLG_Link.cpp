@@ -236,6 +236,7 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 	int nIteration = 0;
 	int nLevelLinked;
 	int nLevelLinkedEx;
+	int* pLevelNum;
 
 	// Set initial link data
 	D2_seedcopy(&linkData.pSeed, &pMisc->MiscSeed);
@@ -255,35 +256,35 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 
 	// Run the linker function on each level in the chain.
 	// Increment iteration count if the space checking function succeeds or is not present.
-	while (pCurrent->nLevel != -1 && pCurrent->nLevel != 0)
+	if (pLink->nLevel)
 	{
-		linkData.nCurrentLevel = pCurrent->nLevel;
-		linkData.nIteration = nIteration;
-		if (pLink->pfLinker(&linkData))
+		pLevelNum = &pLink->nLevel;
+		pCurrent = pLink;
+		do
 		{
-			if (pfSpaceCheck != nullptr)
+			linkData.nCurrentLevel = *pLevelNum;
+			linkData.nIteration = nIteration;
+
+			if (pCurrent->pfLinker(&linkData))
 			{
-				if (pfSpaceCheck(&linkData, nIteration))
+				if (!pfSpaceCheck || pfSpaceCheck(&linkData, nIteration))
 				{
 					nIteration++;
 					pCurrent++;
+					pLevelNum += 4; // ?
 				}
 			}
 			else
 			{
-				nIteration++;
-				pCurrent++;
+				linkData.nRand[0][nIteration] = -1;
+				linkData.nRand[1][nIteration] = -1;
+				linkData.nRand[2][nIteration] = -1;
+				linkData.nRand[3][nIteration] = -1;
+				nIteration--;
+				pCurrent--;
+				pLevelNum -= 4; // ?
 			}
-		}
-		else
-		{	// This seems...wrong? But it's how the game does it...
-			linkData.nRand[0][nIteration] = -1;
-			linkData.nRand[1][nIteration] = -1;
-			linkData.nRand[2][nIteration] = -1;
-			linkData.nRand[3][nIteration] = -1;
-			nIteration--;
-			pCurrent--;
-		}
+		} while (*pLevelNum);
 	}
 
 	pCurrent = pLink;
@@ -815,9 +816,10 @@ static DWORD DRLG_Act1P1_SpaceChecker(DRLGLevelLinkData* pLinkData, int nIterati
 {
 	int nLevel;
 	int nLink = Act1_LinkTable_Pass1[nIteration].nLevelLink;
+	int i = 0;
 
 	// Check for levels overlapping
-	/*for (int i = 0; i < nIteration; i++)
+	for (i = 0; i < nIteration; i++)
 	{
 		if (nLink != i)
 		{
@@ -826,8 +828,9 @@ static DWORD DRLG_Act1P1_SpaceChecker(DRLGLevelLinkData* pLinkData, int nIterati
 				return 0;
 			}
 		}
-	}*/
+	}
 
+	i = 0;
 	nLevel = Act1_LinkTable_Pass1[nIteration].nLevel - 1;
 	if (nLevel != 0)
 	{
@@ -836,16 +839,18 @@ static DWORD DRLG_Act1P1_SpaceChecker(DRLGLevelLinkData* pLinkData, int nIterati
 			DRLGLink* pCurrent = Act1_LinkTable_Pass1;
 			int* pRand = &pLinkData->nRand[0][0];
 
-			while (pCurrent->nLevel != D2LEVEL_NULL)
+			while (i == nIteration ||
+				Act1_LinkTable_Pass1[i].nLevelLink != Act1_LinkTable_Pass1[nIteration].nLevelLink ||
+				pLinkData->nRand[0][nIteration] == *pRand)
 			{
-				if (pCurrent - Act1_LinkTable_Pass1 != nIteration &&
-					pCurrent->nLevelLink == nLink && pLinkData->nRand[0][nIteration] == *pRand)
+				pRand++;
+				i++;
+
+				// NOTE: this checks the level link of pass one against the level link of PASS TWO
+				if (Act1_LinkTable_Pass1[i].nLevelLink >= Act1_LinkTable_Pass2[nIteration].nLevelLink)
 				{
 					return false;
 				}
-
-				pCurrent++;
-				pRand++;
 			}
 		}
 
@@ -853,6 +858,7 @@ static DWORD DRLG_Act1P1_SpaceChecker(DRLGLevelLinkData* pLinkData, int nIterati
 	}
 	else
 	{
+		// funny logic here
 		nLevel = (pLinkData->nRand[2][nLink] << 2) + pLinkData->nRand[0][nLink];
 		nLevel += pLinkData->nRand[2][nIteration];
 		nLevel *= 4;
