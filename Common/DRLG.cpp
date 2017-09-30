@@ -33,7 +33,7 @@ D2LvlPrestTxt* DRLG_GetPrestRecord(int nLevelID)
 	for (int i = 0; i < sgptDataTables->nLvlPrestTxtRecordCount; i++)
 	{
 		pRecord = &sgptDataTables->pLvlPrestTxt[i];
-		if (pRecord->dwDef == nLevelID)
+		if (pRecord->dwLevelId == nLevelID)
 		{
 			return pRecord;
 		}
@@ -142,6 +142,17 @@ bool DRLG_NotOverlapping(DRLGCoordBox* pA, DRLGCoordBox* pB, int nThreshold)
 	}
 
 	return nXDiff >= nThreshold || nYDiff >= nThreshold;
+}
+
+/*
+ *	Get the Act number associated with a level index
+ *	Equivalent in function to D2Common.#10001.
+ *	@author	eezstreet
+ */
+D2COMMONAPI BYTE DRLG_GetLevelActNum(int nLevel)
+{
+	D2LevelsTxt* pRecord = &sgptDataTables->pLevelsTxt[nLevel];
+	return pRecord->nAct;
 }
 
 /*

@@ -209,6 +209,47 @@ enum D2Levels
 	D2LEVEL_ACT5_WORLDSTONE,		// The Worldstone Chamber
 };
 
+enum D2LevelTypes
+{
+	D2LVLTYPE_NONE,
+	D2LVLTYPE_ACT1_TOWN,			// Rogue Encampment
+	D2LVLTYPE_ACT1_WILDERNESS,		// Blood Moor, Cold Plain, Stony Field ... Moo Moo Farm
+	D2LVLTYPE_ACT1_CAVE,			// Den of Evil, Caves, Underground Passage, Pit, Hole
+	D2LVLTYPE_ACT1_CRYPT,			// Forgotten Tower, Crypt, Mausoleum
+	D2LVLTYPE_ACT1_MONASTERY,		// Monastery Gate
+	D2LVLTYPE_ACT1_COURTYARD,		// Outer Cloister, Inner Cloister
+	D2LVLTYPE_ACT1_BARRACKS,		// Barracks
+	D2LVLTYPE_ACT1_JAIL,			// Jail
+	D2LVLTYPE_ACT1_CATHEDRAL,		// Cathedral
+	D2LVLTYPE_ACT1_CATACOMBS,		// Catacombs
+	D2LVLTYPE_ACT1_TRISTRAM,		// Tristram
+	D2LVLTYPE_ACT2_TOWN,			// Lut Gholein
+	D2LVLTYPE_ACT2_SEWER,			// Sewers, Ancient Tunnels
+	D2LVLTYPE_ACT2_HAREM,			// Harem
+	D2LVLTYPE_ACT2_BASEMENT,		// Palace Cellar
+	D2LVLTYPE_ACT2_DESERT,			// Rocky Waste, Dry Hills, Far Oasis, Lost City, ...
+	D2LVLTYPE_ACT2_TOMB,			// Stony Tomb, Halls of the Dead, Viper Temple, ...
+	D2LVLTYPE_ACT2_LAIR,			// Maggot Lair
+	D2LVLTYPE_ACT2_ARCANE,			// Arcane Sanctuary
+	D2LVLTYPE_ACT3_TOWN,			// Kurast Docks
+	D2LVLTYPE_ACT3_JUNGLE,			// Spider Forest, Flayer Jungle, Great Marsh
+	D2LVLTYPE_ACT3_KURAST,			// All Kurast, Durance, and Temple levels
+	D2LVLTYPE_ACT3_SPIDER,			// Spider Caverns, Arachnid Lair
+	D2LVLTYPE_ACT3_DUNGEON,			// Flayer Dungeon, Swampy Pit
+	D2LVLTYPE_ACT3_SEWER,			// Sewers
+	D2LVLTYPE_ACT4_TOWN,			// Pandemonium Fortress
+	D2LVLTYPE_ACT4_MESA,			// Outer Steppes, Plains of Despair, City of the Damned
+	D2LVLTYPE_ACT4_LAVA,			// River of Flame, Chaos Sanctum
+	D2LVLTYPE_ACT5_TOWN,			// Harrogath
+	D2LVLTYPE_ACT5_SIEGE,			// Bloody Foothills
+	D2LVLTYPE_ACT5_BARRICADE,		// Frigid Highlands, Nihlathak's Temple, Arreat Summit, ...
+	D2LVLTYPE_ACT5_TEMPLE,			// Halls of Pain, Halls of Torment, Halls of Vaught
+	D2LVLTYPE_ACT5_ICECAVES,		// Crystalline Passage, Frozen River, Glacial Trail, ...
+	D2LVLTYPE_ACT5_BAAL,			// Worldstone Keep
+	D2LVLTYPE_ACT5_LAVA,			// Abaddon, Pit of Archeron, Infernal Pit
+	D2LVLTYPES_MAX,
+};
+
 ////////////////////////////////////////////////
 //
 //	Savegame Structs
@@ -281,6 +322,7 @@ D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pCon
 D2COMMONAPI void D2Common_Shutdown();
 
 // DRLG.cpp
+D2COMMONAPI BYTE DRLG_GetLevelActNum(int nLevel);
 D2COMMONAPI void DRLG_CreateAct(int nAct, bool bServer, DWORD dwInitSeed, int nDifficulty, int nTown);
 
 

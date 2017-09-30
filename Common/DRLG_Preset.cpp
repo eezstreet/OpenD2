@@ -1,6 +1,38 @@
 #include "DRLG.hpp"
 
 /*
+ *	Creates a preset room
+ *	@author	eezstreet
+ */
+void DRLG_InsertPresetRoom(DRLGLevel* pLevel, DRLGMap* pMap, DRLGCoordBox* pCoords, 
+	int dt1Mask, int nRoomFlags, int nPresetFlags, DRLGGrid* pGrid)
+{
+	DRLGRoomEx* pRoom = DRLG_AllocateRoomEx(pLevel, ROOMTYPE_MAZE_PRESET);
+
+	pRoom->dwDT1Mask = dt1Mask;
+	pRoom->fRoomExFlags |= nRoomFlags;
+	memcpy(&pRoom->RoomExBox, pCoords, sizeof(DRLGCoordBox));
+	pRoom->pPreset->pMap = pMap;
+	pRoom->pPreset->nLevelPrestId = pMap->pLvlPrest->dwDef;
+	pRoom->pPreset->fFlags = nPresetFlags;
+	pRoom->pPreset->pMapMazeGrid = pGrid;
+
+	if (pGrid)
+	{
+		// Add 1 to the height (?)
+		pGrid->nHeight |= 1;
+	}
+
+	// If the lvlPrest is not populated, neither is the room!
+	if (!pMap->pLvlPrest->dwPopulate)
+	{
+		pRoom->fRoomExFlags |= ROOMEXFLAG_POPULATION_ZERO;
+	}
+
+	DRLG_BindRoomEx(pLevel, pRoom);
+}
+
+/*
  *	Creates a DRLGMap associated with a DRLGLevel
  *	@author	eezstreet
  */

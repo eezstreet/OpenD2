@@ -274,16 +274,17 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 			linkData.nIteration = nIteration;
 
 			if (pCurrent->pfLinker(&linkData))
-			{
+			{	// linker function succeeded, try spacechecking
 				if (!pfSpaceCheck || pfSpaceCheck(&linkData, nIteration))
-				{
+				{	// space checking succeeded, go to the next level
 					nIteration++;
 					pCurrent++;
 					pLevelNum += 4; // ?
 				}
+				// space checking failed, re-link at the current level and try again
 			}
 			else
-			{
+			{	// linker failed, walk backwards to the previous level and reset the randomization data
 				linkData.nRand[0][nIteration] = -1;
 				linkData.nRand[1][nIteration] = -1;
 				linkData.nRand[2][nIteration] = -1;
@@ -303,7 +304,7 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 	{
 		nLevelLinked = pCurrent->nLevelLink == -1 ? 0 : pCurrent->nLevelLink;
 		nLevelLinkedEx = pCurrent->nLevelLinkEx == -1 ? 0 : pCurrent->nLevelLinkEx;
-		pLevel = DRLG_GetLevelFromID(pMisc, pCurrent->nLevel);	// this will create the level
+		pLevel = DRLG_GetLevelFromID(pMisc, pCurrent->nLevel);	// this will create the level if it doesn't exist
 
 		pCoord = &pLevel->LvlBox;
 		pCoordFrom = &linkData.pLevelCoord[nIteration];
@@ -324,11 +325,16 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 			}
 		}
 
-		// The direction that the Outer Cloister level is linked to the Barracks depends upon which direction
-		// the Black Marsh links to the Tamoe Highland. This is because the Monastery Gate always links to
-		// the Tamoe Highland on a Northwest direction - if we draw this out on a piece of paper, we can verify
-		// that it's accurate.
-		// (This is a massive hack though)
+		// Since the Tamoe Highland always connects to the Monastery Gate/Outer Cloister going from west to east,
+		// the direction that the Barracks connects to the Outer Cloister therefore also depends upon the direction
+		// that the Black Marsh connects to the Tamoe Highland.
+		// If the Tamoe Highland connects to the Black Marsh along the SOUTH, the Outer Cloister must always connect to
+		// the Barracks from the NORTH or the EAST. 
+		// If the Tamoe Highland connects to the Black Marsh along the NORTH, the Outer Cloister must always connect to
+		// the Barracks from the SOUTH or the EAST.
+		// If the Tamoe Highland connects to the Black Marsh along the WEST, the Outer Cloister can spawn in any possible
+		// direction - NORTH, EAST or SOUTH (but not west, obviously)
+		// (This is a massive hack though, and I think Blizzard North knew this)
 		if (pLevel->nLevel == D2LEVEL_ACT1_WILD5)
 		{
 			DRLGLevel* pCloisterLevel = DRLG_GetLevelFromID(pMisc, D2LEVEL_ACT1_COURTYARD1);
@@ -392,7 +398,8 @@ static void DRLG_CreateLevelLinkageEx(DRLGMisc* pMisc, int nLevel, int nLevelEx)
 	while (nLevel <= nLevelEx)
 	{
 		DRLGLevel* pLevel = DRLG_GetLevelFromID(pMisc, nLevel);
-		if (pLevel->eDRLGType == DRLGTYPE_OUTDOORS)
+		//if (pLevel->eDRLGType == DRLGTYPE_OUTDOORS)
+		if(0)	// FIXME
 		{
 			int* pWarps = DRLG_GetWarpLevels(pMisc, nLevel);
 			int* pVis = DRLG_GetVisLevels(pMisc, nLevel);
@@ -994,15 +1001,24 @@ static void DRLG_Act1_Linker(DRLGLevel* pLevel, int nIteration, int* pRand)
 	while (pStart < pEnd)
 	{
 		if (pStart->nLinkerLevels[0] != nLevel && pStart->nLinkerLevels[0] == D2LEVEL_NULL)
+		{
+			pStart++;
 			continue;
+		}
 
 		if (pStart->nLinkerLevels[1] == nLevel || pStart->nLinkerLevels[2] == nLevel)
+		{
+			pStart++;
 			continue;
+		}
 
 		if (pRand[nIteration] != pStart->nChance[0] || pRand[nIteration] != pStart->nChance[1])
+		{
+			pStart++;
 			continue;
+		}
 
-		pOutdoors->fOUTDOORFLAGS |= pStart->fFlags;
+		//pOutdoors->fOUTDOORFLAGS |= pStart->fFlags;	// FIXME
 		pStart++;
 	}
 }

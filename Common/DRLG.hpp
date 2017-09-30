@@ -36,6 +36,8 @@ typedef int(__fastcall* MISC_BUILDER)(MiscBuild*);
 #define SPAWN_ITEM_COLLISION		(COLLIDE_BLOCK_UNITS|COLLIDE_ITEM|COLLIDE_OBJECT|COLLIDE_DOOR|COLLIDE_UNIT_RELATED|COLLIDE_PET)// 0x3E01
 #define SPAWN_UNIT_COLLISION		(COLLIDE_BLOCK_UNITS|COLLIDE_ALTERNATE_FLOOR|COLLIDE_MONSTER|COLLIDE_ITEM|COLLIDE_OBJECT|COLLIDE_DOOR|COLLIDE_UNIT_RELATED|COLLIDE_PET)// 0x3F11
 
+#define DRLG_GRID_SIZE				8
+#define MAX_LEVELS					255
 
 /////////////////////////////////////////////////
 //
@@ -1006,6 +1008,7 @@ enum DRLGGRID_INDEX
 enum OUTDOORFLAGS
 {
 	OUTDOOR_FLAG1 = 0x00000001,
+	OUTDOOR_FLAG2 = 0x00000002,
 	OUTDOOR_BRIDGE = 0x00000004,
 	OUTDOOR_RIVER_OTHER = 0x00000008,
 	OUTDOOR_RIVER = 0x00000010,
@@ -1305,11 +1308,25 @@ D2LvlMazeTxt* DRLG_GetMazeRecord(int nLevelID);
 D2LvlPrestTxt* DRLG_GetPrestRecord(int nLevelID);
 
 // DRLG_Generation.cpp
+DRLGRoomEx* DRLG_AllocateRoomEx(DRLGLevel* pLevel, int nPresetType);
+void DRLG_BindRoomEx(DRLGLevel* pLevel, DRLGRoomEx* pRoomEx);
 DRLGLevel* DRLG_GenerateLevel(DRLGMisc* pMisc, int nLevel);
 void DRLG_FreeLevels();
 
 // DRLG_Link.cpp
 void DRLG_MiscGenerateOverworld(DRLGMisc* pMisc);
 
+// DRLG_Outdoors.cpp
+void DRLG_InsertOutdoorGridRoom(DRLGLevel* pLevel, int nX, int nY, int nW, int nH, int nRoomFlags,
+	int nOutdoorMapFlags, int nUnused, int dt1Mask);
+void DRLG_CreateOutdoorVerData(DRLGVer** ppVer, DRLGCoordBox* pCoords, char nDirection, DRLGLinkData* pLink);
+void DRLG_CreateAct1OutdoorsLevel(DRLGLevel* pLevel);
+void DRLG_CreateAct2OutdoorsLevel(DRLGLevel* pLevel);
+void DRLG_CreateAct3OutdoorsLevel(DRLGLevel* pLevel);
+void DRLG_CreateAct4OutdoorsLevel(DRLGLevel* pLevel);
+void DRLG_CreateAct5OutdoorsLevel(DRLGLevel* pLevel);
+
 // DRLG_Preset.cpp
+void DRLG_InsertPresetRoom(DRLGLevel* pLevel, DRLGMap* pMap, DRLGCoordBox* pCoords,
+	int dt1Mask, int nRoomFlags, int nPresetFlags, DRLGGrid* pGrid);
 DRLGMap* DRLG_CreateDRLGMap(DRLGLevel* pLevel, DRLGCoordBox* pCoords);
