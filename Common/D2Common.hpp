@@ -9,7 +9,17 @@
 
 ////////////////////////////////////////////
 //
-//	Structures
+//	Structures and Types
+
+enum D2MathFunc
+{
+	D2MATH_OR,
+	D2MATH_AND,
+	D2MATH_XOR,
+	D2MATH_MOV,
+	D2MATH_MOVZ,
+	D2MATH_ANDNOT,
+};
 
 struct D2TxtColumnStrc
 {
@@ -22,6 +32,9 @@ struct D2TxtColumnStrc
 ////////////////////////////////////////////
 //
 //	Functions
+
+// D2Common_Math.cpp
+void Math_Perform(D2MathFunc func, DWORD* pIn, DWORD pOperand);
 
 // DataTables.cpp
 void DataTables_Init();

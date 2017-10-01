@@ -1,6 +1,33 @@
 #include "DRLG.hpp"
 
 /*
+ *	Creates (phase 1) a preset level
+ *	@author	eezstreet
+ */
+void DRLG_PresetLevelAllocate(DRLGLevel* pLevel)
+{
+	D2LvlPrestTxt* pPrest = DRLG_GetPrestRecord(pLevel->nLevel);
+
+	AssertWithDescription((pPrest != nullptr), "Level labeled as Preset, but no preset claims the level");
+
+	// Create the preset level data - this will initialize the pMap structure within pLevel!
+	pLevel->pPreset = (DRLGPresetInfo*)malloc(sizeof(DRLGPresetInfo));
+
+	// If the lvlprest entry has its files field set, randomize from those.
+	// Otherwise, use the last direction field set in the miscdata.
+	if (pPrest->dwFiles)
+	{
+		pLevel->pPreset->nFile = D2_smrand(&pLevel->LevelSeed, pPrest->dwFiles);
+	}
+	else
+	{
+		pLevel->pPreset->nFile = pLevel->pMisc->pRoomEx[0].fRoomAltFlags;
+	}
+
+	DRLG_SetLevelSize(pLevel->pMisc, pLevel);
+}
+
+/*
  *	Creates a preset room
  *	@author	eezstreet
  */
@@ -82,4 +109,19 @@ DRLGMap* DRLG_CreateDRLGMap(DRLGLevel* pLevel, DRLGCoordBox* pCoords)
 	pLevel->pCurrent = pMap;
 
 	return pMap;
+}
+
+/*
+ *	Generates (phase 2) a preset level
+ *	@author	eezstreet
+ */
+void DRLG_PresetLevelGenerate(DRLGLevel* pLevel)
+{
+	// Create the DRLGMap structure.
+	// For some reason this resanitizes the file picked...no clue why...Blizzard logic I guess
+	pLevel->pPreset->pMap = DRLG_CreateDRLGMap(pLevel, &pLevel->LvlBox);
+	pLevel->pPreset->nFile = pLevel->pPreset->pMap->nFilePicked;
+	DRLG_BuildPresetRooms(pLevel, pLevel->pPreset->pMap, 0, false);
+
+	// TODO: call the automap functions
 }

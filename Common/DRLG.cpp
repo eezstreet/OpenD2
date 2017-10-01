@@ -57,7 +57,7 @@ DRLGLevel* DRLG_GetLevelFromID(DRLGMisc* pMisc, int nLevelID)
 	if (pCurrent == nullptr)
 	{
 		// Not found, so we will need to generate it
-		pCurrent = DRLG_GenerateLevel(pMisc, nLevelID);
+		pCurrent = DRLG_CreateLevel(pMisc, nLevelID);
 		Log_ErrorAssert((pCurrent != nullptr), nullptr);
 	}
 
@@ -145,6 +145,43 @@ bool DRLG_NotOverlapping(DRLGCoordBox* pA, DRLGCoordBox* pB, int nThreshold)
 }
 
 /*
+ *	Injects a level into the DRLGMisc structure
+ *	@author	eezstreet
+ */
+void DRLG_SetLevelSize(DRLGMisc* pMisc, DRLGLevel* pLevel)
+{
+	D2LevelDefBin* pLevelDef = &sgptDataTables->pLevelDefBin[pLevel->nLevel];
+
+	// The 'depend' field in levels.txt aligns one level along another one.
+	if (pLevelDef->dwDepend)
+	{
+		// Find the depend level first
+		DRLGLevel* pDependLevel = pMisc->pFirst;
+		while (pDependLevel != nullptr)
+		{
+			if (pDependLevel->nLevel == pLevelDef->dwDepend)
+			{
+				// Found it! Match our coordinates.
+				pLevel->LvlBox.nX = pDependLevel->LvlBox.nX + pLevelDef->dwOffsetX;
+				pLevel->LvlBox.nY = pDependLevel->LvlBox.nY + pLevelDef->dwOffsetY;
+				return;
+			}
+
+			pDependLevel = pDependLevel->pNext;
+		}
+
+		// Didn't find the dependent level, create it!
+		pDependLevel = DRLG_CreateLevel(pMisc, pLevelDef->dwDepend);
+		pLevel->LvlBox.nX = pDependLevel->LvlBox.nX + pLevelDef->dwOffsetX;
+		pLevel->LvlBox.nY = pDependLevel->LvlBox.nY + pLevelDef->dwOffsetY;
+		return;
+	}
+
+	pLevel->LvlBox.nX = pLevelDef->dwOffsetX;
+	pLevel->LvlBox.nY = pLevelDef->dwOffsetY;
+}
+
+/*
  *	Get the Act number associated with a level index
  *	Equivalent in function to D2Common.#10001.
  *	@author	eezstreet
@@ -161,6 +198,7 @@ D2COMMONAPI BYTE DRLG_GetLevelActNum(int nLevel)
  */
 static DRLGMisc* DRLG_CreateMiscData(DRLGAct* pAct, bool bServer, int nDifficulty, int nLevelStart)
 {
+	int i;
 	DRLGMisc* pMisc = (DRLGMisc*)malloc(sizeof(DRLGMisc));
 	memset(pMisc, 0, sizeof(DRLGMisc));
 
@@ -189,7 +227,7 @@ static DRLGMisc* DRLG_CreateMiscData(DRLGAct* pAct, bool bServer, int nDifficult
 	}
 
 	// Initialize the room sectors
-	for (int i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 	{
 		pMisc->pRoomEx[i].eRoomStatus = i;
 		pMisc->pRoomEx[i].pStatusNext = &pMisc->pRoomEx[i];
@@ -202,7 +240,37 @@ static DRLGMisc* DRLG_CreateMiscData(DRLGAct* pAct, bool bServer, int nDifficult
 	// Create the starting level (if one exists)
 	if (nLevelStart)
 	{
-		DRLG_GenerateLevel(pMisc, nLevelStart);
+		DRLGLevel* pLevel = DRLG_GetLevelFromID(pMisc, nLevelStart);
+		switch (pLevel->eDRLGType)
+		{
+			case DRLGTYPE_MAZE:
+				DRLG_MazeLevelGenerate(pLevel);
+				break;
+			case DRLGTYPE_PRESET:
+				DRLG_PresetLevelGenerate(pLevel);
+				break;
+			case DRLGTYPE_OUTDOORS:
+				DRLG_OutdoorLevelGenerate(pLevel);
+				break;
+		}
+
+		// Flag roombools
+		if (pLevel->nRooms && pLevel->pRoomBools)
+		{
+			DRLGRoomEx* pRoomEx = pLevel->pFirstRoomEx;
+			i = 0;
+
+			while (pRoomEx != nullptr)
+			{
+				pRoomEx = pRoomEx->pNext;
+				if (pLevel->pRoomBools[i])
+				{
+					pRoomEx->fRoomAltFlags |= ROOMEXFLAG_ROOMBOOL;
+				}
+			}
+		}
+
+
 	}
 
 	return pMisc;

@@ -236,10 +236,10 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 	int nIteration = 0;
 	int nLevelLinked;
 	int nLevelLinkedEx;
-	int* pLevelNum;
 
 	// Set initial link data
 	D2_seedcopy(&linkData.pSeed, &pMisc->MiscSeed);
+	memset(&linkData, 0, sizeof(linkData));
 	linkData.pLink = pLink;
 
 	for (int i = 0; i < 15; i++)
@@ -251,7 +251,7 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 	}
 
 	// set size for each level in the chain
-	while (pCurrent->nLevel != -1 && pCurrent->nLevel != 0)
+	while (pCurrent->nLevel != 0)
 	{
 		pLevelRecord = &sgptDataTables->pLevelDefBin[pCurrent->nLevel];
 		pCoord->nW = pLevelRecord->dwSizeX[pMisc->nDifficulty];
@@ -260,47 +260,35 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 		pCurrent++;
 	}
 
+	// Run each linker on the batch chain.
+	// Increment iteration count if the space checking function succeeded.
 	pCurrent = pLink;
-
-	// Run the linker function on each level in the chain.
-	// Increment iteration count if the space checking function succeeds or is not present.
-	if (pLink->nLevel)
+	while (pCurrent->nLevel != 0)
 	{
-		pLevelNum = &pLink->nLevel;
-		pCurrent = pLink;
-		do
-		{
-			linkData.nCurrentLevel = *pLevelNum;
-			linkData.nIteration = nIteration;
+		linkData.nCurrentLevel = pCurrent->nLevel;
+		linkData.nIteration = nIteration;
 
-			if (pCurrent->pfLinker(&linkData))
-			{	// linker function succeeded, try spacechecking
-				if (!pfSpaceCheck || pfSpaceCheck(&linkData, nIteration))
-				{	// space checking succeeded, go to the next level
-					nIteration++;
-					pCurrent++;
-					pLevelNum += 4; // ?
-				}
-				// space checking failed, re-link at the current level and try again
-			}
-			else
-			{	// linker failed, walk backwards to the previous level and reset the randomization data
-				linkData.nRand[0][nIteration] = -1;
-				linkData.nRand[1][nIteration] = -1;
-				linkData.nRand[2][nIteration] = -1;
-				linkData.nRand[3][nIteration] = -1;
-				nIteration--;
-				pCurrent--;
-				pLevelNum -= 4; // ?
-			}
-		} while (*pLevelNum);
+		if (pCurrent->pfLinker(&linkData) && (pfSpaceCheck == nullptr || pfSpaceCheck(&linkData, nIteration)))
+		{
+			nIteration++;
+			pCurrent++;
+		}
+		else
+		{
+			linkData.nRand[0][nIteration] = -1;
+			linkData.nRand[1][nIteration] = -1;
+			linkData.nRand[2][nIteration] = -1;
+			linkData.nRand[3][nIteration] = -1;
+			nIteration--;
+			pCurrent--;
+		}
 	}
 
 	pCurrent = pLink;
 	nIteration = 0;
 
 	// Now that we've linked all of the levels up, we need to make sure that the (outdoor) levels line up next to each other.
-	while (pCurrent->nLevel != -1 && pCurrent->nLevel != 0)
+	while (pCurrent->nLevel != 0)
 	{
 		nLevelLinked = pCurrent->nLevelLink == -1 ? 0 : pCurrent->nLevelLink;
 		nLevelLinkedEx = pCurrent->nLevelLinkEx == -1 ? 0 : pCurrent->nLevelLinkEx;
@@ -398,8 +386,7 @@ static void DRLG_CreateLevelLinkageEx(DRLGMisc* pMisc, int nLevel, int nLevelEx)
 	while (nLevel <= nLevelEx)
 	{
 		DRLGLevel* pLevel = DRLG_GetLevelFromID(pMisc, nLevel);
-		//if (pLevel->eDRLGType == DRLGTYPE_OUTDOORS)
-		if(0)	// FIXME
+		if (pLevel->eDRLGType == DRLGTYPE_OUTDOORS)
 		{
 			int* pWarps = DRLG_GetWarpLevels(pMisc, nLevel);
 			int* pVis = DRLG_GetVisLevels(pMisc, nLevel);

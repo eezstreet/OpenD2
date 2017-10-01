@@ -291,9 +291,9 @@ DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize)
  */
 DWORD D2_srand(D2Seed* pSeed)
 {
-	QWORD mul = (pSeed->dwLoSeed * D2SEED_MAGIC) + pSeed->dwHiSeed;
-	pSeed->dwHiSeed = LODWORD(mul);
-	pSeed->dwLoSeed = HIDWORD(mul);
+	QWORD mul = (pSeed->dwHiSeed + D2SEED_MAGIC) * pSeed->dwLoSeed;
+	pSeed->dwHiSeed = HIDWORD(mul);
+	pSeed->dwLoSeed = LODWORD(mul);
 	return pSeed->dwLoSeed;
 }
 

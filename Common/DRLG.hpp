@@ -790,6 +790,7 @@ enum eRoomAltFlags
 
 enum eDRLGRoomExFlags
 {
+	ROOMEXFLAG_ROOMBOOL = 0x00000001,
 	ROOMEXFLAG_INACTIVE = 0x00000002,
 	ROOMEXFLAG_HAS_WARP_0 = 0x00000010,
 	ROOMEXFLAG_HAS_WARP_1 = 0x00000020,
@@ -1300,6 +1301,7 @@ struct DRLGLinkerParams            //sizeof 0x18
 //	Functions
 
 // DRLG.cpp
+void DRLG_SetLevelSize(DRLGMisc* pMisc, DRLGLevel* pLevel);
 DRLGLevel* DRLG_GetLevelFromID(DRLGMisc* pMisc, int nLevelID);
 int* DRLG_GetWarpLevels(DRLGMisc* pMisc, int nLevel);
 int* DRLG_GetVisLevels(DRLGMisc* pMisc, int nLevel);
@@ -1310,23 +1312,30 @@ D2LvlPrestTxt* DRLG_GetPrestRecord(int nLevelID);
 // DRLG_Generation.cpp
 DRLGRoomEx* DRLG_AllocateRoomEx(DRLGLevel* pLevel, int nPresetType);
 void DRLG_BindRoomEx(DRLGLevel* pLevel, DRLGRoomEx* pRoomEx);
-DRLGLevel* DRLG_GenerateLevel(DRLGMisc* pMisc, int nLevel);
+DRLGLevel* DRLG_CreateLevel(DRLGMisc* pMisc, int nLevel);
 void DRLG_FreeLevels();
+void DRLG_BuildPresetRooms(DRLGLevel* pLevel, DRLGMap* pMap, int nFlags, bool bMaze);
+
+// DRLG_Grid.cpp
+void DRLG_CreateGrid(DRLGGrid* pGrid, int nWidth, int nHeight);
+void DRLG_CreateGrid_NoAllocations(DRLGGrid* pGrid, int nWidth, int nHeight, DWORD* pGridFlags, DWORD* pGridSectors);
+DWORD DRLG_GetGridFlags(DRLGGrid* pGrid, int x, int y);
+void DRLG_DoGridFlagsMath(DRLGGrid* pGrid, int nOperand, D2MathFunc nOperator);
 
 // DRLG_Link.cpp
 void DRLG_MiscGenerateOverworld(DRLGMisc* pMisc);
 
+// DRLG_Maze.cpp
+void DRLG_MazeLevelAllocate(DRLGLevel* pLevel);
+void DRLG_MazeLevelGenerate(DRLGLevel* pLevel);
+
 // DRLG_Outdoors.cpp
-void DRLG_InsertOutdoorGridRoom(DRLGLevel* pLevel, int nX, int nY, int nW, int nH, int nRoomFlags,
-	int nOutdoorMapFlags, int nUnused, int dt1Mask);
-void DRLG_CreateOutdoorVerData(DRLGVer** ppVer, DRLGCoordBox* pCoords, char nDirection, DRLGLinkData* pLink);
-void DRLG_CreateAct1OutdoorsLevel(DRLGLevel* pLevel);
-void DRLG_CreateAct2OutdoorsLevel(DRLGLevel* pLevel);
-void DRLG_CreateAct3OutdoorsLevel(DRLGLevel* pLevel);
-void DRLG_CreateAct4OutdoorsLevel(DRLGLevel* pLevel);
-void DRLG_CreateAct5OutdoorsLevel(DRLGLevel* pLevel);
+void DRLG_OutdoorLevelAllocate(DRLGLevel* pLevel);
+void DRLG_OutdoorLevelGenerate(DRLGLevel* pLevel);
 
 // DRLG_Preset.cpp
 void DRLG_InsertPresetRoom(DRLGLevel* pLevel, DRLGMap* pMap, DRLGCoordBox* pCoords,
 	int dt1Mask, int nRoomFlags, int nPresetFlags, DRLGGrid* pGrid);
 DRLGMap* DRLG_CreateDRLGMap(DRLGLevel* pLevel, DRLGCoordBox* pCoords);
+void DRLG_PresetLevelAllocate(DRLGLevel* pLevel);
+void DRLG_PresetLevelGenerate(DRLGLevel* pLevel);
