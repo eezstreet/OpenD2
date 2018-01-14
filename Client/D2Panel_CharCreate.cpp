@@ -2,10 +2,10 @@
 #include "D2Menu_Main.hpp"
 #include "D2Menu_Loading.hpp"
 #include "D2Menu_CharCreate.hpp"
+#include "D2Menu_CharSelect.hpp"
 
 #define TBLTEXT_EXIT			5101
 #define TBLTEXT_OK				5102
-#define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
 
 /*
  *
@@ -19,7 +19,16 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cc_cancel"))
 	{
 		delete cl.pActiveMenu;
-		cl.pActiveMenu = new D2Menu_Main();
+		
+		// If we came from the character selection screen, go back to that instead of the main menu
+		if (pMenu->m_bFromCharSelect)
+		{
+			cl.pActiveMenu = new D2Menu_CharSelect(nullptr);
+		}
+		else
+		{
+			cl.pActiveMenu = new D2Menu_Main();
+		}
 		return;
 	}
 	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cc_ok"))

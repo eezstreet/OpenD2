@@ -2,6 +2,8 @@
 #include "D2Client.hpp"
 #include "D2Widget.hpp"
 
+#define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
+
 /*
  *	Panels are a subsection of UI.
  *	They contain one or more widgets and are part of a menu.

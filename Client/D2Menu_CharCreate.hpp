@@ -49,7 +49,9 @@ private:
 	static void AnimationKeyframe(anim_handle anim, int nExtraInt);
 
 public:
-	D2Menu_CharCreate();
+	bool	m_bFromCharSelect;
+
+	D2Menu_CharCreate(bool bFromCharSelect = false);
 	~D2Menu_CharCreate();
 
 	virtual void Draw();

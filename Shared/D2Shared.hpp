@@ -403,7 +403,7 @@ struct D2ModuleImportStrc
 	void		(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
 	size_t		(*FS_Tell)(fs_handle f);
 	char**		(*FS_ListFilesInDirectory)(char* szDirectory, char* szExtensionFilter, int *nFiles);
-	void		(*FS_FreeFileList)(char** pszFileList);
+	void		(*FS_FreeFileList)(char** pszFileList, int nNumFiles);
 	void		(*FS_CreateSubdirectory)(char* szSubdirectory);
 
 	// Input calls

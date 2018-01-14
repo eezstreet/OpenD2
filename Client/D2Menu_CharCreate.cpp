@@ -40,7 +40,7 @@ static const char* szAnimNameSpecial[CCA_MAX] = {
 /*
  *	Creates the character creation menu. Lots of creation.
  */
-D2Menu_CharCreate::D2Menu_CharCreate()
+D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 {
 	tex_handle fireTex = trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\fire.DC6", "ccfire", PAL_FECHAR);
 
@@ -186,6 +186,9 @@ D2Menu_CharCreate::D2Menu_CharCreate()
 	// set us up to not have anything highlighted
 	m_nHighlightedClass = D2CLASS_MAX;
 	m_nSelectedClass = D2CLASS_MAX;
+
+	// other data
+	m_bFromCharSelect = bFromCharSelect;
 }
 
 /*

@@ -465,7 +465,7 @@ bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen)
  */
 char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles)
 {
-	char szFiles[MAX_FILE_LIST_SIZE][MAX_D2PATH]{ 0 };
+	char szFiles[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]{ 0 };
 	char** szOutFiles;
 	int i;
 	char szCurrentSearchPath[MAX_D2PATH_ABSOLUTE]{ 0 };
@@ -476,7 +476,7 @@ char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *
 	for (i = 0; i < FS_MAXPATH; i++)
 	{
 		snprintf(szCurrentSearchPath, MAX_D2PATH_ABSOLUTE, "%s%s", pszPaths[i], szDirectory);
-		Sys_ListFilesInDirectory(szCurrentSearchPath, szExtensionFilter, nFiles, (char**)szFiles);
+		Sys_ListFilesInDirectory(szCurrentSearchPath, szExtensionFilter, nFiles, &szFiles);
 	}
 
 	if (*nFiles == 0)
@@ -485,10 +485,11 @@ char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *
 	}
 
 	// copy the temporary files into the output files
-	szOutFiles = (char**)malloc(MAX_D2PATH * (*nFiles));
+	szOutFiles = (char**)malloc(sizeof(char*) * (*nFiles));
 	for (i = 0; i < *nFiles; i++)
 	{
-		D2_strncpyz(szOutFiles[i], szFiles[i], MAX_D2PATH);
+		szOutFiles[i] = (char*)malloc(sizeof(char*) * MAX_D2PATH_ABSOLUTE);
+		D2_strncpyz(szOutFiles[i], szFiles[i], MAX_D2PATH_ABSOLUTE);
 	}
 
 	return szOutFiles;
@@ -498,8 +499,12 @@ char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *
  *	Frees a file list. Don't forget to do this once you're done with a file list!
  *	@author	eezstreet
  */
-void FS_FreeFileList(char** pszFileList)
+void FS_FreeFileList(char** pszFileList, int nNumFiles)
 {
+	for (int i = 0; i < nNumFiles; i++)
+	{
+		free(pszFileList[i]);
+	}
 	free(pszFileList);
 }
 

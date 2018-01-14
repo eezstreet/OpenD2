@@ -1,5 +1,6 @@
 #include "D2Panel_Main.hpp"
 #include "D2Menu_CharCreate.hpp"
+#include "D2Menu_CharSelect.hpp"
 
 #define TBLTEXT_SINGLEPLAYER	5106
 #define TBLTEXT_BATTLENET		5107
@@ -91,15 +92,17 @@ static void D2PanelMain_AdvanceToCharSelect()
 {
 	int nNumFiles = 0;
 	char** szFileList = trap->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
+
+	delete cl.pActiveMenu;
 	if (nNumFiles <= 0)
 	{
-		// there's no need to free the list if no files are found (rollsafe.jpg)
-		delete cl.pActiveMenu;
 		cl.pActiveMenu = new D2Menu_CharCreate();
-		return;
 	}
-
-	trap->FS_FreeFileList(szFileList);
+	else
+	{
+		cl.pActiveMenu = new D2Menu_CharSelect(szFileList);
+		trap->FS_FreeFileList(szFileList, nNumFiles);
+	}
 }
 
 /*
