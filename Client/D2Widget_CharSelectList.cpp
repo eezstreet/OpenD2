@@ -1,4 +1,5 @@
 #include "D2Widget_CharSelectList.hpp"
+#include "D2Panel_CharSelect.hpp"
 
 #define D2_NUM_VISIBLE_SAVES	8
 
@@ -81,7 +82,8 @@ static const CharacterTitle TitleStatus_ExpansionHardcore[] =
  *	This method is responsible for loading up all of the savegames.
  *	We should maybe cache the results of the savegame loading so that going to the charselect page doesn't take a while.
  */
-D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h) : D2Widget(x, y, w, h)
+D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h) 
+	: D2Widget(x, y, w, h)
 {
 	// Blank out our own data
 	pCharacterData = nullptr;
@@ -91,6 +93,13 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h) : D
 
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
+
+	frameHandle = trap->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
+		"charselectbox", 0, 1, PAL_UNITS);
+	greyFrameHandle = trap->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
+		"charselectboxgrey", 0, 1, PAL_UNITS);
+	trap->R_SetTextureBlendMode(frameHandle, BLEND_ALPHA);
+	trap->R_SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
 }
 
 /*
@@ -130,6 +139,15 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 }
 
 /*
+ *	This widget got added to the panel. Let's go ahead and tell the parent what we have selected.
+ *	@author	eezstreet
+ */
+void D2Widget_CharSelectList::OnWidgetAdded()
+{
+	Selected(nCurrentSelection);
+}
+
+/*
  *	Draws a Character Select list widget.
  */
 void D2Widget_CharSelectList::Draw()
@@ -158,10 +176,6 @@ void D2Widget_CharSelectList::Draw()
  */
 void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSaveData* pSaveData, int nSlot)
 {
-	// Each slot in the character select screen is 100px tall and 270px wide.
-	const int nSlotWidth = 270;
-	const int nSlotHeight = 100;
-
 	// It draws a visual representation of the character on the left side of each slot, based on what the savegame says.
 	bool bRightSlot = (nSlot % 2) > 0;
 	int nSlotY = nSlot / 2;
@@ -171,13 +185,31 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	char16_t szDisplayString[32]{ 0 };
 	bool bClassMale = Client_classMale(pSaveData->header.nCharClass);
 
+	// If this save slot is the selected one, draw the frame
+	if (nCurrentSelection == nSlot)
+	{
+		if ((pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE)) &&
+			(pSaveData->header.nCharStatus & (1 << D2STATUS_DEAD)))
+		{
+			// Dead hardcore player gets a grey frame
+			trap->R_DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
+				nSlotWidth, nSlotHeight, 0, 0);
+		}
+		else
+		{
+			// Use the normal frame
+			trap->R_DrawTexture(frameHandle, (bRightSlot ? x + nSlotWidth : x), y + (nSlotY * nSlotHeight),
+				nSlotWidth, nSlotHeight, 0, 0);
+		}
+	}
+
 	// On the right, it draws text information:
 	//		Character Title (if present)
 	//		Character Name
 	//		Level X <Character Class>
 	//		EXPANSION CHARACTER (if it's flagged as being an expansion character)
 	nX = x + (bRightSlot ? nSlotWidth : 0) + 76;
-	nY = y + (nSlotY * nSlotHeight) + 14;
+	nY = y + (nSlotY * nSlotHeight) + 4;
 
 	// Draw character title. The title corresponds to the number of acts completed. EXCEPT IN THE EXPANSION
 	// Set font color to be gold. Or red if this is a hardcore character.
@@ -255,6 +287,34 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 }
 
 /*
+ *	Returns the name of the currently selected character.
+ *	@author	eezstreet
+ */
+char16_t* D2Widget_CharSelectList::GetSelectedCharacterName()
+{
+	int i = 0;
+	CharacterSaveData* pCharacterSave = pCharacterData;
+
+	if (nCurrentSelection == -1)
+	{
+		return u"";
+	}
+
+	while (i != nCurrentSelection && pCharacterSave != nullptr)
+	{
+		pCharacterSave = pCharacterSave->pNext;
+		i++;
+	}
+
+	if (i == nCurrentSelection)
+	{
+		return pCharacterSave->name;
+	}
+
+	return u"";
+}
+
+/*
  *	Handles a mouse-down event on a CharSelectList widget.
  */
 bool D2Widget_CharSelectList::HandleMouseDown(DWORD dwX, DWORD dwY)
@@ -273,7 +333,51 @@ bool D2Widget_CharSelectList::HandleMouseClick(DWORD dwX, DWORD dwY)
 {
 	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
 	{
+		Clicked(dwX - x, dwY - y);
 		return true;
 	}
 	return false;
+}
+
+/*
+ *	Handles a click in a relative area
+ *	@author	eezstreet
+ */
+void D2Widget_CharSelectList::Clicked(DWORD dwX, DWORD dwY)
+{
+	bool bClickedRight = dwX > (w / 2);
+	int nClickY = dwY / (h / 4);
+	int nClickSlot = (nClickY * 2) + bClickedRight;
+	int nNewSelection = nClickSlot + nCurrentScroll;
+
+	if (nNewSelection >= nNumberSaves)
+	{
+		nNewSelection = -1;
+	}
+
+	nCurrentSelection = nNewSelection;
+	Selected(nCurrentSelection);
+}
+
+/*
+ *	A new character slot was selected
+ *	@author	eezstreet
+ */
+void D2Widget_CharSelectList::Selected(int nNewSelection)
+{
+	if (nNewSelection >= nNumberSaves)
+	{
+		nNewSelection = -1;
+	}
+
+	nCurrentSelection = nNewSelection;
+	if (nCurrentSelection == -1)
+	{
+		// Grey out the "OK", "Delete Character" and "Convert to Expansion" buttons
+		dynamic_cast<D2Panel_CharSelect*>(m_pOwner)->InvalidateSelection();
+	}
+	else
+	{
+		dynamic_cast<D2Panel_CharSelect*>(m_pOwner)->ValidateSelection();
+	}
 }

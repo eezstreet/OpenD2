@@ -5,8 +5,6 @@
 class D2Widget_CharSelectList : public D2Widget
 {
 private:
-	D2Widget_Scrollbar*		pScrollBar;
-
 	struct CharacterSaveData
 	{
 		D2SaveHeader header;
@@ -15,18 +13,28 @@ private:
 		CharacterSaveData* pNext;
 	};
 	CharacterSaveData* pCharacterData;
+	D2Widget_Scrollbar*		pScrollBar;
 	int nCurrentScroll;
 	int nCurrentSelection;
 	int nNumberSaves;
+	tex_handle	frameHandle;
+	tex_handle	greyFrameHandle;
+	const int nSlotWidth = 272;
+	const int nSlotHeight = 93;
 
 	void DrawSaveSlot(CharacterSaveData* pCharacterData, int nSlot);
+	void Clicked(DWORD dwX, DWORD dwY);
 public:
 	D2Widget_CharSelectList(int x, int y, int w, int h);
 	~D2Widget_CharSelectList();
 
 	void AddSave(D2SaveHeader& header, char* path);
+	char16_t* GetSelectedCharacterName();
 
+	virtual void OnWidgetAdded();
 	virtual void Draw();
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
 	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY);
+
+	void Selected(int nNewSelection);
 };

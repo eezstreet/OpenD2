@@ -35,6 +35,7 @@ public:
 	char* GetIdentifier();
 
 	virtual void Draw() = 0;
+	virtual void OnWidgetAdded();
 	virtual bool HandleTextInput(char* szText);
 	virtual bool HandleTextEditing(char* szText, int nStart, int nLength);
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY) = 0;

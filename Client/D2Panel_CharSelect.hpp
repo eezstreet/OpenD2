@@ -20,6 +20,8 @@ public:
 	~D2Panel_CharSelect();
 
 	void LoadSave(D2SaveHeader& pSaveHeader, char* path);
+	void InvalidateSelection();
+	void ValidateSelection();
 
 	virtual void Draw();
 };

@@ -55,6 +55,16 @@ char* D2Widget::GetIdentifier()
 }
 
 /*
+ *	A callback that occurs when this widget gets added to its parent.
+ *	Until this happens, m_pOwner is invalid and we can't perform operations on it.
+ *	@author	eezstreet
+ */
+void D2Widget::OnWidgetAdded()
+{
+	return;
+}
+
+/*
  *	Handles a text input event
  *	@author	eezstreet
  */

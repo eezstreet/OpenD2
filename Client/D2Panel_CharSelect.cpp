@@ -75,7 +75,7 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 
 	okButton = new D2Widget_Button(628, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	exitButton = new D2Widget_Button(34, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
-	charSelectList = new D2Widget_CharSelectList(37, 88, 548, 370);
+	charSelectList = new D2Widget_CharSelectList(37, 86, 548, 370);
 
 	AddWidget(createCharButton);
 	AddWidget(deleteCharButton);
@@ -121,6 +121,15 @@ D2Panel_CharSelect::~D2Panel_CharSelect()
  */
 void D2Panel_CharSelect::Draw()
 {
+	// Draw the character name
+	char16_t* szCharName = charSelectList->GetSelectedCharacterName();
+
+	if (szCharName && szCharName[0])
+	{
+		trap->R_DrawText(cl.font42, szCharName, 34, 20, 564, 55, ALIGN_CENTER, ALIGN_CENTER);
+	}
+
+	// Draw the widgets
 	DrawAllWidgets();
 }
 
@@ -133,6 +142,28 @@ void D2Panel_CharSelect::LoadSave(D2SaveHeader& save, char* path)
 	{
 		charSelectList->AddSave(save, path);
 	}
+}
+
+/*
+ *	We just received word that we selected an invalid character.
+ *	@author	eezstreet
+ */
+void D2Panel_CharSelect::InvalidateSelection()
+{
+	deleteCharButton->Disable();
+	convertExpansionButton->Disable();
+	okButton->Disable();
+}
+
+/*
+ *	We just received word that we selected a valid character.
+ *	@author	eezstreet
+ */
+void D2Panel_CharSelect::ValidateSelection()
+{
+	deleteCharButton->Enable();
+	convertExpansionButton->Enable();
+	okButton->Enable();
 }
 
 /////////////////////////////////////////////////////////////////
