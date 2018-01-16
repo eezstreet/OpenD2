@@ -200,7 +200,7 @@ bool Sys_CreateDirectory(char* szPath)
  *	If the extension filter is *.*, there is essentially no filter.
  *	@author	eezstreet
  */
-void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE])
+void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE])
 {
 	char szFullPath[MAX_D2PATH_ABSOLUTE]{ 0 };
 	HANDLE hFile;
@@ -216,7 +216,7 @@ void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, int* nFiles
 
 	do
 	{
-		snprintf((*szList)[*nFiles], MAX_D2PATH_ABSOLUTE, "%s/%s", szPath, findData.cFileName);
+		snprintf((*szList)[*nFiles], MAX_D2PATH_ABSOLUTE, "%s/%s", szOriginalPath, findData.cFileName);
 		*nFiles = *nFiles + 1;
 	} while (FindNextFile(hFile, &findData) == TRUE);
 }

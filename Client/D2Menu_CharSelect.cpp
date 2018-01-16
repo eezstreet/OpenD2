@@ -3,8 +3,12 @@
 /*
  *	Creates the CharSelect menu.
  */
-D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths)
+D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 {
+	bool bPreloadedSave = (pszSavePaths != nullptr);
+	D2SaveHeader header{ 0 };
+	fs_handle f;
+
 	// Should match the one in the main menu
 	backgroundTexture =
 		trap->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", "charselect", 0, 11, PAL_UNITS);
@@ -15,6 +19,34 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths)
 
 	AddPanel(m_charSelectPanel, true);
 	AddPanel(m_charDeletePanel, false);
+
+	// We have to load the saves since we did not get them from the previous call
+	if (!bPreloadedSave)
+	{
+		pszSavePaths = trap->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
+	}
+
+	// Iterate through the save files. We tell the select panel to add character data to the display.
+	for (int i = 0; i < nNumFiles; i++)
+	{
+		// Read only the header file of each one. It contains all the information we need.
+		trap->FS_Open(pszSavePaths[i], &f, FS_READ, true);
+		if (f == INVALID_HANDLE)
+		{
+			continue;
+		}
+		trap->FS_Read(f, &header, sizeof(header), 1);
+		trap->FS_CloseFile(f);
+
+		// Pass the header to the panel
+		m_charSelectPanel->LoadSave(header, pszSavePaths[i]);
+	}
+
+	// Don't forget to free the file list!
+	if (!bPreloadedSave)
+	{
+		trap->FS_FreeFileList(pszSavePaths, nNumFiles);
+	}
 }
 
 /*

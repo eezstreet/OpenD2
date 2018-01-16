@@ -13,7 +13,7 @@ private:
 	D2Panel_CharSelect* m_charSelectPanel;
 	D2Panel_CharDeleteConfirm* m_charDeletePanel;
 public:
-	D2Menu_CharSelect(char** pszSavePaths);
+	D2Menu_CharSelect(char** pszSavePaths = nullptr, int nNumFiles = 0);
 	~D2Menu_CharSelect();
 
 	void AskForDeletionConfirmation();

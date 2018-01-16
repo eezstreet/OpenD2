@@ -214,6 +214,44 @@ enum D2InputModifiers
 	KEYMOD_ALT		= 0x04
 };
 
+enum D2CharacterStatus
+{
+	D2STATUS_NEWBIE = 0,
+	D2STATUS_HARDCORE = 2,
+	D2STATUS_DEAD = 3,
+	D2STATUS_EXPANSION = 5,
+};
+
+enum D2CharacterClass
+{
+	D2CLASS_AMAZON,
+	D2CLASS_SORCERESS,
+	D2CLASS_NECROMANCER,
+	D2CLASS_PALADIN,
+	D2CLASS_BARBARIAN,
+	D2CLASS_DRUID,
+	D2CLASS_ASSASSIN,
+	D2CLASS_MAX,
+};
+
+enum D2Difficulties
+{
+	D2DIFF_NORMAL,
+	D2DIFF_NIGHTMARE,
+	D2DIFF_HELL,
+	D2DIFF_MAX,
+};
+
+enum D2Acts
+{
+	D2_ACT_I,
+	D2_ACT_II,
+	D2_ACT_III,
+	D2_ACT_IV,
+	D2_ACT_V,
+	MAX_ACTS,
+};
+
 typedef void	(*AnimKeyframeCallback)(anim_handle anim, int nExtraInt);
 
 //////////////////////////////////////////////////
@@ -466,11 +504,13 @@ typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports)
 //
 //	Library Functions
 
-// String Management
+// String Management - ASCII
 int D2_stricmpn(char* s1, char* s2, int n);
 int D2_stricmp(char* s1, char* s2);
 void D2_strncpyz(char *dest, const char *src, int destsize);
 DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);
+
+// String Management - UTF-16
 int D2_qstricmpn(char16_t* s1, char16_t* s2, int n);
 int D2_qstricmp(char16_t* s1, char16_t* s2);
 int D2_qstrcmpn(char16_t* s1, char16_t* s2, int n);
@@ -479,6 +519,11 @@ size_t D2_qstrncpyz(char16_t* dest, char16_t* src, size_t destLen);
 size_t D2_qstrlen(char16_t* s1);
 size_t D2_qmbtowc(char16_t* dest, size_t destLen, char* src);
 size_t D2_qwctomb(char* dest, size_t destLen, char16_t* src);
+char16_t* D2_qstrverse(char16_t* s);
+char16_t* D2_qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
+char16_t* D2_qstrchr(char16_t* str, char16_t chr);
+int D2_qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);
+int D2_qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...);
 DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
 
 // Random Numbers

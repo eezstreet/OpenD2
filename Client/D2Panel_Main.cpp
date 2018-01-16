@@ -100,7 +100,7 @@ static void D2PanelMain_AdvanceToCharSelect()
 	}
 	else
 	{
-		cl.pActiveMenu = new D2Menu_CharSelect(szFileList);
+		cl.pActiveMenu = new D2Menu_CharSelect(szFileList, nNumFiles);
 		trap->FS_FreeFileList(szFileList, nNumFiles);
 	}
 }

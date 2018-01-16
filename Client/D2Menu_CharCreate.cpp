@@ -497,16 +497,16 @@ bool D2Menu_CharCreate::TrySaveCharacter()
 	save.header.dwCreationTime = time(nullptr);
 	save.header.dwModificationTime = save.header.dwCreationTime;
 
-	save.header.nCharType |= (1 << D2STATUS_NEWBIE);
+	save.header.nCharStatus |= (1 << D2STATUS_NEWBIE);
 	if (pDynamicPanel->HardcoreChecked())
 	{
-		save.header.nCharType |= (1 << D2STATUS_HARDCORE);
+		save.header.nCharStatus |= (1 << D2STATUS_HARDCORE);
 	}
 
 	save.header.nCharClass = m_nSelectedClass;
 	if (m_nSelectedClass == D2CLASS_ASSASSIN || m_nSelectedClass == D2CLASS_DRUID || pDynamicPanel->ExpansionChecked())
 	{	// FIXME: assassin and druid should probably have the expansion checkbox greyed out
-		save.header.nCharType |= (1 << D2STATUS_EXPANSION);
+		save.header.nCharStatus |= (1 << D2STATUS_EXPANSION);
 	}
 
 	// write the save header!

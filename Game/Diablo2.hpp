@@ -407,7 +407,7 @@ void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
 void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
 void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
 bool Sys_CreateDirectory(char* szPath);
-void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]);
+void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]);
 D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
 void Sys_CloseModule(OpenD2Modules nModule);
 

@@ -19,6 +19,8 @@ public:
 	D2Panel_CharSelect();
 	~D2Panel_CharSelect();
 
+	void LoadSave(D2SaveHeader& pSaveHeader, char* path);
+
 	virtual void Draw();
 };
 

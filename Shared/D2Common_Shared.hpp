@@ -33,44 +33,6 @@
 
 typedef handle tile_handle;
 
-enum D2CharacterClass
-{
-	D2CLASS_AMAZON,
-	D2CLASS_SORCERESS,
-	D2CLASS_NECROMANCER,
-	D2CLASS_PALADIN,
-	D2CLASS_BARBARIAN,
-	D2CLASS_DRUID,
-	D2CLASS_ASSASSIN,
-	D2CLASS_MAX,
-};
-
-enum D2CharacterStatus
-{
-	D2STATUS_NEWBIE = 0,
-	D2STATUS_HARDCORE = 2,
-	D2STATUS_DEAD = 3,
-	D2STATUS_EXPANSION = 5,
-};
-
-enum D2Difficulties
-{
-	D2DIFF_NORMAL,
-	D2DIFF_NIGHTMARE,
-	D2DIFF_HELL,
-	D2DIFF_MAX,
-};
-
-enum D2Acts
-{
-	D2_ACT_I,
-	D2_ACT_II,
-	D2_ACT_III,
-	D2_ACT_IV,
-	D2_ACT_V,
-	MAX_ACTS,
-};
-
 // Note: depending on the mod used, this may or may not be correct
 enum D2Levels
 {
@@ -250,6 +212,28 @@ enum D2LevelTypes
 	D2LVLTYPES_MAX,
 };
 
+enum eD2CompositeItem
+{
+	COMP_HEAD,
+	COMP_TORSO,
+	COMP_LEGS,
+	COMP_RIGHTARM,
+	COMP_LEFTARM,
+	COMP_RIGHTHAND,
+	COMP_LEFTHAND,
+	COMP_SHIELD,
+	COMP_SPECIAL1,
+	COMP_SPECIAL2,
+	COMP_SPECIAL3,
+	COMP_SPECIAL4,
+	COMP_SPECIAL5,
+	COMP_SPECIAL6,
+	COMP_SPECIAL7,
+	COMP_SPECIAL8,
+	COMP_COUNT,
+	COMP_INVALID = 0xFF,
+};
+
 ////////////////////////////////////////////////
 //
 //	Savegame Structs
@@ -284,7 +268,7 @@ struct D2SaveHeader
 	DWORD					dwCRC;
 	DWORD					dwWeaponSet;
 	char					szCharacterName[16];
-	BYTE					nCharType;
+	BYTE					nCharStatus;
 	BYTE					nCharTitle;
 	WORD					unk1;
 	BYTE					nCharClass;

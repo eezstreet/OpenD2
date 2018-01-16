@@ -23,7 +23,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 		// If we came from the character selection screen, go back to that instead of the main menu
 		if (pMenu->m_bFromCharSelect)
 		{
-			cl.pActiveMenu = new D2Menu_CharSelect(nullptr);
+			cl.pActiveMenu = new D2Menu_CharSelect();
 		}
 		else
 		{

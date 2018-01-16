@@ -476,7 +476,7 @@ char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *
 	for (i = 0; i < FS_MAXPATH; i++)
 	{
 		snprintf(szCurrentSearchPath, MAX_D2PATH_ABSOLUTE, "%s%s", pszPaths[i], szDirectory);
-		Sys_ListFilesInDirectory(szCurrentSearchPath, szExtensionFilter, nFiles, &szFiles);
+		Sys_ListFilesInDirectory(szCurrentSearchPath, szExtensionFilter, szDirectory, nFiles, &szFiles);
 	}
 
 	if (*nFiles == 0)

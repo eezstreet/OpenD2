@@ -1,5 +1,6 @@
 #include "D2Shared.hpp"
-#include <cstdlib>
+#include <cstdio>
+#include <cstdarg>
 #include <string>
 
 //////////////////////////////////////////////////
@@ -211,6 +212,174 @@ size_t D2_qstrlen(char16_t* s1)
 	size_t len = 0;
 	while (*s1++) len++;
 	return len;
+}
+
+/*
+ *	Reverses a char16_t string.
+ *	@author	eezstreet
+ */
+char16_t* D2_qstrverse(char16_t* s)
+{
+	size_t len = D2_qstrlen(s);
+
+	for (size_t i = len-1; i > 0; i++)
+	{
+		char16_t character = s[i];
+		s[i] = s[i - 1];
+		s[i - 1] = character;
+	}
+
+	return s;
+}
+
+/*
+ *	Converts an integer into a char16_t string.
+ *	@author	eezstreet
+ */
+char16_t* D2_qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written)
+{
+	bool bNegative = false;
+	written = 0;
+
+	if (number == 0)
+	{
+		D2_qstrncpyz(buffer, u"0", bufferLen);
+		written++;
+		return buffer;
+	}
+
+	if (number < 0 && base == 10)
+	{
+		bNegative = true;
+		number = -number;
+	}
+
+	while (number != 0 && written < bufferLen)
+	{
+		int rem = number % base;
+		buffer[written++] = (rem > 9) ? (rem - 10) + 'A' : rem + '0';
+		number = number / base;
+		written++;
+	}
+
+	// Append - to the end
+	if (bNegative)
+	{
+		if (written < bufferLen)
+		{
+			buffer[written++] = '-';
+		}
+		else
+		{
+			buffer[bufferLen - 1] = '-';
+		}
+	}
+
+	// Append null terminator to the end
+	if (written < bufferLen)
+	{
+		buffer[written] = '\0';
+	}
+	else
+	{
+		buffer[bufferLen - 1] = '\0';
+	}
+
+	// Reverse the string
+	D2_qstrverse(buffer);
+
+	return buffer;
+}
+
+/*
+ *	Safe strchr for char16_t.
+ *	Returns a substring from the first instance of the found specified character
+ */
+char16_t* D2_qstrchr(char16_t* str, char16_t chr)
+{
+	char16_t* p = str;
+	while (p && *p && *p != chr)
+	{
+		p++;
+	}
+
+	if (!p || !(*p) || *p != chr)
+	{
+		return nullptr;
+	}
+	return p;
+}
+
+/*
+ *	Pared-down format string handling. Only supports %%, %d and %s, but it uses char16_t to handle those.
+ *	@author	eezstreet
+ */
+int D2_qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args)
+{
+	char16_t* p = (char16_t*)format;
+	char16_t* next = D2_qstrchr(p, '%');
+	char16_t* o = buffer;
+	size_t rem = bufferCount;
+	int intArg;
+	char16_t* strArg;
+
+	while (next != nullptr && rem > 0)
+	{
+		size_t len = (next - p < rem) ? next - p : rem;
+		D2_qstrncpyz(o, p, len);
+		o += len;
+		rem -= next - p;
+
+		p = next;
+		p++;
+		switch (*p)
+		{
+			case '%':
+				*o = *p;
+				o++; p++;
+				rem--;
+				break;
+			case 'd':
+			case 'i':
+				intArg = va_arg(args, int);
+				len = 0;
+				D2_qnitoa(intArg, o, rem, 10, len);
+				o += len - 1;
+				rem -= len;
+				p++;
+				break;
+			case 's':
+				strArg = va_arg(args, char16_t*);
+				len = D2_qstrlen(strArg);
+				D2_qstrncpyz(o, strArg, rem);
+				rem -= len;
+				o += len;
+				p++;
+				break;
+		}
+
+		next = D2_qstrchr(p, '%');
+	}
+
+	D2_qstrncpyz(o, p, rem);
+
+	return bufferCount - rem;
+}
+
+/*
+ *	Pared-down format string handling. Only supports %%, %d and %s, but uses char16_t to handle those.
+ *	@author	eezstreet
+ */
+int D2_qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...)
+{
+	va_list args;
+	int out;
+
+	va_start(args, format);
+	out = D2_qvsnprintf(buffer, bufferCount, format, args);
+	va_end(args);
+
+	return out;
 }
 
 /*

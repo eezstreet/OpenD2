@@ -75,7 +75,7 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 
 	okButton = new D2Widget_Button(628, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	exitButton = new D2Widget_Button(34, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
-	charSelectList = new D2Widget_CharSelectList(34, 88, 548, 370);
+	charSelectList = new D2Widget_CharSelectList(37, 88, 548, 370);
 
 	AddWidget(createCharButton);
 	AddWidget(deleteCharButton);
@@ -108,7 +108,12 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
  */
 D2Panel_CharSelect::~D2Panel_CharSelect()
 {
-
+	delete createCharButton;
+	delete deleteCharButton;
+	delete convertExpansionButton;
+	delete okButton;
+	delete exitButton;
+	delete charSelectList;
 }
 
 /*
@@ -117,6 +122,17 @@ D2Panel_CharSelect::~D2Panel_CharSelect()
 void D2Panel_CharSelect::Draw()
 {
 	DrawAllWidgets();
+}
+
+/*
+ *	We just received a save from the owning menu. Add it to the CharSelectList.
+ */
+void D2Panel_CharSelect::LoadSave(D2SaveHeader& save, char* path)
+{
+	if (charSelectList != nullptr)
+	{
+		charSelectList->AddSave(save, path);
+	}
 }
 
 /////////////////////////////////////////////////////////////////

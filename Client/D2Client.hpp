@@ -62,3 +62,10 @@ extern D2ModuleImportStrc* trap;
 extern D2GameConfigStrc* config;
 extern OpenD2ConfigStrc* openConfig;
 extern D2Client cl;
+
+/////////////////////////////////////////////////
+//
+//	Helper functions
+
+bool Client_classMale(int nCharClass);
+char16_t* Client_className(int nCharClass);
