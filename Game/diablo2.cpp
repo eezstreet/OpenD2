@@ -114,6 +114,10 @@ static D2ModuleImportStrc exports = {
 	TBL_FindStringFromIndex,
 	TBL_FindStringIndexFromKey,
 	TBL_FindStringText,
+
+	COF_Register,
+	COF_Deregister,
+	COF_DeregisterType,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
@@ -430,6 +434,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	WriteGameConfig(&config, &openD2Config);
 	TBL_Cleanup();
+	COF_DeregisterAll();
 	Log_Shutdown();
 	FS_Shutdown();
 

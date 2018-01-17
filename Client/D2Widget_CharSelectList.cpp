@@ -136,6 +136,10 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 
 	// Increment the save count.
 	nNumberSaves++;
+
+	// Register the COF/DCCs necessary.
+	// FIXME, we're just rendering a generic one for right now
+	trap->COF_Register("chars", "NE", "TN", "HTH");
 }
 
 /*

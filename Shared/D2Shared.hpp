@@ -94,6 +94,7 @@ typedef handle tex_handle;
 typedef handle anim_handle;
 typedef handle tbl_handle;
 typedef handle font_handle;
+typedef handle cof_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
@@ -459,6 +460,11 @@ struct D2ModuleImportStrc
 	char16_t*	(*TBL_FindStringFromIndex)(tbl_handle dwIndex);
 	tbl_handle	(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
 	char16_t*	(*TBL_FindStringFromText)(char16_t* szReference);
+
+	// COF calls
+	cof_handle	(*COF_Register)(char* type, char* token, char* animation, char* hitclass);
+	void		(*COF_Deregister)(cof_handle cof);
+	void		(*COF_DeregisterType)(char* type);
 
 	// Renderer calls (should always be last)
 	tex_handle	(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);

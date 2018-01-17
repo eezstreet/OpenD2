@@ -208,12 +208,14 @@ void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOri
 	
 	snprintf(szFullPath, MAX_D2PATH_ABSOLUTE, "%s/%s", szPath, szExtensionFilter);
 
+	// Find the first file.
 	hFile = FindFirstFile(szFullPath, &findData);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return;
 	}
 
+	// Iterate through the list of files, adding them to the szList
 	do
 	{
 		snprintf((*szList)[*nFiles], MAX_D2PATH_ABSOLUTE, "%s/%s", szOriginalPath, findData.cFileName);

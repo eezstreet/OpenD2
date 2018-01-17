@@ -71,7 +71,7 @@ void DC6_LoadImage(char* szPath, DC6Image* pImage)
 	memset(gpDecodeBuffer, 0, sizeof(BYTE) * DECODE_BUFFER_SIZE);
 
 	pImage->f = FSMPQ_FindFile(szPath, nullptr, (D2MPQArchive**)&pImage->mpq);
-	Log_WarnAssert(pImage->f != (fs_handle)-1);
+	Log_WarnAssert(pImage->f != INVALID_HANDLE);
 
 	// Now comes the fun part: reading and decoding the actual thing
 	dwFileSize = MPQ_FileSize((D2MPQArchive*)pImage->mpq, pImage->f);

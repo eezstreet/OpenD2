@@ -286,8 +286,64 @@ struct DC6Image
 };
 
 /*
-*	DCC Files
-*/
+ *	DCC Files
+ */
+
+/*
+ *	COF (component object files)
+ *	COF consists of three key elements: a header, a series of layers, and a series of keyframes.
+ *	The layer count and keyframe count are included as part of the header.
+ *	Each COF has exactly seven characters in its name (not including the extension), and is formatted thusly:
+ *	<token name> <animation> <weapon set>
+ *	So for example, the Amazon's first attack animation, using a staff, would be:
+ *	AMA1STF.cof (AM for the AMazon token, A1 for the first attack animation, STF for the STaFf.
+ *	For optimization (?), some COF metadata is stored in animdata.d2, however we don't need this for our purposes.
+ */
+
+#pragma pack(push, 1)
+enum COFKeyframe
+{
+	COFKEY_NONE,
+	COFKEY_ATTACK,
+	COFKEY_MISSILE,
+	COFKEY_SOUND,
+	COFKEY_SKILL,
+	COFKEY_MAX,
+};
+
+struct COFHeader
+{
+	BYTE	nLayers;
+	BYTE	nFrames;
+	BYTE	nDirs;
+	BYTE	nVersion;
+	DWORD	dwUnk1;
+	DWORD	dwXMin;
+	DWORD	dwXMax;
+	DWORD	dwYMin;
+	DWORD	dwYMax;
+	BYTE	nFPS;
+	BYTE	nArmType;
+	WORD	wUnk2;
+};
+
+struct COFLayer
+{
+	BYTE	nComponent;
+	BYTE	bShadow;
+	BYTE	bSelectable;
+	BYTE	nOverrideTranslvl;
+	BYTE	nNewTranslvl;
+	BYTE	szWeaponClass[4];
+};
+
+struct COFFile
+{
+	COFHeader	header;
+	COFLayer*	layers;
+	BYTE*		keyframes;
+};
+#pragma pack(pop)
 
 /*
  *	Renderer related structures
@@ -337,6 +393,12 @@ extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
 /////////////////////////////////////////////////////////
 //
 //	Functions
+
+// COF.cpp
+cof_handle COF_Register(char* type, char* token, char* animation, char* hitclass);
+void COF_Deregister(cof_handle cof);
+void COF_DeregisterType(char* type);
+void COF_DeregisterAll();
 
 // DC6.cpp
 void DC6_LoadImage(char* szPath, DC6Image* pImage);

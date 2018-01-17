@@ -275,17 +275,17 @@ struct D2SaveHeader
 	WORD					unk2;
 	BYTE					nCharLevel;
 	DWORD					unk3;
-	DWORD					dwCreationTime;
-	DWORD					dwModificationTime;
-	DWORD					dwSkillKey[16];
-	DWORD					dwLeftSkill1;	// left skill for weapon set 1
-	DWORD					dwRightSkill1;	// right skill for weapon set 2
-	DWORD					dwLeftSkill2;
-	DWORD					dwRightSkill2;
-	BYTE					nAppearance[16];
-	BYTE					nColor[16];
-	BYTE					nTowns[D2DIFF_MAX];
-	DWORD					dwSeed;
+	DWORD					dwCreationTime;				// when this save was created
+	DWORD					dwModificationTime;			// when this save was modified
+	DWORD					dwSkillKey[16];				// which skill each skill key is bound to
+	DWORD					dwLeftSkill1;				// left skill for weapon set 1
+	DWORD					dwRightSkill1;				// right skill for weapon set 1
+	DWORD					dwLeftSkill2;				// left skill for weapon set 2
+	DWORD					dwRightSkill2;				// right skill for weapon set 2
+	BYTE					nAppearance[COMP_COUNT];	// appearance in the char select screen
+	BYTE					nColor[COMP_COUNT];			// color for each component
+	BYTE					nTowns[D2DIFF_MAX];			// last town the player was in in each difficulty
+	DWORD					dwSeed;						// seed
 	WORD					unk5;
 	D2SaveHeaderMercData	mercData;
 	BYTE					nRealmData[0x90];
