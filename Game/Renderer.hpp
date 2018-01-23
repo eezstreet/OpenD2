@@ -32,7 +32,7 @@ void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture);
 void Renderer_SDL_SetTextureBlendMode(tex_handle texture, D2ColorBlending blendMode);
 void Renderer_SDL_PollTexture(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
 bool Renderer_SDL_PixelPerfectDetect(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
-anim_handle Renderer_SDL_RegisterAnimation(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
+anim_handle Renderer_SDL_RegisterDC6Animation(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
 void Renderer_SDL_DeregisterAnimation(anim_handle anim);
 void Renderer_SDL_Animate(anim_handle anim, DWORD dwFramerate, int x, int y);
 void Renderer_SDL_SetAnimFrame(anim_handle anim, DWORD dwFrame);

@@ -1,5 +1,9 @@
 #include "D2Menu_CharSelect.hpp"
 
+static char* gszTokenNames[D2CLASS_MAX] = {
+	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
+};
+
 /*
  *	Creates the CharSelect menu.
  */

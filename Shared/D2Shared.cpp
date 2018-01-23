@@ -87,7 +87,7 @@ DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize)
 	int c;
 	size_t stringLen = strlen(szString);
 
-	if (dwLen > stringLen)
+	if (dwLen > stringLen || dwLen == 0)
 	{
 		dwLen = stringLen;
 	}
@@ -504,3 +504,7 @@ bool D2_sbrand(D2Seed* pSeed)
 {
 	return D2_srand(pSeed) & 1;
 }
+
+//////////////////////////////////////////////////
+//
+// Math Functions

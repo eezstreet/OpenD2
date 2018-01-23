@@ -29,7 +29,7 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_SetTextureBlendMode,
 		Renderer_SDL_PollTexture,
 		Renderer_SDL_PixelPerfectDetect,
-		Renderer_SDL_RegisterAnimation,
+		Renderer_SDL_RegisterDC6Animation,
 		Renderer_SDL_DeregisterAnimation,
 		Renderer_SDL_Animate,
 		Renderer_SDL_SetAnimFrame,
@@ -93,7 +93,7 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_DeregisterTexture = RenderTarget->RF_DeregisterTexture;
 	pExport->R_PollTexture = RenderTarget->RF_PollTexture;
 	pExport->R_PixelPerfectDetect = RenderTarget->RF_PixelPerfectDetect;
-	pExport->R_RegisterAnimation = RenderTarget->RF_RegisterAnimation;
+	pExport->R_RegisterAnimation = RenderTarget->RF_RegisterDCCAnimation;
 	pExport->R_DeregisterAnimation = RenderTarget->RF_DeregisterAnimation;
 	pExport->R_Animate = RenderTarget->RF_Animate;
 	pExport->R_SetAnimFrame = RenderTarget->RF_SetAnimFrame;

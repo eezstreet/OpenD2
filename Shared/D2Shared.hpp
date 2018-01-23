@@ -88,6 +88,11 @@ typedef unsigned char		BYTE;
 #define INVALID_HANDLE (handle)-1
 #define SEED_MAGIC		666	// Little known fact...Diablo II encodes the top 4 bytes of a seed with 666. Clearly an evil game.
 
+#define MAX_DIRECTIONS	32	// 32 directions per DCC
+#define MAX_FRAMES		256	// 256 frames per direction
+
+#define INVALID_COMPONENT	"xxx"
+
 typedef DWORD handle;
 typedef handle fs_handle;
 typedef handle tex_handle;
@@ -95,6 +100,7 @@ typedef handle anim_handle;
 typedef handle tbl_handle;
 typedef handle font_handle;
 typedef handle cof_handle;
+typedef handle token_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
@@ -251,6 +257,120 @@ enum D2Acts
 	D2_ACT_IV,
 	D2_ACT_V,
 	MAX_ACTS,
+};
+
+enum D2CompositeItem
+{
+	COMP_HEAD,
+	COMP_TORSO,
+	COMP_LEGS,
+	COMP_RIGHTARM,
+	COMP_LEFTARM,
+	COMP_RIGHTHAND,
+	COMP_LEFTHAND,
+	COMP_SHIELD,
+	COMP_SPECIAL1,
+	COMP_SPECIAL2,
+	COMP_SPECIAL3,
+	COMP_SPECIAL4,
+	COMP_SPECIAL5,
+	COMP_SPECIAL6,
+	COMP_SPECIAL7,
+	COMP_SPECIAL8,
+	COMP_MAX,
+	COMP_INVALID = 0xFF,
+};
+
+// Can be loaded from WeaponClass.txt later on
+enum D2WeaponClass
+{
+	WC_NONE,	// nothing
+	WC_HTH,		// "HTH" - fists
+	WC_BOW,		// "BOW" - bows
+	WC_1HS,		// "1HS" - 'one handed swing' - maces, swords, hammers, axes
+	WC_1HT,		// "1HT" - 'one handed thrust' - daggers, javelins, but also throwing potions
+	WC_STF,		// "STF" - staves, but also polearms, mauls, and two-handed axes
+	WC_2HS,		// "2HS" - 'two handed swing' - bastard swords
+	WC_2HT,		// "2HT" - 'two handed thrust' - spears
+	WC_XBW,		// "XBW" - crossbows
+	WC_1JS,		// "1JS" - 'left jab right swing' - only used for Barbarians
+	WC_1JT,		// "1JT" - 'left jab right thrust' - only used for Barbarians
+	WC_1SS,		// "1SS" - 'left swing right swing' - only used for Barbarians
+	WC_1ST,		// "1ST" - 'left swing right thrust' - only used for Barbarians
+	WC_HT1,		// "HT1" - 'one hand-to-hand' - used for Assassins when claw is in one hand
+	WC_HT2,		// "HT2" - 'two hand-to-hand' - used for Assassins when claw is in two hands
+	WC_MAX,
+};
+
+// Different token types
+enum D2TokenType
+{
+	TOKEN_CHAR,
+	TOKEN_MONSTER,
+	TOKEN_OBJECT,
+	TOKEN_MAX,
+};
+
+// Can be loaded from PlrMode.txt later on
+enum D2PlayerMode
+{
+	PLRMODE_DT,	// death
+	PLRMODE_NU,	// "neutral", when the player is standing still outside of town
+	PLRMODE_WL,	// walk
+	PLRMODE_RN,	// run
+	PLRMODE_GH,	// gethit
+	PLRMODE_TN,	// "town neutral", when the player is standing still inside of town
+	PLRMODE_TW,	// town walk
+	PLRMODE_A1,	// attack 1
+	PLRMODE_A2,	// attack 2
+	PLRMODE_BL,	// block
+	PLRMODE_SC,	// cast
+	PLRMODE_TH,	// throw
+	PLRMODE_KK,	// kick
+	PLRMODE_S1,	// skill 1
+	PLRMODE_S2,	//
+	PLRMODE_S3,
+	PLRMODE_S4,
+	PLRMODE_DD,	// dead
+	PLRMODE_SQ,	// special sequences. These are handled in monseq.txt
+	PLRMODE_KB,	// knockback. not sure if used?
+	PLRMODE_MAX
+};
+
+// Can be loaded from MonMode.txt later on
+enum D2MonsterMode
+{
+	MONMODE_DT,	// death
+	MONMODE_NU,	// neutral
+	MONMODE_WL,	// walk
+	MONMODE_GH,	// gethit
+	MONMODE_A1,	// attack 1
+	MONMODE_A2,	// attack 2
+	MONMODE_BL,	// block
+	MONMODE_SC,	// cast
+	MONMODE_S1,	// skill 1
+	MONMODE_S2,
+	MONMODE_S3,
+	MONMODE_S4,
+	MONMODE_DD,	// dead
+	MONMODE_KB,	// knockback. not sure if used?
+	MONMODE_XX,	// special sequences. These are handled in monseq.txt
+	MONMODE_RN,	// run
+	MONMODE_MAX
+};
+
+// Can be loaded from ObjMode.txt later on
+enum D2ObjectMode
+{
+	OBJMODE_NU,	// neutral
+	OBJMODE_OP,	// operating
+	OBJMODE_ON,	// opened
+	OBJMODE_S1,	// special
+	OBJMODE_S2,
+	OBJMODE_S3,
+	OBJMODE_S4,
+	OBJMODE_S5,
+	OBJMODE_MAX
 };
 
 typedef void	(*AnimKeyframeCallback)(anim_handle anim, int nExtraInt);
@@ -428,72 +548,81 @@ struct D2ModuleImportStrc
 	int nApiVersion;
 
 	// Basic functions
-	void		(*Print)(OpenD2LogFlags nPriority, char* szFormat, ...);
-	void		(*Warning)(char* szFile, int nLine, char* szCondition);
-	void		(*Error)(char* szFile, int nLine, char* szCondition);
-	DWORD		(__cdecl *Milliseconds)();
+	void			(*Print)(OpenD2LogFlags nPriority, char* szFormat, ...);
+	void			(*Warning)(char* szFile, int nLine, char* szCondition);
+	void			(*Error)(char* szFile, int nLine, char* szCondition);
+	DWORD			(__cdecl *Milliseconds)();
 
 	// Filesystem calls
-	size_t		(*FS_Open)(char* szFileName, fs_handle* f, OpenD2FileModes mode, bool bBinary);
-	size_t		(*FS_Read)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
-	size_t		(*FS_Write)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
-	size_t		(*FS_WritePlaintext)(fs_handle f, char* text);
-	void		(*FS_CloseFile)(fs_handle f);
-	void		(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
-	size_t		(*FS_Tell)(fs_handle f);
-	char**		(*FS_ListFilesInDirectory)(char* szDirectory, char* szExtensionFilter, int *nFiles);
-	void		(*FS_FreeFileList)(char** pszFileList, int nNumFiles);
-	void		(*FS_CreateSubdirectory)(char* szSubdirectory);
+	size_t			(*FS_Open)(char* szFileName, fs_handle* f, OpenD2FileModes mode, bool bBinary);
+	size_t			(*FS_Read)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
+	size_t			(*FS_Write)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
+	size_t			(*FS_WritePlaintext)(fs_handle f, char* text);
+	void			(*FS_CloseFile)(fs_handle f);
+	void			(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
+	size_t			(*FS_Tell)(fs_handle f);
+	char**			(*FS_ListFilesInDirectory)(char* szDirectory, char* szExtensionFilter, int *nFiles);
+	void			(*FS_FreeFileList)(char** pszFileList, int nNumFiles);
+	void			(*FS_CreateSubdirectory)(char* szSubdirectory);
 
 	// Input calls
-	void		(*In_PumpEvents)(OpenD2ConfigStrc* pOpenConfig);
-	void		(*In_StartTextEditing)();
-	void		(*In_StopTextEditing)();
+	void			(*In_PumpEvents)(OpenD2ConfigStrc* pOpenConfig);
+	void			(*In_StartTextEditing)();
+	void			(*In_StopTextEditing)();
 
 	// MPQ calls
-	fs_handle	(*MPQ_FindFile)(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
-	size_t		(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
-	size_t		(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
+	fs_handle		(*MPQ_FindFile)(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+	size_t			(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
+	size_t			(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
 
 	// TBL calls
-	tbl_handle	(*TBL_Register)(char* szTBLFile);
-	char16_t*	(*TBL_FindStringFromIndex)(tbl_handle dwIndex);
-	tbl_handle	(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
-	char16_t*	(*TBL_FindStringFromText)(char16_t* szReference);
+	tbl_handle		(*TBL_Register)(char* szTBLFile);
+	char16_t*		(*TBL_FindStringFromIndex)(tbl_handle dwIndex);
+	tbl_handle		(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
+	char16_t*		(*TBL_FindStringFromText)(char16_t* szReference);
 
-	// COF calls
-	cof_handle	(*COF_Register)(char* type, char* token, char* animation, char* hitclass);
-	void		(*COF_Deregister)(cof_handle cof);
-	void		(*COF_DeregisterType)(char* type);
+	// Token calls
+	token_handle	(*TOK_Register)(D2TokenType type, char* tokenName, char* szWeaponClass);
+	void			(*TOK_Deregister)(token_handle token);
+
+	// Token instance calls
+	anim_handle		(*TOK_CreateTokenAnimInstance)(token_handle token);
+	void			(*TOK_SwapTokenAnimToken)(anim_handle handle, token_handle newhandle);
+	void			(*TOK_DestroyTokenInstance)(anim_handle handle);
+	void			(*TOK_SetTokenInstanceComponent)(anim_handle handle, int componentNum, char* componentName);
+	char*			(*TOK_GetTokenInstanceComponent)(anim_handle handle, int component);
+	void			(*TOK_SetTokenInstanceFrame)(anim_handle handle, int frameNum);
+	int				(*TOK_GetTokenInstanceFrame)(anim_handle handle);
+	char*			(*TOK_GetTokenInstanceWeaponClass)(anim_handle handle);
 
 	// Renderer calls (should always be last)
-	tex_handle	(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
-	tex_handle	(*R_RegisterAnimatedDC6)(char *szFileName, char* szHandleName, int nPalette);
-	void		(*R_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
-	void		(*R_DrawTextureFrames)(tex_handle texture, int x, int y, DWORD dwStart, DWORD dwEnd);
-	void		(*R_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
-	void		(*R_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
-	void		(*R_Present)();
-	void		(*R_DeregisterTexture)(char* szTexName, tex_handle texture);
-	void		(*R_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
-	bool		(*R_PixelPerfectDetect)(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
-	anim_handle	(*R_RegisterAnimation)(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
-	void		(*R_DeregisterAnimation)(anim_handle anim);
-	void		(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
-	void		(*R_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
-	DWORD		(*R_GetAnimFrame)(anim_handle anim);
-	void		(*R_AddAnimKeyframe)(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt);
-	void		(*R_RemoveAnimKeyframe)(anim_handle anim);
-	DWORD		(*R_GetAnimFrameCount)(anim_handle anim);
-	font_handle	(*R_RegisterFont)(char* szFontName);
-	void		(*R_DeregisterFont)(font_handle font);
-	void		(*R_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
+	tex_handle		(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
+	tex_handle		(*R_RegisterAnimatedDC6)(char *szFileName, char* szHandleName, int nPalette);
+	void			(*R_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
+	void			(*R_DrawTextureFrames)(tex_handle texture, int x, int y, DWORD dwStart, DWORD dwEnd);
+	void			(*R_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
+	void			(*R_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
+	void			(*R_Present)();
+	void			(*R_DeregisterTexture)(char* szTexName, tex_handle texture);
+	void			(*R_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
+	bool			(*R_PixelPerfectDetect)(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
+	anim_handle		(*R_RegisterAnimation)(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
+	void			(*R_DeregisterAnimation)(anim_handle anim);
+	void			(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
+	void			(*R_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
+	DWORD			(*R_GetAnimFrame)(anim_handle anim);
+	void			(*R_AddAnimKeyframe)(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt);
+	void			(*R_RemoveAnimKeyframe)(anim_handle anim);
+	DWORD			(*R_GetAnimFrameCount)(anim_handle anim);
+	font_handle		(*R_RegisterFont)(char* szFontName);
+	void			(*R_DeregisterFont)(font_handle font);
+	void			(*R_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
 		D2TextAlignment alignHorz, D2TextAlignment alignVert);
-	void		(*R_AlphaModTexture)(tex_handle texture, int nAlpha);
-	void		(*R_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
-	void		(*R_AlphaModFont)(font_handle font, int nAlpha);
-	void		(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
-	void		(*R_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
+	void			(*R_AlphaModTexture)(tex_handle texture, int nAlpha);
+	void			(*R_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
+	void			(*R_AlphaModFont)(font_handle font, int nAlpha);
+	void			(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
+	void			(*R_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
 };
 
 struct D2ModuleExportStrc
@@ -538,3 +667,24 @@ DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax);
 DWORD D2_srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax);
 void D2_seedcopy(D2Seed* pDest, D2Seed* pSrc);
 bool D2_sbrand(D2Seed* pSeed);
+
+// Math
+template <typename T>
+T D2_min(T a, T b)
+{
+	if (a < b)
+	{
+		return a;
+	}
+	return b;
+}
+
+template <typename T>
+T D2_max(T a, T b)
+{
+	if (a > b)
+	{
+		return a;
+	}
+	return b;
+}

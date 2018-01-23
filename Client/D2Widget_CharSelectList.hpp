@@ -10,6 +10,8 @@ private:
 		D2SaveHeader header;
 		char16_t name[16];	// The name gets converted into UTF-16 when we load it
 		char path[MAX_D2PATH_ABSOLUTE];
+		token_handle token; // The token
+		anim_handle tokenInstance;	// The token anim instance for this save so we can draw it
 		CharacterSaveData* pNext;
 	};
 	CharacterSaveData* pCharacterData;

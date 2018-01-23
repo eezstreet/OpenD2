@@ -17,6 +17,11 @@ struct CharacterTitle {
 #define TITLE_BIGENDER_EXP(x,y)	{x, y}, {x, y}, {x, y}, {x, y}, {x, y}
 #define TITLE_NOGENDER_EXP(x)	{x, x}, {x, x}, {x, x}, {x, x}, {x, x}
 
+// Mappings for the class token
+static char* gszClassTokens[D2CLASS_MAX] = {
+	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
+};
+
 static const CharacterTitle TitleStatus_Classic[] =
 {
 	// Normal uncompleted = Nothing
@@ -130,16 +135,25 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	D2_qmbtowc(pSaveData->name, 16, header.szCharacterName);
 	pSaveData->header = header;
 
+	// Register the animations for it.
+	// TODO: use the actual anims (it just uses hth, lit, no weapon for now..)
+	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, gszClassTokens[header.nCharClass], "hth");
+	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEGS, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_RIGHTARM, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SHIELD, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL1, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
+
 	// Add it to the linked list
 	pSaveData->pNext = pCharacterData;
 	pCharacterData = pSaveData;
 
 	// Increment the save count.
 	nNumberSaves++;
-
-	// Register the COF/DCCs necessary.
-	// FIXME, we're just rendering a generic one for right now
-	trap->COF_Register("chars", "NE", "TN", "HTH");
 }
 
 /*

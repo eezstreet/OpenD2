@@ -15,6 +15,11 @@ struct COFHash
 static COFHash COFHashTable[MAX_COF_HASHLEN]{ 0 };
 static int nCOFHashUsed = 0;
 
+const char* COFLayerNames[COMP_MAX] = {
+	"HD", "TR", "LG", "RA", "LA", "RH", "LH", "SH",
+	"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"
+};
+
 /*
  *	Registers a COF (component object file).
  *	Type can either be: "chars", "monsters", or "objects"

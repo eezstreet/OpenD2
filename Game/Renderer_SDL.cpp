@@ -839,7 +839,7 @@ static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, c
 /*
  *	Creates an animation instance from a texture
  */
-anim_handle Renderer_SDL_RegisterAnimation(tex_handle texture, char* szHandle, DWORD dwStartingFrame)
+anim_handle Renderer_SDL_RegisterDC6Animation(tex_handle texture, char* szHandle, DWORD dwStartingFrame)
 {
 	DWORD dwHash = D2_strhash(szHandle, CACHEHANDLE_LEN, MAX_SDL_ANIMCACHE_SIZE);
 	DWORD dwIterations = 0;

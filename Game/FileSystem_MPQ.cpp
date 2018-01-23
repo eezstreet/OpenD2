@@ -105,7 +105,11 @@ D2MPQArchive* FSMPQ_AddSearchPath(char* szMPQName, char* szMPQPath)
 
 /*
  *	Look for a file from an archive
- *	We can either explicitly say which MPQ we want to look from, or pass in nullptr to look in all of them
+ *	We can either explicitly say which MPQ we want to look from, or pass in nullptr to look in all of them.
+ *	Returns the handle to a file. pArchiveOut gets filled in with data about the MPQ archive.
+ *	FIXME: In -direct mode, fs_handle should be a valid file, but pArchiveOut should be invalid.
+ *	We need to route all of the existing MPQ_Read calls through an FSMPQ_ReadFile function to make it work.
+ *	@author	eezstreet
  */
 fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut)
 {

@@ -115,9 +115,17 @@ static D2ModuleImportStrc exports = {
 	TBL_FindStringIndexFromKey,
 	TBL_FindStringText,
 
-	COF_Register,
-	COF_Deregister,
-	COF_DeregisterType,
+	TOK_RegisterToken,
+	TOK_DeregisterToken,
+
+	TOK_CreateTokenAnimInstance,
+	TOK_SwapTokenAnimToken,
+	TOK_DestroyTokenInstance,
+	TOK_SetTokenInstanceComponent,
+	TOK_GetTokenInstanceComponent,
+	TOK_SetTokenInstanceFrame,
+	TOK_GetTokenInstanceFrame,
+	TOK_GetTokenInstanceWeaponClass,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };

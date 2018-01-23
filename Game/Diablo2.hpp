@@ -47,6 +47,61 @@ struct D2SystemInfoStrc
 };
 
 /*
+ *	Bitstreams are used for both DCCs and networking.
+ *	I took this off of CodeProject and can't remember the author, but I've rewritten it for my purposes.
+ */
+class Bitstream
+{
+public:
+	// Public methods
+	Bitstream(void);
+	virtual ~Bitstream(void);
+	void WriteBit(BYTE value);
+	void ReadBit(BYTE& value);
+	void WriteByte(BYTE value);
+	void ReadByte(BYTE& value);
+	void WriteWord(WORD value);
+	void ReadWord(WORD& value);
+	void WriteDWord(DWORD value);
+	void ReadDWord(DWORD& value);
+	void WriteData(BYTE* lpData, long nLen);
+	void ReadData(BYTE* lpData, long nLen);
+	void WriteData(WORD* lpData, long nLen);
+	void ReadData(WORD* lpData, long nLen);
+	void WriteData(DWORD* lpData, long nLen);
+	void ReadData(DWORD* lpData, long nLen);
+	void WriteBits(DWORD value, long nLen = 32);
+	void ReadBits(DWORD& value, long nLen = 32);
+	void ReadBits(void* value, long nLen = 32);
+	void LoadStream(BYTE* lpStream, long nLen);
+	void SaveStream(BYTE* lpStream);
+	void SetCurrentPosition(DWORD dwCurrentPosition);
+
+	BYTE* GetStream() { return m_lpStream; }
+	DWORD GetStreamLength() { return m_dwStreamOffset; }
+	DWORD GetStreamTotalLength() { return m_dwStreamLen; }
+	DWORD GetCurrentByte() { return m_dwCurrentPosition; }
+	DWORD GetCurrentBit() { return m_CurrentBit; }
+
+	void CopyFrom(Bitstream* bits, size_t offset, size_t len);
+	void CopyAllFrom(Bitstream* bits, size_t offset);
+
+private:
+	// Private methods
+	void _WriteBit(BYTE value);
+	void _ReadBit(BYTE& value);
+
+private:
+	// Private members
+	BYTE* m_lpStream;
+	DWORD m_dwStreamLen;
+	DWORD m_dwStreamOffset;
+	DWORD m_dwCurrentPosition;
+	BYTE m_CurrentBit;
+
+};
+
+/*
  *	EVERYTHING TO DO WITH MPQ FILES
  *	The structure containing data about MPQ files
  *	@author Tom Amigo/Paul Siramy/eezstreet/Zezula
@@ -288,6 +343,92 @@ struct DC6Image
 /*
  *	DCC Files
  */
+#pragma pack(push,enter_include)
+#pragma pack(1)
+struct DCCHeader
+{
+	BYTE			nSignature;
+	BYTE			nVersion;
+	BYTE			nNumberDirections;
+	DWORD			dwFramesPerDirection;
+	DWORD			dwTag;
+	DWORD			dwFinalDC6Size;
+	DWORD			dwDirectionOffset[MAX_DIRECTIONS];
+};
+
+struct DCCFrame
+{
+	DWORD			dwVariable0;
+	DWORD			dwWidth;
+	DWORD			dwHeight;
+	long			nXOffset;
+	long			nYOffset;
+	DWORD			dwOptionalBytes;
+	DWORD			dwCodedBytes;
+	DWORD			dwFlipped;
+
+	//////////////////////////////////
+	// Not actually in the file, these are calculated
+	long			nMinX, nMaxX;
+	long			nMinY, nMaxY;
+	//////////////////////////////////
+
+	BYTE*			pOptionalByteData;
+};
+
+#define MAX_DCC_PIXEL_BUFFER	300000
+struct DCCPixelBuffer
+{
+	BYTE			pixel[4];
+	int				frame;
+	int				frameCellIndex;
+};
+
+struct DCCDirection
+{
+	DWORD			dwOutsizeCoded;
+	BYTE			nCompressionFlag;
+	BYTE			nVar0Bits;
+	BYTE			nWidthBits;
+	BYTE			nHeightBits;
+	BYTE			nXOffsetBits;
+	BYTE			nYOffsetBits;
+	BYTE			nOptionalBytesBits;
+	BYTE			nCodedBytesBits;
+
+	DCCFrame		frames[MAX_FRAMES];
+
+	//////////////////////////////////
+	// Not actually in the file, these are calculated
+	long			nMinX, nMaxX;
+	long			nMinY, nMaxY;
+	long			nWidth, nHeight;
+	//////////////////////////////////
+
+	DWORD			dwEqualCellStreamSize;	// only present when nCompressionFlag & 0x02
+	DWORD			dwPixelMaskStreamSize;
+	DWORD			dwEncodingStreamSize;	// only present when nCompressionFlag & 0x01
+	DWORD			dwRawPixelStreamSize;	// only present when nCompressionFlag & 0x01
+	BYTE			nPixelValues[256];
+	Bitstream		EqualCellBitstream;
+	Bitstream		PixelMaskBitstream;
+	Bitstream		EncodingTypeBitstream;
+	Bitstream		RawPixelBitstream;
+	Bitstream		PixelCodeDisplacementBitstream;
+};
+
+struct DCCFile
+{
+	// Part of the file structure
+	DCCHeader		header;
+	DCCDirection	directions[MAX_DIRECTIONS];
+
+	// Other stuff used by OpenD2
+	DWORD			dwFileSize;
+	BYTE*			pFileBytes;
+};
+
+#pragma pack(pop, enter_include)
 
 /*
  *	COF (component object files)
@@ -300,7 +441,8 @@ struct DC6Image
  *	For optimization (?), some COF metadata is stored in animdata.d2, however we don't need this for our purposes.
  */
 
-#pragma pack(push, 1)
+#pragma pack(push,enter_include)
+#pragma pack(1)
 enum COFKeyframe
 {
 	COFKEY_NONE,
@@ -318,10 +460,10 @@ struct COFHeader
 	BYTE	nDirs;
 	BYTE	nVersion;
 	DWORD	dwUnk1;
-	DWORD	dwXMin;
-	DWORD	dwXMax;
-	DWORD	dwYMin;
-	DWORD	dwYMax;
+	int		nXMin;
+	int		nXMax;
+	int		nYMin;
+	int		nYMax;
 	BYTE	nFPS;
 	BYTE	nArmType;
 	WORD	wUnk2;
@@ -343,7 +485,41 @@ struct COFFile
 	COFLayer*	layers;
 	BYTE*		keyframes;
 };
-#pragma pack(pop)
+#pragma pack(pop, enter_include)
+
+/*
+ *	Tokens.
+ *	Tokens are a collection of COFs.
+ *	@author	eezstreet
+ */
+struct AnimToken
+{
+	D2TokenType	tokenType;
+	DWORD		dwCOFsPresent;
+
+	union
+	{
+		cof_handle	plrCof[PLRMODE_MAX];
+		cof_handle	monCof[MONMODE_MAX];
+		cof_handle	objCof[OBJMODE_MAX];
+	};
+};
+
+/*
+ *	Token instances.
+ *	When you want a monster, object or character to be shown on the screen, you should use a token instance.
+ *	A token instance is a single rendering of one of those objects and is animated separately.
+ *	(Missiles and overlays do not use token instances. Instead, they are rendered as raw DCCs.)
+ *	@author	eezstreet
+ */
+struct AnimTokenInstance
+{
+	token_handle	currentHandle;
+	int				currentMode;
+	int				currentFrame;
+	char			components[COMP_MAX][4];
+	bool			bInUse;
+};
 
 /*
  *	Renderer related structures
@@ -366,7 +542,7 @@ struct D2Renderer
 	void		(*RF_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
 	bool		(*RF_PixelPerfectDetect)(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
 
-	anim_handle	(*RF_RegisterAnimation)(tex_handle texture, char* szHandleName, DWORD dwStartingFrame);
+	anim_handle	(*RF_RegisterDCCAnimation)(tex_handle texture, char* szHandleName, DWORD dwStartingFrame);
 	void		(*RF_DeregisterAnimation)(anim_handle anim);
 	void		(*RF_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
 	void		(*RF_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
@@ -488,6 +664,19 @@ tbl_handle TBL_FindStringIndexFromKey(tbl_handle tbl, char16_t* szReference);
 char16_t* TBL_FindStringText(char16_t* szReference);
 void TBL_Init();
 void TBL_Cleanup();
+
+// Token.cpp - Should maybe move this to gamecode?
+token_handle TOK_RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass);
+void TOK_DeregisterToken(token_handle token);
+AnimToken* TOK_GetAnimData(token_handle token);
+anim_handle TOK_CreateTokenAnimInstance(token_handle token);
+void TOK_SwapTokenAnimToken(anim_handle handle, token_handle newhandle);
+void TOK_DestroyTokenInstance(anim_handle handle);
+void TOK_SetTokenInstanceComponent(anim_handle handle, int componentNum, char* componentName);
+char* TOK_GetTokenInstanceComponent(anim_handle handle, int component);
+void TOK_SetTokenInstanceFrame(anim_handle handle, int frameNum);
+int TOK_GetTokenInstanceFrame(anim_handle handle);
+char* TOK_GetTokenInstanceWeaponClass(anim_handle handle);
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);

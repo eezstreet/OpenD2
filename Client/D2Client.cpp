@@ -150,10 +150,6 @@ static void D2Client_LoadData()
 	}
 	else if (cl.nLoadState == 3)
 	{	// START HERE if in an inter-act loading.
-		// Deregister monsters and objects - most acts only share a couple of monsters
-		trap->COF_DeregisterType("monsters");
-		trap->COF_DeregisterType("objects");
-
 		// Create the level
 		DRLG_CreateAct(0, false, rand(), 0, 1);
 		cl.nLoadState++;

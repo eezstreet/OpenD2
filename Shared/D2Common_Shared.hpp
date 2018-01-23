@@ -212,28 +212,6 @@ enum D2LevelTypes
 	D2LVLTYPES_MAX,
 };
 
-enum eD2CompositeItem
-{
-	COMP_HEAD,
-	COMP_TORSO,
-	COMP_LEGS,
-	COMP_RIGHTARM,
-	COMP_LEFTARM,
-	COMP_RIGHTHAND,
-	COMP_LEFTHAND,
-	COMP_SHIELD,
-	COMP_SPECIAL1,
-	COMP_SPECIAL2,
-	COMP_SPECIAL3,
-	COMP_SPECIAL4,
-	COMP_SPECIAL5,
-	COMP_SPECIAL6,
-	COMP_SPECIAL7,
-	COMP_SPECIAL8,
-	COMP_COUNT,
-	COMP_INVALID = 0xFF,
-};
-
 ////////////////////////////////////////////////
 //
 //	Savegame Structs
@@ -282,8 +260,8 @@ struct D2SaveHeader
 	DWORD					dwRightSkill1;				// right skill for weapon set 1
 	DWORD					dwLeftSkill2;				// left skill for weapon set 2
 	DWORD					dwRightSkill2;				// right skill for weapon set 2
-	BYTE					nAppearance[COMP_COUNT];	// appearance in the char select screen
-	BYTE					nColor[COMP_COUNT];			// color for each component
+	BYTE					nAppearance[COMP_MAX];		// appearance in the char select screen
+	BYTE					nColor[COMP_MAX];			// color for each component
 	BYTE					nTowns[D2DIFF_MAX];			// last town the player was in in each difficulty
 	DWORD					dwSeed;						// seed
 	WORD					unk5;
