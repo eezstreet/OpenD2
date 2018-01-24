@@ -34,6 +34,7 @@ cof_handle COF_Register(char* type, char* token, char* animation, char* hitclass
 	fs_handle file;
 	D2MPQArchive* pArchive;
 	size_t dwFileSize;
+	int i;
 
 	// Make sure we aren't hitting the maximum size of the hash table
 	Log_ErrorAssert(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE);
@@ -80,6 +81,14 @@ cof_handle COF_Register(char* type, char* token, char* animation, char* hitclass
 	// Set the pointers for both the layers and the keyframes
 	pHash->pFile->layers = (COFLayer*)(pHash->pCOFContents + sizeof(COFHeader));
 	pHash->pFile->keyframes = (BYTE*)(pHash->pFile->layers + pHash->pFile->header.nLayers);
+
+	// Iterate over the layers and mark off the components which are active.
+	// By doing this once we can save a bit of time when trying to register the DCCs later
+	pHash->pFile->dwLayersPresent = 0;
+	for (i = 0; i < pHash->pFile->header.nLayers; i++)
+	{
+		pHash->pFile->dwLayersPresent |= (1 << pHash->pFile->layers[i].nComponent);
+	}
 
 	return outHandle;
 }
@@ -137,4 +146,31 @@ void COF_DeregisterAll()
 			COF_Deregister((cof_handle)i);
 		}
 	}
+}
+
+/*
+ *	Returns true if a layer is active on this COF.
+ *	@author	eezstreet
+ */
+bool COF_LayerPresent(cof_handle cof, int layer)
+{
+	COFHash* pHash;
+
+	if (cof == INVALID_HANDLE || cof >= MAX_COF_HASHLEN)
+	{	// invalid COF handle
+		return false;
+	}
+
+	if (layer < 0 || layer >= COMP_MAX)
+	{	// of course it's not active! it's not a valid layer!
+		return false;
+	}
+
+	pHash = &COFHashTable[cof];
+	if (!pHash->pFile)
+	{	// COF file didn't load correctly?
+		return false;
+	}
+
+	return pHash->pFile->dwLayersPresent & (1 << layer);
 }

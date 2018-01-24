@@ -56,21 +56,23 @@ public:
 	// Public methods
 	Bitstream(void);
 	virtual ~Bitstream(void);
-	void WriteBit(BYTE value);
+
+	void WriteBit(BYTE value, bool bSigned = false);
+	void WriteByte(BYTE value, bool bSigned = false);
+	void WriteWord(WORD value, bool bSigned = false);
+	void WriteDWord(DWORD value, bool bSigned = false);
+	void WriteData(BYTE* lpData, long nLen, bool bSigned = false);
+	void WriteData(WORD* lpData, long nLen, bool bSigned = false);
+	void WriteData(DWORD* lpData, long nLen, bool bSigned = false);
+	void WriteBits(DWORD value, long nLen = 32, bool bSigned = false);
+
 	void ReadBit(BYTE& value);
-	void WriteByte(BYTE value);
 	void ReadByte(BYTE& value);
-	void WriteWord(WORD value);
 	void ReadWord(WORD& value);
-	void WriteDWord(DWORD value);
 	void ReadDWord(DWORD& value);
-	void WriteData(BYTE* lpData, long nLen);
 	void ReadData(BYTE* lpData, long nLen);
-	void WriteData(WORD* lpData, long nLen);
 	void ReadData(WORD* lpData, long nLen);
-	void WriteData(DWORD* lpData, long nLen);
 	void ReadData(DWORD* lpData, long nLen);
-	void WriteBits(DWORD value, long nLen = 32);
 	void ReadBits(DWORD& value, long nLen = 32);
 	void ReadBits(void* value, long nLen = 32);
 	void LoadStream(BYTE* lpStream, long nLen);
@@ -88,7 +90,7 @@ public:
 
 private:
 	// Private methods
-	void _WriteBit(BYTE value);
+	void _WriteBit(BYTE value, bool bSigned);
 	void _ReadBit(BYTE& value);
 
 private:
@@ -410,11 +412,6 @@ struct DCCDirection
 	DWORD			dwEncodingStreamSize;	// only present when nCompressionFlag & 0x01
 	DWORD			dwRawPixelStreamSize;	// only present when nCompressionFlag & 0x01
 	BYTE			nPixelValues[256];
-	Bitstream		EqualCellBitstream;
-	Bitstream		PixelMaskBitstream;
-	Bitstream		EncodingTypeBitstream;
-	Bitstream		RawPixelBitstream;
-	Bitstream		PixelCodeDisplacementBitstream;
 };
 
 struct DCCFile
@@ -484,6 +481,9 @@ struct COFFile
 	COFHeader	header;
 	COFLayer*	layers;
 	BYTE*		keyframes;
+
+	// The following aren't in the file. They are just loaded for my purposes.
+	DWORD		dwLayersPresent;
 };
 #pragma pack(pop, enter_include)
 
@@ -519,6 +519,8 @@ struct AnimTokenInstance
 	int				currentFrame;
 	char			components[COMP_MAX][4];
 	bool			bInUse;
+
+	anim_handle		componentAnims[XXXMODE_MAX][COMP_MAX];
 };
 
 /*
@@ -575,6 +577,7 @@ cof_handle COF_Register(char* type, char* token, char* animation, char* hitclass
 void COF_Deregister(cof_handle cof);
 void COF_DeregisterType(char* type);
 void COF_DeregisterAll();
+bool COF_LayerPresent(cof_handle cof, int layer);
 
 // DC6.cpp
 void DC6_LoadImage(char* szPath, DC6Image* pImage);
@@ -585,6 +588,16 @@ void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
 void DC6_StitchStats(DC6Image* pImage,
 	DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
 void DC6_FreePixels(DC6Image* pImage);
+
+// DCC.cpp
+anim_handle DCC_Load(char* szPath, char* szName);
+void DCC_IncrementUseCount(anim_handle dccHandle, int amount);
+DCCFile* DCC_GetContents(anim_handle dccHandle);
+void DCC_FreeHandle(anim_handle dcc);
+void DCC_FreeIfInactive(anim_handle handle);
+void DCC_FreeInactive();
+void DCC_FreeByName(char* name);
+void DCC_FreeAll();
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
@@ -677,6 +690,7 @@ char* TOK_GetTokenInstanceComponent(anim_handle handle, int component);
 void TOK_SetTokenInstanceFrame(anim_handle handle, int frameNum);
 int TOK_GetTokenInstanceFrame(anim_handle handle);
 char* TOK_GetTokenInstanceWeaponClass(anim_handle handle);
+void TOK_SetInstanceActive(anim_handle handle, bool bNewActive);
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);

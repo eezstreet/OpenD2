@@ -7,6 +7,7 @@ struct DCCHash
 {
 	DCCFile*	pFile;
 	char		name[MAX_DCC_NAMELEN];
+	int			useCount;
 };
 
 static DCCHash DCCHashTable[MAX_DCC_HASH]{ 0 };
@@ -15,6 +16,38 @@ static int gnNumHashesUsed = 0;
 static const DWORD gdwDCCBitTable[] = {
 	0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 28, 30, 32
 };
+
+static Bitstream* pEqualCellBitstream;
+static Bitstream* pPixelMaskBitstream;
+static Bitstream* pEncodingTypeBitstream;
+static Bitstream* pRawPixelBitstream;
+static Bitstream* pPixelCodeDisplacementBitstream;
+
+/*
+ *	Inits the DCC code globally. We should call this before doing any DCC calls.
+ *	@author	eezstreet
+ */
+void DCC_GlobalInit()
+{
+	pEqualCellBitstream = new Bitstream();
+	pPixelMaskBitstream = new Bitstream();
+	pEncodingTypeBitstream = new Bitstream();
+	pRawPixelBitstream = new Bitstream();
+	pPixelCodeDisplacementBitstream = new Bitstream();
+}
+
+/*
+ *	Shuts down the DCC code globally. We should call this once the game is shutting down.
+ *	@author	eezstreet
+ */
+void DCC_GlobalShutdown()
+{
+	delete pEqualCellBitstream;
+	delete pPixelMaskBitstream;
+	delete pEncodingTypeBitstream;
+	delete pRawPixelBitstream;
+	delete pPixelCodeDisplacementBitstream;
+}
 
 /*
  *	Is responsible for reading the header of the DCC file.
@@ -148,22 +181,22 @@ static void DCC_CreateDirectionBitstreams(DCCDirection& dir, Bitstream* pBits)
 
 	if (dir.nCompressionFlag & 0x02)
 	{
-		dir.EqualCellBitstream.CopyFrom(pBits, dwOffset, dir.dwEqualCellStreamSize);
+		pEqualCellBitstream->CopyFrom(pBits, dwOffset, dir.dwEqualCellStreamSize);
 		dwOffset += dir.dwEqualCellStreamSize;
 	}
-	dir.PixelMaskBitstream.CopyFrom(pBits, dwOffset, dir.dwPixelMaskStreamSize);
+	pPixelMaskBitstream->CopyFrom(pBits, dwOffset, dir.dwPixelMaskStreamSize);
 	dwOffset += dir.dwPixelMaskStreamSize;
 
 	if (dir.nCompressionFlag & 0x01)
 	{
-		dir.EncodingTypeBitstream.CopyFrom(pBits, dwOffset, dir.dwEncodingStreamSize);
+		pEncodingTypeBitstream->CopyFrom(pBits, dwOffset, dir.dwEncodingStreamSize);
 		dwOffset += dir.dwEncodingStreamSize;
 
-		dir.RawPixelBitstream.CopyFrom(pBits, dwOffset, dir.dwRawPixelStreamSize);
+		pRawPixelBitstream->CopyFrom(pBits, dwOffset, dir.dwRawPixelStreamSize);
 		dwOffset += dir.dwRawPixelStreamSize;
 	}
 
-	dir.PixelCodeDisplacementBitstream.CopyAllFrom(pBits, dwOffset);
+	pPixelCodeDisplacementBitstream->CopyAllFrom(pBits, dwOffset);
 }
 
 /*
@@ -199,7 +232,7 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 
 	// Create the bitstream.
 	pBits = new Bitstream();
-	pBits->WriteData(dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
+	pBits->LoadStream(dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
 
 	// Read the header.
 	DCC_ReadHeader(dcc, pBits);
@@ -261,8 +294,6 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 
 		// Initiate the bitstreams
 		DCC_CreateDirectionBitstreams(dir, pBits);
-
-
 	}
 
 	// Clear out the bitstream
@@ -311,8 +342,23 @@ anim_handle DCC_Load(char* szPath, char* szName)
 
 	// Now that we've got a free slot and a file handle, let's go ahead and load the DCC itself
 	DCC_Read(DCCHashTable[outHandle], fileHandle, pArchive);
+	DCCHashTable[outHandle].useCount = 0;
 
 	return outHandle;
+}
+
+/*
+ *	Increment the use count of a DCC. Parameter can be negative to decrement.
+ *	@author	eezstreet
+ */
+void DCC_IncrementUseCount(anim_handle dccHandle, int amount)
+{
+	if (dccHandle == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	DCCHashTable[dccHandle].useCount += amount;
 }
 
 /*
@@ -365,6 +411,30 @@ void DCC_FreeHandle(anim_handle dcc)
 		free(DCCHashTable[dcc].pFile->pFileBytes);
 		free(DCCHashTable[dcc].pFile);
 		DCCHashTable[dcc].pFile = nullptr;
+	}
+}
+
+/*
+ *	Frees a DCC if it is inactive
+ *	@author	eezstreet
+ */
+void DCC_FreeIfInactive(anim_handle handle)
+{
+	if (DCCHashTable[handle].useCount <= 0)
+	{
+		DCC_FreeHandle(handle);
+	}
+}
+
+/*
+ *	Free all DCCs that aren't in use
+ *	@author	eezstreet
+ */
+void DCC_FreeInactive()
+{
+	for (anim_handle i = 0; i < MAX_DCC_HASH; i++)
+	{
+		DCC_FreeIfInactive(i);
 	}
 }
 

@@ -10,6 +10,9 @@ static char* gszTokenType[TOKEN_MAX] =
 	"chars", "monsters", "objects"
 };
 
+// Maps COF layers to strings
+extern const char* COFLayerNames[COMP_MAX];
+
 // Maps a plrmode to a string
 static char* gszPlrMode[PLRMODE_MAX] =
 {
@@ -195,6 +198,7 @@ anim_handle TOK_CreateTokenAnimInstance(token_handle token)
 
 	// Just pick one at random
 	anim_handle handle = rand() * MAX_TOKEN_INSTANCES;
+	handle %= MAX_TOKEN_INSTANCES;
 
 	while (gTokenInstances[handle].bInUse)
 	{
@@ -205,6 +209,15 @@ anim_handle TOK_CreateTokenAnimInstance(token_handle token)
 	memset(&gTokenInstances[handle], 0, sizeof(AnimTokenInstance));
 	gTokenInstances[handle].bInUse = true;
 	gTokenInstances[handle].currentHandle = token;
+
+	for (int i = 0; i < COMP_MAX; i++)
+	{
+		for (int j = 0; j < XXXMODE_MAX; j++)
+		{
+			gTokenInstances[handle].componentAnims[j][i] = INVALID_HANDLE;
+		}
+		D2_strncpyz(gTokenInstances[handle].components[i], "xxx", 4);
+	}
 	return handle;
 }
 
@@ -324,4 +337,110 @@ char* TOK_GetTokenInstanceWeaponClass(anim_handle handle)
 	}
 
 	return gTokenTable[gTokenInstances[handle].currentHandle].weaponClass;
+}
+
+/*
+ *	When we are ready to draw a token, we should set it as being active.
+ *	The DCC becomes registered and loaded if it is not already.
+ *	@author	eezstreet
+ */
+void TOK_SetInstanceActive(anim_handle handle, bool bNewActive)
+{
+	AnimTokenInstance* pInstance;
+	int i, j;
+	D2TokenType tokenType;
+	char path[MAX_D2PATH];
+	char name[MAX_D2PATH];
+	char* tokenName;
+	char* tokenClass;
+	char** modeNames;
+	cof_handle* pCOFs;
+	int max = 0;
+
+	if (handle == INVALID_HANDLE || handle >= MAX_TOKEN_INSTANCES)
+	{	// not valid, don't do anything
+		return;
+	}
+
+	pInstance = &gTokenInstances[handle];
+	if (!pInstance->bInUse)
+	{	// instance is not loaded
+		return;
+	}
+
+	if (pInstance->currentHandle == INVALID_HANDLE)
+	{
+		// we need data in the token table and our token instance is using an invalid handle
+		return;
+	}
+
+	tokenType = gTokenTable[pInstance->currentHandle].token.tokenType;
+	tokenName = gTokenTable[pInstance->currentHandle].baseTokenName;
+	tokenClass = gTokenTable[pInstance->currentHandle].weaponClass;
+
+	if (bNewActive)
+	{
+		// Register component DCCs
+		switch (tokenType)
+		{
+			case TOKEN_CHAR:
+				max = PLRMODE_MAX;
+				modeNames = gszPlrMode;
+				pCOFs = gTokenTable[pInstance->currentHandle].token.plrCof;
+				break;
+			case TOKEN_MONSTER:
+				max = MONMODE_MAX;
+				modeNames = gszMonMode;
+				pCOFs = gTokenTable[pInstance->currentHandle].token.monCof;
+				break;
+			case TOKEN_OBJECT:
+				max = OBJMODE_MAX;
+				modeNames = gszObjMode;
+				pCOFs = gTokenTable[pInstance->currentHandle].token.objCof;
+				break;
+		}
+
+		// Load and increment use count of each component's DCC
+		// There is a DCC file for each component type (CAP, GHM, LIT, MED, HVY, ...)
+		// ...on each component layer (HD, TR, LG, LH, ...)
+		// ...for every mode (WL, RN, NU, ...)
+		// Example: data/global/CHARS/AM/HD/AMHDCRNA21HS.dcc
+		// The COF file on the token acts like glue to hold everything together.
+		for (i = 0; i < max; i++)
+		{
+			for (j = 0; j < COMP_MAX; j++)
+			{
+				if (!COF_LayerPresent(pCOFs[i], j))
+				{	// layer not present in the COF, so it is not drawn
+					continue;
+				}
+
+				snprintf(name, MAX_D2PATH, "%s%s%s%s%s",
+					tokenName, COFLayerNames[j], pInstance->components[j], modeNames[i], tokenClass);
+				snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s.dcc",
+					gszTokenType[tokenType], tokenName, COFLayerNames[j], name);
+				pInstance->componentAnims[i][j] = DCC_Load(path, name);
+
+				if (pInstance->componentAnims[i][j] != INVALID_HANDLE)
+				{
+					DCC_IncrementUseCount(pInstance->componentAnims[i][j], 1);
+				}
+			}
+		}
+	}
+	else
+	{
+		// Decrement use count of each component's DCC
+		// Don't purge it if it goes totally unused though. We only do that in special circumstances.
+		for (i = 0; i < max; i++)
+		{
+			for (j = 0; j < COMP_MAX; j++)
+			{
+				if (pInstance->componentAnims[i][j] != INVALID_HANDLE)
+				{
+					DCC_IncrementUseCount(pInstance->componentAnims[i][j], -1);
+				}
+			}
+		}
+	}
 }

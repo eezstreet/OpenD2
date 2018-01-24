@@ -373,6 +373,9 @@ enum D2ObjectMode
 	OBJMODE_MAX
 };
 
+// max(MONMODE_MAX, PLRMODE_MAX, OBJMODE_MAX)
+#define XXXMODE_MAX	PLRMODE_MAX
+
 typedef void	(*AnimKeyframeCallback)(anim_handle anim, int nExtraInt);
 
 //////////////////////////////////////////////////
@@ -594,6 +597,7 @@ struct D2ModuleImportStrc
 	void			(*TOK_SetTokenInstanceFrame)(anim_handle handle, int frameNum);
 	int				(*TOK_GetTokenInstanceFrame)(anim_handle handle);
 	char*			(*TOK_GetTokenInstanceWeaponClass)(anim_handle handle);
+	void			(*TOK_SetInstanceActive)(anim_handle handle, bool bNewActive);
 
 	// Renderer calls (should always be last)
 	tex_handle		(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);

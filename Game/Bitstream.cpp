@@ -56,7 +56,7 @@ void Bitstream::CopyAllFrom(Bitstream* pBits, size_t offset)
 /*
  *	Internal - write a single bit into the bitstream.
  */
-void Bitstream::_WriteBit(BYTE value)
+void Bitstream::_WriteBit(BYTE value, bool bSigned)
 {
 	// Check for current bit offset
 	if ((m_CurrentBit % 8) == 0)
@@ -80,7 +80,15 @@ void Bitstream::_WriteBit(BYTE value)
 	}
 
 	// Write single BIT
-	m_lpStream[m_dwStreamLen - 1] |= ((value & 0x80) >> m_CurrentBit);
+	if (bSigned)
+	{
+		m_lpStream[m_dwStreamLen - 1] |= ((value & 0x80) >> m_CurrentBit);
+	}
+	else
+	{
+		m_lpStream[m_dwStreamLen - 1] |= (value >> m_CurrentBit);
+	}
+	
 	m_dwStreamOffset++;
 	m_dwCurrentPosition = m_dwStreamOffset - 1;
 	m_CurrentBit++;
@@ -106,11 +114,11 @@ void Bitstream::_ReadBit(BYTE& value)
 /*
  *	Write a bit into the bitstream.
  */
-void Bitstream::WriteBit(BYTE value)
+void Bitstream::WriteBit(BYTE value, bool bSigned)
 {
 	// Write single BIT
 	BYTE bitValue = ((value & 0x01) << 7);
-	_WriteBit(bitValue);
+	_WriteBit(bitValue, bSigned);
 }
 
 /*
@@ -125,16 +133,16 @@ void Bitstream::ReadBit(BYTE& value)
 /*
  *	Write a single byte into the bitstream.
  */
-void Bitstream::WriteByte(BYTE value)
+void Bitstream::WriteByte(BYTE value, bool bSigned)
 {
 	// Write single BYTE
 	BYTE currentOffset = 0;
-	BYTE mask = 0x80;
+	BYTE mask = 0x00;
 	BYTE bitValue = 0;
 	for (long i = 0; i<8; i++)
 	{
 		bitValue = ((value & mask) << currentOffset);
-		_WriteBit(bitValue);
+		_WriteBit(bitValue, bSigned);
 		mask = mask >> 1;
 		currentOffset++;
 	}
@@ -160,7 +168,7 @@ void Bitstream::ReadByte(BYTE& value)
 /*
  *	Write a single word (2 bytes) into the bitstream.
  */
-void Bitstream::WriteWord(WORD value)
+void Bitstream::WriteWord(WORD value, bool bSigned)
 {
 	// Write single WORD
 	BYTE currentOffset = 0;
@@ -169,7 +177,7 @@ void Bitstream::WriteWord(WORD value)
 	for (long i = 0; i<16; i++)
 	{
 		bitValue = (BYTE)(((value & mask) << currentOffset) >> 8);
-		_WriteBit(bitValue);
+		_WriteBit(bitValue, bSigned);
 		mask = mask >> 1;
 		currentOffset++;
 	}
@@ -195,7 +203,7 @@ void Bitstream::ReadWord(WORD& value)
 /*
  *	Write a single DWORD (4 bytes) into the stream.
  */
-void Bitstream::WriteDWord(DWORD value)
+void Bitstream::WriteDWord(DWORD value, bool bSigned)
 {
 	// Write single DWORD
 	BYTE currentOffset = 0;
@@ -204,7 +212,7 @@ void Bitstream::WriteDWord(DWORD value)
 	for (long i = 0; i<32; i++)
 	{
 		bitValue = (BYTE)(((value & mask) << currentOffset) >> 24);
-		_WriteBit(bitValue);
+		_WriteBit(bitValue, bSigned);
 		mask = mask >> 1;
 		currentOffset++;
 	}
@@ -230,7 +238,7 @@ void Bitstream::ReadDWord(DWORD& value)
 /*
  *	Write some data into the bitstream.
  */
-void Bitstream::WriteData(BYTE* lpData, long nLen)
+void Bitstream::WriteData(BYTE* lpData, long nLen, bool bSigned)
 {
 	// Check for valid data
 	if (lpData != NULL)
@@ -239,7 +247,7 @@ void Bitstream::WriteData(BYTE* lpData, long nLen)
 		for (long i = 0; i<nLen; i++)
 		{
 			// Write single BYTE
-			WriteByte(lpData[i]);
+			WriteByte(lpData[i], bSigned);
 		}
 	}
 }
@@ -264,7 +272,7 @@ void Bitstream::ReadData(BYTE* lpData, long nLen)
 /*
  *	Write some data into the bitstream.
  */
-void Bitstream::WriteData(WORD* lpData, long nLen)
+void Bitstream::WriteData(WORD* lpData, long nLen, bool bSigned)
 {
 	// Check for valid data
 	if (lpData != NULL)
@@ -273,7 +281,7 @@ void Bitstream::WriteData(WORD* lpData, long nLen)
 		for (long i = 0; i<nLen; i++)
 		{
 			// Write single WORD
-			WriteWord(lpData[i]);
+			WriteWord(lpData[i], bSigned);
 		}
 	}
 }
@@ -298,7 +306,7 @@ void Bitstream::ReadData(WORD* lpData, long nLen)
 /*
  *	Write some data into the bitstream.
  */
-void Bitstream::WriteData(DWORD* lpData, long nLen)
+void Bitstream::WriteData(DWORD* lpData, long nLen, bool bSigned)
 {
 	// Check for valid data
 	if (lpData != NULL)
@@ -307,7 +315,7 @@ void Bitstream::WriteData(DWORD* lpData, long nLen)
 		for (long i = 0; i<nLen; i++)
 		{
 			// Write single DWORD
-			WriteDWord(lpData[i]);
+			WriteDWord(lpData[i], bSigned);
 		}
 	}
 }
@@ -332,7 +340,7 @@ void Bitstream::ReadData(DWORD* lpData, long nLen)
 /*
  *	Write some bits to the bitstream.
  */
-void Bitstream::WriteBits(DWORD value, long nLen)
+void Bitstream::WriteBits(DWORD value, long nLen, bool bSigned)
 {
 	// Write single BITs
 	long _nLen = D2_max<long>(0, D2_min<long>(32, nLen));
@@ -342,7 +350,7 @@ void Bitstream::WriteBits(DWORD value, long nLen)
 	for (long i = 0; i<_nLen; i++)
 	{
 		bitValue = ((BYTE)((value & mask) >> currentOffset) << 7);
-		_WriteBit(bitValue);
+		_WriteBit(bitValue, bSigned);
 		mask = mask >> 1;
 		currentOffset--;
 	}
@@ -374,7 +382,18 @@ void Bitstream::ReadBits(DWORD& value, long nLen)
  */
 void Bitstream::ReadBits(void* value, long nLen)
 {
-	ReadBits(*(DWORD*)value, nLen);
+	DWORD* pValue = (DWORD*)value;
+
+	*pValue = 0x00000000;
+	long _nLen = D2_max<long>(0, D2_min<long>(32, nLen));
+	BYTE currentOffset = 31;
+	BYTE bitValue;
+	for (long i = 0; i<_nLen; i++)
+	{
+		_ReadBit(bitValue);
+		*pValue |= (bitValue << currentOffset);
+		currentOffset--;
+	}
 }
 
 /*
