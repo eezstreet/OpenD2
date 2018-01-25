@@ -76,6 +76,8 @@ public:
 	void ReadBits(void* outBits, size_t outSize, int bitCount);
 	void ReadData(void* data, size_t outSize);
 
+	void Rewind();
+
 	size_t GetRemainingReadBits();
 
 private:
@@ -84,6 +86,8 @@ private:
 
 	bool bExternalStorage;
 	BYTE* pStream;
+	size_t dwStreamStartByte;
+	size_t dwStreamStartBit;
 	size_t dwTotalStreamSizeBytes;
 	size_t dwTotalStreamSizeBits;
 	size_t dwCurrentByte;
@@ -360,6 +364,7 @@ struct DCCFrame
 	// Not actually in the file, these are calculated
 	long			nMinX, nMaxX;
 	long			nMinY, nMaxY;
+	DWORD			dwCellW, dwCellH;
 	//////////////////////////////////
 
 	BYTE*			pOptionalByteData;
@@ -399,6 +404,14 @@ struct DCCDirection
 	DWORD			dwEncodingStreamSize;	// only present when nCompressionFlag & 0x01
 	DWORD			dwRawPixelStreamSize;	// only present when nCompressionFlag & 0x01
 	BYTE			nPixelValues[256];
+
+	//////////////////////////////////
+	//	Allocated when the DCC direction is created
+	Bitstream*		EqualCellStream;
+	Bitstream*		PixelMaskStream;
+	Bitstream*		EncodingTypeStream;
+	Bitstream*		RawPixelStream;
+	Bitstream*		PixelCodeDisplacementStream;
 };
 
 struct DCCFile

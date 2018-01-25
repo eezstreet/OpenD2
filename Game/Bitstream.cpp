@@ -10,6 +10,8 @@ Bitstream::Bitstream()
 	dwTotalStreamSizeBits = 0;
 	dwTotalStreamSizeBytes = 0;
 	bExternalStorage = false;
+	dwStreamStartByte = 0;
+	dwStreamStartBit = 0;
 }
 
 /*
@@ -34,6 +36,8 @@ void Bitstream::LoadStream(BYTE* pNewStream, size_t dwNewSizeBytes)
 	pStream = pNewStream;
 	dwTotalStreamSizeBits = dwNewSizeBytes * 8;
 	dwTotalStreamSizeBytes = dwNewSizeBytes;
+	dwStreamStartByte = 0;
+	dwStreamStartBit = 0;
 	
 #ifndef BIG_ENDIAN
 	dwReadBit = dwCurrentByte = 0;
@@ -66,6 +70,9 @@ void Bitstream::SplitFrom(Bitstream* pSplitStream, size_t dwSplitStreamSizeBits)
 		pSplitStream->dwCurrentByte++;
 		pSplitStream->dwReadBit -= 8;
 	}
+
+	dwStreamStartBit = dwReadBit;
+	dwStreamStartByte = dwCurrentByte;
 }
 
 /*
@@ -76,6 +83,18 @@ void Bitstream::SetCurrentPosition(DWORD dwPosition, DWORD dwBitOffset)
 {
 	dwCurrentByte = dwPosition;
 	dwReadBit = dwBitOffset;
+}
+
+/*
+ *	"Rewind" the stream back to its original start.
+ *	When you use this on a split stream, it will rewind back to the split start.
+ *	When you use this on any other stream, it will rewind all the way back to the beginning.
+ *	@author	eezstreet
+ */
+void Bitstream::Rewind()
+{
+	dwReadBit = dwStreamStartBit;
+	dwCurrentByte = dwStreamStartByte;
 }
 
 /*

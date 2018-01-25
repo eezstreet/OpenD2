@@ -17,23 +17,13 @@ static const DWORD gdwDCCBitTable[] = {
 	0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 28, 30, 32
 };
 
-static Bitstream* pEqualCellBitstream;
-static Bitstream* pPixelMaskBitstream;
-static Bitstream* pEncodingTypeBitstream;
-static Bitstream* pRawPixelBitstream;
-static Bitstream* pPixelCodeDisplacementBitstream;
-
 /*
  *	Inits the DCC code globally. We should call this before doing any DCC calls.
  *	@author	eezstreet
  */
 void DCC_GlobalInit()
 {
-	pEqualCellBitstream = new Bitstream();
-	pPixelMaskBitstream = new Bitstream();
-	pEncodingTypeBitstream = new Bitstream();
-	pRawPixelBitstream = new Bitstream();
-	pPixelCodeDisplacementBitstream = new Bitstream();
+	// do nothing atm
 }
 
 /*
@@ -42,11 +32,7 @@ void DCC_GlobalInit()
  */
 void DCC_GlobalShutdown()
 {
-	delete pEqualCellBitstream;
-	delete pPixelMaskBitstream;
-	delete pEncodingTypeBitstream;
-	delete pRawPixelBitstream;
-	delete pPixelCodeDisplacementBitstream;
+	DCC_FreeAll();
 }
 
 /*
@@ -142,6 +128,7 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 		}
 	}
 
+	// Calculate mins/maxs
 	frame.nMinX = frame.nXOffset;
 	frame.nMaxX = frame.nMinX + frame.dwWidth - 1;
 	if (frame.dwFlipped)
@@ -154,6 +141,50 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 		frame.nMaxY = frame.nYOffset;
 		frame.nMinY = frame.nMaxY - frame.dwHeight + 1;
 	}
+}
+
+/*
+ *	Calculates information about cells in a frame: the number of cells present, how wide they are, etc.
+ *	@author	eezstreet
+ */
+static void DCC_CalculateFrameCellData(DCCDirection& dir, DCCFrame& frame)
+{
+	int nCellWidth = 4 - ((frame.nMinX - dir.nMinX) % 4);
+	int nCellHeight = 4 - ((frame.nMinY - dir.nMinY) % 4);
+	DWORD dwCellsWide = 0;
+	DWORD dwCellsHigh = 0;
+	int temp;
+
+	if (frame.dwWidth - nCellWidth <= 1)
+	{	// the frame is very small, it can only be one cell wide
+		dwCellsWide = 1;
+	}
+	else
+	{	// give us some wiggle room on either side of the cell
+		temp = frame.dwWidth - nCellWidth - 1;
+		dwCellsWide = 2 + (temp / 4);
+		if ((temp % 4) == 0)
+		{
+			dwCellsWide--;
+		}
+	}
+
+	if (frame.dwHeight - nCellHeight <= 1)
+	{	// the frame is very small, it can only be one cell high
+		dwCellsHigh = 1;
+	}
+	else
+	{	// give us some wiggle room on either side of the cell
+		temp = frame.dwHeight - nCellHeight - 1;
+		dwCellsHigh = 2 + (temp / 4);
+		if ((temp % 4) == 0)
+		{
+			dwCellsHigh--;
+		}
+	}
+
+	frame.dwCellW = dwCellsWide;
+	frame.dwCellH = dwCellsHigh;
 }
 
 /*
@@ -182,21 +213,33 @@ static void DCC_ReadDirectionPixelMapping(DCCDirection& dir, Bitstream* pBits)
  */
 static void DCC_CreateDirectionBitstreams(DCCDirection& dir, Bitstream* pBits)
 {
+	// Initialize everything to nullptr to begin with
+	dir.EqualCellStream = nullptr;
+	dir.PixelMaskStream = nullptr;
+	dir.EncodingTypeStream = nullptr;
+	dir.RawPixelStream = nullptr;
+	dir.PixelCodeDisplacementStream = nullptr;
+
 	if (dir.nCompressionFlag & 0x02)
 	{
-		pEqualCellBitstream->SplitFrom(pBits, dir.dwEqualCellStreamSize);
+		dir.EqualCellStream = new Bitstream();
+		dir.EqualCellStream->SplitFrom(pBits, dir.dwEqualCellStreamSize);
 	}
 
-	pPixelMaskBitstream->SplitFrom(pBits, dir.dwPixelMaskStreamSize);
+	dir.PixelMaskStream = new Bitstream();
+	dir.PixelMaskStream->SplitFrom(pBits, dir.dwPixelMaskStreamSize);
 
 	if (dir.nCompressionFlag & 0x01)
 	{
-		pEncodingTypeBitstream->SplitFrom(pBits, dir.dwEncodingStreamSize);
-		pRawPixelBitstream->SplitFrom(pBits, dir.dwRawPixelStreamSize);
+		dir.EncodingTypeStream = new Bitstream();
+		dir.RawPixelStream = new Bitstream();
+		dir.EncodingTypeStream->SplitFrom(pBits, dir.dwEncodingStreamSize);
+		dir.RawPixelStream->SplitFrom(pBits, dir.dwRawPixelStreamSize);
 	}
 
 	// Read the remainder into the pixel code displacement
-	pPixelCodeDisplacementBitstream->SplitFrom(pBits, pBits->GetRemainingReadBits());
+	dir.PixelCodeDisplacementStream = new Bitstream();
+	dir.PixelCodeDisplacementStream->SplitFrom(pBits, pBits->GetRemainingReadBits());
 }
 
 /*
@@ -204,10 +247,43 @@ static void DCC_CreateDirectionBitstreams(DCCDirection& dir, Bitstream* pBits)
  *	Unlike Paul Siramy's code, we use a global buffer to cut down on the number of allocations
  */
 static DCCPixelBuffer gPixelBuffer[MAX_DCC_PIXEL_BUFFER]{ 0 };
-static void DCC_FillPixelBuffer()
+static void DCC_FillPixelBuffer(DCCHeader* pHeader, DCCDirection* pDirection)
 {
+	DWORD dwCellsW, dwCellsH;
+	DWORD dwSkipCell = 0, dwPixelMask = 0;
+
 	memset(gPixelBuffer, 0, sizeof(DCCPixelBuffer) * MAX_DCC_PIXEL_BUFFER);
 
+	// Each frame is divided up into a grid of "cells." These cells are normally 4x4 pixels wide.
+	// HOWEVER, some of the time the cell may need to be extended. Normally this would be along the edge.
+
+	for (int f = 0; f < pHeader->dwFramesPerDirection; f++)
+	{
+		dwCellsW = pDirection->frames[f].dwCellW;
+		dwCellsH = pDirection->frames[f].dwCellH;
+
+		for (int y = 0; y < dwCellsH; y++)
+		{
+			for (int x = 0; x < dwCellsW; x++)
+			{
+				// If the EqualCell bitstream is present, read a bit from it.
+				dwSkipCell = 0;
+				if (pDirection->dwEqualCellStreamSize > 0)
+				{
+					pDirection->EqualCellStream->ReadBits(dwSkipCell, 1);
+				}
+				
+				// If EqualCell bitstream contained a '1' bit, then we can skip the current cell.
+				if (dwSkipCell)
+				{
+					continue;
+				}
+
+				// Read the pixel mask
+				pDirection->PixelMaskStream->ReadBits(dwPixelMask, 4);
+			}
+		}
+	}
 }
 
 /*
@@ -266,6 +342,12 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 		dir.nWidth = dir.nMaxX - dir.nMinX + 1;
 		dir.nHeight = dir.nMaxY - dir.nMinY + 1;
 
+		// Calculate frame cell width
+		for (j = 0; j < dcc.pFile->header.dwFramesPerDirection; j++)
+		{
+			DCC_CalculateFrameCellData(dir, dir.frames[j]);
+		}
+
 		// Read direction optional data
 		if (optionalSize > 0)
 		{
@@ -294,6 +376,9 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 
 		// Initiate the bitstreams
 		DCC_CreateDirectionBitstreams(dir, pBits);
+
+		// That's all we need to do for now. 
+		// The LRU on the renderer will be responsible for decoding the DCCs as we need them.
 	}
 
 	// Clear out the bitstream
@@ -334,14 +419,19 @@ anim_handle DCC_Load(char* szPath, char* szName)
 	// Find a free slot in the hash table
 	dwNameHash = D2_strhash(szName, 0, MAX_DCC_HASH);
 	outHandle = (anim_handle)dwNameHash;
-	while (DCCHashTable[outHandle].pFile != nullptr && !D2_stricmp(szName, DCCHashTable[outHandle].name))
+	while (DCCHashTable[outHandle].pFile != nullptr)
 	{
+		if (!D2_stricmp(szName, DCCHashTable[outHandle].name))
+		{
+			return outHandle;
+		}
 		outHandle++;
 		outHandle %= MAX_DCC_HASH;
 	}
 
 	// Now that we've got a free slot and a file handle, let's go ahead and load the DCC itself
 	DCC_Read(DCCHashTable[outHandle], fileHandle, pArchive);
+	D2_strncpyz(DCCHashTable[outHandle].name, szName, MAX_DCC_NAMELEN);
 	DCCHashTable[outHandle].useCount = 0;
 
 	return outHandle;

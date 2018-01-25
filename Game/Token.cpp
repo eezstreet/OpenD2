@@ -357,6 +357,11 @@ void TOK_SetInstanceActive(anim_handle handle, bool bNewActive)
 	cof_handle* pCOFs;
 	int max = 0;
 
+#ifdef PROFILE_TOKENS
+	DWORD dwStartTicks = SDL_GetTicks();
+	DWORD dwTicks;
+#endif
+
 	if (handle == INVALID_HANDLE || handle >= MAX_TOKEN_INSTANCES)
 	{	// not valid, don't do anything
 		return;
@@ -443,4 +448,10 @@ void TOK_SetInstanceActive(anim_handle handle, bool bNewActive)
 			}
 		}
 	}
+
+#ifdef PROFILE_TOKENS
+	dwTicks = SDL_GetTicks();
+	Log_Print(PRIORITY_DEBUG, "Loaded token instance %s (%d) in %d milliseconds\n",
+		gTokenTable[pInstance->currentHandle].baseTokenName, pInstance->currentHandle, dwTicks - dwStartTicks);
+#endif
 }
