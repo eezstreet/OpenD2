@@ -48,59 +48,46 @@ struct D2SystemInfoStrc
 
 /*
  *	Bitstreams are used for both DCCs and networking.
- *	I took this off of CodeProject and can't remember the author, but I've rewritten it for my purposes.
+ *	@author	eezstreet
  */
 class Bitstream
 {
 public:
-	// Public methods
-	Bitstream(void);
-	virtual ~Bitstream(void);
+	Bitstream();
+	~Bitstream();
 
-	void WriteBit(BYTE value, bool bSigned = false);
-	void WriteByte(BYTE value, bool bSigned = false);
-	void WriteWord(WORD value, bool bSigned = false);
-	void WriteDWord(DWORD value, bool bSigned = false);
-	void WriteData(BYTE* lpData, long nLen, bool bSigned = false);
-	void WriteData(WORD* lpData, long nLen, bool bSigned = false);
-	void WriteData(DWORD* lpData, long nLen, bool bSigned = false);
-	void WriteBits(DWORD value, long nLen = 32, bool bSigned = false);
+	void LoadStream(BYTE* pNewStream, size_t dwStreamSizeBytes);
+	void SplitFrom(Bitstream* pSplitStream, size_t dwSplitStreamSizeBits);
 
-	void ReadBit(BYTE& value);
-	void ReadByte(BYTE& value);
-	void ReadWord(WORD& value);
-	void ReadDWord(DWORD& value);
-	void ReadData(BYTE* lpData, long nLen);
-	void ReadData(WORD* lpData, long nLen);
-	void ReadData(DWORD* lpData, long nLen);
-	void ReadBits(DWORD& value, long nLen = 32);
-	void ReadBits(void* value, long nLen = 32);
-	void LoadStream(BYTE* lpStream, long nLen);
-	void SaveStream(BYTE* lpStream);
-	void SetCurrentPosition(DWORD dwCurrentPosition);
+	void SetCurrentPosition(DWORD dwPosition, DWORD dwBitOffset = 0);
 
-	BYTE* GetStream() { return m_lpStream; }
-	DWORD GetStreamLength() { return m_dwStreamOffset; }
-	DWORD GetStreamTotalLength() { return m_dwStreamLen; }
-	DWORD GetCurrentByte() { return m_dwCurrentPosition; }
-	DWORD GetCurrentBit() { return m_CurrentBit; }
+	void ReadByte(BYTE& outByte);
+	void ReadWord(WORD& outWord);
+	void ReadDWord(DWORD& outWord);
+	void ReadBits(BYTE& outBits, int bitCount);
+	void ReadBits(WORD& outBits, int bitCount);
+	void ReadBits(DWORD& outBits, int bitCount);
+	void ReadByte(BYTE* outByte);
+	void ReadWord(WORD* outWord);
+	void ReadDWord(DWORD* outWord);
+	void ReadBits(BYTE* outBits, int bitCount);
+	void ReadBits(WORD* outBits, int bitCount);
+	void ReadBits(DWORD* outBits, int bitCount);
+	void ReadBits(void* outBits, size_t outSize, int bitCount);
+	void ReadData(void* data, size_t outSize);
 
-	void CopyFrom(Bitstream* bits, size_t offset, size_t len);
-	void CopyAllFrom(Bitstream* bits, size_t offset);
+	size_t GetRemainingReadBits();
 
 private:
-	// Private methods
-	void _WriteBit(BYTE value, bool bSigned);
-	void _ReadBit(BYTE& value);
+	int ReadBits(int bitsCount);
+	void FreeInternalStreamSource();
 
-private:
-	// Private members
-	BYTE* m_lpStream;
-	DWORD m_dwStreamLen;
-	DWORD m_dwStreamOffset;
-	DWORD m_dwCurrentPosition;
-	BYTE m_CurrentBit;
-
+	bool bExternalStorage;
+	BYTE* pStream;
+	size_t dwTotalStreamSizeBytes;
+	size_t dwTotalStreamSizeBits;
+	size_t dwCurrentByte;
+	size_t dwReadBit;
 };
 
 /*
@@ -580,6 +567,8 @@ void COF_DeregisterAll();
 bool COF_LayerPresent(cof_handle cof, int layer);
 
 // DC6.cpp
+void DCC_GlobalInit();
+void DCC_GlobalShutdown();
 void DC6_LoadImage(char* szPath, DC6Image* pImage);
 void DC6_UnloadImage(DC6Image* pImage);
 BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);

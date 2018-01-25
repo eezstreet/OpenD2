@@ -1,448 +1,314 @@
 #include "Diablo2.hpp"
 
 /*
- *	Create the stream.
- */
-Bitstream::Bitstream(void)
-{
-	// Init members
-	m_lpStream = NULL;
-	m_dwStreamLen = 0;
-	m_dwStreamOffset = 0;
-	m_dwCurrentPosition = 0;
-	m_CurrentBit = 0;
-}
-
-/*
- *	Free the stream.
- */
-Bitstream::~Bitstream(void)
-{
-	// Free stream
-	if (m_lpStream != NULL)
-	{
-		free(m_lpStream);
-		m_lpStream = NULL;
-		m_dwStreamLen = 0;
-	}
-}
-
-/*
- *	Copy another bitstream
+ *	Creates a new blank bitstream.
  *	@author	eezstreet
  */
-void Bitstream::CopyFrom(Bitstream* pBits, size_t offset, size_t len)
+Bitstream::Bitstream()
 {
-	m_lpStream = pBits->m_lpStream;
-	m_CurrentBit = pBits->m_CurrentBit + offset;
-	m_dwStreamLen = pBits->m_dwStreamLen;
-	m_dwStreamOffset = len;
-	m_dwCurrentPosition = pBits->m_dwCurrentPosition + (offset / 8);
+	pStream = nullptr;
+	dwTotalStreamSizeBits = 0;
+	dwTotalStreamSizeBytes = 0;
+	bExternalStorage = false;
 }
 
 /*
- *	Copy all remaining bits from one bitstream into another
+ *	Deletes the bitstream.
  *	@author	eezstreet
  */
-void Bitstream::CopyAllFrom(Bitstream* pBits, size_t offset)
+Bitstream::~Bitstream()
 {
-	m_lpStream = pBits->m_lpStream;
-	m_CurrentBit = pBits->m_CurrentBit + offset;
-	m_dwStreamLen = pBits->m_dwStreamLen;
-	m_dwStreamOffset = pBits->m_dwStreamOffset - offset;
-	m_dwCurrentPosition = pBits->m_dwCurrentPosition + (offset / 8);
+	FreeInternalStreamSource();
 }
 
 /*
- *	Internal - write a single bit into the bitstream.
+ *	Load in a stream using external memory storage.
+ *	The external source is not modified and needs to be freed manually when the stream is destroyed.
+ *	@author	eezstreet
  */
-void Bitstream::_WriteBit(BYTE value, bool bSigned)
+void Bitstream::LoadStream(BYTE* pNewStream, size_t dwNewSizeBytes)
 {
-	// Check for current bit offset
-	if ((m_CurrentBit % 8) == 0)
-	{
-		// Check for valid stream
-		if (m_lpStream == NULL)
-		{
-			m_lpStream = (BYTE*)malloc(sizeof(BYTE));
-			m_dwStreamLen = 1;
-			m_lpStream[m_dwStreamLen - 1] = 0;
-			m_CurrentBit = 0;
-			m_dwStreamOffset = 0;
-		}
-		else
-		{
-			m_CurrentBit = 0;
-			m_dwStreamLen++;
-			m_lpStream = (BYTE*)realloc(m_lpStream, m_dwStreamLen * sizeof(BYTE));
-			m_lpStream[m_dwStreamLen - 1] = 0;
-		}
-	}
+	FreeInternalStreamSource();
 
-	// Write single BIT
-	if (bSigned)
-	{
-		m_lpStream[m_dwStreamLen - 1] |= ((value & 0x80) >> m_CurrentBit);
-	}
-	else
-	{
-		m_lpStream[m_dwStreamLen - 1] |= (value >> m_CurrentBit);
-	}
+	bExternalStorage = true;
+	pStream = pNewStream;
+	dwTotalStreamSizeBits = dwNewSizeBytes * 8;
+	dwTotalStreamSizeBytes = dwNewSizeBytes;
 	
-	m_dwStreamOffset++;
-	m_dwCurrentPosition = m_dwStreamOffset - 1;
-	m_CurrentBit++;
+#ifndef BIG_ENDIAN
+	dwReadBit = dwCurrentByte = 0;
+#endif
 }
 
 /*
- *	Internal - read a single bit from the bitstream.
- */
-void Bitstream::_ReadBit(BYTE& value)
-{
-	// Check for valid position
-	value = 0x00;
-	if (m_dwCurrentPosition < m_dwStreamOffset)
-	{
-		// Read single BIT
-		DWORD currentByte = m_dwCurrentPosition >> 3;
-		BYTE currentBit = (BYTE)(m_dwCurrentPosition % 8);
-		value = ((BYTE)(m_lpStream[currentByte] << currentBit) >> 7);
-		m_dwCurrentPosition = D2_max<DWORD>(0, D2_min<DWORD>(m_dwStreamOffset - 1, m_dwCurrentPosition + 1));
-	}
-}
-
-/*
- *	Write a bit into the bitstream.
- */
-void Bitstream::WriteBit(BYTE value, bool bSigned)
-{
-	// Write single BIT
-	BYTE bitValue = ((value & 0x01) << 7);
-	_WriteBit(bitValue, bSigned);
-}
-
-/*
- *	Read a single bit from the bitstream.
- */
-void Bitstream::ReadBit(BYTE& value)
-{
-	// Read single BIT
-	_ReadBit(value);
-}
-
-/*
- *	Write a single byte into the bitstream.
- */
-void Bitstream::WriteByte(BYTE value, bool bSigned)
-{
-	// Write single BYTE
-	BYTE currentOffset = 0;
-	BYTE mask = 0x00;
-	BYTE bitValue = 0;
-	for (long i = 0; i<8; i++)
-	{
-		bitValue = ((value & mask) << currentOffset);
-		_WriteBit(bitValue, bSigned);
-		mask = mask >> 1;
-		currentOffset++;
-	}
-}
-
-/*
- *	Read a single byte from the bitstream.
- */
-void Bitstream::ReadByte(BYTE& value)
-{
-	// Read single BYTE
-	value = 0x00;
-	BYTE currentOffset = 7;
-	BYTE bitValue;
-	for (long i = 0; i<8; i++)
-	{
-		_ReadBit(bitValue);
-		value |= (bitValue << currentOffset);
-		currentOffset--;
-	}
-}
-
-/*
- *	Write a single word (2 bytes) into the bitstream.
- */
-void Bitstream::WriteWord(WORD value, bool bSigned)
-{
-	// Write single WORD
-	BYTE currentOffset = 0;
-	WORD mask = 0x8000;
-	BYTE bitValue = 0;
-	for (long i = 0; i<16; i++)
-	{
-		bitValue = (BYTE)(((value & mask) << currentOffset) >> 8);
-		_WriteBit(bitValue, bSigned);
-		mask = mask >> 1;
-		currentOffset++;
-	}
-}
-
-/*
- *	Read a single word (2 bytes) from the bitstream.
- */
-void Bitstream::ReadWord(WORD& value)
-{
-	// Read single WORD
-	value = 0x0000;
-	BYTE currentOffset = 15;
-	BYTE bitValue;
-	for (long i = 0; i<16; i++)
-	{
-		_ReadBit(bitValue);
-		value |= (bitValue << currentOffset);
-		currentOffset--;
-	}
-}
-
-/*
- *	Write a single DWORD (4 bytes) into the stream.
- */
-void Bitstream::WriteDWord(DWORD value, bool bSigned)
-{
-	// Write single DWORD
-	BYTE currentOffset = 0;
-	DWORD mask = 0x80000000;
-	BYTE bitValue = 0;
-	for (long i = 0; i<32; i++)
-	{
-		bitValue = (BYTE)(((value & mask) << currentOffset) >> 24);
-		_WriteBit(bitValue, bSigned);
-		mask = mask >> 1;
-		currentOffset++;
-	}
-}
-
-/*
- *	Read a single DWORD (4 bytes) from the stream.
- */
-void Bitstream::ReadDWord(DWORD& value)
-{
-	// Read single DWORD
-	value = 0x00000000;
-	BYTE currentOffset = 31;
-	BYTE bitValue;
-	for (long i = 0; i<32; i++)
-	{
-		_ReadBit(bitValue);
-		value |= (bitValue << currentOffset);
-		currentOffset--;
-	}
-}
-
-/*
- *	Write some data into the bitstream.
- */
-void Bitstream::WriteData(BYTE* lpData, long nLen, bool bSigned)
-{
-	// Check for valid data
-	if (lpData != NULL)
-	{
-		// Write variable-length data
-		for (long i = 0; i<nLen; i++)
-		{
-			// Write single BYTE
-			WriteByte(lpData[i], bSigned);
-		}
-	}
-}
-
-/*
- *	Read some data from the bitstream.
- */
-void Bitstream::ReadData(BYTE* lpData, long nLen)
-{
-	// Check for valid data
-	if (lpData != NULL)
-	{
-		// Read variable-length data
-		for (long i = 0; i<nLen; i++)
-		{
-			// Read single BYTE
-			ReadByte(lpData[i]);
-		}
-	}
-}
-
-/*
- *	Write some data into the bitstream.
- */
-void Bitstream::WriteData(WORD* lpData, long nLen, bool bSigned)
-{
-	// Check for valid data
-	if (lpData != NULL)
-	{
-		// Write variable-length data
-		for (long i = 0; i<nLen; i++)
-		{
-			// Write single WORD
-			WriteWord(lpData[i], bSigned);
-		}
-	}
-}
-
-/*
- *	Read some data from the bitstream.
- */
-void Bitstream::ReadData(WORD* lpData, long nLen)
-{
-	// Check for valid data
-	if (lpData != NULL)
-	{
-		// Read variable-length data
-		for (long i = 0; i<nLen; i++)
-		{
-			// Read single WORD
-			ReadWord(lpData[i]);
-		}
-	}
-}
-
-/*
- *	Write some data into the bitstream.
- */
-void Bitstream::WriteData(DWORD* lpData, long nLen, bool bSigned)
-{
-	// Check for valid data
-	if (lpData != NULL)
-	{
-		// Write variable-length data
-		for (long i = 0; i<nLen; i++)
-		{
-			// Write single DWORD
-			WriteDWord(lpData[i], bSigned);
-		}
-	}
-}
-
-/*
- *	Read some data from the bitstream.
- */
-void Bitstream::ReadData(DWORD* lpData, long nLen)
-{
-	// Check for valid data
-	if (lpData != NULL)
-	{
-		// Read variable-length data
-		for (long i = 0; i<nLen; i++)
-		{
-			// Read single DWORD
-			ReadDWord(lpData[i]);
-		}
-	}
-}
-
-/*
- *	Write some bits to the bitstream.
- */
-void Bitstream::WriteBits(DWORD value, long nLen, bool bSigned)
-{
-	// Write single BITs
-	long _nLen = D2_max<long>(0, D2_min<long>(32, nLen));
-	BYTE currentOffset = (BYTE)(_nLen - 1);
-	DWORD mask = (0x00000001 << (_nLen - 1));
-	BYTE bitValue = 0;
-	for (long i = 0; i<_nLen; i++)
-	{
-		bitValue = ((BYTE)((value & mask) >> currentOffset) << 7);
-		_WriteBit(bitValue, bSigned);
-		mask = mask >> 1;
-		currentOffset--;
-	}
-}
-
-/*
- *	Reads some bits.
- *	The output is stored in the parameter `value`
- */
-void Bitstream::ReadBits(DWORD& value, long nLen)
-{
-	// Read single BITs
-	value = 0x00000000;
-	long _nLen = D2_max<long>(0, D2_min<long>(32, nLen));
-	BYTE currentOffset = 31;
-	BYTE bitValue;
-	for (long i = 0; i<_nLen; i++)
-	{
-		_ReadBit(bitValue);
-		value |= (bitValue << currentOffset);
-		currentOffset--;
-	}
-}
-
-/*
- *	Read some bits into a pointer.
- *	The output is stored in the parameter `value`
+ *	"Split" this stream from another stream. It inherits the data but uses a different offset.
  *	@author	eezstreet
  */
-void Bitstream::ReadBits(void* value, long nLen)
+void Bitstream::SplitFrom(Bitstream* pSplitStream, size_t dwSplitStreamSizeBits)
 {
-	DWORD* pValue = (DWORD*)value;
+	DWORD dwBitsHanging = (dwSplitStreamSizeBits % 8);
+	DWORD dwBytes = (dwSplitStreamSizeBits - dwBitsHanging) / 8;
+	FreeInternalStreamSource();
+	
+	// Copy from the other bitstream
+	bExternalStorage = true;
+	dwReadBit = pSplitStream->dwReadBit;
+	dwCurrentByte = pSplitStream->dwCurrentByte;
+	dwTotalStreamSizeBits = pSplitStream->dwTotalStreamSizeBits;
+	dwTotalStreamSizeBytes = pSplitStream->dwTotalStreamSizeBytes;
+	pStream = pSplitStream->pStream;
 
-	*pValue = 0x00000000;
-	long _nLen = D2_max<long>(0, D2_min<long>(32, nLen));
-	BYTE currentOffset = 31;
-	BYTE bitValue;
-	for (long i = 0; i<_nLen; i++)
+	// Advance the other bitstream
+	pSplitStream->dwCurrentByte += dwBytes;
+	pSplitStream->dwReadBit += dwBitsHanging;
+	while (pSplitStream->dwReadBit >= 8)
 	{
-		_ReadBit(bitValue);
-		*pValue |= (bitValue << currentOffset);
-		currentOffset--;
+		pSplitStream->dwCurrentByte++;
+		pSplitStream->dwReadBit -= 8;
 	}
 }
 
 /*
- *	Loads a chunk of memory into the bitstream.
+ *	Set the current stream position.
+ *	@author	eezstreet
  */
-void Bitstream::LoadStream(BYTE* lpStream, long nLen)
+void Bitstream::SetCurrentPosition(DWORD dwPosition, DWORD dwBitOffset)
 {
-	// Check for valid memory buffer
-	if (lpStream != NULL)
+	dwCurrentByte = dwPosition;
+	dwReadBit = dwBitOffset;
+}
+
+/*
+ *	Read a byte from the stream.
+ *	@author	eezstreet
+ */
+// Overload 1
+void Bitstream::ReadByte(BYTE& outByte)
+{
+	DWORD bits = ReadBits(8);
+	
+	outByte = bits;
+}
+
+// Overload 2
+void Bitstream::ReadByte(BYTE* outByte)
+{
+	DWORD bits = ReadBits(8);
+
+	*outByte = bits;
+}
+
+/*
+ *	Read a word from the stream.
+ *	@author	eezstreet
+ */
+// Overload 1
+void Bitstream::ReadWord(WORD& outWord)
+{
+	DWORD bits = ReadBits(16);
+
+	outWord = bits;
+}
+
+// Overload 2
+void Bitstream::ReadWord(WORD* outWord)
+{
+	DWORD bits = ReadBits(16);
+
+	*outWord = bits;
+}
+
+/*
+ *	Read a doubleword from the stream.
+ *	@author	eezstreet
+ */
+// Overload 1
+void Bitstream::ReadDWord(DWORD& outDWord)
+{
+	DWORD bits = ReadBits(32);
+
+	outDWord = bits;
+}
+
+// Overload 2
+void Bitstream::ReadDWord(DWORD* outDWord)
+{
+	DWORD bits = ReadBits(32);
+
+	*outDWord = bits;
+}
+
+/*
+ *	Read bits from the stream (public). If a negative number is used it will read a signed number.
+ *	@author	eezstreet
+ */
+// Overload 1
+void Bitstream::ReadBits(BYTE& outBits, int bitCount)
+{
+	BYTE bits = ReadBits(bitCount);
+
+	outBits = bits;
+}
+
+// Overload 2
+void Bitstream::ReadBits(WORD& outBits, int bitCount)
+{
+	WORD bits = ReadBits(bitCount);
+
+	outBits = bits;
+}
+
+// Overload 3
+void Bitstream::ReadBits(DWORD& outBits, int bitCount)
+{
+	DWORD bits = ReadBits(bitCount);
+
+	outBits = bits;
+}
+
+// Overload 4
+void Bitstream::ReadBits(BYTE* outBits, int bitCount)
+{
+	BYTE bits = ReadBits(bitCount);
+
+	*outBits = bits;
+}
+
+// Overload 5
+void Bitstream::ReadBits(WORD* outBits, int bitCount)
+{
+	WORD bits = ReadBits(bitCount);
+
+	*outBits = bits;
+}
+
+// Overload 6
+void Bitstream::ReadBits(DWORD* outBits, int bitCount)
+{
+	DWORD bits = ReadBits(bitCount);
+
+	*outBits = bits;
+}
+
+// Overload 7
+void Bitstream::ReadBits(void* outBits, size_t outBitsSize, int bitCount)
+{
+	switch (outBitsSize)
 	{
-		// Free stream
-		if (m_lpStream != NULL)
-		{
-			free(m_lpStream);
-			m_lpStream = NULL;
-			m_dwStreamLen = 0;
+		case 1:
+			{
+				BYTE nBits = ReadBits(bitCount);
+				*(BYTE*)outBits = nBits;
+			}
+			break;
+		case 2:
+			{
+				WORD wBits = ReadBits(bitCount);
+				*(WORD*)outBits = wBits;
+			}
+			break;
+		case 4:
+			{
+				DWORD dwBits = ReadBits(bitCount);
+				*(DWORD*)outBits = dwBits;
+			}
+			break;
+		case 8:
+			{
+				QWORD qwBits = ReadBits(bitCount);
+				*(QWORD*)outBits = qwBits;
+			}
+			break;
+	}
+}
+
+/*
+ *	Get the number of bits remaining to be read.
+ *	@author	eezstreet
+ */
+size_t Bitstream::GetRemainingReadBits()
+{
+	return dwTotalStreamSizeBits - ((dwCurrentByte * 8) + dwReadBit);
+}
+
+/*
+ *	Read bits from the stream (private). If a negative number is used it will read a signed number.
+ *	@author	id Software / eezstreet
+ */
+int Bitstream::ReadBits(int numBits) 
+{
+	int		value;
+	int		valueBits;
+	int		get;
+	int		fraction;
+	bool	sgn;
+
+	Log_ErrorAssert(pStream != nullptr, 0);
+	Log_ErrorAssert(numBits != 0 && numBits >= -31 && numBits <= 32, 0);
+
+	value = 0;
+	valueBits = 0;
+
+	if (numBits < 0) {
+		numBits = -numBits;
+		sgn = true;
+	}
+	else {
+		sgn = false;
+	}
+
+	// check for overflow
+	if (numBits > GetRemainingReadBits()) {
+		return -1;
+	}
+
+	while (valueBits < numBits) {
+		if (dwReadBit == 0) {
+			dwCurrentByte++;
 		}
+		get = 8 - dwReadBit;
+		if (get >(numBits - valueBits)) {
+			get = numBits - valueBits;
+		}
+		fraction = pStream[dwCurrentByte - 1];
+		fraction >>= dwReadBit;
+		fraction &= (1 << get) - 1;
+		value |= fraction << valueBits;
 
-		// Read stream from memory buffer
-		m_dwStreamLen = nLen;
-		m_lpStream = (BYTE*)malloc(m_dwStreamLen * sizeof(BYTE));
-		memcpy(m_lpStream, lpStream, m_dwStreamLen * sizeof(BYTE));
-		m_dwStreamOffset = m_dwStreamLen << 3;
-		m_dwCurrentPosition = m_dwStreamOffset - 1;
-		m_CurrentBit = 0;
+		valueBits += get;
+		dwReadBit = (dwReadBit + get) & 7;
 	}
-}
 
-/*
- *	Writes the stream to the memory buffer.
- */
-void Bitstream::SaveStream(BYTE* lpStream)
-{
-	// Check for valid memory buffer
-	if (lpStream != NULL)
-	{
-		// Check for valid stream
-		if (m_lpStream != NULL)
-		{
-			// Write stream to memory buffer
-			memcpy(lpStream, m_lpStream, m_dwStreamLen * sizeof(BYTE));
+	if (sgn) {
+		if (value & (1 << (numBits - 1))) {
+			value |= -1 ^ ((1 << numBits) - 1);
 		}
 	}
+
+	return value;
 }
 
 /*
- *	Sets the current stream position.
+ *	Reads a big chunk of continuous data from the stream
+ *	@author	eezstreet
  */
-void Bitstream::SetCurrentPosition(DWORD dwCurrentPosition)
+void Bitstream::ReadData(void* data, size_t dataSize)
 {
-	m_dwCurrentPosition = D2_max<DWORD>(0, D2_min<DWORD>(m_dwStreamOffset - 1, dwCurrentPosition));
+	size_t i;
+	for (i = 0; i < dataSize; i++)
+	{
+		ReadByte((BYTE*)data);
+	}
+}
+
+/*
+ *	Frees the memory that this bitstream is holding onto, if any
+ *	@author	eezstreet
+ */
+void Bitstream::FreeInternalStreamSource()
+{
+	if (pStream != nullptr && !bExternalStorage)
+	{
+		free(pStream);
+	}
 }

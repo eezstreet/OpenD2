@@ -72,6 +72,7 @@ void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_W
 
 	// Load palettes
 	Pal_Init();
+	DCC_GlobalInit();
 
 	RenderTarget = &RenderTargets[DesiredRenderTarget];
 	RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);

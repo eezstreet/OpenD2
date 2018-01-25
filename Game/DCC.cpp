@@ -75,15 +75,15 @@ static void DCC_ReadHeader(DCCHash& dcc, Bitstream* pBits)
 static void DCC_ReadDirectionHeader(DCCHeader& fileHeader, DCCDirection& dir, int dirNum, Bitstream* pBits)
 {
 	pBits->SetCurrentPosition(fileHeader.dwDirectionOffset[dirNum]);
-	pBits->ReadBits(dir.dwOutsizeCoded);
-	pBits->ReadBits((DWORD&)dir.nCompressionFlag, 2);
-	pBits->ReadBits((DWORD&)dir.nVar0Bits, 4);
-	pBits->ReadBits((DWORD&)dir.nWidthBits, 4);
-	pBits->ReadBits((DWORD&)dir.nHeightBits, 4);
-	pBits->ReadBits((DWORD&)dir.nXOffsetBits, 4);
-	pBits->ReadBits((DWORD&)dir.nYOffsetBits, 4);
-	pBits->ReadBits((DWORD&)dir.nOptionalBytesBits, 4);
-	pBits->ReadBits((DWORD&)dir.nCodedBytesBits, 4);
+	pBits->ReadBits(&dir.dwOutsizeCoded, 32);
+	pBits->ReadBits(dir.nCompressionFlag, 2);
+	pBits->ReadBits(dir.nVar0Bits, 4);
+	pBits->ReadBits(dir.nWidthBits, 4);
+	pBits->ReadBits(dir.nHeightBits, 4);
+	pBits->ReadBits(dir.nXOffsetBits, 4);
+	pBits->ReadBits(dir.nYOffsetBits, 4);
+	pBits->ReadBits(dir.nOptionalBytesBits, 4);
+	pBits->ReadBits(dir.nCodedBytesBits, 4);
 }
 
 /*
@@ -94,6 +94,9 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 {
 	int width;
 	void *ptr;
+	size_t size = 4;
+
+	memset(&frame, 0, sizeof(DCCFrame));
 
 	for (int i = 0; i < 8; i++)
 	{
@@ -133,7 +136,10 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 				break;
 		}
 
-		pBits->ReadBits(ptr, gdwDCCBitTable[width]);
+		if (gdwDCCBitTable[width] != 0)
+		{
+			pBits->ReadBits(ptr, size, gdwDCCBitTable[width]);
+		}
 	}
 
 	frame.nMinX = frame.nXOffset;
@@ -157,7 +163,7 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 static void DCC_ReadDirectionPixelMapping(DCCDirection& dir, Bitstream* pBits)
 {
 	int index = 0;
-	DWORD value = 0;
+	BYTE value = 0;
 
 	for (int i = 0; i < 256; i++)
 	{
@@ -176,27 +182,21 @@ static void DCC_ReadDirectionPixelMapping(DCCDirection& dir, Bitstream* pBits)
  */
 static void DCC_CreateDirectionBitstreams(DCCDirection& dir, Bitstream* pBits)
 {
-	DWORD dwBit = (pBits->GetCurrentByte() * 8) + pBits->GetCurrentBit();
-	DWORD dwOffset = 0;
-
 	if (dir.nCompressionFlag & 0x02)
 	{
-		pEqualCellBitstream->CopyFrom(pBits, dwOffset, dir.dwEqualCellStreamSize);
-		dwOffset += dir.dwEqualCellStreamSize;
+		pEqualCellBitstream->SplitFrom(pBits, dir.dwEqualCellStreamSize);
 	}
-	pPixelMaskBitstream->CopyFrom(pBits, dwOffset, dir.dwPixelMaskStreamSize);
-	dwOffset += dir.dwPixelMaskStreamSize;
+
+	pPixelMaskBitstream->SplitFrom(pBits, dir.dwPixelMaskStreamSize);
 
 	if (dir.nCompressionFlag & 0x01)
 	{
-		pEncodingTypeBitstream->CopyFrom(pBits, dwOffset, dir.dwEncodingStreamSize);
-		dwOffset += dir.dwEncodingStreamSize;
-
-		pRawPixelBitstream->CopyFrom(pBits, dwOffset, dir.dwRawPixelStreamSize);
-		dwOffset += dir.dwRawPixelStreamSize;
+		pEncodingTypeBitstream->SplitFrom(pBits, dir.dwEncodingStreamSize);
+		pRawPixelBitstream->SplitFrom(pBits, dir.dwRawPixelStreamSize);
 	}
 
-	pPixelCodeDisplacementBitstream->CopyAllFrom(pBits, dwOffset);
+	// Read the remainder into the pixel code displacement
+	pPixelCodeDisplacementBitstream->SplitFrom(pBits, pBits->GetRemainingReadBits());
 }
 
 /*

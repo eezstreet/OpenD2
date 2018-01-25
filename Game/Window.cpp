@@ -53,6 +53,7 @@ void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
  */
 void D2Win_ShutdownSDL()
 {
+	DCC_GlobalShutdown();
 	RenderTarget->RF_Shutdown();
 	SDL_DestroyWindow(gpWindow);
 	SDL_Quit();
