@@ -3,6 +3,12 @@
 
 #define CACHEHANDLE_LEN	32
 
+#define LRUSIZE_CHARS					128
+#define LRUSIZE_MONSTERS				256
+#define LRUSIZE_OBJECTS					64
+#define LRUSIZE_MISSILES				32
+#define LRUSIZE_OVERLAYS				32
+
 ///////////////////////////////////////////////////////////////////////
 //
 //	TYPES
@@ -13,6 +19,42 @@ enum OpenD2RenderTargets
 	OD2RT_SDL,			// SDL renderer with hardware acceleration (default for now)
 	OD2RT_OPENGL,		// OpenGL
 	OD2RT_MAX
+};
+
+// LRU (least-recently-used) queues which get used on the renderers
+class LRUQueueItem
+{
+public:
+	LRUQueueItem(handle i) { itemHandle = i; }
+
+private:
+	handle itemHandle;
+
+	LRUQueueItem* pNext;
+	LRUQueueItem* pPrev;
+
+friend class LRUQueue;
+};
+
+class LRUQueue
+{
+private:
+	LRUQueueItem* pHead;
+	LRUQueueItem* pTail;
+
+	DWORD dwHitCount;
+	DWORD dwMissCount;
+	DWORD dwQueryCount;
+	DWORD dwLRUSize;
+	DWORD dwInUseCount;
+
+	void MoveToFront(LRUQueueItem* pItem);
+
+public:
+	LRUQueue(DWORD dwInitialQueueSize);
+	~LRUQueue();
+
+	LRUQueueItem* QueryItem(handle itemHandle);
 };
 
 ///////////////////////////////////////////////////////////////////////

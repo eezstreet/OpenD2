@@ -123,7 +123,7 @@ struct SDLCommand
 
 typedef void(*RenderProcessCommand)(SDLCommand* pCmd);
 
-struct SDLHardwareTextureCacheItem
+struct SDLDC6CacheItem
 {
 	DWORD dwWidth;
 	DWORD dwHeight;
@@ -134,7 +134,7 @@ struct SDLHardwareTextureCacheItem
 	DC6Image dc6;			// optional - dc6 image
 };
 
-struct SDLHardwareAnimationCacheItem
+struct SDLDC6AnimationCacheItem
 {
 	DWORD dwFrame;
 	tex_handle texture;
@@ -162,9 +162,10 @@ struct SDLFontCacheItem
 	DC6Image dc6[2];
 };
 
-//////////////////////////////////////////////////////////////
-//
-//	Functions
-
-void Renderer_SDL_ClearTextureCache();
-void Renderer_SDL_DeregisterAllFonts();
+// LRU cache for DCC animations
+class SDLLRUItem : public LRUQueueItem
+{
+public:
+	SDLLRUItem(handle itemHandle);
+	~SDLLRUItem();
+};

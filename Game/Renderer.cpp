@@ -111,3 +111,110 @@ void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	pExport->R_ColorModFont = RenderTarget->RF_ColorModFont;
 	pExport->R_DrawRectangle = RenderTarget->RF_DrawRectangle;
 }
+
+/*
+ *
+ *	LRU Implementation
+ *
+ */
+LRUQueue::LRUQueue(DWORD dwInitialSize)
+{
+	dwHitCount = dwMissCount = dwQueryCount = dwInUseCount = 0;
+	dwLRUSize = dwInitialSize;
+	pHead = pTail = nullptr;
+}
+
+LRUQueue::~LRUQueue()
+{
+	DWORD i;
+	LRUQueueItem* pCurrent = pHead;
+	LRUQueueItem* pPrev = nullptr;
+	while (pCurrent != nullptr)
+	{
+		pPrev = pCurrent;
+		pCurrent = pCurrent->pNext;
+		delete pPrev;
+	}
+}
+
+LRUQueueItem* LRUQueue::QueryItem(handle itemHandle)
+{
+	// see if it's in the LRU first
+	LRUQueueItem* pCurrent = pHead;
+
+	dwQueryCount++;
+
+	while (pCurrent != nullptr)
+	{
+		if (pCurrent->itemHandle == itemHandle)
+		{
+			// Mark this as a hit...
+			dwHitCount++;
+			// ...move it to the front...
+			MoveToFront(pCurrent);
+			// ... and return it
+			return pCurrent;
+		}
+		pCurrent = pCurrent->pNext;
+	}
+
+	// MISS!
+	// we need to make a new LRU item and push it to the front
+	dwMissCount++;
+
+	pCurrent = new LRUQueueItem(itemHandle);
+	dwInUseCount++;
+	MoveToFront(pCurrent);
+	return pCurrent;
+}
+
+void LRUQueue::MoveToFront(LRUQueueItem* pItem)
+{
+	// If this thing is the front, we don't need to do anything
+	if (pItem == pHead)
+	{
+		return;
+	}
+
+	// Move this item out of its current queue slot (if it exists)
+	if (pItem->pPrev)
+	{
+		pItem->pPrev->pNext = pItem->pNext;
+	}
+	if (pItem->pNext)
+	{
+		pItem->pNext->pPrev = pItem->pPrev;
+	}
+
+	// If this thing was the tail, we need to set it to the previous thing
+	if (pItem == pTail)
+	{
+		pTail = pItem->pPrev;
+	}
+
+	// Fix the pointers on the item so it points in the correct directions
+	pItem->pPrev = nullptr;
+	pItem->pNext = pHead;
+
+	// Make the tail fall off if we exceed the size
+	if (dwInUseCount > dwLRUSize)
+	{
+		LRUQueueItem* pOldTail = pTail;
+		pTail = pTail->pPrev;
+		delete pOldTail;
+		dwInUseCount = dwLRUSize;
+	}
+
+	// Insert this thing as the head
+	if (pHead)
+	{
+		pHead->pPrev = pItem;
+	}
+	pHead = pItem;
+
+	// ...and possibly as the tail too if there isn't one
+	if (pTail == nullptr)
+	{
+		pTail = pHead;
+	}
+}

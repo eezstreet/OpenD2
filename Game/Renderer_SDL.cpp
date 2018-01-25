@@ -11,9 +11,13 @@ static SDLPaletteEntry PaletteCache[PAL_MAX_PALETTES]{ 0 };
 static SDLCommand gdrawCommands[MAX_SDL_DRAWCOMMANDS_PER_FRAME];
 static DWORD numDrawCommandsThisFrame = 0;
 
-static SDLHardwareTextureCacheItem TextureCache[MAX_SDL_TEXTURECACHE_SIZE]{ 0 };
-static SDLHardwareAnimationCacheItem AnimCache[MAX_SDL_ANIMCACHE_SIZE]{ 0 };
+// For DC6s
+static SDLDC6CacheItem TextureCache[MAX_SDL_TEXTURECACHE_SIZE]{ 0 };
+static SDLDC6AnimationCacheItem AnimCache[MAX_SDL_ANIMCACHE_SIZE]{ 0 };
 static SDLFontCacheItem FontCache[MAX_SDL_FONTCACHE_SIZE]{ 0 };
+
+// For DCCs - one LRU for each type
+static LRUQueue* DCCLRU[ATYPE_MAX];
 
 static SDL_Texture* gpRenderTexture = nullptr;
 
@@ -38,7 +42,7 @@ static void RB_DrawTextureFrames(SDLCommand* pCmd)
 	DWORD dwStartY = 0;
 	SDL_Rect d{ pCmd->DrawTextureFrames.dwDstX, pCmd->DrawTextureFrames.dwDstY, 0, 0 };
 	SDL_Rect s{ 0 };
-	SDLHardwareTextureCacheItem* pCache = &TextureCache[pCmd->DrawTextureFrames.tex];
+	SDLDC6CacheItem* pCache = &TextureCache[pCmd->DrawTextureFrames.tex];
 	DC6Frame* pFrame;
 
 	for (int i = pCmd->DrawTextureFrames.dwStart; i <= pCmd->DrawTextureFrames.dwEnd; i++)
@@ -74,7 +78,7 @@ static void RB_DrawTextureFrames(SDLCommand* pCmd)
  */
 static void RB_DrawTextureFrame(SDLCommand* pCmd)
 {
-	SDLHardwareTextureCacheItem* pCache = &TextureCache[pCmd->DrawTextureFrame.tex];
+	SDLDC6CacheItem* pCache = &TextureCache[pCmd->DrawTextureFrame.tex];
 	DC6Frame* pDesiredFrame;
 	SDL_Rect s{ 0 };
 	SDL_Rect d{ 0 };
@@ -113,7 +117,7 @@ static void RB_DrawTextureFrame(SDLCommand* pCmd)
 static void RB_Animate(SDLCommand* pCmd)
 {
 	DWORD dwTicks = SDL_GetTicks();
-	SDLHardwareAnimationCacheItem* pCache = &AnimCache[pCmd->Animate.anim];
+	SDLDC6AnimationCacheItem* pCache = &AnimCache[pCmd->Animate.anim];
 	DWORD dwAnimRate = pCmd->Animate.dwFramerate;
 	DWORD dwOriginalFrame = pCache->dwFrame;
 	SDL_Rect s{ 0 };
@@ -328,6 +332,76 @@ static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_DrawRectangle,
 };
 
+
+/*
+ *	Kills all font handles
+ */
+void Renderer_SDL_DeregisterAllFonts()
+{
+	for (int i = 0; i < MAX_SDL_FONTCACHE_SIZE; i++)
+	{
+		if (FontCache[i].pTexture != nullptr)
+		{
+			SDL_DestroyTexture(FontCache[i].pTexture);
+		}
+		if (FontCache[i].dc6[0].pPixels != nullptr)
+		{
+			free(FontCache[i].dc6[0].pPixels);
+		}
+		if (FontCache[i].dc6[0].pFrames != nullptr)
+		{
+			free(FontCache[i].dc6[0].pFrames);
+		}
+	}
+
+	memset(FontCache, 0, sizeof(SDLFontCacheItem) * MAX_SDL_FONTCACHE_SIZE);
+}
+
+/*
+ *	Clears out the texture cache
+ */
+void Renderer_SDL_ClearTextureCache()
+{
+	for (int i = 0; i < MAX_SDL_TEXTURECACHE_SIZE; i++)
+	{
+		SDLDC6CacheItem* pCache = &TextureCache[i];
+		if (pCache->pTexture != nullptr)
+		{
+			SDL_DestroyTexture(pCache->pTexture);
+		}
+		if (pCache->bHasDC6)
+		{
+			DC6_UnloadImage(&pCache->dc6);
+		}
+		memset(pCache, 0, sizeof(SDLDC6CacheItem));
+	}
+}
+
+/*
+ *	Sets up the LRUs
+ *	@author	eezstreet
+ */
+static DWORD LRUSizes[ATYPE_MAX] = { LRUSIZE_CHARS, LRUSIZE_MONSTERS, LRUSIZE_OBJECTS, LRUSIZE_MISSILES, LRUSIZE_OVERLAYS };
+void Renderer_SDL_InitLRUs()
+{
+	for (int i = 0; i < ATYPE_MAX; i++)
+	{
+		DCCLRU[i] = new LRUQueue(LRUSizes[i]);
+	}
+}
+
+/*
+ *	Clears out the LRUs
+ *	@author	eezstreet
+ */
+void Renderer_SDL_ClearLRUs()
+{
+	for (int i = 0; i < ATYPE_MAX; i++)
+	{
+		delete DCCLRU[i];
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////
 //
 //	FRONTEND FUNCTIONS
@@ -385,7 +459,7 @@ void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig,
 	}
 
 	// Clear anim cache
-	memset(AnimCache, 0, sizeof(SDLHardwareAnimationCacheItem) * MAX_SDL_ANIMCACHE_SIZE);
+	memset(AnimCache, 0, sizeof(SDLDC6AnimationCacheItem) * MAX_SDL_ANIMCACHE_SIZE);
 	for (int i = 0; i < MAX_SDL_ANIMCACHE_SIZE; i++)
 	{
 		AnimCache[i].texture = INVALID_HANDLE;
@@ -409,6 +483,7 @@ void Renderer_SDL_Shutdown()
 	SDL_DestroyTexture(gpRenderTexture);
 	Renderer_SDL_ClearTextureCache();
 	Renderer_SDL_DeregisterAllFonts();
+	Renderer_SDL_ClearLRUs();
 	SDL_DestroyRenderer(gpRenderer);
 }
 
@@ -476,7 +551,7 @@ static tex_handle Renderer_SDL_GetTextureInCache(char* szHandleName)
  */
 void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture)
 {
-	SDLHardwareTextureCacheItem* pCache;
+	SDLDC6CacheItem* pCache;
 
 	if (texture == INVALID_HANDLE && szHandleName == nullptr)
 	{	// We don't know *either* the handle or the handle name. Very bad.
@@ -500,27 +575,7 @@ void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture)
 	{
 		DC6_UnloadImage(&pCache->dc6);
 	}
-	memset(pCache, 0, sizeof(SDLHardwareTextureCacheItem));
-}
-
-/*
-*	Clears out the texture cache
-*/
-void Renderer_SDL_ClearTextureCache()
-{
-	for (int i = 0; i < MAX_SDL_TEXTURECACHE_SIZE; i++)
-	{
-		SDLHardwareTextureCacheItem* pCache = &TextureCache[i];
-		if (pCache->pTexture != nullptr)
-		{
-			SDL_DestroyTexture(pCache->pTexture);
-		}
-		if (pCache->bHasDC6)
-		{
-			DC6_UnloadImage(&pCache->dc6);
-		}
-		memset(pCache, 0, sizeof(SDLHardwareTextureCacheItem));
-	}
+	memset(pCache, 0, sizeof(SDLDC6CacheItem));
 }
 
 /*
@@ -531,7 +586,7 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 	D2Palette* pPal = Pal_GetPalette(nPalette);
 	bool bExists = false;
 	tex_handle tex = Renderer_SDL_GetTextureInCache(szHandle);
-	SDLHardwareTextureCacheItem* pCache;
+	SDLDC6CacheItem* pCache;
 	SDL_Surface* pBigSurface;
 	SDL_Texture* pTexture;
 
@@ -609,7 +664,7 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 	D2Palette* pPal = Pal_GetPalette(nPalette);
 	bool bExists = false;
 	tex_handle tex = Renderer_SDL_GetTextureInCache(szHandle);
-	SDLHardwareTextureCacheItem* pCache;
+	SDLDC6CacheItem* pCache;
 	int bpp = 0;
 	Uint32 dwRMask, dwGMask, dwBMask, dwAMask;
 
@@ -700,8 +755,8 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
  */
 bool Renderer_SDL_PixelPerfectDetect(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha)
 {
-	SDLHardwareAnimationCacheItem* pAnimCache;
-	SDLHardwareTextureCacheItem* pTexCache;
+	SDLDC6AnimationCacheItem* pAnimCache;
+	SDLDC6CacheItem* pTexCache;
 	int nDrawWidth;
 	int nDrawHeight;
 	DC6Frame* pFrame;
@@ -791,7 +846,7 @@ void Renderer_SDL_PollTexture(tex_handle texture, DWORD* dwWidth, DWORD* dwHeigh
  */
 static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, char* szHandle, DWORD dwStartingFrame)
 {
-	SDLHardwareAnimationCacheItem* pCache = &AnimCache[anim];
+	SDLDC6AnimationCacheItem* pCache = &AnimCache[anim];
 	DC6Image* pDC6 = &TextureCache[texture].dc6;
 	DWORD dwCenterPos[64]{ 0 };
 
@@ -870,8 +925,8 @@ anim_handle Renderer_SDL_RegisterDC6Animation(tex_handle texture, char* szHandle
  */
 void Renderer_SDL_DeregisterAnimation(anim_handle anim)
 {
-	SDLHardwareAnimationCacheItem* pCache = &AnimCache[anim];
-	memset(pCache, 0, sizeof(SDLHardwareAnimationCacheItem));
+	SDLDC6AnimationCacheItem* pCache = &AnimCache[anim];
+	memset(pCache, 0, sizeof(SDLDC6AnimationCacheItem));
 	pCache->texture = INVALID_HANDLE;
 }
 
@@ -1049,30 +1104,6 @@ void Renderer_SDL_DeregisterFont(font_handle font)
 	pCache->pFontData[0] = nullptr;
 	pCache->pFontData[1] = nullptr;
 	SDL_DestroyTexture(pCache->pTexture);
-}
-
-/*
- *	Kills all font handles
- */
-void Renderer_SDL_DeregisterAllFonts()
-{
-	for (int i = 0; i < MAX_SDL_FONTCACHE_SIZE; i++)
-	{
-		if (FontCache[i].pTexture != nullptr)
-		{
-			SDL_DestroyTexture(FontCache[i].pTexture);
-		}
-		if (FontCache[i].dc6[0].pPixels != nullptr)
-		{
-			free(FontCache[i].dc6[0].pPixels);
-		}
-		if (FontCache[i].dc6[0].pFrames != nullptr)
-		{
-			free(FontCache[i].dc6[0].pFrames);
-		}
-	}
-
-	memset(FontCache, 0, sizeof(SDLFontCacheItem) * MAX_SDL_FONTCACHE_SIZE);
 }
 
 /*
@@ -1345,4 +1376,13 @@ void Renderer_SDL_DrawRectangle(int x, int y, int w, int h, int r, int g, int b,
 	pCommand->DrawRectangle.b = b;
 	pCommand->DrawRectangle.a = a;
 	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Start drawing a token instance
+ *	@author	eezstreet
+ */
+void Renderer_SDL_DrawTokenInstance(anim_handle instance, int x, int y, int translvl, int palette)
+{
+	// Push all of the components onto the LRU.
 }

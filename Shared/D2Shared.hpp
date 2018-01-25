@@ -311,6 +311,17 @@ enum D2TokenType
 	TOKEN_MAX,
 };
 
+// Different animation types (DCC)
+enum D2AnimatedType
+{
+	ATYPE_CHAR,
+	ATYPE_MONSTER,
+	ATYPE_OBJECT,
+	ATYPE_MISSILE,
+	ATYPE_OVERLAY,
+	ATYPE_MAX,
+};
+
 // Can be loaded from PlrMode.txt later on
 enum D2PlayerMode
 {
@@ -627,6 +638,7 @@ struct D2ModuleImportStrc
 	void			(*R_AlphaModFont)(font_handle font, int nAlpha);
 	void			(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
 	void			(*R_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
+	void			(*R_DrawTokenInstance)(anim_handle token, int x, int y, int translvl, int palette);
 };
 
 struct D2ModuleExportStrc
