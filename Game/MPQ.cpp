@@ -317,7 +317,7 @@ fs_handle MPQ_FetchHandle(D2MPQArchive* pMPQ, char* szFileName)
 		if (pHash->dwBlockEntry == 0xFFFFFFFF)
 		{
 			// Nonexistent hash entry = we reached the end of the list (somehow)
-			return (fs_handle)-1;
+			return INVALID_HANDLE;
 		}
 
 		if (pHash->dwMethodA == dwName1 && pHash->dwMethodB == dwName2 && dwBlockIndex < pMPQ->dwNumBlockEntries)
@@ -330,11 +330,11 @@ fs_handle MPQ_FetchHandle(D2MPQArchive* pMPQ, char* szFileName)
 		dwIndex = (dwIndex + 1) & dwHashIndexMask;
 		if (dwIndex == dwStartIndex)
 		{	// wrapped around
-			return (fs_handle)-1;
+			return INVALID_HANDLE;
 		}
 	}
 
-	return (fs_handle)-1;
+	return INVALID_HANDLE;
 }
 
 /*

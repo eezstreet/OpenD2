@@ -132,5 +132,5 @@ fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArch
 		}
 		pCurrent = pCurrent->pNext;
 	}
-	return (fs_handle)-1;	// invalid handle
+	return INVALID_HANDLE;	// invalid handle
 }

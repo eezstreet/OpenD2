@@ -21,6 +21,8 @@
  *	Whenever we reference a file directly (ie, "d2char.mpq"), it's always assumed to be a path relative to a directory.
  */
 
+#define MAX_CONCURRENT_FILES_OPEN	32
+
 static char gszHomePath[MAX_D2PATH_ABSOLUTE]{ 0 };
 static char gszBasePath[MAX_D2PATH_ABSOLUTE]{ 0 };
 static char gszModPath[MAX_D2PATH_ABSOLUTE]{ 0 };
@@ -34,13 +36,14 @@ static const char* pszPaths[FS_MAXPATH] = {
 struct FSHandleStore
 {
 	char szFileName[MAX_D2PATH];
-	fs_handle handle;
+	FILE* handle;
 	OpenD2FileModes mode;
-
-	FSHandleStore* next;
+	SDL_mutex* mut;
+	bool bActive;
 };
 
-static FSHandleStore* glFileHandles = nullptr;
+static FSHandleStore glFileHandles[MAX_CONCURRENT_FILES_OPEN]{ 0 };
+static int gnNumFilesOpened = 0;
 
 /*
  *	Log the searchpaths
@@ -136,6 +139,12 @@ void FS_Init(OpenD2ConfigStrc* pConfig)
 	D2_strncpyz(gszBasePath, pConfig->szBasePath, MAX_D2PATH_ABSOLUTE);
 	D2_strncpyz(gszModPath, pConfig->szModPath, MAX_D2PATH_ABSOLUTE);
 
+	// Create mutexes for each openable file
+	for (int i = 0; i < MAX_CONCURRENT_FILES_OPEN; i++)
+	{
+		glFileHandles[i].mut = SDL_CreateMutex();
+	}
+
 	// Make sure there's no garbage in the strings
 	FS_SanitizeSearchPath(gszHomePath);
 	FS_SanitizeSearchPath(gszBasePath);
@@ -154,16 +163,14 @@ void FS_Shutdown()
 	// Shut down any extensions that need closing
 	FSMPQ_Shutdown();
 
-	FSHandleStore* pRecord = glFileHandles;
-	FSHandleStore* pPrev = nullptr;
-
-	// Kill any files that were opened that weren't closed
-	while (pRecord != nullptr)
+	for (int i = 0; i < MAX_CONCURRENT_FILES_OPEN; i++)
 	{
-		pPrev = pRecord;
-		pRecord = pRecord->next;
-		fclose((FILE*)pPrev->handle);
-		free(pPrev);
+		FSHandleStore* pRecord = &glFileHandles[i];
+		if (pRecord->bActive)
+		{
+			fclose(pRecord->handle);
+		}
+		SDL_DestroyMutex(pRecord->mut);
 	}
 }
 
@@ -253,6 +260,10 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 	char path[MAX_D2PATH_ABSOLUTE]{ 0 };
 	char folder[MAX_D2PATH]{ 0 };
 	const char* szModeStr = FS_ModeStr(mode, bBinary);
+	fs_handle outHandle = 0;
+	FILE* fileHandle;
+
+	Log_ErrorAssert(gnNumFilesOpened < MAX_CONCURRENT_FILES_OPEN, 0);
 
 	FS_SanitizeFilePath(filename);
 	if (mode == FS_READ)
@@ -262,7 +273,7 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 			D2_strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
 			strcat(path, filename);
 
-			if (*f = (fs_handle)fopen(path, szModeStr))
+			if (fileHandle = fopen(path, szModeStr))
 			{
 				break;
 			}
@@ -275,7 +286,7 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 			D2_strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
 			strcat(path, filename);
 
-			if (*f = (fs_handle)fopen(path, szModeStr))
+			if (fileHandle = fopen(path, szModeStr))
 			{
 				break;
 			}
@@ -283,42 +294,35 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 	}
 	
 
-	if (*f == 0)
+	if (fileHandle == 0)
 	{	// file could not be found
 		*f = INVALID_HANDLE;
 		return 0;
 	}
 
-	// Push this file handle to the linked list
-	FSHandleStore* pStore = (FSHandleStore*)malloc(sizeof(FSHandleStore));
-	assert(pStore);
-	pStore->handle = *f;
-	pStore->next = nullptr;
-	pStore->mode = mode;
-	D2_strncpyz(pStore->szFileName, filename, MAX_D2PATH);
-
-	if (glFileHandles != nullptr)
+	// Push this file handle
+	while (!glFileHandles[outHandle].bActive)
 	{
-		FSHandleStore* pPrev = nullptr;
-		FSHandleStore* pCurrent = glFileHandles;
-		while (pCurrent != nullptr)
+		if (!D2_stricmp(glFileHandles[outHandle].szFileName, filename))
 		{
-			pPrev = pCurrent;
-			pCurrent = pCurrent->next;
+			return outHandle;
 		}
+		outHandle++;
+	}
 
-		pPrev->next = pStore;
-	}
-	else
-	{
-		glFileHandles = pStore;
-	}
+	// Not active, store it!
+	*f = outHandle;
+	glFileHandles[outHandle].handle = fileHandle;
+	SDL_UnlockMutex(glFileHandles[outHandle].mut);
+	glFileHandles[outHandle].mode = mode;
+	D2_strncpyz(glFileHandles[outHandle].szFileName, filename, MAX_D2PATH);
+	gnNumFilesOpened++;
 
 	// Get the length of the file and return it
 	size_t dwLen = 0;
-	fseek((FILE*)*f, 0, SEEK_END);
-	dwLen = ftell((FILE*)*f);
-	rewind((FILE*)*f);
+	fseek(fileHandle, 0, SEEK_END);
+	dwLen = ftell(fileHandle);
+	rewind(fileHandle);
 
 	return dwLen;
 }
@@ -328,16 +332,12 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
  */
 static FSHandleStore* FS_GetFileRecord(fs_handle f)
 {
-	FSHandleStore* pRecord = glFileHandles;
-	while (pRecord != nullptr)
+	if (f == INVALID_HANDLE)
 	{
-		if (pRecord->handle == f)
-		{
-			return pRecord;
-		}
-		pRecord = pRecord->next;
+		return nullptr;
 	}
-	return nullptr;
+
+	return &glFileHandles[f];
 }
 
 /*
@@ -346,7 +346,19 @@ static FSHandleStore* FS_GetFileRecord(fs_handle f)
  */
 size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
 {
-	return fread(buffer, dwBufferLen, dwCount, (FILE*)f);
+	size_t result;
+	FSHandleStore* pSource = FS_GetFileRecord(f);
+
+	if (pSource == nullptr || !pSource->bActive || pSource->handle == 0)
+	{
+		return 0;
+	}
+
+	SDL_LockMutex(pSource->mut);
+	result = fread(buffer, dwBufferLen, dwCount, pSource->handle);
+	SDL_UnlockMutex(pSource->mut);
+
+	return result;
 }
 
 /*
@@ -361,18 +373,28 @@ size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount)
 	}
 
 	FSHandleStore* pRecord = FS_GetFileRecord(f);
+	size_t result;
+
 	if (!pRecord || pRecord->mode == FS_READ)
 	{
 		// Not allowed to write to something which we opened in read mode
 		return 0;
 	}
 
+	// Lock the mutex until we are done writing
+	SDL_LockMutex(pRecord->mut);
+
 	if (dwBufferLen == 0)
 	{
 		dwBufferLen = strlen((const char*)buffer);
 	}
 
-	return fwrite(buffer, dwCount, dwBufferLen, (FILE*)f);
+	result = fwrite(buffer, dwCount, dwBufferLen, pRecord->handle);
+	
+	// Unlock the mutex so other stuff can use this
+	SDL_UnlockMutex(pRecord->mut);
+
+	return result;
 }
 
 /*
@@ -389,28 +411,21 @@ size_t FS_WritePlaintext(fs_handle f, char* text)
  */
 void FS_CloseFile(fs_handle f)
 {
-	FSHandleStore* pRecord = glFileHandles;
-	FSHandleStore* pPrevRecord = nullptr;
+	FSHandleStore* pRecord = FS_GetFileRecord(f);
 
-	while (pRecord != nullptr)
+	if (pRecord == nullptr || !pRecord->bActive || pRecord->handle == 0)
 	{
-		if (pRecord->handle == f)
-		{	// found it
-			if (pPrevRecord == nullptr)
-			{
-				glFileHandles = pRecord->next;
-			}
-			else
-			{
-				pPrevRecord->next = pRecord->next;
-			}
-			fclose((FILE*)pRecord->handle);
-			free(pRecord);
-			break;
-		}
-		pPrevRecord = pRecord;
-		pRecord = pRecord->next;
+		// File is probably invalid
+		return;
 	}
+
+	// Lock, write, unlock
+	SDL_LockMutex(pRecord->mut);
+	fclose(pRecord->handle);
+	pRecord->handle = 0;
+	pRecord->bActive = false;
+	gnNumFilesOpened--;
+	SDL_UnlockMutex(pRecord->mut);
 }
 
 /*
@@ -418,7 +433,18 @@ void FS_CloseFile(fs_handle f)
  */
 void FS_Seek(fs_handle f, size_t offset, int nSeekType)
 {
-	fseek((FILE*)f, offset, nSeekType);
+	// 
+	FSHandleStore* pRecord = FS_GetFileRecord(f);
+
+	if (pRecord == nullptr || !pRecord->bActive || pRecord->handle == 0)
+	{
+		// not a valid handle
+		return;
+	}
+
+	SDL_LockMutex(pRecord->mut);
+	fseek(pRecord->handle, offset, nSeekType);
+	SDL_UnlockMutex(pRecord->mut);
 }
 
 /*
@@ -426,7 +452,18 @@ void FS_Seek(fs_handle f, size_t offset, int nSeekType)
  */
 size_t FS_Tell(fs_handle f)
 {
-	return ftell((FILE*)f);
+	size_t result;
+	FSHandleStore* pFile = FS_GetFileRecord(f);
+
+	if (pFile == nullptr || pFile->handle == 0 || !pFile->bActive)
+	{
+		return 0;
+	}
+
+	SDL_LockMutex(pFile->mut);
+	result = ftell(pFile->handle);
+	SDL_UnlockMutex(pFile->mut);
+	return result;
 }
 
 /*
