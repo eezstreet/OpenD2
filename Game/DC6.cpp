@@ -22,7 +22,7 @@ static void DC6_DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
 	}
 	else
 	{
-		y = pFrame->fh.dwHeight;
+		y = pFrame->fh.dwHeight - 1;
 	}
 
 	for (size_t i = 0; i < pFrame->fh.dwLength; i++)

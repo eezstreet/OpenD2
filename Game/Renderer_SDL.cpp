@@ -243,7 +243,7 @@ static void RB_DrawText(SDLCommand* pCmd)
 
 		SDL_Rect s{ 
 			(int)pGlyph->dwUnknown4, 
-			(int)(pGlyph->nHeight / 2) - 1, 
+			(int)(pGlyph->nHeight / 2) - 2, 
 			(int)pGlyph->nWidth, 
 			(int)pCache->pFontData[0]->nHeight };
 		SDL_Rect d{ 
@@ -630,16 +630,16 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		int dwBlitToX = (i % dwStitchCols) * 256;
 		int dwBlitToY = (int)floor(i / (float)dwStitchCols) * 255;
 
-		SDL_Surface* pSmallSurface = SDL_CreateRGBSurface(0, pFrame->fh.dwWidth, pFrame->fh.dwHeight,
+		SDL_Surface* pSmallSurface = SDL_CreateRGBSurface(0, pFrame->fh.dwWidth, pFrame->fh.dwHeight + 1,
 			8, 0, 0, 0, 0);
 		SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
 
 		memcpy(pSmallSurface->pixels, 
 			DC6_GetPixelsAtFrame(&pCache->dc6, 0, i + dwStart, nullptr), 
-			pFrame->fh.dwWidth * pFrame->fh.dwHeight);
+			pFrame->fh.dwWidth * (pFrame->fh.dwHeight + 1));
 
-		SDL_Rect dstRect = { (int)dwBlitToX, (int)dwBlitToY, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight };
-		SDL_Rect srcRect = { 0 , 1, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight };
+		SDL_Rect dstRect = { (int)dwBlitToX, (int)dwBlitToY, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight + 1 };
+		SDL_Rect srcRect = { 0 , 0, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight };
 		SDL_BlitSurface(pSmallSurface, &srcRect, pBigSurface, &dstRect);
 		SDL_FreeSurface(pSmallSurface);
 	}
