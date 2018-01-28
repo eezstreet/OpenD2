@@ -20,38 +20,25 @@ struct MPQSearchPath
 static MPQSearchPath* gpMPQSearchPaths;
 
 /*
- *	Asynchronous job: Add an MPQ to the searchpaths
- *	@author	eezstreet
- */
-void FSMPQ_AddSearchPath_Async(int notUsed, char* szMPQName, void* pMPQName)
-{
-	FSMPQ_AddSearchPath(szMPQName, (char*)pMPQName);
-}
-
-/*
  *	Initializes the MPQ filesystem
  */
 void FSMPQ_Init()
 {
-	// I originally had these running on the main thread. But just to prove that my threadpool is working,
-	// I made all of these asynchronous. It might seem minor, but it managed to drop the load time from
-	// 15ms to 3ms. Pretty nice!
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2DATA", "d2data.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2CHAR", "d2char.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2SFX", "d2sfx.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2SPEECH", "d2speech.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2MUSIC", "d2music.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2VIDEO", "d2video.mpq");
+	FSMPQ_AddSearchPath("D2DATA", "d2data.mpq");
+	FSMPQ_AddSearchPath("D2CHAR", "d2char.mpq");
+	FSMPQ_AddSearchPath("D2SFX", "d2sfx.mpq");
+	FSMPQ_AddSearchPath("D2SPEECH", "d2speech.mpq");
+	FSMPQ_AddSearchPath("D2MUSIC", "d2music.mpq");
+	FSMPQ_AddSearchPath("D2VIDEO", "d2video.mpq");
 #ifdef ASIA_LOCALIZATION
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2DELTA", "d2delta.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2KFIXUP", "d2kfixup.mpq");
+	FSMPQ_AddSearchPath("D2DELTA", "d2delta.mpq");
+	FSMPQ_AddSearchPath("D2KFIXUP", "d2kfixup.mpq");
 #endif
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2EXP", "d2exp.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2EXPANSION", "d2XVideo.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2EXPANSION", "d2XTalk.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "D2EXPANSION", "d2XMusic.mpq");
-	T_SpawnJob(FSMPQ_AddSearchPath_Async, 0, "PATCH_D2", "patch_d2.mpq");
-	T_WaitUntilCompletion();
+	FSMPQ_AddSearchPath("D2EXP", "d2exp.mpq");
+	FSMPQ_AddSearchPath("D2EXPANSION", "d2XVideo.mpq");
+	FSMPQ_AddSearchPath("D2EXPANSION", "d2XTalk.mpq");
+	FSMPQ_AddSearchPath("D2EXPANSION", "d2XMusic.mpq");
+	FSMPQ_AddSearchPath("PATCH_D2", "patch_d2.mpq");
 }
 
 /*
