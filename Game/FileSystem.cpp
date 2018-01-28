@@ -301,7 +301,7 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 	}
 
 	// Push this file handle
-	while (!glFileHandles[outHandle].bActive)
+	while (glFileHandles[outHandle].bActive)
 	{
 		if (!D2_stricmp(glFileHandles[outHandle].szFileName, filename))
 		{
@@ -315,6 +315,7 @@ size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 	glFileHandles[outHandle].handle = fileHandle;
 	SDL_UnlockMutex(glFileHandles[outHandle].mut);
 	glFileHandles[outHandle].mode = mode;
+	glFileHandles[outHandle].bActive = true;
 	D2_strncpyz(glFileHandles[outHandle].szFileName, filename, MAX_D2PATH);
 	gnNumFilesOpened++;
 

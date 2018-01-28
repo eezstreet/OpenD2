@@ -224,7 +224,7 @@ void MPQ_OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ)
 	memset(pMPQ, 0, sizeof(D2MPQArchive));
 
 	DWORD dwMPQSize = FS_Open(szMPQPath, &pMPQ->f, FS_READ, true);
-	if (!dwMPQSize || !pMPQ->f)
+	if (!dwMPQSize || pMPQ->f == INVALID_HANDLE)
 	{	// couldn't load MPQ - throw error?
 		return;
 	}
