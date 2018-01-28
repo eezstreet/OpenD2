@@ -16,6 +16,7 @@ private:
 	tex_handle texture_up;
 	tex_handle texture_down;
 	tex_handle texture_disabled;
+	font_handle font;
 public:
 	D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonType,
 		DWORD dwStartEnabled, DWORD dwEndEnabled,
@@ -31,6 +32,8 @@ public:
 
 	void AttachClickSignal(MenuSignal pClickSignal);
 	void RemoveClickSignal() { bHasClickSignal = false; }
+
+	void SetFont(font_handle newFont) { font = newFont; }
 
 	virtual void Draw();
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);

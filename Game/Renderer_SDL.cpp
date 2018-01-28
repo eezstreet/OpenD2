@@ -205,11 +205,9 @@ static void RB_DrawText(SDLCommand* pCmd)
 			pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
 
 			dwTextWidth += pGlyph->nWidth;
-			if (pGlyph->nHeight > dwTextHeight)
-			{
-				dwTextHeight = pGlyph->nHeight;
-			}
 		}
+
+		dwTextHeight = pCache->dc6->dwTotalHeight;
 
 		if (pCmd->DrawText.horzAlign == ALIGN_CENTER)
 		{
@@ -222,7 +220,8 @@ static void RB_DrawText(SDLCommand* pCmd)
 
 		if (pCmd->DrawText.vertAlign == ALIGN_CENTER)
 		{
-			pCmd->DrawText.y += (pCmd->DrawText.h / 2) - (dwTextHeight / 2);
+			pCmd->DrawText.y += (pCmd->DrawText.h / 2);
+			pCmd->DrawText.y -= dwTextHeight / 2 - 2;
 		}
 		else if (pCmd->DrawText.vertAlign == ALIGN_BOTTOM)
 		{
@@ -236,19 +235,23 @@ static void RB_DrawText(SDLCommand* pCmd)
 	for (int i = 0; i < len; i++)
 	{
 		TBLFontGlyph* pGlyph;
+		DWORD dwHeight;
 
 		c = (char)pCmd->DrawText.text[i];
 		pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
-		
+		dwHeight = pCache->dc6->dwTotalHeight;
 
 		SDL_Rect s{ 
 			(int)pGlyph->dwUnknown4, 
-			(int)(pGlyph->nHeight / 2) - 2, 
+			(int)0, 
 			(int)pGlyph->nWidth, 
-			(int)pCache->pFontData[0]->nHeight };
+			(int)dwHeight};
 		SDL_Rect d{ 
 			pCmd->DrawText.x + (int)dwOffsetX, pCmd->DrawText.y + (int)dwOffsetY, 
-				pGlyph->nWidth, pCache->pFontData[0]->nHeight };
+				pGlyph->nWidth, dwHeight };
+
+		//SDL_SetRenderDrawColor(gpRenderer, 0, 255, 0, 255);
+		//SDL_RenderDrawRect(gpRenderer, &d);
 
 		SDL_RenderCopy(gpRenderer, pCache->pTexture, &s, &d);
 
@@ -1065,6 +1068,7 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 
 	// Create the texture from the big surface
 	pCache->pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
+	SDL_SaveBMP(pBigSurface, "fontsurface.bmp");
 	SDL_FreeSurface(pBigSurface);
 
 	// There is no reason we should be blending a font in anything besides alpha mode

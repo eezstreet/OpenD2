@@ -126,7 +126,7 @@ void D2Panel_CharSelect::Draw()
 
 	if (szCharName && szCharName[0])
 	{
-		trap->R_DrawText(cl.font42, szCharName, 34, 20, 564, 55, ALIGN_CENTER, ALIGN_CENTER);
+		trap->R_DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
 	}
 
 	// Draw the widgets

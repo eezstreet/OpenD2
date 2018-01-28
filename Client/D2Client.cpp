@@ -28,6 +28,7 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	cl.font42 = trap->R_RegisterFont("font42");
 	cl.fontFormal12 = trap->R_RegisterFont("fontformal12");
 	cl.fontExocet10 = trap->R_RegisterFont("fontExocet10");
+	cl.fontRidiculous = trap->R_RegisterFont("fontridiculous");
 }
 
 /*

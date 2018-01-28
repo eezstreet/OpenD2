@@ -11,6 +11,8 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 {
 	char typeBuffer[32]{ 0 };
 
+	font = cl.fontExocet10;
+
 	// register all of the textures
 	snprintf(typeBuffer, 32, "%s_up", szButtonType);
 	texture_up = trap->R_RegisterDC6Texture(szDC6Path, typeBuffer, dwStartEnabled, dwEndEnabled, PAL_UNITS);
@@ -73,14 +75,14 @@ void D2Widget_Button::Draw()
 
 	if (bHasText)
 	{
-		trap->R_ColorModFont(cl.fontExocet10, 0, 0, 0);	// buttons only have text in black exocet, font16
+		trap->R_ColorModFont(font, 0, 0, 0);	// buttons only have text in black exocet, font16
 		if (bDown)
 		{ // shift the x and y a little bit to make it look like we're pressing the button
-			trap->R_DrawText(cl.fontExocet10, buttonTextBuffer, x - 2, y + 2, w, h, ALIGN_CENTER, ALIGN_CENTER);
+			trap->R_DrawText(font, buttonTextBuffer, x - 2, y + 2, w, h, ALIGN_CENTER, ALIGN_CENTER);
 		}
 		else
 		{
-			trap->R_DrawText(cl.fontExocet10, buttonTextBuffer, x, y, w, h, ALIGN_CENTER, ALIGN_CENTER);
+			trap->R_DrawText(font, buttonTextBuffer, x, y, w, h, ALIGN_CENTER, ALIGN_CENTER);
 		}
 		
 	}

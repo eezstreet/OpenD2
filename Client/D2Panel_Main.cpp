@@ -23,9 +23,12 @@ D2Panel_Main::D2Panel_Main() : D2Panel()
 	m_battleNetButton = new D2Widget_Button(265, 332, BATTLE_BUTTON_DC6, "wide02", 0, 1, 2, 3, 0, 1);
 	m_gatewayButton = new D2Widget_Button(265, 366, THIN_BUTTON_DC6, "narrow", 0, 1, 2, 3, 0, 1);
 	m_multiplayerButton = new D2Widget_Button(265, 400, MAIN_BUTTON_DC6, "3wide", 0, 1, 2, 3, 4, 5);
-	m_creditsButton = new D2Widget_Button(265, 505, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
-	m_cinematicsButton = new D2Widget_Button(403, 505, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
+	m_creditsButton = new D2Widget_Button(265, 495, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
+	m_cinematicsButton = new D2Widget_Button(410, 495, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	m_exitButton = new D2Widget_Button(265, 535, MAIN_BUTTON_DC6, "3wide", 0, 1, 2, 3, 4, 5);
+
+	m_creditsButton->SetFont(cl.fontRidiculous);
+	m_cinematicsButton->SetFont(cl.fontRidiculous);
 
 	AddWidget(m_singleplayerButton);
 	AddWidget(m_battleNetButton);

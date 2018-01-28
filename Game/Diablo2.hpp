@@ -260,14 +260,14 @@ struct TBLFile
 // FIXME: there's a lot of unknowns here, they need to be properly investigated with a debugger
 struct TBLFontGlyph
 {
-	WORD			wChar;
+	WORD			wChar;		// Unicode character code
 	BYTE			nUnknown1;
 	BYTE			nWidth;
 	BYTE			nHeight;
 	BYTE			nUnknown2;
 	WORD			wUnknown3;
 	BYTE			nImageIndex;
-	BYTE			nChar;
+	BYTE			nChar;		// ANSI character code
 	DWORD			dwUnknown4;	// NOTE: on SDL renderer this gets set to the X offset of the glyph on atlas
 };
 

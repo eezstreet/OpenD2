@@ -48,6 +48,7 @@ struct D2Client
 	font_handle			font30;
 	font_handle			font42;
 	font_handle			fontFormal12;
+	font_handle			fontRidiculous;
 
 	char				szCurrentSave[MAX_D2PATH];
 
