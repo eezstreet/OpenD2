@@ -151,14 +151,14 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 			case D2CLASS_PALADIN:
 				CreateData[i].nDrawXPos = 520;
 				CreateData[i].nDrawYPos = 164;
-				CreateData[i].nSpecialYOffset = 50;
+				CreateData[i].nSpecialYOffset = 54;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4008);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5132);
 				break;
 			case D2CLASS_BARBARIAN:
 				CreateData[i].nDrawXPos = 400;
 				CreateData[i].nDrawYPos = 150;
-				CreateData[i].nSpecialYOffset = 0;
+				CreateData[i].nSpecialYOffset = 30;
 				CreateData[i].szCharClassName = trap->TBL_FindStringFromIndex(4007);
 				CreateData[i].szCharClassDescription = trap->TBL_FindStringFromIndex(5130);
 				break;
@@ -291,7 +291,7 @@ void D2Menu_CharCreate::Draw()
 		{
 			trap->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
 				25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
-			if (CreateData[i].bSpecialAnimPresent[CreateData[i].status])
+			if (CreateData[i].bSpecialAnimPresent[CreateData[i].status] && i != m_nSelectedClass)
 			{
 				trap->R_Animate(CreateData[i].specialAnimAnimHandle[CreateData[i].status],
 					25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos + CreateData[i].nSpecialYOffset);
@@ -328,6 +328,17 @@ void D2Menu_CharCreate::Draw()
 	if (m_nSelectedClass != D2CLASS_MAX && m_nHighlightedClass == D2CLASS_MAX)
 	{	// if we have selected a class and have none highlighted, use that one for its text
 		m_nHighlightedClass = m_nSelectedClass;
+	}
+
+	if (m_nSelectedClass != D2CLASS_MAX)
+	{
+		// Always draw the special animation of the selected thing on top
+		if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CreateData[m_nSelectedClass].status])
+		{
+			trap->R_Animate(CreateData[m_nSelectedClass].specialAnimAnimHandle[CreateData[m_nSelectedClass].status],
+				25, CreateData[m_nSelectedClass].nDrawXPos,
+				CreateData[m_nSelectedClass].nDrawYPos + CreateData[m_nSelectedClass].nSpecialYOffset);
+		}
 	}
 
 	// draw current class text
