@@ -682,7 +682,7 @@ void TBL_Cleanup();
 
 // Threadpool.cpp
 void T_WaitUntilCompletion();
-void T_SpawnJob(D2AsyncTask job, int nIntData, char* szStrData, void* pData);
+void T_SpawnJob(D2AsyncTask job, void* pData);
 void T_Init();
 void T_Shutdown();
 

@@ -9,11 +9,7 @@
 struct D2ThreadTask
 {
 	D2AsyncTask task;
-
-	int nInteger;
-	char szString[MAX_D2PATH_ABSOLUTE];
 	void* pData;
-
 	D2ThreadTask* pBehind;	// the element that is "behind" this one in line
 };
 
@@ -22,8 +18,7 @@ static bool gbKillThreads = false;
 
 static D2ThreadTask* gpJobQueueHead = nullptr;
 static D2ThreadTask* gpJobQueueTail = nullptr;
-static SDL_mutex* gpHeadMutex = nullptr;
-static SDL_mutex* gpTailMutex = nullptr;
+static SDL_mutex* gpJobQueueMutex = nullptr;
 static SDL_semaphore* gpQueueSizeSemaphore = nullptr;
 
 /*
@@ -39,6 +34,9 @@ void T_WaitUntilCompletion()
 }
 
 /*
+ *	Wait until a single job on the queue has been completed
+
+/*
  *	Pop a job off of the job queue.
  *	@author	eezstreet
  */
@@ -50,7 +48,7 @@ static void T_PopJob()
 	}
 
 	// Lock the head
-	SDL_LockMutex(gpHeadMutex);
+	SDL_LockMutex(gpJobQueueMutex);
 
 	// Pop the head off
 	D2ThreadTask* pCurrent = gpJobQueueHead;
@@ -62,10 +60,10 @@ static void T_PopJob()
 
 
 	// Unlock the head (and the tail too, if we need to)
-	SDL_UnlockMutex(gpHeadMutex);
+	SDL_UnlockMutex(gpJobQueueMutex);
 
 	// Actually do the job
-	pCurrent->task(pCurrent->nInteger, pCurrent->szString, pCurrent->pData);
+	pCurrent->task(pCurrent->pData);
 	
 	// Free it
 	free(pCurrent);
@@ -75,18 +73,16 @@ static void T_PopJob()
  *	Push a job onto the job queue.
  *	@author	eezstreet
  */
-void T_SpawnJob(D2AsyncTask job, int nIntData, char* szStrData, void* pData)
+void T_SpawnJob(D2AsyncTask job, void* pData)
 {
 	// Allocate a thread task
 	D2ThreadTask* pCurrent = (D2ThreadTask*)malloc(sizeof(D2ThreadTask));
 	pCurrent->task = job;
-	pCurrent->nInteger = nIntData;
 	pCurrent->pData = pData;
 	pCurrent->pBehind = nullptr;
-	D2_strncpyz(pCurrent->szString, szStrData, MAX_D2PATH_ABSOLUTE);
 
-	// Lock the tail mutex
-	SDL_LockMutex(gpTailMutex);
+	// Lock the queue mutex
+	SDL_LockMutex(gpJobQueueMutex);
 
 	// If there's nothing on the queue, we set the element to be the current.
 	// Otherwise, we adjust the tail.
@@ -100,11 +96,20 @@ void T_SpawnJob(D2AsyncTask job, int nIntData, char* szStrData, void* pData)
 		gpJobQueueTail = pCurrent;
 	}
 
-	// Unlock the tail mutex (so something else can modify it)
-	SDL_UnlockMutex(gpTailMutex);
+	// Unlock the queue mutex (so something else can modify it)
+	SDL_UnlockMutex(gpJobQueueMutex);
 
 	// Lastly, increment the queue size semaphore
 	SDL_SemPost(gpQueueSizeSemaphore);
+}
+
+/*
+ *	Spawn one of these jobs to kill a worker thread.
+ *	@author	eezstreet
+ */
+static void T_WorkerDie(void* pData)
+{
+	exit(0);
 }
 
 /*
@@ -134,8 +139,7 @@ void T_Init()
 	char threadName[32];
 
 	// Create the two mutexes and semaphore associated with the job queue.
-	gpHeadMutex = SDL_CreateMutex();
-	gpTailMutex = SDL_CreateMutex();
+	gpJobQueueMutex = SDL_CreateMutex();
 	gpQueueSizeSemaphore = SDL_CreateSemaphore(0);
 
 	for (int i = 0; i < THREADPOOL_SIZE; i++)
@@ -157,11 +161,11 @@ void T_Shutdown()
 	// Detach them and watch the magic happen
 	for (int i = 0; i < THREADPOOL_SIZE; i++)
 	{
+		T_SpawnJob(T_WorkerDie, 0);
 		SDL_DetachThread(gpaThreadPool[i]);
 	}
 
 	// Delete the mutexes and the semaphore
 	SDL_DestroySemaphore(gpQueueSizeSemaphore);
-	SDL_DestroyMutex(gpHeadMutex);
-	SDL_DestroyMutex(gpTailMutex);
+	SDL_DestroyMutex(gpJobQueueMutex);
 }

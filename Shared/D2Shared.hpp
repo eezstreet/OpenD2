@@ -101,11 +101,12 @@ typedef handle tbl_handle;
 typedef handle font_handle;
 typedef handle cof_handle;
 typedef handle token_handle;
+typedef handle thread_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
 
-typedef void	(*D2AsyncTask)(int intData, char* strData, void* pData);
+typedef void	(*D2AsyncTask)(void* pData);
 
 struct D2MPQArchive;
 

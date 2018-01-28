@@ -126,7 +126,6 @@ LRUQueue::LRUQueue(DWORD dwInitialSize)
 
 LRUQueue::~LRUQueue()
 {
-	DWORD i;
 	LRUQueueItem* pCurrent = pHead;
 	LRUQueueItem* pPrev = nullptr;
 	while (pCurrent != nullptr)

@@ -241,8 +241,13 @@ static void RB_DrawText(SDLCommand* pCmd)
 		pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
 		
 
-		SDL_Rect s{ pGlyph->dwUnknown4, (pGlyph->nHeight / 2) - 1, pGlyph->nWidth, pCache->pFontData[0]->nHeight };
-		SDL_Rect d{ pCmd->DrawText.x + dwOffsetX, pCmd->DrawText.y + dwOffsetY, 
+		SDL_Rect s{ 
+			(int)pGlyph->dwUnknown4, 
+			(int)(pGlyph->nHeight / 2) - 1, 
+			(int)pGlyph->nWidth, 
+			(int)pCache->pFontData[0]->nHeight };
+		SDL_Rect d{ 
+			pCmd->DrawText.x + (int)dwOffsetX, pCmd->DrawText.y + (int)dwOffsetY, 
 				pGlyph->nWidth, pCache->pFontData[0]->nHeight };
 
 		SDL_RenderCopy(gpRenderer, pCache->pTexture, &s, &d);
@@ -623,7 +628,7 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		DC6Frame* pFrame = &pCache->dc6.pFrames[dwStart + i];
 
 		int dwBlitToX = (i % dwStitchCols) * 256;
-		int dwBlitToY = floor(i / (float)dwStitchCols) * 255;
+		int dwBlitToY = (int)floor(i / (float)dwStitchCols) * 255;
 
 		SDL_Surface* pSmallSurface = SDL_CreateRGBSurface(0, pFrame->fh.dwWidth, pFrame->fh.dwHeight,
 			8, 0, 0, 0, 0);
@@ -633,8 +638,8 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 			DC6_GetPixelsAtFrame(&pCache->dc6, 0, i + dwStart, nullptr), 
 			pFrame->fh.dwWidth * pFrame->fh.dwHeight);
 
-		SDL_Rect dstRect = { dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
-		SDL_Rect srcRect = { 0 , 1, pFrame->fh.dwWidth, pFrame->fh.dwHeight };
+		SDL_Rect dstRect = { (int)dwBlitToX, (int)dwBlitToY, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight };
+		SDL_Rect srcRect = { 0 , 1, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight };
 		SDL_BlitSurface(pSmallSurface, &srcRect, pBigSurface, &dstRect);
 		SDL_FreeSurface(pSmallSurface);
 	}
@@ -1043,7 +1048,7 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 		SDL_Surface* pTinySurface = SDL_CreateRGBSurfaceFrom(DC6_GetPixelsAtFrame(&pCache->dc6[0], 0, i, nullptr),
 			dwFrameWidth, dwFrameHeight, 8, dwFrameWidth, 0, 0, 0, 0);
 		
-		SDL_Rect dst{ dwXCounter, -1, dwFrameWidth, dwFrameHeight };
+		SDL_Rect dst{ (int)dwXCounter, -1, (int)dwFrameWidth, (int)dwFrameHeight };
 
 		// Every font uses units palette.
 		SDL_SetSurfacePalette(pTinySurface, PaletteCache[PAL_UNITS].pPal);
