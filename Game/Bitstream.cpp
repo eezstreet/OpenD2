@@ -106,7 +106,7 @@ void Bitstream::ReadByte(BYTE& outByte)
 {
 	DWORD bits = ReadBits(8);
 	
-	outByte = bits;
+	outByte = (BYTE)bits;
 }
 
 // Overload 2
@@ -114,7 +114,7 @@ void Bitstream::ReadByte(BYTE* outByte)
 {
 	DWORD bits = ReadBits(8);
 
-	*outByte = bits;
+	*outByte = (BYTE)bits;
 }
 
 /*
@@ -126,7 +126,7 @@ void Bitstream::ReadWord(WORD& outWord)
 {
 	DWORD bits = ReadBits(16);
 
-	outWord = bits;
+	outWord = (WORD)bits;
 }
 
 // Overload 2
@@ -134,7 +134,7 @@ void Bitstream::ReadWord(WORD* outWord)
 {
 	DWORD bits = ReadBits(16);
 
-	*outWord = bits;
+	*outWord = (WORD)bits;
 }
 
 /*

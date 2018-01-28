@@ -69,7 +69,7 @@ static bool Pal_RegisterPalette(char* szPalettePath, D2Palette* pPalette)
 	}
 
 	fs_handle f = FSMPQ_FindFile(szPalettePath, nullptr, &pArchive);
-	if (f == (fs_handle)-1 || pArchive == nullptr)
+	if (f == INVALID_HANDLE || pArchive == nullptr)
 	{	// Couldn't register palette
 		return false;
 	}

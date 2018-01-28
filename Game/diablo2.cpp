@@ -391,6 +391,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 	PopulateConfiguration(&config, &openD2Config);
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
+	T_Init();
 	FS_Init(&openD2Config);
 	Log_InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
 	FS_LogSearchPaths();
@@ -446,6 +447,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 	COF_DeregisterAll();
 	Log_Shutdown();
 	FS_Shutdown();
+	T_Shutdown();
 
 	return 0;
 }

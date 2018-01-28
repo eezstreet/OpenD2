@@ -105,6 +105,8 @@ typedef handle token_handle;
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
 
+typedef void	(*D2AsyncTask)(int intData, char* strData, void* pData);
+
 struct D2MPQArchive;
 
 enum OpenD2Paths
@@ -678,6 +680,9 @@ int D2_qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, .
 DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
 
 // Random Numbers
+DWORD D2_rand();
+DWORD D2_mrand(DWORD dwMax);
+DWORD D2_rrand(DWORD dwMin, DWORD dwMax);
 DWORD D2_srand(D2Seed* pSeed);
 DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax);
 DWORD D2_srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax);

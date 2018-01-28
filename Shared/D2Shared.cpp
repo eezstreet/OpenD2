@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <string>
+#include <time.h>
 
 //////////////////////////////////////////////////
 //
@@ -467,6 +468,16 @@ DWORD D2_srand(D2Seed* pSeed)
 }
 
 /*
+ *	Generates a random number, without a seed.
+ *	@author	eezstreet
+ */
+DWORD D2_rand()
+{
+	srand(time(nullptr));
+	return rand();
+}
+
+/*
  *	Generate a random number, with a maximum value, given a seed.
  *	The seed is regenerated in the process.
  *	@author	eezstreet
@@ -477,6 +488,15 @@ DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax)
 }
 
 /*
+ *	Generate a random number, with a maximum value, without using a seed.
+ *	@author	eezstreet
+ */
+DWORD D2_mrand(DWORD dwMax)
+{
+	return D2_rand() % dwMax;
+}
+
+/*
  *	Generate a random number, between two values (inclusive to both the minimum and maximum), given a seed.
  *	The seed is regenerated in the process.
  *	@author	eezstreet
@@ -484,6 +504,15 @@ DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax)
 DWORD D2_srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax)
 {
 	return D2_smrand(pSeed, dwMax - dwMin) + dwMin;
+}
+
+/*
+ *	Generate a random number, between the two values (inclusive to both the minimum and the maximum), without a seed.
+ *	@author	eezstreet
+ */
+DWORD D2_rrand(DWORD dwMin, DWORD dwMax)
+{
+	return D2_mrand(dwMax - dwMin) + dwMin;
 }
 
 /*

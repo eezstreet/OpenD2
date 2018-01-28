@@ -680,6 +680,12 @@ char16_t* TBL_FindStringText(char16_t* szReference);
 void TBL_Init();
 void TBL_Cleanup();
 
+// Threadpool.cpp
+void T_WaitUntilCompletion();
+void T_SpawnJob(D2AsyncTask job, int nIntData, char* szStrData, void* pData);
+void T_Init();
+void T_Shutdown();
+
 // Token.cpp - Should maybe move this to gamecode?
 token_handle TOK_RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass);
 void TOK_DeregisterToken(token_handle token);
