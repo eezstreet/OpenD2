@@ -31,6 +31,7 @@ enum SDLHardwareCommandType
 	RCMD_ALPHAMODULATEFONT,
 	RCMD_COLORMODULATEFONT,
 	RCMD_DRAWRECTANGLE,
+	RCMD_DRAWTOKENINSTANCE,
 	RCMD_MAX,
 };
 
@@ -104,6 +105,13 @@ struct SDLDrawRectangleCommand
 	int r, g, b, a;
 };
 
+struct SDLDrawTokenInstanceCommand
+{
+	anim_handle handle;
+	int x, y;
+	int translvl, palette;
+};
+
 struct SDLCommand
 {
 	SDLHardwareCommandType cmdType;
@@ -118,6 +126,7 @@ struct SDLCommand
 		SDLAlphaModulateCommand AlphaModulate;
 		SDLColorModulateCommand ColorModulate;
 		SDLDrawRectangleCommand DrawRectangle;
+		SDLDrawTokenInstanceCommand DrawToken;
 	};
 };
 
@@ -160,12 +169,4 @@ struct SDLFontCacheItem
 	TBLFontFile* pFontData[2];
 	char szHandleName[CACHEHANDLE_LEN];
 	DC6Image dc6[2];
-};
-
-// LRU cache for DCC animations
-class SDLLRUItem : public LRUQueueItem
-{
-public:
-	SDLLRUItem(handle itemHandle);
-	~SDLLRUItem();
 };

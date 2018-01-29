@@ -174,3 +174,20 @@ bool COF_LayerPresent(cof_handle cof, int layer)
 
 	return pHash->pFile->dwLayersPresent & (1 << layer);
 }
+
+/*
+ *	Retrieves data about a particular COF file
+ *	@author	eezstreet
+ */
+COFFile* COF_GetFileData(cof_handle handle)
+{
+	COFHash* pHash;
+
+	if (handle == INVALID_HANDLE)
+	{
+		return nullptr;
+	}
+
+	pHash = &COFHashTable[handle];
+	return pHash->pFile;
+}

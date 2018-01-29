@@ -303,6 +303,9 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 		trap->R_DrawText(cl.font16, trap->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	}
 	trap->R_ColorModFont(cl.font16, 255, 255, 255);
+
+	// Draw the token instance
+	trap->R_DrawTokenInstance(pSaveData->tokenInstance, nX - 30, nY, 0, PAL_UNITS);
 }
 
 /*

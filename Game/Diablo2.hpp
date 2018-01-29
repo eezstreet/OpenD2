@@ -371,6 +371,7 @@ struct DCCFrame
 };
 
 #define MAX_DCC_PIXEL_BUFFER	300000
+#define MAX_DCC_FRAMES			200
 struct DCCPixelBuffer
 {
 	BYTE			pixel[4];
@@ -412,6 +413,17 @@ struct DCCDirection
 	Bitstream*		EncodingTypeStream;
 	Bitstream*		RawPixelStream;
 	Bitstream*		PixelCodeDisplacementStream;
+
+	//////////////////////////////////
+	//	Functions to make our lives a bit easier
+	void RewindAllStreams()
+	{
+		if (EqualCellStream) { EqualCellStream->Rewind(); }
+		if (PixelMaskStream) { PixelMaskStream->Rewind(); }
+		if (EncodingTypeStream) { EncodingTypeStream->Rewind(); }
+		if (RawPixelStream) { RawPixelStream->Rewind(); }
+		if (PixelCodeDisplacementStream) { PixelCodeDisplacementStream->Rewind(); }
+	}
 };
 
 struct DCCFile
@@ -423,6 +435,15 @@ struct DCCFile
 	// Other stuff used by OpenD2
 	DWORD			dwFileSize;
 	BYTE*			pFileBytes;
+};
+
+// Each frame in the DCC is composed of cells.
+// Cells are (roughly) 4x4 blocks of pixels.
+// The size is flexible; sometimes you can have a 5x4, etc.
+struct DCCCell
+{
+	int nX, nY, nW, nH;
+	BYTE clrmap[4];
 };
 
 #pragma pack(pop, enter_include)
@@ -515,10 +536,14 @@ struct AnimToken
 struct AnimTokenInstance
 {
 	token_handle	currentHandle;
+	int				tokenType;
 	int				currentMode;
-	int				currentFrame;
+	float			currentFrame;
+	int				previousTime;
+	int				currentDirection;
 	char			components[COMP_MAX][4];
 	bool			bInUse;
+	bool			bActive;
 
 	anim_handle		componentAnims[XXXMODE_MAX][COMP_MAX];
 };
@@ -564,6 +589,8 @@ struct D2Renderer
 	void		(*RF_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
 
 	void		(*RF_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
+
+	void		(*RF_DrawTokenInstance)(anim_handle instance, int x, int y, int translvl, int palette);
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
@@ -578,10 +605,9 @@ void COF_Deregister(cof_handle cof);
 void COF_DeregisterType(char* type);
 void COF_DeregisterAll();
 bool COF_LayerPresent(cof_handle cof, int layer);
+COFFile* COF_GetFileData(cof_handle handle);
 
 // DC6.cpp
-void DCC_GlobalInit();
-void DCC_GlobalShutdown();
 void DC6_LoadImage(char* szPath, DC6Image* pImage);
 void DC6_UnloadImage(DC6Image* pImage);
 BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
@@ -592,6 +618,8 @@ void DC6_StitchStats(DC6Image* pImage,
 void DC6_FreePixels(DC6Image* pImage);
 
 // DCC.cpp
+void DCC_GlobalInit();
+void DCC_GlobalShutdown();
 anim_handle DCC_Load(char* szPath, char* szName);
 void DCC_IncrementUseCount(anim_handle dccHandle, int amount);
 DCCFile* DCC_GetContents(anim_handle dccHandle);
@@ -599,7 +627,8 @@ void DCC_FreeHandle(anim_handle dcc);
 void DCC_FreeIfInactive(anim_handle handle);
 void DCC_FreeInactive();
 void DCC_FreeByName(char* name);
-void DCC_FreeAll();
+void DCC_FreeAll(); 
+DWORD DCC_GetCellCount(int pos, int& sz);
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
@@ -690,6 +719,7 @@ void T_Shutdown();
 token_handle TOK_RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass);
 void TOK_DeregisterToken(token_handle token);
 AnimToken* TOK_GetAnimData(token_handle token);
+cof_handle TOK_GetCOFData(token_handle token, int mode);
 anim_handle TOK_CreateTokenAnimInstance(token_handle token);
 void TOK_SwapTokenAnimToken(anim_handle handle, token_handle newhandle);
 void TOK_DestroyTokenInstance(anim_handle handle);
@@ -699,6 +729,7 @@ void TOK_SetTokenInstanceFrame(anim_handle handle, int frameNum);
 int TOK_GetTokenInstanceFrame(anim_handle handle);
 char* TOK_GetTokenInstanceWeaponClass(anim_handle handle);
 void TOK_SetInstanceActive(anim_handle handle, bool bNewActive);
+AnimTokenInstance* TOK_GetTokenInstanceData(anim_handle handle);
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);

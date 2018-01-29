@@ -226,18 +226,20 @@ static void DCC_CreateDirectionBitstreams(DCCDirection& dir, Bitstream* pBits)
 		dir.EqualCellStream->SplitFrom(pBits, dir.dwEqualCellStreamSize);
 	}
 
+	// Corresponds to `ColorMask` in SVR's code
 	dir.PixelMaskStream = new Bitstream();
 	dir.PixelMaskStream->SplitFrom(pBits, dir.dwPixelMaskStreamSize);
 
 	if (dir.nCompressionFlag & 0x01)
 	{
 		dir.EncodingTypeStream = new Bitstream();
-		dir.RawPixelStream = new Bitstream();
+		dir.RawPixelStream = new Bitstream();	// Corresponds to `RawColors` in SVR's code
 		dir.EncodingTypeStream->SplitFrom(pBits, dir.dwEncodingStreamSize);
 		dir.RawPixelStream->SplitFrom(pBits, dir.dwRawPixelStreamSize);
 	}
 
 	// Read the remainder into the pixel code displacement
+	// Corresponds to `PixelData` in SVR's code
 	dir.PixelCodeDisplacementStream = new Bitstream();
 	dir.PixelCodeDisplacementStream->SplitFrom(pBits, pBits->GetRemainingReadBits());
 }
@@ -318,6 +320,9 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 	{
 		DCCDirection& dir = dcc.pFile->directions[i];
 		size_t optionalSize = 0;
+
+		dir.nMinX = INT_MAX;
+		dir.nMinY = INT_MAX;
 
 		// Direction header
 		DCC_ReadDirectionHeader(dcc.pFile->header, dir, i, pBits);
@@ -570,4 +575,33 @@ void DCC_FreeAll()
 	{
 		DCC_FreeHandle(i);
 	}
+}
+
+//////////////////////////////////////////////////
+//
+//	Helper functions for renderer decoding
+
+/*
+ *	Get the number of cells in a direction
+ *	@author	SVR
+ */
+DWORD DCC_GetCellCount(int pos, int& sz)
+{
+	int nCells = 0;
+	int first = (4 - (pos & 3));	// calc size of first cell
+
+	if (sz <= (first + 1))	// not crossing boundry (by 2 or more)
+		return 1;	// only one cell with size 5 or less
+
+	sz -= first;	// subtract size of first cell
+	nCells++;		// add first cell to count
+
+	while (sz > 5)
+	{	// count full cells until 5 or less
+		sz -= 4;	// pixels remain
+		nCells++;
+	}
+
+	nCells++;		// last cell width = sz
+	return nCells;
 }

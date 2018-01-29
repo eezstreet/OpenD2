@@ -21,42 +21,6 @@ enum OpenD2RenderTargets
 	OD2RT_MAX
 };
 
-// LRU (least-recently-used) queues which get used on the renderers
-class LRUQueueItem
-{
-public:
-	LRUQueueItem(handle i) { itemHandle = i; }
-
-private:
-	handle itemHandle;
-
-	LRUQueueItem* pNext;
-	LRUQueueItem* pPrev;
-
-friend class LRUQueue;
-};
-
-class LRUQueue
-{
-private:
-	LRUQueueItem* pHead;
-	LRUQueueItem* pTail;
-
-	DWORD dwHitCount;
-	DWORD dwMissCount;
-	DWORD dwQueryCount;
-	DWORD dwLRUSize;
-	DWORD dwInUseCount;
-
-	void MoveToFront(LRUQueueItem* pItem);
-
-public:
-	LRUQueue(DWORD dwInitialQueueSize);
-	~LRUQueue();
-
-	LRUQueueItem* QueryItem(handle itemHandle);
-};
-
 ///////////////////////////////////////////////////////////////////////
 //
 //	FUNCTIONS
@@ -91,5 +55,6 @@ void Renderer_SDL_ColorModulateTexture(tex_handle texture, int nRed, int nGreen,
 void Renderer_SDL_AlphaModulateFont(font_handle font, int nAlpha);
 void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int nBlue);
 void Renderer_SDL_DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a);
+void Renderer_SDL_DrawTokenInstance(anim_handle instance, int x, int y, int translvl, int palette);
 
 // Renderer_OpenGL.cpp

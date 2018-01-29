@@ -176,6 +176,37 @@ AnimToken* TOK_GetAnimData(token_handle token)
 	return nullptr;
 }
 
+/*
+ *	Retrieve a COF handle by the provided token handle and mode index.
+ *	@author	eezstreet
+ */
+cof_handle TOK_GetCOFData(token_handle token, int mode)
+{
+	TokenHash* pHash;
+
+	if (token == INVALID_HANDLE)
+	{	// invalid handle passed, invalid handle is what you get back
+		return INVALID_HANDLE;
+	}
+
+	pHash = &gTokenTable[token];
+	if (!pHash->bRegistered)
+	{	// the handle we passed was valid, but the thing it pointed to was not
+		return INVALID_HANDLE;
+	}
+
+	switch (pHash->token.tokenType)
+	{
+		default:
+		case TOKEN_CHAR:
+			return pHash->token.plrCof[mode];
+		case TOKEN_MONSTER:
+			return pHash->token.monCof[mode];
+		case TOKEN_OBJECT:
+			return pHash->token.objCof[mode];
+	}
+}
+
 ////////////////////////////////////////////////////////////
 //
 //	Token Instances
@@ -209,6 +240,7 @@ anim_handle TOK_CreateTokenAnimInstance(token_handle token)
 	memset(&gTokenInstances[handle], 0, sizeof(AnimTokenInstance));
 	gTokenInstances[handle].bInUse = true;
 	gTokenInstances[handle].currentHandle = token;
+	gTokenInstances[handle].tokenType = gTokenTable[token].token.tokenType;
 
 	for (int i = 0; i < COMP_MAX; i++)
 	{
@@ -237,6 +269,7 @@ void TOK_SwapTokenAnimToken(anim_handle handle, token_handle newhandle)
 	// The components might not be altered when we switch tokens but the frame *will*
 	gTokenInstances[handle].currentHandle = newhandle;
 	gTokenInstances[handle].currentFrame = 0;
+	gTokenInstances[handle].tokenType = gTokenTable[newhandle].token.tokenType;
 
 	// FIXME: if our token class changes (ie, we change from monster to player or vice versa), our mode will be wrong!
 	// This is because each token type has its own mappings for these modes!
@@ -337,6 +370,20 @@ char* TOK_GetTokenInstanceWeaponClass(anim_handle handle)
 	}
 
 	return gTokenTable[gTokenInstances[handle].currentHandle].weaponClass;
+}
+
+/*
+ *	Get the AnimTokenInstance data associated with a token handle
+ *	@author	eezstreet
+ */
+AnimTokenInstance* TOK_GetTokenInstanceData(anim_handle handle)
+{
+	if (handle == INVALID_HANDLE || handle >= MAX_TOKEN_INSTANCES)
+	{
+		return nullptr;
+	}
+
+	return &gTokenInstances[handle];
 }
 
 /*
@@ -448,6 +495,9 @@ void TOK_SetInstanceActive(anim_handle handle, bool bNewActive)
 			}
 		}
 	}
+
+	pInstance->bActive = bNewActive;
+	pInstance->previousTime = SDL_GetTicks();
 
 #ifdef PROFILE_TOKENS
 	dwTicks = SDL_GetTicks();
