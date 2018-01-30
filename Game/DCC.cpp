@@ -13,7 +13,7 @@ struct DCCHash
 static DCCHash DCCHashTable[MAX_DCC_HASH]{ 0 };
 static int gnNumHashesUsed = 0;
 
-static const DWORD gdwDCCBitTable[] = {
+static const BYTE gdwDCCBitTable[] = {
 	0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 28, 30, 32
 };
 
@@ -70,6 +70,14 @@ static void DCC_ReadDirectionHeader(DCCHeader& fileHeader, DCCDirection& dir, in
 	pBits->ReadBits(dir.nYOffsetBits, 4);
 	pBits->ReadBits(dir.nOptionalBytesBits, 4);
 	pBits->ReadBits(dir.nCodedBytesBits, 4);
+
+	dir.nVar0Bits = gdwDCCBitTable[dir.nVar0Bits];
+	dir.nWidthBits = gdwDCCBitTable[dir.nWidthBits];
+	dir.nHeightBits = gdwDCCBitTable[dir.nHeightBits];
+	dir.nXOffsetBits = gdwDCCBitTable[dir.nXOffsetBits];
+	dir.nYOffsetBits = gdwDCCBitTable[dir.nYOffsetBits];
+	dir.nOptionalBytesBits = gdwDCCBitTable[dir.nOptionalBytesBits];
+	dir.nCodedBytesBits = gdwDCCBitTable[dir.nCodedBytesBits];
 }
 
 /*
@@ -78,55 +86,21 @@ static void DCC_ReadDirectionHeader(DCCHeader& fileHeader, DCCDirection& dir, in
  */
 static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstream* pBits)
 {
-	int width;
-	void *ptr;
-	size_t size = 4;
-
 	memset(&frame, 0, sizeof(DCCFrame));
 
-	for (int i = 0; i < 8; i++)
-	{
-		switch (i)
-		{
-			case 0:
-				width = direction.nVar0Bits;
-				ptr = &frame.dwVariable0;
-				break;
-			case 1:
-				width = direction.nWidthBits;
-				ptr = &frame.dwWidth;
-				break;
-			case 2:
-				width = direction.nHeightBits;
-				ptr = &frame.dwHeight;
-				break;
-			case 3:
-				width = direction.nXOffsetBits;
-				ptr = &frame.nXOffset;
-				break;
-			case 4:
-				width = direction.nYOffsetBits;
-				ptr = &frame.nYOffset;
-				break;
-			case 5:
-				width = direction.nOptionalBytesBits;
-				ptr = &frame.dwOptionalBytes;
-				break;
-			case 6:
-				width = direction.nCodedBytesBits;
-				ptr = &frame.dwCodedBytes;
-				break;
-			case 7:
-				width = 1;
-				ptr = &frame.dwFlipped;
-				break;
-		}
+#define ReadBits(x, y)	if(y != 0) pBits->ReadBits((DWORD*)&x, y);
+	ReadBits(frame.dwVariable0, direction.nVar0Bits);
+	ReadBits(frame.dwWidth, direction.nWidthBits);
+	ReadBits(frame.dwHeight, direction.nHeightBits);
+	ReadBits(frame.nXOffset, direction.nXOffsetBits);
+	ReadBits(frame.nYOffset, direction.nYOffsetBits);
+	ReadBits(*frame.pOptionalByteData, frame.dwOptionalBytes);
+	ReadBits(frame.dwCodedBytes, direction.nCodedBytesBits);
+	ReadBits(frame.dwFlipped, 1);
+#undef ReadBits
 
-		if (gdwDCCBitTable[width] != 0)
-		{
-			pBits->ReadBits(ptr, size, gdwDCCBitTable[width]);
-		}
-	}
+	pBits->ConvertFormat(&frame.nXOffset, direction.nXOffsetBits);
+	pBits->ConvertFormat(&frame.nYOffset, direction.nYOffsetBits);
 
 	// Calculate mins/maxs
 	frame.nMinX = frame.nXOffset;
@@ -144,50 +118,6 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 }
 
 /*
- *	Calculates information about cells in a frame: the number of cells present, how wide they are, etc.
- *	@author	eezstreet
- */
-static void DCC_CalculateFrameCellData(DCCDirection& dir, DCCFrame& frame)
-{
-	int nCellWidth = 4 - ((frame.nMinX - dir.nMinX) % 4);
-	int nCellHeight = 4 - ((frame.nMinY - dir.nMinY) % 4);
-	DWORD dwCellsWide = 0;
-	DWORD dwCellsHigh = 0;
-	int temp;
-
-	if (frame.dwWidth - nCellWidth <= 1)
-	{	// the frame is very small, it can only be one cell wide
-		dwCellsWide = 1;
-	}
-	else
-	{	// give us some wiggle room on either side of the cell
-		temp = frame.dwWidth - nCellWidth - 1;
-		dwCellsWide = 2 + (temp / 4);
-		if ((temp % 4) == 0)
-		{
-			dwCellsWide--;
-		}
-	}
-
-	if (frame.dwHeight - nCellHeight <= 1)
-	{	// the frame is very small, it can only be one cell high
-		dwCellsHigh = 1;
-	}
-	else
-	{	// give us some wiggle room on either side of the cell
-		temp = frame.dwHeight - nCellHeight - 1;
-		dwCellsHigh = 2 + (temp / 4);
-		if ((temp % 4) == 0)
-		{
-			dwCellsHigh--;
-		}
-	}
-
-	frame.dwCellW = dwCellsWide;
-	frame.dwCellH = dwCellsHigh;
-}
-
-/*
  *	Is responsible for reading raw pixels on a direction
  *	@author	eezstreet
  */
@@ -196,13 +126,14 @@ static void DCC_ReadDirectionPixelMapping(DCCDirection& dir, Bitstream* pBits)
 	int index = 0;
 	BYTE value = 0;
 
+	memset(dir.nPixelValues, 0, sizeof(BYTE) * 256);
 	for (int i = 0; i < 256; i++)
 	{
 		pBits->ReadBits(value, 1);
 
 		if (value)
 		{
-			dir.nPixelValues[index++] = value;
+			dir.nPixelValues[index++] = i;
 		}
 	}
 }
@@ -245,50 +176,6 @@ static void DCC_CreateDirectionBitstreams(DCCDirection& dir, Bitstream* pBits)
 }
 
 /*
- *	Is responsible for filling up the pixel buffer
- *	Unlike Paul Siramy's code, we use a global buffer to cut down on the number of allocations
- */
-static DCCPixelBuffer gPixelBuffer[MAX_DCC_PIXEL_BUFFER]{ 0 };
-static void DCC_FillPixelBuffer(DCCHeader* pHeader, DCCDirection* pDirection)
-{
-	DWORD dwCellsW, dwCellsH;
-	DWORD dwSkipCell = 0, dwPixelMask = 0;
-
-	memset(gPixelBuffer, 0, sizeof(DCCPixelBuffer) * MAX_DCC_PIXEL_BUFFER);
-
-	// Each frame is divided up into a grid of "cells." These cells are normally 4x4 pixels wide.
-	// HOWEVER, some of the time the cell may need to be extended. Normally this would be along the edge.
-
-	for (int f = 0; f < pHeader->dwFramesPerDirection; f++)
-	{
-		dwCellsW = pDirection->frames[f].dwCellW;
-		dwCellsH = pDirection->frames[f].dwCellH;
-
-		for (int y = 0; y < dwCellsH; y++)
-		{
-			for (int x = 0; x < dwCellsW; x++)
-			{
-				// If the EqualCell bitstream is present, read a bit from it.
-				dwSkipCell = 0;
-				if (pDirection->dwEqualCellStreamSize > 0)
-				{
-					pDirection->EqualCellStream->ReadBits(dwSkipCell, 1);
-				}
-				
-				// If EqualCell bitstream contained a '1' bit, then we can skip the current cell.
-				if (dwSkipCell)
-				{
-					continue;
-				}
-
-				// Read the pixel mask
-				pDirection->PixelMaskStream->ReadBits(dwPixelMask, 4);
-			}
-		}
-	}
-}
-
-/*
  *	Is responsible for the actual reading of the DCC, from an fs_handle and a hash entry pointer.
  *	@author	eezstreet
  */
@@ -323,6 +210,8 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 
 		dir.nMinX = INT_MAX;
 		dir.nMinY = INT_MAX;
+		dir.nMaxX = INT_MIN;
+		dir.nMaxY = INT_MIN;
 
 		// Direction header
 		DCC_ReadDirectionHeader(dcc.pFile->header, dir, i, pBits);
@@ -341,16 +230,6 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 
 			// Add to the optional bytes size
 			optionalSize += dir.frames[j].dwOptionalBytes;
-		}
-
-		// Calculate width
-		dir.nWidth = dir.nMaxX - dir.nMinX + 1;
-		dir.nHeight = dir.nMaxY - dir.nMinY + 1;
-
-		// Calculate frame cell width
-		for (j = 0; j < dcc.pFile->header.dwFramesPerDirection; j++)
-		{
-			DCC_CalculateFrameCellData(dir, dir.frames[j]);
 		}
 
 		// Read direction optional data

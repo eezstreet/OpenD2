@@ -242,6 +242,27 @@ void Bitstream::ReadBits(void* outBits, size_t outBitsSize, int bitCount)
 }
 
 /*
+ *	Helper function: converts from an unsigned number to a twos complement number.
+ *	@author	eezstreet/SVR
+ */
+void Bitstream::ConvertFormat(long* dwOutBits, int bitCount)
+{
+	long dwValue;
+	if (dwOutBits == nullptr)
+	{
+		return;
+	}
+	dwValue = *dwOutBits;
+
+	if (bitCount < 32 && (dwValue & (1 << (bitCount - 1))))
+	{
+		dwValue |= ~((1 << bitCount) - 1);
+	}
+
+	*dwOutBits = dwValue;
+}
+
+/*
  *	Get the number of bits remaining to be read.
  *	@author	eezstreet
  */
@@ -262,8 +283,13 @@ int Bitstream::ReadBits(int numBits)
 	int		fraction;
 	bool	sgn;
 
+	if (numBits == 0)
+	{
+		return 0;
+	}
+
 	Log_ErrorAssert(pStream != nullptr, 0);
-	Log_ErrorAssert(numBits != 0 && numBits >= -31 && numBits <= 32, 0);
+	Log_ErrorAssert(numBits >= -31 && numBits <= 32, 0);
 
 	value = 0;
 	valueBits = 0;
@@ -303,6 +329,8 @@ int Bitstream::ReadBits(int numBits)
 			value |= -1 ^ ((1 << numBits) - 1);
 		}
 	}
+
+	Log_ErrorAssert(dwCurrentByte <= dwTotalStreamSizeBytes, 0);
 
 	return value;
 }

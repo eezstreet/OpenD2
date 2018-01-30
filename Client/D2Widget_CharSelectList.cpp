@@ -137,7 +137,7 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 
 	// Register the animations for it.
 	// TODO: use the actual anims (it just uses hth, lit, no weapon for now..)
-	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, gszClassTokens[header.nCharClass], "hth");
+	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, /*gszClassTokens[header.nCharClass]*/ "AI", "hth");
 	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");

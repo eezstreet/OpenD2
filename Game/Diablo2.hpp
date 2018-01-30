@@ -75,6 +75,9 @@ public:
 	void ReadBits(DWORD* outBits, int bitCount);
 	void ReadBits(void* outBits, size_t outSize, int bitCount);
 	void ReadData(void* data, size_t outSize);
+	
+	// Helper function - convert from unsigned to 2C
+	void ConvertFormat(long* dwOutBits, int bitCount);
 
 	void Rewind();
 
@@ -397,7 +400,6 @@ struct DCCDirection
 	// Not actually in the file, these are calculated
 	long			nMinX, nMaxX;
 	long			nMinY, nMaxY;
-	long			nWidth, nHeight;
 	//////////////////////////////////
 
 	DWORD			dwEqualCellStreamSize;	// only present when nCompressionFlag & 0x02

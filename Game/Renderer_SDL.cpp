@@ -80,8 +80,8 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 	DWORD dwNumCellsThisDir = nDirCellW * nDirCellH;
 
 	// Global cell buffer
-	DCCCell** pCellBuffer = new DCCCell*[dwNumCellsThisDir];
-	memset(pCellBuffer, 0, dwNumCellsThisDir * sizeof(DCCCell*));
+	DCCCell** ppCellBuffer = new DCCCell*[dwNumCellsThisDir];
+	memset(ppCellBuffer, 0, dwNumCellsThisDir * sizeof(DCCCell*));
 	// Cell buffer for all frames
 	DCCCell* pFrameCells[MAX_DCC_FRAMES];
 	memset(pFrameCells, 0, sizeof(DCCCell*) * MAX_DCC_FRAMES);
@@ -116,7 +116,7 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 			for (int x = nStartX; x < (nStartX + nNumCellsW); x++)
 			{
 				DCCCell* pCurCell = pCell++;
-				DCCCell* pPrevCell = pCellBuffer[(y * nDirCellW) + x];
+				DCCCell* pPrevCell = ppCellBuffer[(y * nDirCellW) + x];
 				DWORD dwCLRMask = 0xF;
 
 				*(DWORD*)(pCurCell->clrmap) = 0;
@@ -155,7 +155,7 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 
 					for (n = 0; n < 4; n++)
 					{	// read the colors in the mask
-						if (dwCLRMask & (1 << n))
+						if (dwCLRMask & (0x1 << n))
 						{
 							if (dwEncodingType != 0)
 							{	// if encoding is 1, read it from the raw pixel stream
@@ -188,7 +188,7 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 				// Merge previous colors
 				for (n = 0; n < 4; n++)
 				{
-					if (dwCLRMask & (1 << n))
+					if (dwCLRMask & (0x1 << n))
 					{	// pop the current color bit
 						pCurCell->clrmap[n] = (BYTE)(dwTemp & 0xFF);
 						dwTemp >>= 8;
@@ -199,38 +199,34 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 					}
 				}
 
-				pCellBuffer[(y * nDirCellW) + x] = pCurCell;
+				ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
 			}
 		}
 	}
 
 	// Second part: build a bitmap based on the cells data
 	// FIXME: segregate this code to being renderer specific instead of this whole function being renderer-specific
-	SDL_Surface* pFrameSurf = SDL_CreateRGBSurface(0, nDirectionW, nDirectionH, 8, 0, 0, 0, 0);
+	BYTE* bitmap = new BYTE[nDirectionW * nDirectionH];
 	dwDirectionW = nDirectionW;
 	dwDirectionH = nDirectionH;
 
-	// Go ahead and clear out the surface
-	if (SDL_MUSTLOCK(pFrameSurf))
-	{
-		SDL_LockSurface(pFrameSurf);
-	}
-	memset(pFrameSurf->pixels, 0, pFrameSurf->pitch * pFrameSurf->h);
-	if (SDL_MUSTLOCK(pFrameSurf))
-	{
-		SDL_UnlockSurface(pFrameSurf);
-	}
-
-	// Rewind the EqualCell bitstream
+	// Rewind the equal cell stream
 	if (pDir->EqualCellStream != nullptr)
 	{
 		pDir->EqualCellStream->Rewind();
 	}
+	/*if (pDir->PixelCodeDisplacementStream != nullptr)
+	{
+		pDir->PixelCodeDisplacementStream->Rewind();
+	}*/
 
 	// Render each frame's cells onto the mini surface 
 	for (int f = 0; f < pFile->header.dwFramesPerDirection; f++)
 	{
 		DCCFrame* pFrame = &pDir->frames[f];
+
+		// Clear out the bitmap
+		memset(bitmap, 0, nDirectionW * nDirectionH);
 
 		// Calculate the frame size, and number of cells in this frame
 		int nFrameW = pFrame->dwWidth;
@@ -250,11 +246,12 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 		int nCountI = nFirstRowH;	// height counter
 		int nCountJ;
 		int nYPos = 0;
+		int nXPos;
 
 		DCCCell* pCells = pFrameCells[f];
 		for (int y = nStartY; y < (nStartY + nNumCellsH); y++)
 		{
-			int nXPos = 0;
+			nXPos = 0;
 			nCountJ = nFirstColumnW;
 
 			if (y == ((nStartY + nNumCellsH) - 1))
@@ -266,7 +263,7 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 			{
 				bool bTransparent = false;
 				DCCCell* pCurCell = pCells++;
-				DCCCell* pPrevCell = pCellBuffer[(y * nDirCellW) + x];
+				DCCCell* pPrevCell = ppCellBuffer[(y * nDirCellW) + x];
 
 				if (x == ((nStartX + nNumCellsW) - 1))
 				{	// If it's the last column, use the last width
@@ -279,37 +276,36 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 				pCurCell->nY = nFrameY + nYPos;
 
 				// Check for equal cell
-				if (pPrevCell)
+				if (pPrevCell && pDir->EqualCellStream != nullptr)
 				{
-					if (pDir->EqualCellStream != nullptr)
-					{
-						DWORD dwEqualCell = 0;
-						pDir->EqualCellStream->ReadBits(&dwEqualCell, 1);
+					DWORD dwEqualCell = 0;
+					pDir->EqualCellStream->ReadBits(&dwEqualCell, 1);
 
+					if (dwEqualCell)
+					{
 						if (pPrevCell->nH == pCurCell->nH && pPrevCell->nW == pCurCell->nW)
 						{	// same sized cell = it's definitely the same
 							// check x/y - if they are not the same then we copy it
 							if (pPrevCell->nX != pCurCell->nX || pPrevCell->nY != pCurCell->nY)
 							{
 								// source and destination rectangles
-								SDL_Rect s{
-									pPrevCell->nX,
-									pPrevCell->nY,
-									pPrevCell->nW,
-									pPrevCell->nH,
-								};
-								SDL_Rect d{
-									pCurCell->nX,
-									pCurCell->nY,
-									pCurCell->nW,
-									pCurCell->nH,
-								};
-								SDL_BlitSurface(pFrameSurf, &s, pFrameSurf, &d);
+								int dY = pCurCell->nY;
+
+								for (int i = pPrevCell->nY; i < pPrevCell->nY + pPrevCell->nH; i++)
+								{
+									int dX = pCurCell->nX;
+									for (int j = pPrevCell->nX; j < pPrevCell->nX + pPrevCell->nW; j++)
+									{
+										bitmap[(dY * nDirectionW) + dX] = bitmap[(i * nDirectionW) + j];
+										dX++;
+									}
+									dY++;
+								}
 							}
 
-							pCellBuffer[(y * nDirCellW) + x] = pCurCell;
+							ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
 							nXPos += nCountJ;
-							nCountJ += 4;
+							nCountJ = 4;
 							continue;
 						}
 						else
@@ -330,23 +326,16 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 				// fill the cell
 				if (bTransparent || !n)
 				{	// if all of them are transparent, fill with 0s
-					SDL_Rect s{
-						nFrameX + nXPos,
-						nFrameY + nYPos,
-						nCountJ,
-						nCountI,
-					};
-
-					SDL_FillRect(pFrameSurf, &s, 0);
+					for (int i = nFrameY + nYPos; i < nFrameY + nYPos + nCountI; i++)
+					{
+						for (int j = nFrameX + nXPos; j < nFrameX + nXPos + nCountJ; j++)
+						{
+							bitmap[(i * nDirectionW) + j] = 0;
+						}
+					}
 				}
 				else
 				{
-					// Lock the surface so we can write colors to it
-					if (SDL_MUSTLOCK(pFrameSurf))
-					{
-						SDL_LockSurface(pFrameSurf);
-					}
-
 					// Write the color pixels...one by one...
 					for (int i = 0; i < nCountI; i++)
 					{
@@ -354,20 +343,16 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 						{
 							DWORD dwPixelData = 0;
 							DWORD dwPixelPos = ((nFrameY + nYPos + i) * (nDirectionW)) + (nFrameX + nXPos + j);
+							int nPalettePos;
 
 							pDir->PixelCodeDisplacementStream->ReadBits(&dwPixelData, n);
-							((DWORD*)pFrameSurf->pixels)[dwPixelPos] = dwPixelData;
+							nPalettePos = pCurCell->clrmap[dwPixelData];
+							bitmap[dwPixelPos] = pDir->nPixelValues[nPalettePos];
 						}
-					}
-
-					// Relock the surface so other operations can work on it
-					if (SDL_MUSTLOCK(pFrameSurf))
-					{
-						SDL_UnlockSurface(pFrameSurf);
 					}
 				}
 
-				pCellBuffer[(y * nDirCellW) + x] = pCurCell;
+				ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
 				nXPos += nCountJ;
 				nCountJ = 4;
 			}
@@ -376,14 +361,16 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 			nCountI = 4;
 		}
 
-		// Create a new texture from this surface, for this frame
+		SDL_Surface* pFrameSurf = SDL_CreateRGBSurfaceFrom(bitmap, nDirectionW, nDirectionH, 8, nDirectionW, 0, 0, 0, 0);
 		SDL_SetSurfacePalette(pFrameSurf, PaletteCache[PAL_UNITS].pPal);
+		SDL_SaveBMP(pFrameSurf, "test.bmp");
+
+		// Create a new texture from this surface, for this frame		
 		pTexture[f] = SDL_CreateTextureFromSurface(gpRenderer, pFrameSurf);
 
+		// remove the surface, we don't need it anymore
+		SDL_FreeSurface(pFrameSurf);
 	}
-
-	// Delete the surface
-	SDL_FreeSurface(pFrameSurf);
 
 	// Delete all of the cell data, we don't need it anymore
 	for (int f = 0; f < pFile->header.dwFramesPerDirection; f++)
@@ -391,8 +378,8 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 		delete pFrameCells[f];
 	}
 
-	delete pFrameCells;
-	delete pCellBuffer;
+	delete[] bitmap;
+	delete[] ppCellBuffer;
 }
 
 /*
@@ -783,7 +770,7 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 		DWORD dwWidth = pItem->GetDirectionWidth();
 		DWORD dwHeight = pItem->GetDirectionHeight();
 
-		SDL_SetTextureBlendMode(pTexture, SDL_BLENDMODE_BLEND);
+		//SDL_SetTextureBlendMode(pTexture, SDL_BLENDMODE_BLEND);
 
 		SDL_Rect d{
 			pTCmd->x,
@@ -791,6 +778,8 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 			(int)dwWidth,
 			(int)dwHeight,
 		};
+
+		SDL_SetTextureBlendMode(pTexture, SDL_BLENDMODE_BLEND);
 
 		SDL_RenderCopy(gpRenderer, pTexture, nullptr, &d);
 	}

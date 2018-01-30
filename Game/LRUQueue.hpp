@@ -9,7 +9,7 @@
 class LRUQueueItem
 {
 public:
-	LRUQueueItem(handle i, int d) { itemHandle = i; nDirection = d; }
+	LRUQueueItem(handle i, int d) { itemHandle = i; nDirection = d; pNext = pPrev = nullptr; }
 
 	handle GetHandle() { return itemHandle; }
 	int GetDirection() { return nDirection; }
