@@ -127,6 +127,8 @@ static D2ModuleImportStrc exports = {
 	TOK_GetTokenInstanceFrame,
 	TOK_GetTokenInstanceWeaponClass,
 	TOK_SetInstanceActive,
+	TOK_SetTokenInstanceMode,
+	TOK_SetTokenInstanceDirection,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };

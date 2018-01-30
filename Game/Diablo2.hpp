@@ -732,6 +732,8 @@ int TOK_GetTokenInstanceFrame(anim_handle handle);
 char* TOK_GetTokenInstanceWeaponClass(anim_handle handle);
 void TOK_SetInstanceActive(anim_handle handle, bool bNewActive);
 AnimTokenInstance* TOK_GetTokenInstanceData(anim_handle handle);
+void TOK_SetTokenInstanceMode(anim_handle handle, int modeNum);
+void TOK_SetTokenInstanceDirection(anim_handle handle, int dirNum);
 
 // Window.cpp
 void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);

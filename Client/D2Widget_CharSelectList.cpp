@@ -137,7 +137,7 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 
 	// Register the animations for it.
 	// TODO: use the actual anims (it just uses hth, lit, no weapon for now..)
-	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, /*gszClassTokens[header.nCharClass]*/ "AI", "hth");
+	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, /*gszClassTokens[header.nCharClass]*/ "NE", "hth");
 	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");
@@ -147,6 +147,8 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL1, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
+	//trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
+	trap->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 3);
 	trap->TOK_SetInstanceActive(pSaveData->tokenInstance, true);	// always set it as active so scrolling is smooth
 
 	// Add it to the linked list

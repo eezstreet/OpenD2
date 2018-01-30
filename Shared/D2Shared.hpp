@@ -612,6 +612,8 @@ struct D2ModuleImportStrc
 	int				(*TOK_GetTokenInstanceFrame)(anim_handle handle);
 	char*			(*TOK_GetTokenInstanceWeaponClass)(anim_handle handle);
 	void			(*TOK_SetInstanceActive)(anim_handle handle, bool bNewActive);
+	void			(*TOK_SetTokenInstanceMode)(anim_handle handle, int modeNum);
+	void			(*TOK_SetTokenInstanceDirection)(anim_handle handle, int dirNum);
 
 	// Renderer calls (should always be last)
 	tex_handle		(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);

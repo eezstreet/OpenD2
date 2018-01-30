@@ -337,6 +337,34 @@ void TOK_SetTokenInstanceFrame(anim_handle handle, int frameNum)
 }
 
 /*
+ *	Set a token instance's mode
+ *	@author	eezstreet
+ */
+void TOK_SetTokenInstanceMode(anim_handle handle, int modeNum)
+{
+	if (handle == INVALID_HANDLE || handle >= MAX_TOKEN_INSTANCES)
+	{
+		return;
+	}
+
+	gTokenInstances[handle].currentMode = modeNum;
+}
+
+/*
+ *	Set a token instance's direction
+ *	@author	eezstreet
+ */
+void TOK_SetTokenInstanceDirection(anim_handle handle, int dirNum)
+{
+	if (handle == INVALID_HANDLE || handle >= MAX_TOKEN_INSTANCES)
+	{
+		return;
+	}
+
+	gTokenInstances[handle].currentDirection == dirNum;
+}
+
+/*
  *	Get a token instance's frame
  *	@author	eezstreet
  */
