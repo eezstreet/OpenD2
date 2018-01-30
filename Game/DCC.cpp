@@ -60,7 +60,6 @@ static void DCC_ReadHeader(DCCHash& dcc, Bitstream* pBits)
  */
 static void DCC_ReadDirectionHeader(DCCHeader& fileHeader, DCCDirection& dir, int dirNum, Bitstream* pBits)
 {
-	pBits->SetCurrentPosition(fileHeader.dwDirectionOffset[dirNum]);
 	pBits->ReadBits(&dir.dwOutsizeCoded, 32);
 	pBits->ReadBits(dir.nCompressionFlag, 2);
 	pBits->ReadBits(dir.nVar0Bits, 4);
@@ -207,6 +206,8 @@ void DCC_Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
 	{
 		DCCDirection& dir = dcc.pFile->directions[i];
 		size_t optionalSize = 0;
+
+		pBits->SetCurrentPosition(dcc.pFile->header.dwDirectionOffset[i]);
 
 		dir.nMinX = INT_MAX;
 		dir.nMinY = INT_MAX;
