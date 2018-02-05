@@ -145,6 +145,18 @@ void D2Panel_CharSelect::LoadSave(D2SaveHeader& save, char* path)
 }
 
 /*
+ *	We just got told to select a save in the save list widget.
+ *	@author	eezstreet
+ */
+void D2Panel_CharSelect::SelectSave(int nSaveNumber)
+{
+	if (charSelectList != nullptr)
+	{
+		charSelectList->Selected(nSaveNumber);
+	}
+}
+
+/*
  *	We just received word that we selected an invalid character.
  *	@author	eezstreet
  */

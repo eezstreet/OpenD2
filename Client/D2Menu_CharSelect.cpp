@@ -51,6 +51,9 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 	{
 		trap->FS_FreeFileList(pszSavePaths, nNumFiles);
 	}
+
+	// Select the first save in the list
+	m_charSelectPanel->SelectSave(0);
 }
 
 /*

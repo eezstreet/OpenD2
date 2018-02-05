@@ -366,7 +366,10 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 
 		SDL_Surface* pFrameSurf = SDL_CreateRGBSurfaceFrom(bitmap, nDirectionW, nDirectionH, 8, nDirectionW, 0, 0, 0, 0);
 		SDL_SetSurfacePalette(pFrameSurf, PaletteCache[PAL_UNITS].pPal);
-//		SDL_SaveBMP(pFrameSurf, "test.bmp");
+
+		/*char testFrameName[32];
+		snprintf(testFrameName, 32, "test%04d.bmp", f);
+		SDL_SaveBMP(pFrameSurf, testFrameName);*/
 
 		// Create a new texture from this surface, for this frame		
 		pTexture[f] = SDL_CreateTextureFromSurface(gpRenderer, pFrameSurf);
@@ -781,32 +784,39 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 		DWORD dwWidth = pItem->GetDirectionWidth();
 		DWORD dwHeight = pItem->GetDirectionHeight();
 
-		SDL_Rect testRect{
-			pTCmd->x,
-			pTCmd->y,
-			4,
-			4,
-		};
-		SDL_SetRenderDrawColor(gpRenderer, 255, 0, 0, 255);
-		SDL_RenderDrawRect(gpRenderer, &testRect);
-
-		testRect.x += pItem->pDirection->frames[pInstance->currentFrame].nXOffset - pItem->pDirection->nMinX;
-		testRect.y += pItem->pDirection->frames[pInstance->currentFrame].nYOffset - pItem->pDirection->nMinY;
-		SDL_SetRenderDrawColor(gpRenderer, 0, 255, 0, 255);
-		SDL_RenderDrawRect(gpRenderer, &testRect);
-
-		//SDL_SetTextureBlendMode(pTexture, SDL_BLENDMODE_BLEND);
-
+		// The destination rectangle is oriented from the upper left corner, but whenever we do a draw call,
+		// we are orienting from the "base point" of the token's DCC files. So we need to correct that.
 		SDL_Rect d{
 			pTCmd->x,
 			pTCmd->y,
 			(int)dwWidth,
 			(int)dwHeight,
 		};
-
+		d.x -= (pItem->pDirection->frames[pInstance->currentFrame].nMinX - pItem->pDirection->nMinX);
+		d.x += pItem->pDirection->frames[pInstance->currentFrame].nXOffset;
+		d.y -= (pItem->pDirection->frames[pInstance->currentFrame].nMinY - pItem->pDirection->nMinY);
+		d.y += pItem->pDirection->frames[pInstance->currentFrame].nYOffset;
+		d.y -= pItem->pDirection->frames[pInstance->currentFrame].dwHeight - 1;
 		SDL_SetTextureBlendMode(pTexture, SDL_BLENDMODE_BLEND);
-
 		SDL_RenderCopy(gpRenderer, pTexture, nullptr, &d);
+
+#if 0
+		// debug: draw a rectangle around where the frames are
+		d.x += (pItem->pDirection->frames[pInstance->currentFrame].nMinX - pItem->pDirection->nMinX);
+		d.y += (pItem->pDirection->frames[pInstance->currentFrame].nMinY - pItem->pDirection->nMinY);
+		d.w = pItem->pDirection->frames[pInstance->currentFrame].dwWidth;
+		d.h = pItem->pDirection->frames[pInstance->currentFrame].dwHeight;
+		SDL_SetRenderDrawColor(gpRenderer, 128, 128, 255, 255);
+		SDL_RenderDrawRect(gpRenderer, &d);
+
+		// debug: draw a small red box indicating the origin
+		d.x = pTCmd->x;
+		d.y = pTCmd->y;
+		d.w = 4;
+		d.h = 4;
+		SDL_SetRenderDrawColor(gpRenderer, 255, 0, 0, 255);
+		SDL_RenderDrawRect(gpRenderer, &d);
+#endif
 	}
 }
 

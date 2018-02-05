@@ -137,7 +137,7 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 
 	// Register the animations for it.
 	// TODO: use the actual anims (it just uses hth, lit, no weapon for now..)
-	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, /*gszClassTokens[header.nCharClass]*/ "NE", "hth");
+	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, gszClassTokens[header.nCharClass], "hth");
 	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");
@@ -147,14 +147,9 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL1, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
-	//trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
+	trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
 	trap->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 4);
 	trap->TOK_SetInstanceActive(pSaveData->tokenInstance, true);	// always set it as active so scrolling is smooth
-	/*pSaveData->token = trap->TOK_Register(TOKEN_MONSTER, "5P", "hth");
-	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
-	trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, MONMODE_A1);
-	trap->TOK_SetInstanceActive(pSaveData->tokenInstance, true);*/
 
 	// Add it to the linked list
 	pSaveData->pNext = pCharacterData;
@@ -312,7 +307,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	trap->R_ColorModFont(cl.font16, 255, 255, 255);
 
 	// Draw the token instance
-	trap->R_DrawTokenInstance(pSaveData->tokenInstance, nX - 30, nY, 0, PAL_UNITS);
+	trap->R_DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
 }
 
 /*

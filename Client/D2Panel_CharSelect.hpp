@@ -22,6 +22,7 @@ public:
 	void LoadSave(D2SaveHeader& pSaveHeader, char* path);
 	void InvalidateSelection();
 	void ValidateSelection();
+	void SelectSave(int nNewSave);
 
 	virtual void Draw();
 };
