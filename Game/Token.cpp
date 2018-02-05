@@ -361,7 +361,7 @@ void TOK_SetTokenInstanceDirection(anim_handle handle, int dirNum)
 		return;
 	}
 
-	gTokenInstances[handle].currentDirection == dirNum;
+	gTokenInstances[handle].currentDirection = dirNum;
 }
 
 /*
@@ -525,7 +525,6 @@ void TOK_SetInstanceActive(anim_handle handle, bool bNewActive)
 	}
 
 	pInstance->bActive = bNewActive;
-	pInstance->previousTime = SDL_GetTicks();
 
 #ifdef PROFILE_TOKENS
 	dwTicks = SDL_GetTicks();

@@ -23,6 +23,8 @@ public:
 	SDLLRUItem(handle itemHandle, int d);
 	~SDLLRUItem();
 
+	DCCDirection* pDirection;
+
 	SDL_Texture* GetTextureForFrame(int nFrame)
 	{
 		return pTexture[nFrame];
@@ -69,6 +71,8 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 	{	// tried to enter an invalid direction! don't do this!
 		return;
 	}
+
+	pDirection = pDir;
 
 	pTexture = new SDL_Texture*[pFile->header.dwFramesPerDirection];
 
@@ -210,15 +214,14 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 	dwDirectionW = nDirectionW;
 	dwDirectionH = nDirectionH;
 
+	// ? clear all cells in the frame buffer list
+	memset(ppCellBuffer, 0, sizeof(DCCCell*) * dwNumCellsThisDir);
+
 	// Rewind the equal cell stream
 	if (pDir->EqualCellStream != nullptr)
 	{
 		pDir->EqualCellStream->Rewind();
 	}
-	/*if (pDir->PixelCodeDisplacementStream != nullptr)
-	{
-		pDir->PixelCodeDisplacementStream->Rewind();
-	}*/
 
 	// Render each frame's cells onto the mini surface 
 	for (int f = 0; f < pFile->header.dwFramesPerDirection; f++)
@@ -363,7 +366,7 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 
 		SDL_Surface* pFrameSurf = SDL_CreateRGBSurfaceFrom(bitmap, nDirectionW, nDirectionH, 8, nDirectionW, 0, 0, 0, 0);
 		SDL_SetSurfacePalette(pFrameSurf, PaletteCache[PAL_UNITS].pPal);
-		SDL_SaveBMP(pFrameSurf, "test.bmp");
+//		SDL_SaveBMP(pFrameSurf, "test.bmp");
 
 		// Create a new texture from this surface, for this frame		
 		pTexture[f] = SDL_CreateTextureFromSurface(gpRenderer, pFrameSurf);
@@ -700,6 +703,24 @@ static void RB_DrawRectangle(SDLCommand* pCmd)
 }
 
 /*
+ *	Continues the animation on a token instance
+ *	@author	eezstreet
+ */
+static void RB_ContinueTokenInstanceAnimation(AnimTokenInstance* pInstance, COFFile* pCOFFile)
+{
+	DWORD dwCurrentTime = SDL_GetTicks();
+
+	if (pCOFFile->header.nFPS == 0)
+	{
+		return; // There is no reason to be animating at all.
+	}
+
+	pInstance->currentFrame = dwCurrentTime * pCOFFile->header.nFPS / 40;
+	pInstance->currentFrame %= (pCOFFile->header.nFrames << 8);
+	pInstance->currentFrame >>= 8;
+}
+
+/*
  *	Backend - Draw an anim token instance
  */
 static void RB_DrawTokenInstance(SDLCommand* pCmd)
@@ -708,9 +729,6 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 	AnimTokenInstance* pInstance = TOK_GetTokenInstanceData(pTCmd->handle);
 	cof_handle currentCOF;
 	COFFile* pCOFFile;
-	DWORD dwCurrentTicks = SDL_GetTicks();
-	DWORD dwTicksDiff;
-	int currentFrame;
 	LRUQueue<SDLLRUItem>* pQueue;
 
 	if (pInstance == nullptr || !pInstance->bInUse || !pInstance->bActive)
@@ -730,14 +748,7 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 		return;
 	}
 
-	// determine how long it's been since this animation ran last.
-	// increment the frame counter by the framerate
-	dwTicksDiff = dwCurrentTicks - pInstance->previousTime;
-	pInstance->currentFrame += (float)dwTicksDiff / (1000.0f / pCOFFile->header.nFPS);
-	currentFrame = (int)pInstance->currentFrame;
-	currentFrame %= pCOFFile->header.nFrames;
-	pInstance->currentFrame = (float)currentFrame;
-	// currentFrame now contains the quantized frame, and pInstance->currentFrame contains the float version
+	RB_ContinueTokenInstanceAnimation(pInstance, pCOFFile);
 
 	// iterate through all components
 	switch (pInstance->tokenType)
@@ -766,9 +777,23 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 		Log_ErrorAssert(pItem != nullptr);
 		
 		// render it!!
-		SDL_Texture* pTexture = pItem->GetTextureForFrame(currentFrame);
+		SDL_Texture* pTexture = pItem->GetTextureForFrame((int)pInstance->currentFrame);
 		DWORD dwWidth = pItem->GetDirectionWidth();
 		DWORD dwHeight = pItem->GetDirectionHeight();
+
+		SDL_Rect testRect{
+			pTCmd->x,
+			pTCmd->y,
+			4,
+			4,
+		};
+		SDL_SetRenderDrawColor(gpRenderer, 255, 0, 0, 255);
+		SDL_RenderDrawRect(gpRenderer, &testRect);
+
+		testRect.x += pItem->pDirection->frames[pInstance->currentFrame].nXOffset - pItem->pDirection->nMinX;
+		testRect.y += pItem->pDirection->frames[pInstance->currentFrame].nYOffset - pItem->pDirection->nMinY;
+		SDL_SetRenderDrawColor(gpRenderer, 0, 255, 0, 255);
+		SDL_RenderDrawRect(gpRenderer, &testRect);
 
 		//SDL_SetTextureBlendMode(pTexture, SDL_BLENDMODE_BLEND);
 
@@ -1536,7 +1561,6 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 
 	// Create the texture from the big surface
 	pCache->pTexture = SDL_CreateTextureFromSurface(gpRenderer, pBigSurface);
-	SDL_SaveBMP(pBigSurface, "fontsurface.bmp");
 	SDL_FreeSurface(pBigSurface);
 
 	// There is no reason we should be blending a font in anything besides alpha mode

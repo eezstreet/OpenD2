@@ -148,8 +148,13 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
 	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
 	//trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
-	trap->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 3);
+	trap->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 4);
 	trap->TOK_SetInstanceActive(pSaveData->tokenInstance, true);	// always set it as active so scrolling is smooth
+	/*pSaveData->token = trap->TOK_Register(TOKEN_MONSTER, "5P", "hth");
+	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
+	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
+	trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, MONMODE_A1);
+	trap->TOK_SetInstanceActive(pSaveData->tokenInstance, true);*/
 
 	// Add it to the linked list
 	pSaveData->pNext = pCharacterData;

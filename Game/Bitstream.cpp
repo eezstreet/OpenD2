@@ -58,6 +58,10 @@ void Bitstream::SplitFrom(Bitstream* pSplitStream, size_t dwSplitStreamSizeBits)
 	bExternalStorage = true;
 	dwReadBit = pSplitStream->dwReadBit;
 	dwCurrentByte = pSplitStream->dwCurrentByte;
+	if (dwReadBit == 0)
+	{	// Send the bitstream back by one byte so we don't encounter errors
+		dwCurrentByte--;
+	}
 	dwTotalStreamSizeBits = pSplitStream->dwTotalStreamSizeBits;
 	dwTotalStreamSizeBytes = pSplitStream->dwTotalStreamSizeBytes;
 	pStream = pSplitStream->pStream;

@@ -484,8 +484,9 @@ struct COFHeader
 	int		nXMax;
 	int		nYMin;
 	int		nYMax;
-	BYTE	nFPS;
-	BYTE	nArmType;
+	WORD	nFPS;
+	/*BYTE	nFPS;
+	BYTE	nArmType;*/
 	WORD	wUnk2;
 };
 
@@ -540,8 +541,7 @@ struct AnimTokenInstance
 	token_handle	currentHandle;
 	int				tokenType;
 	int				currentMode;
-	float			currentFrame;
-	int				previousTime;
+	int				currentFrame;
 	int				currentDirection;
 	char			components[COMP_MAX][4];
 	bool			bInUse;
