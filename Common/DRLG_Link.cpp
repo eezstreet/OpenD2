@@ -238,7 +238,7 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 	int nLevelLinkedEx;
 
 	// Set initial link data
-	D2_seedcopy(&linkData.pSeed, &pMisc->MiscSeed);
+	D2Lib::seedcopy(&linkData.pSeed, &pMisc->MiscSeed);
 	memset(&linkData, 0, sizeof(linkData));
 	linkData.pLink = pLink;
 
@@ -331,12 +331,12 @@ static void DRLG_CreateLevelLinkage(DRLGMisc* pMisc, DRLGLink* pLink, DRLGSPACE 
 			case DIRECTION_NORTHWEST:
 				// Black Marsh links to Tamoe Highland from the WEST
 				// Barracks can only link to Outer Cloister from EAST
-				pCloisterLevel->pPreset->nFile = D2_sbrand(&pMisc->MiscSeed) ? DIRECTION_SOUTHEAST : DIRECTION_NORTHEAST;
+				pCloisterLevel->pPreset->nFile = D2Lib::sbrand(&pMisc->MiscSeed) ? DIRECTION_SOUTHEAST : DIRECTION_NORTHEAST;
 				break;
 			case DIRECTION_NORTHEAST:
 				// Black Marsh links to Tamoe Highland from the EAST
 				// Barracks can only link to Outer Cloiser from WEST
-				pCloisterLevel->pPreset->nFile = D2_sbrand(&pMisc->MiscSeed) ? DIRECTION_SOUTHWEST : DIRECTION_NORTHWEST;
+				pCloisterLevel->pPreset->nFile = D2Lib::sbrand(&pMisc->MiscSeed) ? DIRECTION_SOUTHWEST : DIRECTION_NORTHWEST;
 				break;
 			}
 		}
@@ -587,7 +587,7 @@ bool DRLGLink_Floating(DRLGLevelLinkData* pLinkData)
 	nIteration = pLinkData->nIteration;
 	if (pLinkData->nRand[1][nIteration] == -1)
 	{	// Pick a random direction
-		nRand = D2_smrand(&pLinkData->pSeed, DIRECTION_COUNT);
+		nRand = D2Lib::smrand(&pLinkData->pSeed, DIRECTION_COUNT);
 		pLinkData->nRand[0][nIteration] = nRand;
 		pLinkData->nRand[1][nIteration] = nRand;
 	}
@@ -624,10 +624,10 @@ bool DRLGLink_LinkToAct1Town(DRLGLevelLinkData* pLinkData)
 	
 	if (pLinkData->nRand[1][nIteration] == -1)
 	{
-		nNewDir = D2_srand(&pLinkData->pSeed);
+		nNewDir = D2Lib::srand(&pLinkData->pSeed);
 		pLinkData->nRand[1][nIteration] = nNewDir & 3;
 		pLinkData->nRand[0][nIteration] = pLinkData->nRand[1][nIteration];
-		nRand = D2_srand(&pLinkData->pSeed);
+		nRand = D2Lib::srand(&pLinkData->pSeed);
 		pLinkData->nRand[3][nIteration] = nRand & 1;
 		nRand = pLinkData->nRand[3][nIteration];
 	}
@@ -677,10 +677,10 @@ bool DRLGLink_LinkFromAct1Town(DRLGLevelLinkData* pLinkData)
 
 	if (pLinkData->nRand[1][nIteration] == -1)
 	{
-		nRand = D2_srand(&pLinkData->pSeed);
+		nRand = D2Lib::srand(&pLinkData->pSeed);
 		pLinkData->nRand[1][nIteration] = nRand & 3;
 		pLinkData->nRand[0][nIteration] = pLinkData->nRand[1][nIteration];
-		nRand = D2_srand(&pLinkData->pSeed);
+		nRand = D2Lib::srand(&pLinkData->pSeed);
 		pLinkData->nRand[3][nIteration] = nRand & 1;
 		nLink = pLinkData->nRand[3][nIteration];
 	}

@@ -4,190 +4,193 @@
 #define MAX_COF_TYPELEN		16
 #define MAX_COF_HASHLEN		2048
 
-struct COFHash
-{
-	char szCOFName[MAX_COFFILE_NAMELEN];
-	char szCOFType[MAX_COF_TYPELEN];
-	COFFile*	pFile;
-	BYTE*		pCOFContents;
-};
-
-static COFHash COFHashTable[MAX_COF_HASHLEN]{ 0 };
-static int nCOFHashUsed = 0;
-
 const char* COFLayerNames[COMP_MAX] = {
 	"HD", "TR", "LG", "RA", "LA", "RH", "LH", "SH",
 	"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"
 };
 
-/*
- *	Registers a COF (component object file).
- *	Type can either be: "chars", "monsters", or "objects"
- *	@author	eezstreet
- */
-cof_handle COF_Register(char* type, char* token, char* animation, char* hitclass)
+namespace COF
 {
-	char path[MAX_D2PATH]{ 0 };
-	char cof[MAX_COFFILE_NAMELEN]{ 0 };
-	COFHash* pHash;
-	cof_handle outHandle;
-	fs_handle file;
-	D2MPQArchive* pArchive;
-	size_t dwFileSize;
-	int i;
-
-	// Make sure we aren't hitting the maximum size of the hash table
-	Log_ErrorAssert(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE);
-
-	snprintf(cof, MAX_COFFILE_NAMELEN, "%s%s%s.cof", token, animation, hitclass);
-	snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\COF\\%s", type, token, cof);
-
-	// Try and load the COF first because it's possible we could be wasting time with the below code
-	file = FSMPQ_FindFile(path, nullptr, &pArchive);
-	if (file == INVALID_HANDLE)
+	struct COFHash
 	{
-		Log_Print(PRIORITY_MESSAGE, "Couldn't load %s\n", cof);
-		return INVALID_HANDLE;
-	}
+		char szCOFName[MAX_COFFILE_NAMELEN];
+		char szCOFType[MAX_COF_TYPELEN];
+		COFFile*	pFile;
+		BYTE*		pCOFContents;
+	};
 
-	// Find the handle. If we collide in the hash table, just use linear probing
-	outHandle = D2_strhash(cof, MAX_COFFILE_NAMELEN, MAX_COF_HASHLEN);
-	pHash = &COFHashTable[outHandle];
-	while (pHash->pFile != nullptr && D2_stricmp(pHash->szCOFName, cof))
+	static COFHash COFHashTable[MAX_COF_HASHLEN]{ 0 };
+	static int nCOFHashUsed = 0;
+
+	/*
+	*	Registers a COF (component object file).
+	*	Type can either be: "chars", "monsters", or "objects"
+	*	@author	eezstreet
+	*/
+	cof_handle Register(char* type, char* token, char* animation, char* hitclass)
 	{
-		outHandle++;
-		outHandle %= MAX_COF_HASHLEN;
+		char path[MAX_D2PATH]{ 0 };
+		char cof[MAX_COFFILE_NAMELEN]{ 0 };
+		COFHash* pHash;
+		cof_handle outHandle;
+		fs_handle file;
+		D2MPQArchive* pArchive;
+		size_t dwFileSize;
+		int i;
+
+		// Make sure we aren't hitting the maximum size of the hash table
+		Log_ErrorAssert(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE);
+
+		snprintf(cof, MAX_COFFILE_NAMELEN, "%s%s%s.cof", token, animation, hitclass);
+		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\COF\\%s", type, token, cof);
+
+		// Try and load the COF first because it's possible we could be wasting time with the below code
+		file = FSMPQ::FindFile(path, nullptr, &pArchive);
+		if (file == INVALID_HANDLE)
+		{
+			Log::Print(PRIORITY_MESSAGE, "Couldn't load %s\n", cof);
+			return INVALID_HANDLE;
+		}
+
+		// Find the handle. If we collide in the hash table, just use linear probing
+		outHandle = D2Lib::strhash(cof, MAX_COFFILE_NAMELEN, MAX_COF_HASHLEN);
 		pHash = &COFHashTable[outHandle];
-	}
-
-	// Allocate the file.
-	pHash->pFile = (COFFile*)malloc(sizeof(COFFile));
-
-	D2_strncpyz(pHash->szCOFName, cof, MAX_COFFILE_NAMELEN);
-	D2_strncpyz(pHash->szCOFType, type, MAX_COF_TYPELEN);
-	
-	// Read the whole file at once
-	dwFileSize = MPQ_FileSize(pArchive, file);
-	Log_WarnAssert(dwFileSize != 0, INVALID_HANDLE);
-
-	pHash->pCOFContents = (BYTE*)malloc(dwFileSize);
-	Log_ErrorAssert(pHash->pCOFContents != nullptr, INVALID_HANDLE);
-
-	MPQ_ReadFile(pArchive, file, pHash->pCOFContents, dwFileSize);
-
-	// Copy the header over
-	memcpy(&pHash->pFile->header, pHash->pCOFContents, sizeof(COFHeader));
-
-	// Set the pointers for both the layers and the keyframes
-	pHash->pFile->layers = (COFLayer*)(pHash->pCOFContents + sizeof(COFHeader));
-	pHash->pFile->keyframes = (BYTE*)(pHash->pFile->layers + pHash->pFile->header.nLayers);
-
-	// Iterate over the layers and mark off the components which are active.
-	// By doing this once we can save a bit of time when trying to register the DCCs later
-	pHash->pFile->dwLayersPresent = 0;
-	for (i = 0; i < pHash->pFile->header.nLayers; i++)
-	{
-		pHash->pFile->dwLayersPresent |= (1 << pHash->pFile->layers[i].nComponent);
-	}
-
-	return outHandle;
-}
-
-/*
- *	Deregisters a COF file.
- *	@author	eezstreet
- */
-void COF_Deregister(cof_handle cof)
-{
-	COFHash* pHash = &COFHashTable[cof];
-
-	if (pHash->pFile == nullptr)
-	{
-		// already deregistered
-		return;
-	}
-
-	free(pHash->pFile);
-	free(pHash->pCOFContents);
-	pHash->pFile = nullptr;
-	pHash->pCOFContents = nullptr;
-	pHash->szCOFName[0] = '\0';
-	pHash->szCOFType[0] = '\0';
-}
-
-/*
- *	Deregisters all COF of a specific category.
- *	We do this during inter-act loading to deregister all monster and object COFs but NOT on the player.
- *	@author	eezstreet
- */
-void COF_DeregisterType(char* type)
-{
-	for (int i = 0; i < MAX_COF_HASHLEN; i++)
-	{
-		COFHash* pHash = &COFHashTable[i];
-		if (pHash->pFile && pHash->szCOFType[0] && !D2_stricmp(type, pHash->szCOFType))
+		while (pHash->pFile != nullptr && D2Lib::stricmp(pHash->szCOFName, cof))
 		{
-			COF_Deregister((cof_handle)i);
+			outHandle++;
+			outHandle %= MAX_COF_HASHLEN;
+			pHash = &COFHashTable[outHandle];
+		}
+
+		// Allocate the file.
+		pHash->pFile = (COFFile*)malloc(sizeof(COFFile));
+
+		D2Lib::strncpyz(pHash->szCOFName, cof, MAX_COFFILE_NAMELEN);
+		D2Lib::strncpyz(pHash->szCOFType, type, MAX_COF_TYPELEN);
+
+		// Read the whole file at once
+		dwFileSize = MPQ::FileSize(pArchive, file);
+		Log_WarnAssert(dwFileSize != 0, INVALID_HANDLE);
+
+		pHash->pCOFContents = (BYTE*)malloc(dwFileSize);
+		Log_ErrorAssert(pHash->pCOFContents != nullptr, INVALID_HANDLE);
+
+		MPQ::ReadFile(pArchive, file, pHash->pCOFContents, dwFileSize);
+
+		// Copy the header over
+		memcpy(&pHash->pFile->header, pHash->pCOFContents, sizeof(COFHeader));
+
+		// Set the pointers for both the layers and the keyframes
+		pHash->pFile->layers = (COFLayer*)(pHash->pCOFContents + sizeof(COFHeader));
+		pHash->pFile->keyframes = (BYTE*)(pHash->pFile->layers + pHash->pFile->header.nLayers);
+
+		// Iterate over the layers and mark off the components which are active.
+		// By doing this once we can save a bit of time when trying to register the DCCs later
+		pHash->pFile->dwLayersPresent = 0;
+		for (i = 0; i < pHash->pFile->header.nLayers; i++)
+		{
+			pHash->pFile->dwLayersPresent |= (1 << pHash->pFile->layers[i].nComponent);
+		}
+
+		return outHandle;
+	}
+
+	/*
+	*	Deregisters a COF file.
+	*	@author	eezstreet
+	*/
+	void Deregister(cof_handle cof)
+	{
+		COFHash* pHash = &COFHashTable[cof];
+
+		if (pHash->pFile == nullptr)
+		{
+			// already deregistered
+			return;
+		}
+
+		free(pHash->pFile);
+		free(pHash->pCOFContents);
+		pHash->pFile = nullptr;
+		pHash->pCOFContents = nullptr;
+		pHash->szCOFName[0] = '\0';
+		pHash->szCOFType[0] = '\0';
+	}
+
+	/*
+	*	Deregisters all COF of a specific category.
+	*	We do this during inter-act loading to deregister all monster and object COFs but NOT on the player.
+	*	@author	eezstreet
+	*/
+	void DeregisterType(char* type)
+	{
+		for (int i = 0; i < MAX_COF_HASHLEN; i++)
+		{
+			COFHash* pHash = &COFHashTable[i];
+			if (pHash->pFile && pHash->szCOFType[0] && !D2Lib::stricmp(type, pHash->szCOFType))
+			{
+				Deregister((cof_handle)i);
+			}
 		}
 	}
-}
 
-/*
- *	Deregisters ALL COFs.
- *	@author	eezstreet
- */
-void COF_DeregisterAll()
-{
-	for (int i = 0; i < MAX_COF_HASHLEN; i++)
+	/*
+	*	Deregisters ALL COFs.
+	*	@author	eezstreet
+	*/
+	void DeregisterAll()
 	{
-		COFHash* pHash = &COFHashTable[i];
-		if (pHash->pFile)
+		for (int i = 0; i < MAX_COF_HASHLEN; i++)
 		{
-			COF_Deregister((cof_handle)i);
+			COFHash* pHash = &COFHashTable[i];
+			if (pHash->pFile)
+			{
+				Deregister((cof_handle)i);
+			}
 		}
 	}
-}
 
-/*
- *	Returns true if a layer is active on this COF.
- *	@author	eezstreet
- */
-bool COF_LayerPresent(cof_handle cof, int layer)
-{
-	COFHash* pHash;
-
-	if (cof == INVALID_HANDLE || cof >= MAX_COF_HASHLEN)
-	{	// invalid COF handle
-		return false;
-	}
-
-	if (layer < 0 || layer >= COMP_MAX)
-	{	// of course it's not active! it's not a valid layer!
-		return false;
-	}
-
-	pHash = &COFHashTable[cof];
-	if (!pHash->pFile)
-	{	// COF file didn't load correctly?
-		return false;
-	}
-
-	return pHash->pFile->dwLayersPresent & (1 << layer);
-}
-
-/*
- *	Retrieves data about a particular COF file
- *	@author	eezstreet
- */
-COFFile* COF_GetFileData(cof_handle handle)
-{
-	COFHash* pHash;
-
-	if (handle == INVALID_HANDLE)
+	/*
+	*	Returns true if a layer is active on this COF.
+	*	@author	eezstreet
+	*/
+	bool LayerPresent(cof_handle cof, int layer)
 	{
-		return nullptr;
+		COFHash* pHash;
+
+		if (cof == INVALID_HANDLE || cof >= MAX_COF_HASHLEN)
+		{	// invalid COF handle
+			return false;
+		}
+
+		if (layer < 0 || layer >= COMP_MAX)
+		{	// of course it's not active! it's not a valid layer!
+			return false;
+		}
+
+		pHash = &COFHashTable[cof];
+		if (!pHash->pFile)
+		{	// COF file didn't load correctly?
+			return false;
+		}
+
+		return pHash->pFile->dwLayersPresent & (1 << layer);
 	}
 
-	pHash = &COFHashTable[handle];
-	return pHash->pFile;
+	/*
+	*	Retrieves data about a particular COF file
+	*	@author	eezstreet
+	*/
+	COFFile* GetFileData(cof_handle handle)
+	{
+		COFHash* pHash;
+
+		if (handle == INVALID_HANDLE)
+		{
+			return nullptr;
+		}
+
+		pHash = &COFHashTable[handle];
+		return pHash->pFile;
+	}
 }

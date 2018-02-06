@@ -660,55 +660,58 @@ typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports)
 //
 //	Library Functions
 
-// String Management - ASCII
-int D2_stricmpn(char* s1, char* s2, int n);
-int D2_stricmp(char* s1, char* s2);
-void D2_strncpyz(char *dest, const char *src, int destsize);
-DWORD D2_strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);
-
-// String Management - UTF-16
-int D2_qstricmpn(char16_t* s1, char16_t* s2, int n);
-int D2_qstricmp(char16_t* s1, char16_t* s2);
-int D2_qstrcmpn(char16_t* s1, char16_t* s2, int n);
-int D2_qstrcmp(char16_t* s1, char16_t* s2);
-size_t D2_qstrncpyz(char16_t* dest, char16_t* src, size_t destLen);
-size_t D2_qstrlen(char16_t* s1);
-size_t D2_qmbtowc(char16_t* dest, size_t destLen, char* src);
-size_t D2_qwctomb(char* dest, size_t destLen, char16_t* src);
-char16_t* D2_qstrverse(char16_t* s);
-char16_t* D2_qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
-char16_t* D2_qstrchr(char16_t* str, char16_t chr);
-int D2_qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);
-int D2_qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...);
-DWORD D2_qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
-
-// Random Numbers
-DWORD D2_rand();
-DWORD D2_mrand(DWORD dwMax);
-DWORD D2_rrand(DWORD dwMin, DWORD dwMax);
-DWORD D2_srand(D2Seed* pSeed);
-DWORD D2_smrand(D2Seed* pSeed, DWORD dwMax);
-DWORD D2_srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax);
-void D2_seedcopy(D2Seed* pDest, D2Seed* pSrc);
-bool D2_sbrand(D2Seed* pSeed);
-
-// Math
-template <typename T>
-T D2_min(T a, T b)
+namespace D2Lib
 {
-	if (a < b)
-	{
-		return a;
-	}
-	return b;
-}
+	// String Management - ASCII
+	int stricmpn(char* s1, char* s2, int n);
+	int stricmp(char* s1, char* s2);
+	void strncpyz(char *dest, const char *src, int destsize);
+	DWORD strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);
 
-template <typename T>
-T D2_max(T a, T b)
-{
-	if (a > b)
+	// String Management - UTF-16
+	int qstricmpn(char16_t* s1, char16_t* s2, int n);
+	int qstricmp(char16_t* s1, char16_t* s2);
+	int qstrcmpn(char16_t* s1, char16_t* s2, int n);
+	int qstrcmp(char16_t* s1, char16_t* s2);
+	size_t qstrncpyz(char16_t* dest, char16_t* src, size_t destLen);
+	size_t qstrlen(char16_t* s1);
+	size_t qmbtowc(char16_t* dest, size_t destLen, char* src);
+	size_t qwctomb(char* dest, size_t destLen, char16_t* src);
+	char16_t* qstrverse(char16_t* s);
+	char16_t* qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
+	char16_t* qstrchr(char16_t* str, char16_t chr);
+	int qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);
+	int qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...);
+	DWORD qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
+
+	// Random Numbers
+	DWORD rand();
+	DWORD mrand(DWORD dwMax);
+	DWORD rrand(DWORD dwMin, DWORD dwMax);
+	DWORD srand(D2Seed* pSeed);
+	DWORD smrand(D2Seed* pSeed, DWORD dwMax);
+	DWORD srrand(D2Seed* pSeed, DWORD dwMin, DWORD dwMax);
+	void seedcopy(D2Seed* pDest, D2Seed* pSrc);
+	bool sbrand(D2Seed* pSeed);
+
+	// Math
+	template <typename T>
+	T min(T a, T b)
 	{
-		return a;
+		if (a < b)
+		{
+			return a;
+		}
+		return b;
 	}
-	return b;
-}
+
+	template <typename T>
+	T max(T a, T b)
+	{
+		if (a > b)
+		{
+			return a;
+		}
+		return b;
+	}
+};

@@ -47,7 +47,7 @@ D2Widget_TextEntry::~D2Widget_TextEntry()
  */
 void D2Widget_TextEntry::AttachLabel(char16_t* szText)
 {
-	D2_qstrncpyz(szLabel, szText, 32);
+	D2Lib::qstrncpyz(szLabel, szText, 32);
 	m_bHasAttachedText = true;
 }
 
@@ -161,7 +161,7 @@ bool D2Widget_TextEntry::HandleTextInput(char* szText)
 		return true;
 	}
 
-	originalLen = D2_qstrlen(szTextBuffer);
+	originalLen = D2Lib::qstrlen(szTextBuffer);
 
 	if (m_bOverstrikeMode)
 	{
@@ -235,7 +235,7 @@ bool D2Widget_TextEntry::HandleKeyDown(DWORD dwKey)
 			m_nCursorPos = 0;
 			break;
 		case B_END:
-			m_nCursorPos = D2_qstrlen(szTextBuffer);
+			m_nCursorPos = D2Lib::qstrlen(szTextBuffer);
 			break;
 		case B_LEFTARROW:
 			if (m_nCursorPos > 0)
@@ -244,7 +244,7 @@ bool D2Widget_TextEntry::HandleKeyDown(DWORD dwKey)
 			}
 			break;
 		case B_RIGHTARROW:
-			if (m_nCursorPos < D2_qstrlen(szTextBuffer))
+			if (m_nCursorPos < D2Lib::qstrlen(szTextBuffer))
 			{
 				m_nCursorPos++;
 			}

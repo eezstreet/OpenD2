@@ -602,141 +602,196 @@ extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
 //	Functions
 
 // COF.cpp
-cof_handle COF_Register(char* type, char* token, char* animation, char* hitclass);
-void COF_Deregister(cof_handle cof);
-void COF_DeregisterType(char* type);
-void COF_DeregisterAll();
-bool COF_LayerPresent(cof_handle cof, int layer);
-COFFile* COF_GetFileData(cof_handle handle);
+namespace COF
+{
+	cof_handle Register(char* type, char* token, char* animation, char* hitclass);
+	void Deregister(cof_handle cof);
+	void DeregisterType(char* type);
+	void DeregisterAll();
+	bool LayerPresent(cof_handle cof, int layer);
+	COFFile* GetFileData(cof_handle handle);
+};
 
 // DC6.cpp
-void DC6_LoadImage(char* szPath, DC6Image* pImage);
-void DC6_UnloadImage(DC6Image* pImage);
-BYTE* DC6_GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
-void DC6_PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
-	DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
-void DC6_StitchStats(DC6Image* pImage,
-	DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
-void DC6_FreePixels(DC6Image* pImage);
+namespace DC6
+{
+	void LoadImage(char* szPath, DC6Image* pImage);
+	void UnloadImage(DC6Image* pImage);
+	BYTE* GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
+	void PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
+		DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
+	void StitchStats(DC6Image* pImage,
+		DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
+	void FreePixels(DC6Image* pImage);
+};
 
 // DCC.cpp
-void DCC_GlobalInit();
-void DCC_GlobalShutdown();
-anim_handle DCC_Load(char* szPath, char* szName);
-void DCC_IncrementUseCount(anim_handle dccHandle, int amount);
-DCCFile* DCC_GetContents(anim_handle dccHandle);
-void DCC_FreeHandle(anim_handle dcc);
-void DCC_FreeIfInactive(anim_handle handle);
-void DCC_FreeInactive();
-void DCC_FreeByName(char* name);
-void DCC_FreeAll(); 
-DWORD DCC_GetCellCount(int pos, int& sz);
+namespace DCC
+{
+	void GlobalInit();
+	void GlobalShutdown();
+	anim_handle Load(char* szPath, char* szName);
+	void IncrementUseCount(anim_handle dccHandle, int amount);
+	DCCFile* GetContents(anim_handle dccHandle);
+	void FreeHandle(anim_handle dcc);
+	void FreeIfInactive(anim_handle handle);
+	void FreeInactive();
+	void FreeByName(char* name);
+	void FreeAll();
+	DWORD GetCellCount(int pos, int& sz);
+};
 
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
 DWORD GetMilliseconds();
 
 // FileSystem.cpp
-void FS_Init(OpenD2ConfigStrc* pConfig);
-void FS_Shutdown();
-void FS_LogSearchPaths();
-size_t FS_Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false);
-size_t FS_Read(fs_handle f, void* buffer, size_t dwBufferLen = 4, size_t dwCount = 1);
-size_t FS_Write(fs_handle f, void* buffer, size_t dwBufferLen = 1, size_t dwCount = 1);
-size_t FS_WritePlaintext(fs_handle f, char* text);
-void FS_CloseFile(fs_handle f);
-void FS_Seek(fs_handle f, size_t offset, int nSeekType);
-size_t FS_Tell(fs_handle f);
-bool FS_Find(char* szFileName, char* szBuffer, size_t dwBufferLen);
-char** FS_ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles);
-void FS_FreeFileList(char** pszFileList, int nNumFiles);
-void FS_CreateSubdirectory(char* szSubdirectory);
+namespace FS
+{
+	void Init(OpenD2ConfigStrc* pConfig);
+	void Shutdown();
+	void LogSearchPaths();
+	size_t Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false);
+	size_t Read(fs_handle f, void* buffer, size_t dwBufferLen = 4, size_t dwCount = 1);
+	size_t Write(fs_handle f, void* buffer, size_t dwBufferLen = 1, size_t dwCount = 1);
+	size_t WritePlaintext(fs_handle f, char* text);
+	void CloseFile(fs_handle f);
+	void Seek(fs_handle f, size_t offset, int nSeekType);
+	size_t Tell(fs_handle f);
+	bool Find(char* szFileName, char* szBuffer, size_t dwBufferLen);
+	char** ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles);
+	void FreeFileList(char** pszFileList, int nNumFiles);
+	void CreateSubdirectory(char* szSubdirectory);
+};
 
 // FileSystem_MPQ.cpp
-void FSMPQ_Init();
-void FSMPQ_Shutdown();
-D2MPQArchive* FSMPQ_AddSearchPath(char* szMPQName, char* szMPQPath);
-fs_handle FSMPQ_FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+namespace FSMPQ
+{
+	void Init();
+	void Shutdown();
+	D2MPQArchive* AddSearchPath(char* szMPQName, char* szMPQPath);
+	fs_handle FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+}
 
 // INI.cpp
-void INI_WriteConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig);
-void INI_ReadConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig);
+namespace INI
+{
+	void WriteConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig);
+	void ReadConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig);
+}
 
 // Input.cpp
-void In_PumpEvents(OpenD2ConfigStrc* pOpenConfig);
+namespace IN
+{
+	void PumpEvents(OpenD2ConfigStrc* pOpenConfig);
+}
 
 // Logging.cpp
-void Log_InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);
-void Log_Shutdown();
-void Log_Print(OpenD2LogFlags nPriority, char* szFormat, ...);
-void Log_Warning(char* szFile, int nLine, char* szCondition);
-void Log_Error(char* szFile, int nLine, char* szCondition);
-#define Log_WarnAssert(x, y) if(!(x)) { Log_Warning(__FILE__, __LINE__, "" #x); return y; }
-#define Log_ErrorAssert(x, y) if(!(x)) { Log_Error(__FILE__, __LINE__, "" #x); return y; }
+#define Log_WarnAssert(x, y) if(!(x)) { Log::Warning(__FILE__, __LINE__, "" #x); return y; }
+#define Log_ErrorAssert(x, y) if(!(x)) { Log::Error(__FILE__, __LINE__, "" #x); return y; }
+namespace Log
+{
+	void InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);
+	void Shutdown();
+	void Print(OpenD2LogFlags nPriority, char* szFormat, ...);
+	void Warning(char* szFile, int nLine, char* szCondition);
+	void Error(char* szFile, int nLine, char* szCondition);
+}
 
 // MPQ.cpp
-void MPQ_OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
-void MPQ_CloseMPQ(D2MPQArchive* pMPQ);
-fs_handle MPQ_FetchHandle(D2MPQArchive* pMPQ, char* szFileName);
-size_t MPQ_FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
-size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
-void MPQ_Cleanup();
+namespace MPQ
+{
+	void OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
+	void CloseMPQ(D2MPQArchive* pMPQ);
+	fs_handle FetchHandle(D2MPQArchive* pMPQ, char* szFileName);
+	size_t FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
+	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
+	void Cleanup();
+}
 
 // Palette.cpp
-bool Pal_Init();
-D2Palette* Pal_GetPalette(int nIndex);
+namespace Pal
+{
+	bool Init();
+	D2Palette* GetPalette(int nIndex);
+}
 
 // Platform_*.cpp
-void Sys_GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
-void Sys_DefaultHomepath(char* szBuffer, size_t dwBufferLen);
-void Sys_GetSystemInfo(D2SystemInfoStrc* pInfo);
-bool Sys_CreateDirectory(char* szPath);
-void Sys_ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]);
-D2ModuleExportStrc* Sys_OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
-void Sys_CloseModule(OpenD2Modules nModule);
+namespace Sys
+{
+	void GetWorkingDirectory(char* szBuffer, size_t dwBufferLen);
+	void DefaultHomepath(char* szBuffer, size_t dwBufferLen);
+	void GetSystemInfo(D2SystemInfoStrc* pInfo);
+	bool CreateDirectory(char* szPath);
+	void ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]);
+	D2ModuleExportStrc* OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
+	void CloseModule(OpenD2Modules nModule);
+}
 
 // Renderer.cpp
-void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
-void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport);
+namespace Renderer
+{
+	void Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
+	void MapRenderTargetExports(D2ModuleImportStrc* pExport);
+}
 
 // TBL_Font.cpp
-tbl_handle TBLFont_RegisterFont(char* szFontName);
-TBLFontFile* TBLFont_GetPointerFromHandle(tbl_handle handle);
+namespace TBLFont
+{
+	tbl_handle RegisterFont(char* szFontName);
+	TBLFontFile* GetPointerFromHandle(tbl_handle handle);
+}
 
 // TBL_Text.cpp
-tbl_handle TBL_Register(char* szTblFile);
-char16_t* TBL_FindStringFromIndex(DWORD dwIndex);
-tbl_handle TBL_FindStringIndexFromKey(tbl_handle tbl, char16_t* szReference);
-char16_t* TBL_FindStringText(char16_t* szReference);
-void TBL_Init();
-void TBL_Cleanup();
+namespace TBL
+{
+	tbl_handle Register(char* szTblFile);
+	char16_t* FindStringFromIndex(DWORD dwIndex);
+	tbl_handle FindStringIndexFromKey(tbl_handle tbl, char16_t* szReference);
+	char16_t* FindStringText(char16_t* szReference);
+	void Init();
+	void Cleanup();
+}
 
 // Threadpool.cpp
-void T_WaitUntilCompletion();
-void T_SpawnJob(D2AsyncTask job, void* pData);
-void T_Init();
-void T_Shutdown();
+namespace Threadpool
+{
+	void WaitUntilCompletion();
+	void SpawnJob(D2AsyncTask job, void* pData);
+	void Init();
+	void Shutdown();
+}
 
 // Token.cpp - Should maybe move this to gamecode?
-token_handle TOK_RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass);
-void TOK_DeregisterToken(token_handle token);
-AnimToken* TOK_GetAnimData(token_handle token);
-cof_handle TOK_GetCOFData(token_handle token, int mode);
-anim_handle TOK_CreateTokenAnimInstance(token_handle token);
-void TOK_SwapTokenAnimToken(anim_handle handle, token_handle newhandle);
-void TOK_DestroyTokenInstance(anim_handle handle);
-void TOK_SetTokenInstanceComponent(anim_handle handle, int componentNum, char* componentName);
-char* TOK_GetTokenInstanceComponent(anim_handle handle, int component);
-void TOK_SetTokenInstanceFrame(anim_handle handle, int frameNum);
-int TOK_GetTokenInstanceFrame(anim_handle handle);
-char* TOK_GetTokenInstanceWeaponClass(anim_handle handle);
-void TOK_SetInstanceActive(anim_handle handle, bool bNewActive);
-AnimTokenInstance* TOK_GetTokenInstanceData(anim_handle handle);
-void TOK_SetTokenInstanceMode(anim_handle handle, int modeNum);
-void TOK_SetTokenInstanceDirection(anim_handle handle, int dirNum);
+namespace Token
+{
+	token_handle RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass);
+	void DeregisterToken(token_handle token);
+	AnimToken* GetAnimData(token_handle token);
+	cof_handle GetCOFData(token_handle token, int mode);
+}
+
+namespace TokenInstance
+{
+	anim_handle CreateTokenAnimInstance(token_handle token);
+	void SwapTokenAnimToken(anim_handle handle, token_handle newhandle);
+	void DestroyTokenInstance(anim_handle handle);
+	void SetTokenInstanceComponent(anim_handle handle, int componentNum, char* componentName);
+	char* GetTokenInstanceComponent(anim_handle handle, int component);
+	void SetTokenInstanceFrame(anim_handle handle, int frameNum);
+	int GetTokenInstanceFrame(anim_handle handle);
+	char* GetTokenInstanceWeaponClass(anim_handle handle);
+	void SetInstanceActive(anim_handle handle, bool bNewActive);
+	AnimTokenInstance* GetTokenInstanceData(anim_handle handle);
+	void SetTokenInstanceMode(anim_handle handle, int modeNum);
+	void SetTokenInstanceDirection(anim_handle handle, int dirNum);
+}
 
 // Window.cpp
-void D2Win_InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
-void D2Win_ShutdownSDL();
-void D2Win_ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage);
-bool D2Win_InFocus(DWORD nWindowID);
+namespace Window
+{
+	void InitSDL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
+	void ShutdownSDL();
+	void ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage);
+	bool InFocus(DWORD nWindowID);
+}

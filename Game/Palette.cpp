@@ -29,87 +29,90 @@
  *	TODO: handle .pl2 files for colormapping
  */
 
-static bool gbPalettesInitialized = false;
-
-struct D2PaletteEntry {
-	char szPath[MAX_D2PATH];
-	D2Palette pal;
-};
-
-static D2PaletteEntry D2Palettes[PAL_MAX_PALETTES] = {
-	{ "data\\global\\palette\\ACT1\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\ACT2\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\ACT3\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\ACT4\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\ACT5\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\ENDGAME\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\FECHAR\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\LOADING\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\MENU0\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\MENU1\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\MENU2\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\MENU3\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\MENU4\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\SKY\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\STATIC\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\TRADEMARK\\pal.dat",{ 0 } },
-	{ "data\\global\\palette\\UNITS\\pal.dat",{ 0 } },
-};
-
-/*
- *	Registers a palette and stores it in pPalette argument
- */
-static bool Pal_RegisterPalette(char* szPalettePath, D2Palette* pPalette)
+namespace Pal
 {
-	D2MPQArchive* pArchive = nullptr;
+	static bool gbPalettesInitialized = false;
 
-	if (pPalette == nullptr)
-	{	// bad palette pointer
-		return false;
-	}
+	struct D2PaletteEntry {
+		char szPath[MAX_D2PATH];
+		D2Palette pal;
+	};
 
-	fs_handle f = FSMPQ_FindFile(szPalettePath, nullptr, &pArchive);
-	if (f == INVALID_HANDLE || pArchive == nullptr)
-	{	// Couldn't register palette
-		return false;
-	}
+	static D2PaletteEntry D2Palettes[PAL_MAX_PALETTES] = {
+		{ "data\\global\\palette\\ACT1\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ACT2\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ACT3\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ACT4\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ACT5\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ENDGAME\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\FECHAR\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\LOADING\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\MENU0\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\MENU1\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\MENU2\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\MENU3\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\MENU4\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\SKY\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\STATIC\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\TRADEMARK\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\UNITS\\pal.dat",{ 0 } },
+	};
 
-	size_t dwPaletteSize = MPQ_FileSize(pArchive, f);
-	if (dwPaletteSize != sizeof(D2Palette))
-	{	// Not correct size = don't load
-		return false;
-	}
-
-	// read the palette
-	MPQ_ReadFile(pArchive, f, **pPalette, dwPaletteSize);
-	return true;
-}
-
-/*
- *	Initializes the palette subsystem
- */
-bool Pal_Init()
-{
-	for (int i = 0; i < PAL_MAX_PALETTES; i++)
+	/*
+	 *	Registers a palette and stores it in pPalette argument
+	 */
+	static bool RegisterPalette(char* szPalettePath, D2Palette* pPalette)
 	{
-		D2PaletteEntry* pEntry = &D2Palettes[i];
-		if (!Pal_RegisterPalette(pEntry->szPath, &pEntry->pal))
-		{
+		D2MPQArchive* pArchive = nullptr;
+
+		if (pPalette == nullptr)
+		{	// bad palette pointer
 			return false;
 		}
-	}
-	gbPalettesInitialized = true;
-	return true;
-}
 
-/*
- *	Retrieves a palette with the specified index
- */
-D2Palette* Pal_GetPalette(int nIndex)
-{
-	if (!gbPalettesInitialized || nIndex < 0 || nIndex >= PAL_MAX_PALETTES)
-	{
-		return nullptr;
+		fs_handle f = FSMPQ::FindFile(szPalettePath, nullptr, &pArchive);
+		if (f == INVALID_HANDLE || pArchive == nullptr)
+		{	// Couldn't register palette
+			return false;
+		}
+
+		size_t dwPaletteSize = MPQ::FileSize(pArchive, f);
+		if (dwPaletteSize != sizeof(D2Palette))
+		{	// Not correct size = don't load
+			return false;
+		}
+
+		// read the palette
+		MPQ::ReadFile(pArchive, f, **pPalette, dwPaletteSize);
+		return true;
 	}
-	return &D2Palettes[nIndex].pal;
+
+	/*
+	 *	Initializes the palette subsystem
+	 */
+	bool Init()
+	{
+		for (int i = 0; i < PAL_MAX_PALETTES; i++)
+		{
+			D2PaletteEntry* pEntry = &D2Palettes[i];
+			if (!RegisterPalette(pEntry->szPath, &pEntry->pal))
+			{
+				return false;
+			}
+		}
+		gbPalettesInitialized = true;
+		return true;
+	}
+
+	/*
+	 *	Retrieves a palette with the specified index
+	 */
+	D2Palette* GetPalette(int nIndex)
+	{
+		if (!gbPalettesInitialized || nIndex < 0 || nIndex >= PAL_MAX_PALETTES)
+		{
+			return nullptr;
+		}
+		return &D2Palettes[nIndex].pal;
+	}
 }

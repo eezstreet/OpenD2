@@ -49,7 +49,7 @@ void D2Widget_Checkbox::Draw()
  */
 void D2Widget_Checkbox::AttachLabel(char16_t* szText)
 {
-	D2_qstrncpyz(szLabel, szText, 32);
+	D2Lib::qstrncpyz(szLabel, szText, 32);
 	m_bHasLabel = true;
 }
 

@@ -26,7 +26,7 @@ public:
 	void AttachLabel(char16_t* szText);
 	void DetachLabel();
 	char16_t* GetText() { return szTextBuffer; }
-	size_t GetTextLength() { return D2_qstrlen(szTextBuffer); }
+	size_t GetTextLength() { return D2Lib::qstrlen(szTextBuffer); }
 
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
 	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY);

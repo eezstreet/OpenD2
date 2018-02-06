@@ -16,7 +16,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
 	D2Menu_CharCreate* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
 
-	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cc_cancel"))
+	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cc_cancel"))
 	{
 		delete cl.pActiveMenu;
 		
@@ -31,7 +31,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 		}
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cc_ok"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cc_ok"))
 	{
 		// NOTE: in the Diablo 2 code, it checks if there is enough disk space available in order to create a savegame.
 		// It checks for there being exactly 5000 bytes being free on the hard drive.

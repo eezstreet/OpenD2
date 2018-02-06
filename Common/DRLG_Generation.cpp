@@ -34,7 +34,7 @@ DRLGRoomEx* DRLG_AllocateRoomEx(DRLGLevel* pLevel, int nPresetType)
 	pRoom->pLevel = pLevel;
 	pRoom->ePresetType = nPresetType;
 	pRoom->eRoomStatus = STATUS_INITED_UNTILED;
-	D2_seedcopy(&pRoom->RoomExSeed, &pLevel->LevelSeed);
+	D2Lib::seedcopy(&pRoom->RoomExSeed, &pLevel->LevelSeed);
 	pRoom->dwInitSeed = pRoom->RoomExSeed.dwLoSeed;
 
 	// Reveal it on the automap, if it needs to be revealed
@@ -194,7 +194,7 @@ DRLGLevel* DRLG_CreateLevel(DRLGMisc* pMisc, int nLevel)
 	}
 
 	// Fill in data about the level
-	pLevel->dwStartSeed = D2_srand(&pMisc->MiscSeed);
+	pLevel->dwStartSeed = D2Lib::srand(&pMisc->MiscSeed);
 	pLevel->LevelSeed.dwLoSeed = pLevel->dwStartSeed;
 	pLevel->LevelSeed.dwHiSeed = SEED_MAGIC;
 	pLevel->nLevel = nLevel;

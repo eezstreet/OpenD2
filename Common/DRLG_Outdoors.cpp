@@ -39,7 +39,7 @@ static DWORD DRLG_MaskSubtypes(DRLGRoomEx* pRoomEx, int nSubtype, int nSubTheme)
 	// OK cool we found it. Keep iterating through the file, applying dt1mask and picked types until we run out of types
 	while (pStart && nIterator < nLvlSubMax && pStart->dwType == nSubtype)
 	{
-		if (D2_smrand(&pRoomEx->RoomExSeed, 100) < pStart->dwProb[nSubTheme])
+		if (D2Lib::smrand(&pRoomEx->RoomExSeed, 100) < pStart->dwProb[nSubTheme])
 		{
 			dwResult |= (1 << nMiniIterator);
 			pRoomEx->dwDT1Mask |= pStart->dwDt1Mask;

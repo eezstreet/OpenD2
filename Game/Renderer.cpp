@@ -53,63 +53,66 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 	},
 };
 
-/*
- *	Initializes the renderer.
- *	Call after the window has been created.
- */
-void Render_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow)
+namespace Renderer
 {
-	OpenD2RenderTargets DesiredRenderTarget = OD2RT_SDL;
-
-	// Determine which render target to go with
-	if (pConfig->bOpenGL || pConfig->bD3D || pOpenConfig->bNoSDLAccel)
+	/*
+	 *	Initializes the renderer.
+	 *	Call after the window has been created.
+	 */
+	void Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow)
 	{
-		DesiredRenderTarget = OD2RT_OPENGL;
+		OpenD2RenderTargets DesiredRenderTarget = OD2RT_SDL;
+
+		// Determine which render target to go with
+		if (pConfig->bOpenGL || pConfig->bD3D || pOpenConfig->bNoSDLAccel)
+		{
+			DesiredRenderTarget = OD2RT_OPENGL;
+		}
+		else
+		{
+			DesiredRenderTarget = OD2RT_SDL;
+		}
+
+		// Load palettes
+		Pal::Init();
+		DCC::GlobalInit();
+
+		RenderTarget = &RenderTargets[DesiredRenderTarget];
+		RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);
 	}
-	else
+
+	/*
+	 *	Map rendertarget exports to game module exports
+	 *	@author	eezstreet
+	 */
+	void MapRenderTargetExports(D2ModuleImportStrc* pExport)
 	{
-		DesiredRenderTarget = OD2RT_SDL;
+		pExport->R_RegisterDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
+		pExport->R_RegisterAnimatedDC6 = RenderTarget->RF_TextureFromAnimatedDC6;
+		pExport->R_DrawTexture = RenderTarget->RF_DrawTexture;
+		pExport->R_DrawTextureFrame = RenderTarget->RF_DrawTextureFrame;
+		pExport->R_DrawTextureFrames = RenderTarget->RF_DrawTextureFrames;
+		pExport->R_SetTextureBlendMode = RenderTarget->RF_SetTextureBlendMode;
+		pExport->R_Present = RenderTarget->RF_Present;
+		pExport->R_DeregisterTexture = RenderTarget->RF_DeregisterTexture;
+		pExport->R_PollTexture = RenderTarget->RF_PollTexture;
+		pExport->R_PixelPerfectDetect = RenderTarget->RF_PixelPerfectDetect;
+		pExport->R_RegisterAnimation = RenderTarget->RF_RegisterDCCAnimation;
+		pExport->R_DeregisterAnimation = RenderTarget->RF_DeregisterAnimation;
+		pExport->R_Animate = RenderTarget->RF_Animate;
+		pExport->R_SetAnimFrame = RenderTarget->RF_SetAnimFrame;
+		pExport->R_GetAnimFrame = RenderTarget->RF_GetAnimFrame;
+		pExport->R_AddAnimKeyframe = RenderTarget->RF_AddAnimKeyframe;
+		pExport->R_RemoveAnimKeyframe = RenderTarget->RF_RemoveAnimKeyframe;
+		pExport->R_GetAnimFrameCount = RenderTarget->RF_GetAnimFrameCount;
+		pExport->R_RegisterFont = RenderTarget->RF_RegisterFont;
+		pExport->R_DeregisterFont = RenderTarget->RF_DeregisterFont;
+		pExport->R_DrawText = RenderTarget->RF_DrawText;
+		pExport->R_AlphaModTexture = RenderTarget->RF_AlphaModTexture;
+		pExport->R_ColorModTexture = RenderTarget->RF_ColorModTexture;
+		pExport->R_AlphaModFont = RenderTarget->RF_AlphaModFont;
+		pExport->R_ColorModFont = RenderTarget->RF_ColorModFont;
+		pExport->R_DrawRectangle = RenderTarget->RF_DrawRectangle;
+		pExport->R_DrawTokenInstance = RenderTarget->RF_DrawTokenInstance;
 	}
-
-	// Load palettes
-	Pal_Init();
-	DCC_GlobalInit();
-
-	RenderTarget = &RenderTargets[DesiredRenderTarget];
-	RenderTarget->RF_Init(pConfig, pOpenConfig, pWindow);
-}
-
-/*
- *	Map rendertarget exports to game module exports
- *	@author	eezstreet
- */
-void Render_MapRenderTargetExports(D2ModuleImportStrc* pExport)
-{
-	pExport->R_RegisterDC6Texture = RenderTarget->RF_TextureFromStitchedDC6;
-	pExport->R_RegisterAnimatedDC6 = RenderTarget->RF_TextureFromAnimatedDC6;
-	pExport->R_DrawTexture = RenderTarget->RF_DrawTexture;
-	pExport->R_DrawTextureFrame = RenderTarget->RF_DrawTextureFrame;
-	pExport->R_DrawTextureFrames = RenderTarget->RF_DrawTextureFrames;
-	pExport->R_SetTextureBlendMode = RenderTarget->RF_SetTextureBlendMode;
-	pExport->R_Present = RenderTarget->RF_Present;
-	pExport->R_DeregisterTexture = RenderTarget->RF_DeregisterTexture;
-	pExport->R_PollTexture = RenderTarget->RF_PollTexture;
-	pExport->R_PixelPerfectDetect = RenderTarget->RF_PixelPerfectDetect;
-	pExport->R_RegisterAnimation = RenderTarget->RF_RegisterDCCAnimation;
-	pExport->R_DeregisterAnimation = RenderTarget->RF_DeregisterAnimation;
-	pExport->R_Animate = RenderTarget->RF_Animate;
-	pExport->R_SetAnimFrame = RenderTarget->RF_SetAnimFrame;
-	pExport->R_GetAnimFrame = RenderTarget->RF_GetAnimFrame;
-	pExport->R_AddAnimKeyframe = RenderTarget->RF_AddAnimKeyframe;
-	pExport->R_RemoveAnimKeyframe = RenderTarget->RF_RemoveAnimKeyframe;
-	pExport->R_GetAnimFrameCount = RenderTarget->RF_GetAnimFrameCount;
-	pExport->R_RegisterFont = RenderTarget->RF_RegisterFont;
-	pExport->R_DeregisterFont = RenderTarget->RF_DeregisterFont;
-	pExport->R_DrawText = RenderTarget->RF_DrawText;
-	pExport->R_AlphaModTexture = RenderTarget->RF_AlphaModTexture;
-	pExport->R_ColorModTexture = RenderTarget->RF_ColorModTexture;
-	pExport->R_AlphaModFont = RenderTarget->RF_AlphaModFont;
-	pExport->R_ColorModFont = RenderTarget->RF_ColorModFont;
-	pExport->R_DrawRectangle = RenderTarget->RF_DrawRectangle;
-	pExport->R_DrawTokenInstance = RenderTarget->RF_DrawTokenInstance;
 }

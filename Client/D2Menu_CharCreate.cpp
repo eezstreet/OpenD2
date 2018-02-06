@@ -473,7 +473,7 @@ bool D2Menu_CharCreate::TrySaveCharacter()
 	fs_handle	f;
 
 	// convert player name to ascii
-	D2_qwctomb(szPlayerName, 16, pDynamicPanel->GetName());
+	D2Lib::qwctomb(szPlayerName, 16, pDynamicPanel->GetName());
 
 	// create save directory
 	trap->FS_CreateSubdirectory(GAME_SAVE_PATH);
@@ -525,7 +525,7 @@ bool D2Menu_CharCreate::TrySaveCharacter()
 	trap->FS_Write(f, &save.header, sizeof(save.header), 1);
 	trap->FS_CloseFile(f);
 
-	D2_strncpyz(cl.szCurrentSave, szSavePath, MAX_D2PATH);
+	D2Lib::strncpyz(cl.szCurrentSave, szSavePath, MAX_D2PATH);
 
 	return true;
 }

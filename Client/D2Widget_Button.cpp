@@ -93,7 +93,7 @@ void D2Widget_Button::Draw()
  */
 void D2Widget_Button::AttachText(char16_t* szText)
 {
-	D2_qstrncpyz(buttonTextBuffer, szText, 64);
+	D2Lib::qstrncpyz(buttonTextBuffer, szText, 64);
 	bHasText = true;
 }
 

@@ -213,17 +213,17 @@ static DRLGMisc* DRLG_CreateMiscData(DRLGAct* pAct, bool bServer, int nDifficult
 		//	* Staff Tomb (tomb that leads to Duriel)
 		//	* Boss Tomb (tomb that leads to Ancient Kaa the Soulless)
 		// These two values cannot be the same thing (just reroll until two distinct values are found)
-		pMisc->nStaffTombLvl = D2_smrand(&pMisc->MiscSeed, 7);
+		pMisc->nStaffTombLvl = D2Lib::smrand(&pMisc->MiscSeed, 7);
 		do
 		{
-			pMisc->nBossTombLvl = D2_smrand(&pMisc->MiscSeed, 7);
+			pMisc->nBossTombLvl = D2Lib::smrand(&pMisc->MiscSeed, 7);
 		} while (pMisc->nBossTombLvl == pMisc->nStaffTombLvl);
 	}
 	else if (pMisc->nAct == D2_ACT_III)
 	{
 		// Act III has a special value that we need to randomize:
 		//	* Whether or not to use Great Marsh as an interlink between Spider Forest and Flayer Jungle
-		pMisc->bJungleInterlink = D2_sbrand(&pMisc->MiscSeed);
+		pMisc->bJungleInterlink = D2Lib::sbrand(&pMisc->MiscSeed);
 	}
 
 	// Initialize the room sectors

@@ -135,8 +135,8 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	CharacterSaveData* pSaveData = (CharacterSaveData*)malloc(sizeof(CharacterSaveData));
 
 	// Copy the path, name, and header data
-	D2_strncpyz(pSaveData->path, path, MAX_D2PATH_ABSOLUTE);
-	D2_qmbtowc(pSaveData->name, 16, header.szCharacterName);
+	D2Lib::strncpyz(pSaveData->path, path, MAX_D2PATH_ABSOLUTE);
+	D2Lib::qmbtowc(pSaveData->name, 16, header.szCharacterName);
 	pSaveData->header = header;
 
 	// Register the animations for it.
@@ -293,11 +293,11 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Draw character level and class
 	trap->R_ColorModFont(cl.font16, 255, 255, 255);
 	// Format it so that it will read "Level %d <Class>
-	D2_qsnprintf(szCharacterLevelClass, 32, u"%s %s",
+	D2Lib::qsnprintf(szCharacterLevelClass, 32, u"%s %s",
 		trap->TBL_FindStringFromIndex(5017),
 		Client_className(pSaveData->header.nCharClass));
 	// Reformat it again so that the level is filled in
-	D2_qsnprintf(szDisplayString, 32, szCharacterLevelClass, pSaveData->header.nCharLevel);
+	D2Lib::qsnprintf(szDisplayString, 32, szCharacterLevelClass, pSaveData->header.nCharLevel);
 	// Now draw it!
 	trap->R_DrawText(cl.font16, szDisplayString, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	nY += 15;

@@ -31,7 +31,7 @@ D2Widget::~D2Widget()
 void D2Widget::AttachIdentifier(char* szIdentifier)
 {
 	bHasIdentifier = true;
-	D2_strncpyz(identifier, szIdentifier, 64);
+	D2Lib::strncpyz(identifier, szIdentifier, 64);
 }
 
 /*

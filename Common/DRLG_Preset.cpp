@@ -17,7 +17,7 @@ void DRLG_PresetLevelAllocate(DRLGLevel* pLevel)
 	// Otherwise, use the last direction field set in the miscdata.
 	if (pPrest->dwFiles)
 	{
-		pLevel->pPreset->nFile = D2_smrand(&pLevel->LevelSeed, pPrest->dwFiles);
+		pLevel->pPreset->nFile = D2Lib::smrand(&pLevel->LevelSeed, pPrest->dwFiles);
 	}
 	else
 	{
@@ -79,7 +79,7 @@ DRLGMap* DRLG_CreateDRLGMap(DRLGLevel* pLevel, DRLGCoordBox* pCoords)
 	// Select the file used
 	if (pLevel->pPreset->nFile == -1)
 	{
-		pMap->nFilePicked = D2_smrand(&pLevel->LevelSeed, pLvlPrest->dwFiles);
+		pMap->nFilePicked = D2Lib::smrand(&pLevel->LevelSeed, pLvlPrest->dwFiles);
 	}
 	else
 	{

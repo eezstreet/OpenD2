@@ -25,14 +25,14 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
 	D2Menu_CharSelect* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
 
-	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cs_exit"))
+	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_exit"))
 	{
 		// Exit button pressed
 		delete cl.pActiveMenu;
 		cl.pActiveMenu = new D2Menu_Main();
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cs_ok"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_ok"))
 	{
 		// OK button pressed
 		if (pCharMenu->CharacterChosen())
@@ -43,19 +43,19 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 			return;
 		}
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cs_delete"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_delete"))
 	{
 		// Delete character button pressed
 		pCharMenu->AskForDeletionConfirmation();
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cs_convert"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_convert"))
 	{
 		// Convert character button pressed
 		// Currently doesn't do anything.
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "cs_new"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_new"))
 	{
 		// New character button pressed
 		delete cl.pActiveMenu;
@@ -189,13 +189,13 @@ static void PanelSignal_DeleteConfirm(D2Panel* pCallerPanel, D2Widget* pCallerWi
 {
 	D2Menu_CharSelect* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
 
-	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "csc_ok"))
+	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "csc_ok"))
 	{
 		// Delete the selected character
 		pCharMenu->DeleteConfirmed();
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "csc_cancel"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "csc_cancel"))
 	{
 		// I changed my mind, go back!
 		pCharMenu->DeleteCanceled();

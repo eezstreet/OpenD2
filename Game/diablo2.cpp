@@ -86,49 +86,49 @@ D2CmdArgStrc OpenD2CommandArguments[] = {
 static D2ModuleImportStrc exports = {
 	D2CLIENTAPI_VERSION,
 
-	Log_Print,
-	Log_Warning,
-	Log_Error,
+	Log::Print,
+	Log::Warning,
+	Log::Error,
 	GetMilliseconds,
 
-	FS_Open,
-	FS_Read,
-	FS_Write,
-	FS_WritePlaintext,
-	FS_CloseFile,
-	FS_Seek,
-	FS_Tell,
-	FS_ListFilesInDirectory,
-	FS_FreeFileList,
-	FS_CreateSubdirectory,
+	FS::Open,
+	FS::Read,
+	FS::Write,
+	FS::WritePlaintext,
+	FS::CloseFile,
+	FS::Seek,
+	FS::Tell,
+	FS::ListFilesInDirectory,
+	FS::FreeFileList,
+	FS::CreateSubdirectory,
 
-	In_PumpEvents,
+	IN::PumpEvents,
 	SDL_StartTextInput,
 	SDL_StopTextInput,
 
-	FSMPQ_FindFile,
-	MPQ_FileSize,
-	MPQ_ReadFile,
+	FSMPQ::FindFile,
+	MPQ::FileSize,
+	MPQ::ReadFile,
 
-	TBL_Register,
-	TBL_FindStringFromIndex,
-	TBL_FindStringIndexFromKey,
-	TBL_FindStringText,
+	TBL::Register,
+	TBL::FindStringFromIndex,
+	TBL::FindStringIndexFromKey,
+	TBL::FindStringText,
 
-	TOK_RegisterToken,
-	TOK_DeregisterToken,
+	Token::RegisterToken,
+	Token::DeregisterToken,
 
-	TOK_CreateTokenAnimInstance,
-	TOK_SwapTokenAnimToken,
-	TOK_DestroyTokenInstance,
-	TOK_SetTokenInstanceComponent,
-	TOK_GetTokenInstanceComponent,
-	TOK_SetTokenInstanceFrame,
-	TOK_GetTokenInstanceFrame,
-	TOK_GetTokenInstanceWeaponClass,
-	TOK_SetInstanceActive,
-	TOK_SetTokenInstanceMode,
-	TOK_SetTokenInstanceDirection,
+	TokenInstance::CreateTokenAnimInstance,
+	TokenInstance::SwapTokenAnimToken,
+	TokenInstance::DestroyTokenInstance,
+	TokenInstance::SetTokenInstanceComponent,
+	TokenInstance::GetTokenInstanceComponent,
+	TokenInstance::SetTokenInstanceFrame,
+	TokenInstance::GetTokenInstanceFrame,
+	TokenInstance::GetTokenInstanceWeaponClass,
+	TokenInstance::SetInstanceActive,
+	TokenInstance::SetTokenInstanceMode,
+	TokenInstance::SetTokenInstanceDirection,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
@@ -157,7 +157,7 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 	pArg = CommandArguments;
 	while (pArg != nullptr && pArg->szCmdName[0] != '\0')
 	{
-		if (!D2_stricmpn(arg, pArg->szCmdName, strlen(pArg->szCmdName)))
+		if (!D2Lib::stricmpn(arg, pArg->szCmdName, strlen(pArg->szCmdName)))
 		{
 			// It's this one!
 			break;
@@ -188,7 +188,7 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 		case CMD_STRING:
 			if (*(arg + strlen(pArg->szCmdName)) == '=')
 			{
-				D2_strncpyz(((char*)config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, 32);
+				D2Lib::strncpyz(((char*)config + pArg->nOffset), arg + strlen(pArg->szCmdName) + 1, 32);
 			}
 			break;
 	}
@@ -210,7 +210,7 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 	pArg = OpenD2CommandArguments;
 	while (pArg != nullptr && pArg->szCmdName[0] != '\0')
 	{
-		if (!D2_stricmpn(arg, pArg->szCmdName, strlen(pArg->szCmdName)))
+		if (!D2Lib::stricmpn(arg, pArg->szCmdName, strlen(pArg->szCmdName)))
 		{	// it's this one
 			break;
 		}
@@ -252,7 +252,7 @@ void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 			// in OpenD2 we take the default argument type as meaning the size of the string to copy into
 			if (*(arg + dwArgLen) == '=')
 			{
-				D2_strncpyz(((char*)config + pArg->nOffset), arg + dwArgLen + 1, pArg->dwDefault);
+				D2Lib::strncpyz(((char*)config + pArg->nOffset), arg + dwArgLen + 1, pArg->dwDefault);
 			}
 			break;
 	}
@@ -333,7 +333,7 @@ static void CleanupModule(OpenD2Modules module)
 	{
 		imports[module]->CleanupModule();
 	}
-	Sys_CloseModule(module);
+	Sys::CloseModule(module);
 }
 
 /*
@@ -354,12 +354,12 @@ static void WriteGameConfig(D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOp
 {
 	fs_handle f;
 
-	FS_Open(GAME_CONFIG_PATH, &f, FS_WRITE);
+	FS::Open(GAME_CONFIG_PATH, &f, FS_WRITE);
 	Log_ErrorAssert(f != INVALID_HANDLE);
 
-	INI_WriteConfig(&f, pGameConfig, pOpenConfig);
+	INI::WriteConfig(&f, pGameConfig, pOpenConfig);
 
-	FS_CloseFile(f);
+	FS::CloseFile(f);
 }
 
 /*
@@ -369,15 +369,15 @@ static void ReadGameConfig(D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpe
 {
 	fs_handle f;
 
-	FS_Open(GAME_CONFIG_PATH, &f, FS_READ);
+	FS::Open(GAME_CONFIG_PATH, &f, FS_READ);
 	if (f == INVALID_HANDLE)
 	{	// the config file doesn't exist. WE NEED TO COPY FROM THE REGISTRY!
 		return;
 	}
 
-	INI_ReadConfig(&f, pGameConfig, pOpenConfig);
+	INI::ReadConfig(&f, pGameConfig, pOpenConfig);
 
-	FS_CloseFile(f);
+	FS::CloseFile(f);
 }
 
 /*
@@ -393,15 +393,15 @@ int InitGame(int argc, char** argv, DWORD pid)
 	PopulateConfiguration(&config, &openD2Config);
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
-	T_Init();
-	FS_Init(&openD2Config);
-	Log_InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
-	FS_LogSearchPaths();
+	Threadpool::Init();
+	FS::Init(&openD2Config);
+	Log::InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
+	FS::LogSearchPaths();
 	ReadGameConfig(&config, &openD2Config);
-	TBL_Init();
+	TBL::Init();
 
-	D2Win_InitSDL(&config, &openD2Config); // renderer also gets initialized here
-	Render_MapRenderTargetExports(&exports);
+	Window::InitSDL(&config, &openD2Config); // renderer also gets initialized here
+	Renderer::MapRenderTargetExports(&exports);
 	
 	// Main loop: execute modules until one of the modules has had enough
 	while (currentModule != MODULE_NONE)
@@ -413,7 +413,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 		// Open the desired module if it does not exist
 		if (imports[currentModule] == nullptr)
 		{
-			imports[currentModule] = Sys_OpenModule(currentModule, &exports);
+			imports[currentModule] = Sys::OpenModule(currentModule, &exports);
 			if (imports[currentModule] == nullptr || 
 				imports[currentModule]->nApiVersion != D2CLIENTAPI_VERSION)
 			{
@@ -442,14 +442,14 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	CleanupAllModules();
 
-	D2Win_ShutdownSDL();	// renderer also gets shut down here
+	Window::ShutdownSDL();	// renderer also gets shut down here
 
 	WriteGameConfig(&config, &openD2Config);
-	TBL_Cleanup();
-	COF_DeregisterAll();
-	Log_Shutdown();
-	FS_Shutdown();
-	T_Shutdown();
+	TBL::Cleanup();
+	COF::DeregisterAll();
+	Log::Shutdown();
+	FS::Shutdown();
+	Threadpool::Shutdown();
 
 	return 0;
 }

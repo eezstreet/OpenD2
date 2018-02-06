@@ -115,24 +115,24 @@ static void D2PanelMain_AdvanceToCharSelect()
  */
 void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
-	if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
+	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
 	{	// singleplayer button got clicked
 		D2PanelMain_AdvanceToCharSelect();
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_mul"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_mul"))
 	{	// multiplayer button got clicked
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_cred"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_cred"))
 	{	// credits button got clicked
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_cin"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_cin"))
 	{	// cinematics button got clicked
 		return;
 	}
-	else if (!D2_stricmp(pCallerWidget->GetIdentifier(), "b_exit"))
+	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_exit"))
 	{	// exit button got clicked
 		cl.bKillGame = true;
 		return;
