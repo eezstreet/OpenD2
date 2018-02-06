@@ -211,6 +211,7 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 	// Second part: build a bitmap based on the cells data
 	// FIXME: segregate this code to being renderer specific instead of this whole function being renderer-specific
 	BYTE* bitmap = new BYTE[nDirectionW * nDirectionH];
+	SDL_Surface* pFrameSurf = nullptr;
 	dwDirectionW = nDirectionW;
 	dwDirectionH = nDirectionH;
 
@@ -364,9 +365,25 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 			nCountI = 4;
 		}
 
-		SDL_Surface* pFrameSurf = SDL_CreateRGBSurfaceFrom(bitmap, nDirectionW, nDirectionH, 8, nDirectionW, 0, 0, 0, 0);
-		SDL_SetSurfacePalette(pFrameSurf, PaletteCache[PAL_UNITS].pPal);
+		if (pFrameSurf == nullptr)
+		{
+			pFrameSurf = SDL_CreateRGBSurfaceFrom(bitmap, nDirectionW, nDirectionH, 8, nDirectionW, 0, 0, 0, 0);
+			SDL_SetSurfacePalette(pFrameSurf, PaletteCache[PAL_UNITS].pPal);
+		}
+		else
+		{
+			if (SDL_MUSTLOCK(pFrameSurf))
+			{
+				SDL_LockSurface(pFrameSurf);
+			}
 
+			memcpy(pFrameSurf->pixels, bitmap, nDirectionW * nDirectionH);
+
+			if (SDL_MUSTLOCK(pFrameSurf))
+			{
+				SDL_UnlockSurface(pFrameSurf);
+			}
+		}
 #if 0
 		// save frame as BMP
 		char testFrameName[32];
@@ -376,7 +393,10 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 
 		// Create a new texture from this surface, for this frame		
 		pTexture[f] = SDL_CreateTextureFromSurface(gpRenderer, pFrameSurf);
+	}
 
+	if (pFrameSurf != nullptr)
+	{
 		// remove the surface, we don't need it anymore
 		SDL_FreeSurface(pFrameSurf);
 	}
