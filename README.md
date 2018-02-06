@@ -1,6 +1,8 @@
 # OpenD2
 A project to open-source Diablo 2, under the GNU General Public License.
 
+![Diablo II Main Menu in OpenD2](https://i.imgur.com/RFNbRiT.png)
+
 ### Project Goals
 Simply put, this project is a total rewrite of the game engine. It uses the original game files, and uses the original game's save files. Ideally it will also be compatible in TCP/IP games with the original client, but this may not be feasible.
 
