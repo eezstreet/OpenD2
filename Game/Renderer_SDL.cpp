@@ -769,7 +769,7 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 			pQueue = DCCLRU[ATYPE_MONSTER];
 			break;
 	}
-	for (int i = 0; i < COMP_MAX; i++)
+	for (int i = COMP_MAX-1; i >= 0; i--)
 	{
 		anim_handle curAnim = pInstance->componentAnims[pInstance->currentMode][i];
 		SDLLRUItem* pItem;
