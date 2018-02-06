@@ -21,7 +21,7 @@ private:
 	char16_t szLabel[32];
 public:
 	D2Widget_TextEntry(int x, int y, bool bStartFocus, bool bAlwaysFocus, bool bCharSelect);
-	~D2Widget_TextEntry();
+	virtual ~D2Widget_TextEntry();
 
 	void AttachLabel(char16_t* szText);
 	void DetachLabel();

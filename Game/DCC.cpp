@@ -87,16 +87,16 @@ static void DCC_ReadFrameHeader(DCCFrame& frame, DCCDirection& direction, Bitstr
 {
 	memset(&frame, 0, sizeof(DCCFrame));
 
-#define ReadBits(x, y)	if(y != 0) pBits->ReadBits((DWORD*)&x, y);
-	ReadBits(frame.dwVariable0, direction.nVar0Bits);
-	ReadBits(frame.dwWidth, direction.nWidthBits);
-	ReadBits(frame.dwHeight, direction.nHeightBits);
-	ReadBits(frame.nXOffset, direction.nXOffsetBits);
-	ReadBits(frame.nYOffset, direction.nYOffsetBits);
-	ReadBits(*frame.pOptionalByteData, frame.dwOptionalBytes);
-	ReadBits(frame.dwCodedBytes, direction.nCodedBytesBits);
-	ReadBits(frame.dwFlipped, 1);
-#undef ReadBits
+#define ReadHeaderBits(x, y)	if(y != 0) pBits->ReadBits((DWORD*)&x, y);
+	ReadHeaderBits(frame.dwVariable0, direction.nVar0Bits);
+	ReadHeaderBits(frame.dwWidth, direction.nWidthBits);
+	ReadHeaderBits(frame.dwHeight, direction.nHeightBits);
+	ReadHeaderBits(frame.nXOffset, direction.nXOffsetBits);
+	ReadHeaderBits(frame.nYOffset, direction.nYOffsetBits);
+	ReadHeaderBits(*frame.pOptionalByteData, frame.dwOptionalBytes);
+	ReadHeaderBits(frame.dwCodedBytes, direction.nCodedBytesBits);
+	ReadHeaderBits(frame.dwFlipped, 1);
+#undef ReadHeaderBits
 
 	pBits->ConvertFormat(&frame.nXOffset, direction.nXOffsetBits);
 	pBits->ConvertFormat(&frame.nYOffset, direction.nYOffsetBits);

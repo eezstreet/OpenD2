@@ -492,6 +492,7 @@ void TOK_SetInstanceActive(anim_handle handle, bool bNewActive)
 			{
 				if (!COF_LayerPresent(pCOFs[i], j))
 				{	// layer not present in the COF, so it is not drawn
+					pInstance->componentAnims[i][j] = INVALID_HANDLE;
 					continue;
 				}
 

@@ -28,7 +28,7 @@ private:
 	void Clicked(DWORD dwX, DWORD dwY);
 public:
 	D2Widget_CharSelectList(int x, int y, int w, int h);
-	~D2Widget_CharSelectList();
+	virtual ~D2Widget_CharSelectList();
 
 	void AddSave(D2SaveHeader& header, char* path);
 	char16_t* GetSelectedCharacterName();

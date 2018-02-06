@@ -17,7 +17,7 @@ private:
 	D2Widget_CharSelectList*	charSelectList;
 public:
 	D2Panel_CharSelect();
-	~D2Panel_CharSelect();
+	virtual ~D2Panel_CharSelect();
 
 	void LoadSave(D2SaveHeader& pSaveHeader, char* path);
 	void InvalidateSelection();

@@ -52,7 +52,7 @@ public:
 	bool	m_bFromCharSelect;
 
 	D2Menu_CharCreate(bool bFromCharSelect = false);
-	~D2Menu_CharCreate();
+	virtual ~D2Menu_CharCreate();
 
 	virtual void Draw();
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);

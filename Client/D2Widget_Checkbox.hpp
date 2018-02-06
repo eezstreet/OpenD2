@@ -13,7 +13,7 @@ private:
 	bool m_bChecked;
 public:
 	D2Widget_Checkbox(int x, int y, bool bStartChecked);
-	~D2Widget_Checkbox();
+	virtual ~D2Widget_Checkbox();
 
 	bool IsChecked() { return m_bChecked; }
 

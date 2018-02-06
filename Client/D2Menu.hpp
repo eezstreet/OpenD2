@@ -47,5 +47,5 @@ public:
 	static void ProcessMenuSignals(D2Menu* pMenu);
 
 	D2Menu();
-	~D2Menu();
+	virtual ~D2Menu();
 };

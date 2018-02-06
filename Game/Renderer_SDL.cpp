@@ -367,9 +367,12 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 		SDL_Surface* pFrameSurf = SDL_CreateRGBSurfaceFrom(bitmap, nDirectionW, nDirectionH, 8, nDirectionW, 0, 0, 0, 0);
 		SDL_SetSurfacePalette(pFrameSurf, PaletteCache[PAL_UNITS].pPal);
 
-		/*char testFrameName[32];
+#if 0
+		// save frame as BMP
+		char testFrameName[32];
 		snprintf(testFrameName, 32, "test%04d.bmp", f);
-		SDL_SaveBMP(pFrameSurf, testFrameName);*/
+		SDL_SaveBMP(pFrameSurf, testFrameName);
+#endif
 
 		// Create a new texture from this surface, for this frame		
 		pTexture[f] = SDL_CreateTextureFromSurface(gpRenderer, pFrameSurf);

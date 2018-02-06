@@ -22,7 +22,7 @@ public:
 		DWORD dwStartEnabled, DWORD dwEndEnabled,
 		DWORD dwStartDown, DWORD dwEndDown, 
 		DWORD dwStartDisabled, DWORD dwEndDisabled);
-	~D2Widget_Button();
+	virtual ~D2Widget_Button();
 
 	void AttachText(char16_t* text);
 	void DetachText();

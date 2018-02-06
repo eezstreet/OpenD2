@@ -56,7 +56,7 @@ public:
 
 	int x, y;
 
-	~D2Panel();
+	virtual ~D2Panel();
 
 	friend class D2Menu;
 };

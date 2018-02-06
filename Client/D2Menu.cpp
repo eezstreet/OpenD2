@@ -14,22 +14,7 @@ D2Menu::D2Menu() : m_panels(nullptr), m_visiblePanels(nullptr), bSignalReady(fal
  */
 D2Menu::~D2Menu()
 {
-	// Delete all of the panels
-	D2Panel* pPanel = m_panels;
-	D2Panel* pPrevPanel = nullptr;
-
-	while (pPanel != nullptr)
-	{
-		Log_WarnAssert((pPanel->GetOwner() == this));
-		delete pPrevPanel;
-		pPrevPanel = pPanel;
-		pPanel = pPanel->GetNext();
-	}
-
-	if (pPrevPanel != nullptr)
-	{
-		delete pPrevPanel;
-	}
+	// It is up to subclasses to delete their own widgets (maybe should change this?)
 }
 
 /*

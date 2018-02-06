@@ -22,7 +22,7 @@ private:
 
 public:
 	D2Panel_Main();
-	~D2Panel_Main();
+	virtual ~D2Panel_Main();
 
 	virtual void Draw();
 };

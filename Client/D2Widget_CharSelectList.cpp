@@ -117,6 +117,10 @@ D2Widget_CharSelectList::~D2Widget_CharSelectList()
 	while (pCurrent != nullptr)
 	{
 		CharacterSaveData* pNext = pCurrent->pNext;
+		if (pCurrent->tokenInstance != INVALID_HANDLE)
+		{
+			trap->TOK_DestroyTokenInstance(pCurrent->tokenInstance);
+		}
 		free(pCurrent);
 		pCurrent = pNext;
 	}

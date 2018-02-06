@@ -20,8 +20,8 @@ private:
 
 public:
 	D2Widget(int x, int y, int w, int h);
-	~D2Widget();
 	D2Widget();
+	virtual ~D2Widget();
 
 	bool IsVisible() { return m_bVisible; }
 	void Show() { m_bVisible = true; }

@@ -16,7 +16,7 @@ private:
 
 public:
 	D2Menu_Trademark();
-	~D2Menu_Trademark();
+	virtual ~D2Menu_Trademark();
 
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual bool WaitingSignal();

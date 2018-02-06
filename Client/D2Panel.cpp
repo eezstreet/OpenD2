@@ -6,23 +6,7 @@
  */
 D2Panel::~D2Panel()
 {
-	D2Widget* pCurrent = m_widgets;
-	D2Widget* pPrev = nullptr;
-
-	while (pCurrent != nullptr)
-	{
-		if (pPrev != nullptr)
-		{
-			delete pPrev;
-		}
-		pPrev = pCurrent;
-		pCurrent = pCurrent->m_pNextWidget;
-	}
-	
-	if (pPrev != nullptr)
-	{
-		delete pPrev;
-	}
+	// It is up to the children to clear out their associated widgets (maybe should change this?)
 }
 
 /*

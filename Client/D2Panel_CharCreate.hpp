@@ -21,7 +21,7 @@ public:
 	void DisableOKButton() { pOKButton->Disable(); }
 
 	D2Panel_CharCreate_Static();
-	~D2Panel_CharCreate_Static();
+	virtual ~D2Panel_CharCreate_Static();
 };
 
 class D2Panel_CharCreate_Dynamic : public D2Panel
