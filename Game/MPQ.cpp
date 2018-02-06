@@ -542,7 +542,7 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 	}
 
 	if (pBlock->dwFlags & MPQ_FILE_IMPLODE || pBlock->dwFlags & MPQ_FILE_COMPRESS)
-	{
+	{	// Compressed file. Around 90% of the blocks are compressed in this manner.
 		dwNumBlocks = ((pBlock->dwFSize - 1) / pMPQ->wSectorSize) + 2;
 
 		FS_Seek(pMPQ->f, pBlock->dwFilePos, FS_SEEK_SET);
@@ -598,6 +598,40 @@ size_t MPQ_ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwB
 			pTempBuffer += dwBlockLengthRead;
 			dwTotalAmountRead += dwBufferFilled;
 		}
+	}
+	else
+	{	// Uncompressed file - Very few files are uncompressed but some (like Druid and Assassin character animations) are.
+		DWORD dwFullBlocks, dwPartialBlock;
+		DWORD dwFileSize = pBlock->dwCSize;
+		DWORD dwReadSize = 0x60000;
+
+		if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
+		{	// FIXME: apply fixes from Paul's code here
+			return 0;
+		}
+
+		if (dwFileSize < dwReadSize)
+		{	// This last block is very short, we need to only read that part
+			dwReadSize = dwFileSize;
+		}
+
+		// Compute the number of blocks that we need to read
+		dwPartialBlock = dwFileSize % dwReadSize;
+		dwFullBlocks = (dwFileSize - dwPartialBlock) / dwReadSize;
+
+		// Seek to the part of the MPQ in question
+		FS_Seek(pMPQ->f, pBlock->dwFilePos, FS_SEEK_SET);
+
+		// Read all of the full blocks
+		for (DWORD j = 0; j < dwFullBlocks; j++)
+		{
+			FS_Read(pMPQ->f, buffer + dwTotalAmountRead, dwReadSize);
+			dwTotalAmountRead += dwReadSize;
+		}
+
+		// Read the remaining partial block
+		FS_Read(pMPQ->f, buffer + dwTotalAmountRead, dwBufferLen - dwTotalAmountRead);
+		dwTotalAmountRead += dwPartialBlock;
 	}
 
 	return dwTotalAmountRead;
