@@ -24,6 +24,7 @@
 #define GAME_HOMEPATH		"Diablo II"
 #define	GAME_CONFIG_PATH	"D2.ini"
 #define GAME_SAVE_PATH		"Save"
+#define GAME_PORT			6006
 
 /*
  *	The following languages are known to exist:
@@ -49,6 +50,8 @@
 #define	MAX_D2PATH_ABSOLUTE	1024
 #define	MAX_D2PATH			64
 #define MAX_FILE_LIST_SIZE	128
+#define MAX_PLAYERS_VIRTUAL	128		// how many players we can simulate in the treasure system
+#define MAX_PLAYERS_REAL	8		// how many players can actually exist in the game at once
 
 //////////////////////////////////////////////////
 //
