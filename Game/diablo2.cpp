@@ -102,6 +102,15 @@ static D2ModuleImportStrc exports = {
 	FS::FreeFileList,
 	FS::CreateSubdirectory,
 
+	Network::SendServerPacket,
+	Network::SendClientPacket,
+	Network::SetMaxPlayerCount,
+	Network::ConnectToServer,
+	Network::DisconnectFromServer,
+	Network::StartListen,
+	Network::StopListening,
+	Network::GetLocalIP,
+
 	IN::PumpEvents,
 	SDL_StartTextInput,
 	SDL_StopTextInput,
@@ -389,10 +398,12 @@ int InitGame(int argc, char** argv, DWORD pid)
 {
 	D2GameConfigStrc config{ 0 };
 	OpenD2ConfigStrc openD2Config{ 0 };
+	DWORD dwDesiredFrameMsec;
 
 	PopulateConfiguration(&config, &openD2Config);
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
+	Network::Init();
 	Threadpool::Init();
 	FS::Init(&openD2Config);
 	Log::InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
@@ -402,13 +413,22 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	Window::InitSDL(&config, &openD2Config); // renderer also gets initialized here
 	Renderer::MapRenderTargetExports(&exports);
+
+	if (config.dwFramerate > 0)
+	{
+		dwDesiredFrameMsec = (1000 / config.dwFramerate);
+	}
+	else
+	{
+		dwDesiredFrameMsec = 16;	// 60fps
+	}
 	
 	// Main loop: execute modules until one of the modules has had enough
 	while (currentModule != MODULE_NONE)
 	{
 		OpenD2Modules previousModule = currentModule;
 		DWORD dwPreTick = SDL_GetTicks();
-		DWORD dwPostTick, dwFrameMsec;
+		DWORD dwPostTick, dwFrameMsec, dwSplitFrameMsec;
 
 		// Open the desired module if it does not exist
 		if (imports[currentModule] == nullptr)
@@ -429,14 +449,49 @@ int InitGame(int argc, char** argv, DWORD pid)
 			CleanupModule(previousModule);
 			imports[previousModule] = nullptr;
 			currentModule = MODULE_CLIENT;
+			continue;
+		}
+		else if (currentModule == MODULE_NONE)
+		{
+			break;
 		}
 
-		// Lock the framerate
 		dwPostTick = SDL_GetTicks();
 		dwFrameMsec = dwPostTick - dwPreTick;
-		if (config.dwFramerate > 0 && dwFrameMsec < (1000 / config.dwFramerate))
+
+		if (currentModule != previousModule)
 		{
-			SDL_Delay((1000 / config.dwFramerate) - dwFrameMsec);
+			// We are running on a split instance. We need to divide the time in half across two modules.
+			dwSplitFrameMsec = dwDesiredFrameMsec / 2;
+		}
+		else
+		{
+			// We are not running on a split instance. Therefore, use whatever is leftover.
+			dwSplitFrameMsec = dwDesiredFrameMsec;
+		}
+
+		if (dwFrameMsec > dwSplitFrameMsec)
+		{	// we can go negative here and break the read process
+			dwFrameMsec = dwSplitFrameMsec = 0;
+		}
+
+		if (currentModule == MODULE_SERVER)
+		{
+			// Handle server socket
+			dwFrameMsec = Network::ReadServerPackets(dwSplitFrameMsec - dwFrameMsec);
+		}
+		else if (currentModule == MODULE_CLIENT)
+		{
+			// Handle client socket
+			dwFrameMsec = Network::ReadClientPackets(dwSplitFrameMsec - dwFrameMsec);
+		}
+
+		// Lock the framerate.
+		// We do this by two means: waiting on sockets, and waiting on the game.
+		// The latter is handled below.
+		if (dwFrameMsec > 0)
+		{
+			SDL_Delay(dwFrameMsec);
 		}
 	}
 
@@ -444,6 +499,7 @@ int InitGame(int argc, char** argv, DWORD pid)
 
 	Window::ShutdownSDL();	// renderer also gets shut down here
 
+	Network::Shutdown();
 	WriteGameConfig(&config, &openD2Config);
 	TBL::Cleanup();
 	COF::DeregisterAll();

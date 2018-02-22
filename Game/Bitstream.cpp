@@ -24,6 +24,17 @@ Bitstream::~Bitstream()
 }
 
 /*
+ *	Retrieves the data in a bitstream.
+ *	The outSize argument is filled with the size of the bitstream.
+ *	@author	eezstreet
+ */
+BYTE* Bitstream::GetHeldData(size_t& outSize)
+{
+	outSize = dwTotalStreamSizeBytes;
+	return pStream;
+}
+
+/*
  *	Load in a stream using external memory storage.
  *	The external source is not modified and needs to be freed manually when the stream is destroyed.
  *	@author	eezstreet

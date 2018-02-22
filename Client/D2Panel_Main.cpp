@@ -1,6 +1,7 @@
 #include "D2Panel_Main.hpp"
 #include "D2Menu_CharCreate.hpp"
 #include "D2Menu_CharSelect.hpp"
+#include "D2Menu_OtherMultiplayer.hpp"
 
 #define TBLTEXT_SINGLEPLAYER	5106
 #define TBLTEXT_BATTLENET		5107
@@ -117,11 +118,14 @@ void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
 	{	// singleplayer button got clicked
+		trap->NET_SetPlayerCount(1);	// only one player can join
 		D2PanelMain_AdvanceToCharSelect();
 		return;
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_mul"))
 	{	// multiplayer button got clicked
+		delete cl.pActiveMenu;
+		cl.pActiveMenu = new D2Menu_OtherMultiplayer();
 		return;
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_cred"))

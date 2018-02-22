@@ -44,7 +44,7 @@ if(BUILD_GAME)
 	set_target_properties(game PROPERTIES OUTPUT_NAME game)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 
-	set(SDL_LIBRARY SDL2.lib SDL2main.lib SDL2test.lib)
+	set(SDL_LIBRARY SDL2.lib SDL2main.lib SDL2test.lib SDL2_net.lib)
 
 	target_link_libraries(game ${STATIC_LIBRARIES} ${SDL_LIBRARY})
 	target_compile_definitions(game PUBLIC D2EXE)

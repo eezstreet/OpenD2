@@ -283,10 +283,6 @@ struct D2Savegame
 D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
 D2COMMONAPI void D2Common_Shutdown();
 
-// DRLG.cpp
-D2COMMONAPI BYTE DRLG_GetLevelActNum(int nLevel);
-D2COMMONAPI void DRLG_CreateAct(int nAct, bool bServer, DWORD dwInitSeed, int nDifficulty, int nTown);
-
 
 ////////////////////////////////////////////////
 //

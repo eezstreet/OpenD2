@@ -16,6 +16,7 @@
 #define GAME_MAJOR_VERSION	1
 #define	GAME_MINOR_VERSION	10
 #define	GAME_TRAILER		"f"
+#define GAME_FULL_UTF16		u"Diablo II 1.10f"
 
 #define EXPANSION			// If not present, we are compiling D2 Classic!
 
@@ -112,6 +113,7 @@ typedef pixel D2Palette[256];
 typedef void	(*D2AsyncTask)(void* pData);
 
 struct D2MPQArchive;
+struct D2Packet;
 
 enum OpenD2Paths
 {
@@ -556,8 +558,8 @@ struct OpenD2ConfigStrc
 
 enum OpenD2Modules
 {
-	MODULE_CLIENT,	// Submodule: D2Client
-	MODULE_SERVER,	// Submodule: D2Game
+	MODULE_CLIENT,		// Submodule: D2Client
+	MODULE_SERVER,		// Submodule: D2Game
 	MODULE_MAX,
 	MODULE_NONE,
 	MODULE_CLEAN,
@@ -584,6 +586,16 @@ struct D2ModuleImportStrc
 	char**			(*FS_ListFilesInDirectory)(char* szDirectory, char* szExtensionFilter, int *nFiles);
 	void			(*FS_FreeFileList)(char** pszFileList, int nNumFiles);
 	void			(*FS_CreateSubdirectory)(char* szSubdirectory);
+
+	// Network subsystem calls
+	void			(*NET_SendServerPacket)(int nClientMask, D2Packet* pPacket);
+	void			(*NET_SendClientPacket)(D2Packet* pPacket);
+	void			(*NET_SetPlayerCount)(DWORD dwNewPlayerCount);
+	bool			(*NET_Connect)(char* szServerAddress, DWORD dwPort);
+	void			(*NET_Disconnect)();
+	void			(*NET_Listen)(DWORD dwPort);
+	void			(*NET_StopListen)();
+	void			(*NET_GetLocalIP)(char16_t* szBuffer, size_t dwBufferLen, DWORD dwPort);
 
 	// Input calls
 	void			(*In_PumpEvents)(OpenD2ConfigStrc* pOpenConfig);
@@ -655,6 +667,7 @@ struct D2ModuleExportStrc
 
 	OpenD2Modules	(*RunModuleFrame)(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
 	void			(*CleanupModule)();
+	bool			(*HandlePacket)(D2Packet* pPacket);
 };
 
 typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports);

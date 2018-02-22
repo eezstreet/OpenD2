@@ -32,6 +32,16 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 }
 
 /*
+ *	Set up local game server
+ *	@author	eezstreet
+ */
+void D2Client_CreateServer()
+{
+	trap->NET_Listen(GAME_PORT);
+	cl.bLocalServer = true;
+}
+
+/*
  *	Pump input
  */
 static void D2Client_HandleInput()
@@ -152,7 +162,6 @@ static void D2Client_LoadData()
 	else if (cl.nLoadState == 3)
 	{	// START HERE if in an inter-act loading.
 		// Create the level
-		DRLG_CreateAct(0, false, rand(), 0, 1);
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 4)

@@ -1,12 +1,13 @@
-#include "D2Menu_Main.hpp"
+#include "D2Menu_OtherMultiplayer.hpp"
 
 /*
- *	Creates the main menu
+ *	Creates the Other Multiplayer menu.
  *	@author	eezstreet
  */
-D2Menu_Main::D2Menu_Main() : D2Menu()
+D2Menu_OtherMultiplayer::D2Menu_OtherMultiplayer() : D2Menu()
 {
-	tex_handle flameLeftTex = 
+	// Copied from the Main Menu
+	tex_handle flameLeftTex =
 		trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
 	tex_handle flameRightTex =
 		trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireRight.dc6", "flameright", PAL_UNITS);
@@ -26,32 +27,31 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 	blackRightAnim = trap->R_RegisterAnimation(blackRightTex, "blackright", 0);
 
 #ifdef EXPANSION
-	backgroundTexture = 
+	backgroundTexture =
 		trap->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6", "mainbg", 0, 11, PAL_UNITS);
 #else
 	backgroundTexture =
 		trap->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\gameselectscreen.dc6", "mainbg", 0, 11, PAL_UNITS);
 #endif
 
-	pMainPanel = new D2Panel_Main();
-	AddPanel(pMainPanel);
+	m_panel = new D2Panel_OtherMultiplayer();
+	AddPanel(m_panel);
 }
 
 /*
- *	Destroys the main menu
+ *	Destroys the Other Multiplayer menu.
  *	@author	eezstreet
  */
-D2Menu_Main::~D2Menu_Main()
+D2Menu_OtherMultiplayer::~D2Menu_OtherMultiplayer()
 {
-	// We don't kill the game select background, because we might need it again later
-	delete pMainPanel;
+	delete m_panel;
 }
 
 /*
- *	Draws the main menu
+ *	Draws the Other Multiplayer menu.
  *	@author	eezstreet
  */
-void D2Menu_Main::Draw()
+void D2Menu_OtherMultiplayer::Draw()
 {
 	// Draw the background
 	trap->R_DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);

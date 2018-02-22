@@ -171,5 +171,7 @@ namespace Log
 
 		// pull us out of the main game loop
 		currentModule = MODULE_NONE;
+
+		exit(1);
 	}
 }

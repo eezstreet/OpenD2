@@ -225,7 +225,7 @@ namespace D2Lib
 	{
 		size_t len = qstrlen(s);
 
-		for (size_t i = len - 1; i > 0; i++)
+		for (size_t i = len - 1; i > 0; i--)
 		{
 			char16_t character = s[i];
 			s[i] = s[i - 1];

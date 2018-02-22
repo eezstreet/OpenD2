@@ -70,3 +70,9 @@ extern D2Client cl;
 
 bool Client_classMale(int nCharClass);
 char16_t* Client_className(int nCharClass);
+
+/////////////////////////////////////////////////
+//
+//	Client functions
+
+void D2Client_CreateServer();

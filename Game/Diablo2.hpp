@@ -1,5 +1,6 @@
 #pragma once
 #include "../Shared/D2Shared.hpp"
+#include "../Shared/D2Packets.hpp"
 #include "../Libraries/sdl/SDL.h"
 
 /////////////////////////////////////////////////////////
@@ -82,6 +83,8 @@ public:
 	void Rewind();
 
 	size_t GetRemainingReadBits();
+
+	BYTE* GetHeldData(size_t& outSize);
 
 private:
 	int ReadBits(int bitsCount);
@@ -596,6 +599,25 @@ struct D2Renderer
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
+
+/*
+ *	Networking functions
+ */
+namespace Network
+{
+	void SendServerPacket(int nClientMask, D2Packet* pPacket);
+	void SendClientPacket(D2Packet* pPacket);
+	void SetMaxPlayerCount(DWORD dwNewPlayerCount);
+	DWORD ReadClientPackets(DWORD dwTimeout);
+	DWORD ReadServerPackets(DWORD dwTimeout);
+	bool ConnectToServer(char* szServerAddress, DWORD dwPort);
+	void DisconnectFromServer();
+	void StartListen(DWORD dwPort);
+	void StopListening();
+	void Init();
+	void Shutdown();
+	void GetLocalIP(char16_t* szBuffer, size_t bufferSize, DWORD dwPort);
+};
 
 /////////////////////////////////////////////////////////
 //
