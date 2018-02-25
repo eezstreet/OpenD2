@@ -19,8 +19,8 @@ D2Menu_TCPIP::D2Menu_TCPIP() : D2Menu()
 
 	HidePanel(m_joinMenu);
 
-	trap->NET_GetLocalIP(m_ipStringBuffer, 32, GAME_PORT);
 	m_yourIPString = trap->TBL_FindStringFromIndex(TBLTEXT_YOURIP);
+	m_yourIP = trap->NET_GetLocalIP();
 }
 
 /*
@@ -43,10 +43,10 @@ void D2Menu_TCPIP::Draw()
 	trap->R_DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
 	// Draw the "Your IP Address is:" string
-	trap->R_DrawText(cl.fontFormal12, m_yourIPString, 265, 110, 300, 15, ALIGN_CENTER, ALIGN_TOP);
+	trap->R_DrawText(cl.fontFormal12, m_yourIPString, 0, 110, 800, 15, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the IP string
-	trap->R_DrawText(cl.fontFormal12, m_ipStringBuffer, 265, 130, 300, 15, ALIGN_CENTER, ALIGN_TOP);
+	trap->R_DrawText(cl.fontFormal12, m_yourIP, 0, 130, 800, 15, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the panel
 	DrawAllPanels();

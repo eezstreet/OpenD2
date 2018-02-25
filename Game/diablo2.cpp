@@ -109,7 +109,7 @@ static D2ModuleImportStrc exports = {
 	Network::DisconnectFromServer,
 	Network::StartListen,
 	Network::StopListening,
-	Network::GetLocalIP,
+	Sys::GetAdapterIP,
 
 	IN::PumpEvents,
 	SDL_StartTextInput,

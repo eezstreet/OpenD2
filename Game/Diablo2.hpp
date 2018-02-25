@@ -616,7 +616,6 @@ namespace Network
 	void StopListening();
 	void Init();
 	void Shutdown();
-	void GetLocalIP(char16_t* szBuffer, size_t bufferSize, DWORD dwPort);
 };
 
 /////////////////////////////////////////////////////////
@@ -748,6 +747,7 @@ namespace Sys
 	void ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]);
 	D2ModuleExportStrc* OpenModule(OpenD2Modules nModule, D2ModuleImportStrc* pImports);
 	void CloseModule(OpenD2Modules nModule);
+	char16_t* GetAdapterIP();
 }
 
 // Renderer.cpp

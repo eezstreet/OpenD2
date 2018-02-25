@@ -221,18 +221,18 @@ namespace D2Lib
 	*	Reverses a char16_t string.
 	*	@author	eezstreet
 	*/
-	char16_t* qstrverse(char16_t* s)
+	void qstrverse(char16_t* s, int start, size_t len)
 	{
-		size_t len = qstrlen(s);
+		char16_t temp;
 
-		for (size_t i = len - 1; i > 0; i--)
+		temp = s[start];
+		s[start] = s[len - start];
+		s[len - start] = temp;
+		if (start == len / 2)
 		{
-			char16_t character = s[i];
-			s[i] = s[i - 1];
-			s[i - 1] = character;
+			return;
 		}
-
-		return s;
+		qstrverse(s, start + 1, len);
 	}
 
 	/*
@@ -262,7 +262,6 @@ namespace D2Lib
 			int rem = number % base;
 			buffer[written++] = (rem > 9) ? (rem - 10) + 'A' : rem + '0';
 			number = number / base;
-			written++;
 		}
 
 		// Append - to the end
@@ -289,7 +288,7 @@ namespace D2Lib
 		}
 
 		// Reverse the string
-		qstrverse(buffer);
+		qstrverse(buffer, 0, written - 1);
 
 		return buffer;
 	}
@@ -415,7 +414,7 @@ namespace D2Lib
 			}
 			else
 			{
-				dest[len] = src[len];
+				dest[len] = (char)src[len];
 			}
 			len++;
 		}

@@ -400,46 +400,6 @@ namespace Network
 	}
 
 	/*
-	 *	Retrieve the local IP address in UTF-16 encoding.
-	 *	@author	eezstreet
-	 */
-	void GetLocalIP(char16_t* szBuffer, size_t bufferSize, DWORD dwPort)
-	{
-		int result;
-		IPaddress serverIP;
-		BYTE* pDotQuad;
-		size_t dwOffset = 0;
-		size_t dwWritten = 0;
-
-		result = SDLNet_ResolveHost(&serverIP, nullptr, dwPort);
-		pDotQuad = (BYTE*)&serverIP.host;
-
-		// Dot quad digits
-		for (int i = 0; i < 4; i++)
-		{
-			D2Lib::qnitoa(pDotQuad[i], szBuffer + dwOffset, bufferSize - dwOffset, 10, dwWritten);
-			dwOffset += dwWritten;
-
-			if (dwOffset >= bufferSize)
-			{
-				return;
-			}
-
-			if (i == 3)
-			{
-				szBuffer[dwOffset++] = u':';
-			}
-			else
-			{
-				szBuffer[dwOffset++] = u'.';
-			}
-		}
-
-		// Port
-		D2Lib::qnitoa(dwPort, szBuffer + dwOffset, bufferSize - dwOffset, 10, dwWritten);
-	}
-
-	/*
 	 *	Start up the networking subsystem.
 	 *	@author	eezstreet
 	 */

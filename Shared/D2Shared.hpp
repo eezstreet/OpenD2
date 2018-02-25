@@ -25,7 +25,7 @@
 #define GAME_HOMEPATH		"Diablo II"
 #define	GAME_CONFIG_PATH	"D2.ini"
 #define GAME_SAVE_PATH		"Save"
-#define GAME_PORT			6006
+#define GAME_PORT			6112
 
 /*
  *	The following languages are known to exist:
@@ -595,7 +595,7 @@ struct D2ModuleImportStrc
 	void			(*NET_Disconnect)();
 	void			(*NET_Listen)(DWORD dwPort);
 	void			(*NET_StopListen)();
-	void			(*NET_GetLocalIP)(char16_t* szBuffer, size_t dwBufferLen, DWORD dwPort);
+	char16_t*		(*NET_GetLocalIP)();
 
 	// Input calls
 	void			(*In_PumpEvents)(OpenD2ConfigStrc* pOpenConfig);
@@ -693,7 +693,7 @@ namespace D2Lib
 	size_t qstrlen(char16_t* s1);
 	size_t qmbtowc(char16_t* dest, size_t destLen, char* src);
 	size_t qwctomb(char* dest, size_t destLen, char16_t* src);
-	char16_t* qstrverse(char16_t* s);
+	void qstrverse(char16_t* s, int start, size_t len);
 	char16_t* qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
 	char16_t* qstrchr(char16_t* str, char16_t chr);
 	int qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);

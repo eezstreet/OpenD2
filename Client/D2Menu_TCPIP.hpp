@@ -8,8 +8,8 @@ class D2Menu_TCPIP : public D2Menu
 private:
 	tex_handle backgroundTexture;
 
-	char16_t m_ipStringBuffer[32];
 	char16_t* m_yourIPString;
+	char16_t* m_yourIP;
 
 	D2Panel_TCPIPJoin* m_joinMenu;
 	D2Panel_TCPIPMain* m_mainMenu;

@@ -52,6 +52,10 @@ D2Panel_TCPIPMain::~D2Panel_TCPIPMain()
  */
 void D2Panel_TCPIPMain::Draw()
 {
+	// Draw the big title at the top of the screen
+	trap->R_DrawText(cl.font42, trap->TBL_FindStringFromIndex(5117), 0, 70, 800, 50, ALIGN_CENTER, ALIGN_TOP);
+
+	// Draw all of the widgets
 	DrawAllWidgets();
 }
 

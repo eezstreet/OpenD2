@@ -5,6 +5,11 @@
 #include <cstdio>
 #include <shlobj.h>
 #include <crtdbg.h>
+#include <winsock2.h>
+#include <iphlpapi.h>
+
+// Link with Iphlpapi.lib
+#pragma comment(lib, "IPHLPAPI.lib")
 
 #define D2REGISTRY_BETA_KEY	"SOFTWARE\\Blizzard Entertainment\\Diablo II Beta"
 #define D2REGISTRY_KEY		"SOFTWARE\\Blizzard Entertainment\\Diablo II"
@@ -74,6 +79,52 @@ namespace Sys
 	void CopySettings()
 	{
 
+	}
+
+	/*
+	 *	Get topmost adapter IP address
+	 */
+#define ADAPTER_LIST_SIZE	15000
+	char16_t* GetAdapterIP()
+	{
+		IP_ADAPTER_ADDRESSES* addresses = (IP_ADAPTER_ADDRESSES*)malloc(ADAPTER_LIST_SIZE);
+		PIP_ADAPTER_ADDRESSES currAddress;
+		DWORD dwSize = ADAPTER_LIST_SIZE;
+		static char16_t szAddress[32];
+
+		if (GetAdaptersAddresses(AF_INET, 0, nullptr, addresses, &dwSize) != ERROR_BUFFER_OVERFLOW)
+		{
+			currAddress = (PIP_ADAPTER_ADDRESSES)addresses;
+			while (currAddress)
+			{
+				if (currAddress->OperStatus == IfOperStatusUp && currAddress->Ipv4Enabled &&
+					currAddress->FirstUnicastAddress)
+				{	// current adapter is operational, is IPv4 enabled and has TCP (unicast) capabilities
+					DWORD dwOffset = 0;
+					for (int i = 2; i < 6; i++)
+					{
+						size_t dwWritten = 0;
+
+						if (i != 2)
+						{	// add dots between the numbers
+							szAddress[dwOffset++] = u'.';
+						}
+
+						// put the number on
+						D2Lib::qnitoa((BYTE)currAddress->FirstUnicastAddress->Address.lpSockaddr->sa_data[i],
+							szAddress + dwOffset, 32 - dwOffset, 10, dwWritten);
+						dwOffset += dwWritten;
+					}
+					free(addresses);
+					return szAddress;
+				}
+				currAddress = currAddress->Next;
+			}
+		}
+
+		free(addresses);
+		D2Lib::qsnprintf(szAddress, 32, u"0.0.0.0");
+		return szAddress;
 	}
 
 	/*
