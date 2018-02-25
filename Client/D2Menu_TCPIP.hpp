@@ -17,4 +17,6 @@ public:
 	D2Menu_TCPIP();
 	virtual ~D2Menu_TCPIP();
 	virtual void Draw();
+
+	void ShowJoinSubmenu(bool bShow);
 };

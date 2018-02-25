@@ -1,5 +1,6 @@
 #include "D2Panel_TCPIPMain.hpp"
 #include "D2Menu_OtherMultiplayer.hpp"
+#include "D2Menu_TCPIP.hpp"
 
 #define MAIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\3WideButtonBlank.dc6"
 #define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
@@ -60,6 +61,24 @@ void D2Panel_TCPIPMain::Draw()
 }
 
 /*
+ *	Enable/disable the Host Game and Join Game buttons (Join Game was clicked)
+ *	@author	eezstreet
+ */
+void D2Panel_TCPIPMain::EnableButtons(bool bEnable)
+{
+	if (bEnable)
+	{
+		m_hostGameButton->Enable();
+		m_joinGameButton->Enable();
+	}
+	else
+	{
+		m_hostGameButton->Disable();
+		m_joinGameButton->Disable();
+	}
+}
+
+/*
  *	The signal for when a button on the TCP/IP menu is clicked.
  *	@author	eezstreet
  */
@@ -71,7 +90,8 @@ void D2Panel_TCPIPMain::PanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWi
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))
 	{
-
+		D2Menu_TCPIP* pMenu = (D2Menu_TCPIP*)cl.pActiveMenu;
+		pMenu->ShowJoinSubmenu(true);
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_cancel"))
 	{

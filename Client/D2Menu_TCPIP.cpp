@@ -51,3 +51,20 @@ void D2Menu_TCPIP::Draw()
 	// Draw the panel
 	DrawAllPanels();
 }
+
+/*
+ *	Show or hide the Join Game submenu
+ *	@author	eezstreet
+ */
+void D2Menu_TCPIP::ShowJoinSubmenu(bool bShow)
+{
+	m_mainMenu->EnableButtons(!bShow);
+	if (bShow)
+	{
+		ShowPanel(m_joinMenu);
+	}
+	else
+	{
+		HidePanel(m_joinMenu);
+	}
+}

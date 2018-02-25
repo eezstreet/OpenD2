@@ -94,7 +94,7 @@ D2Panel_CharCreate_Dynamic::D2Panel_CharCreate_Dynamic() : D2Panel()
 	x = 320;
 	y = 490;
 
-	pNameEntry = new D2Widget_TextEntry(0, 0, true, true, true);
+	pNameEntry = new D2Widget_TextEntry(0, 0, true, true, true, false);
 	pExpansionCheckbox = new D2Widget_Checkbox(0, 35, true);
 	pHardcoreCheckbox = new D2Widget_Checkbox(0, 55, false);
 

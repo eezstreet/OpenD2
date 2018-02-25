@@ -4,7 +4,7 @@
  *	Creates the text entry widget
  *	@author	eezstreet
  */
-D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bAlwaysFocus, bool bCharSelect) : D2Widget()
+D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bAlwaysFocus, bool bCharSelect, bool bIP) : D2Widget()
 {
 	x = _x;
 	y = _y;
@@ -21,6 +21,11 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 		backgroundTexture = 
 			trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
 		backgroundAnim = trap->R_RegisterAnimation(backgroundTexture, "textbox", 0);
+	}
+	else if (bIP)
+	{
+		backgroundTexture = trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
+		backgroundAnim = trap->R_RegisterAnimation(backgroundTexture, "ipaddressbox", 0);
 	}
 	else
 	{
