@@ -68,9 +68,25 @@ void D2Menu::ShowPanel(D2Panel* pPanel)
 	// Show it, firing off its events
 	pPanel->Show();
 
-	// Most recently shown panel is shown on the bottom.
-	pPanel->m_pNextVisible = m_visiblePanels;
-	m_visiblePanels = pPanel;
+	// Most recently shown panel is on the end of the list, so it gets rendered last.
+	if (m_visiblePanels == nullptr)
+	{
+		pPanel->m_pNextVisible = m_visiblePanels;
+		m_visiblePanels = pPanel;
+	}
+	else
+	{
+		D2Panel* pCurrent = m_visiblePanels;
+		D2Panel* pPrev = nullptr;
+
+		while (pCurrent != nullptr)
+		{
+			pPrev = pCurrent;
+			pCurrent = pCurrent->m_pNextVisible;
+		}
+
+		pPrev->m_pNextVisible = pPanel;
+	}
 }
 
 /*

@@ -58,7 +58,7 @@ void D2Widget_Button::Draw()
 		{
 			trap->R_ColorModTexture(texture_disabled, 122, 122, 122);
 		}
-		trap->R_DrawTexture(texture_disabled, x, y, w, h, 0, 0);
+		trap->R_DrawTexture(texture_disabled, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
 		if (bAlphaModulateDisable)
 		{
 			trap->R_ColorModTexture(texture_disabled, 255, 255, 255);
@@ -66,11 +66,11 @@ void D2Widget_Button::Draw()
 	}
 	else if (bDown)
 	{
-		trap->R_DrawTexture(texture_down, x, y, w, h, 0, 0);
+		trap->R_DrawTexture(texture_down, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
 	}
 	else
 	{
-		trap->R_DrawTexture(texture_up, x, y, w, h, 0, 0);
+		trap->R_DrawTexture(texture_up, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
 	}
 
 	if (bHasText)
@@ -78,11 +78,12 @@ void D2Widget_Button::Draw()
 		trap->R_ColorModFont(font, 0, 0, 0);	// buttons only have text in black exocet, font16
 		if (bDown)
 		{ // shift the x and y a little bit to make it look like we're pressing the button
-			trap->R_DrawText(font, buttonTextBuffer, x - 2, y + 2, w, h, ALIGN_CENTER, ALIGN_CENTER);
+			trap->R_DrawText(font, buttonTextBuffer, m_pOwner->x + x - 2, m_pOwner->y + y + 2, 
+				w, h, ALIGN_CENTER, ALIGN_CENTER);
 		}
 		else
 		{
-			trap->R_DrawText(font, buttonTextBuffer, x, y, w, h, ALIGN_CENTER, ALIGN_CENTER);
+			trap->R_DrawText(font, buttonTextBuffer, m_pOwner->x + x, m_pOwner->y + y, w, h, ALIGN_CENTER, ALIGN_CENTER);
 		}
 		
 	}
@@ -124,7 +125,7 @@ bool D2Widget_Button::HandleMouseDown(DWORD dwX, DWORD dwY)
 		return false; // don't do anything when disabled
 	}
 
-	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
+	if (dwX >= x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
 	{	// it got pressed
 		bDown = true;
 		return true;
@@ -150,7 +151,7 @@ bool D2Widget_Button::HandleMouseClick(DWORD dwX, DWORD dwY)
 
 	bDown = false;
 
-	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
+	if (dwX >= x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
 	{
 		if (bWasDown)
 		{

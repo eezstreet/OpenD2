@@ -612,6 +612,10 @@ static void RB_DrawText(SDLCommand* pCmd)
 			TBLFontGlyph* pGlyph;
 
 			c = (char)pCmd->DrawText.text[i];
+			if (c >= 256 || c < 0)
+			{
+				continue;
+			}
 			pGlyph = &pCache->pFontData[0]->glyphs[c];	// LATINHACK
 
 			dwTextWidth += pGlyph->nWidth;

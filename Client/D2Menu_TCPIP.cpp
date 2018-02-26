@@ -14,8 +14,11 @@ D2Menu_TCPIP::D2Menu_TCPIP() : D2Menu()
 	m_joinMenu = new D2Panel_TCPIPJoin();
 	m_mainMenu = new D2Panel_TCPIPMain();
 
-	AddPanel(m_joinMenu);
+	m_joinMenu->x = 265;
+	m_joinMenu->y = 160;
+
 	AddPanel(m_mainMenu);
+	AddPanel(m_joinMenu);
 
 	HidePanel(m_joinMenu);
 

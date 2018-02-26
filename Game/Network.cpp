@@ -308,6 +308,19 @@ namespace Network
 	}
 
 	/*
+	 *	Try to resolve the specified address.
+	 *	@author	eezstreet
+	 */
+	bool TryResolveAddress(char16_t* szAddress, DWORD dwAddressSize)
+	{
+		char szASCIIAddress[32]{ 0 };
+		IPaddress ip;
+
+		D2Lib::qwctomb(szASCIIAddress, 32, szAddress);
+		return SDLNet_ResolveHost(&ip, szASCIIAddress, GAME_PORT) == 0;
+	}
+
+	/*
 	 *	Disconnect from the current server
 	 *	@author	eezstreet
 	 */

@@ -79,7 +79,7 @@ void D2Panel_TCPIPJoin::Draw()
 	trap->R_DrawTexture(panelBackground, x, y, dwWidth, dwHeight, 0, 0);
 
 	// Draw the text
-	trap->R_DrawText(cl.font16, ipText, 45, 25, 175, 40, ALIGN_CENTER, ALIGN_TOP);
+	trap->R_DrawText(cl.font16, ipText, x + 45, y + 25, 175, 40, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the widgets
 	DrawAllWidgets();

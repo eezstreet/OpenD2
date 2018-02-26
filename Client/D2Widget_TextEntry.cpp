@@ -14,6 +14,7 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 	m_bCharSelect = bCharSelect;
 	m_nCursorPos = 0;
 	m_bOverstrikeMode = false;
+	m_bHasAttachedText = false;
 	memset(szTextBuffer, 0, MAX_TEXTENTRY_LEN);
 
 	if (bCharSelect)
@@ -72,20 +73,20 @@ void D2Widget_TextEntry::DetachLabel()
 void D2Widget_TextEntry::Draw()
 {
 	// draw background
-	trap->R_Animate(backgroundAnim, 0, x, y);
+	trap->R_Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
 
 	// draw a label, if present
 	if (m_bHasAttachedText)
 	{
 		trap->R_ColorModFont(cl.font16, 150, 135, 100);
-		trap->R_DrawText(cl.font16, szLabel, x, y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
+		trap->R_DrawText(cl.font16, szLabel, m_pOwner->x + x, m_pOwner->y + y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
 	}
 
 	if (szTextBuffer[0] != '\0')
 	{
 		// draw text, if present
 		trap->R_ColorModFont(cl.fontFormal12, 255, 255, 255);
-		trap->R_DrawText(cl.fontFormal12, szTextBuffer, x + 6, y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
+		trap->R_DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
 	}
 }
 

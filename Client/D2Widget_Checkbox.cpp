@@ -34,12 +34,12 @@ D2Widget_Checkbox::~D2Widget_Checkbox()
 void D2Widget_Checkbox::Draw()
 {
 	trap->R_SetAnimFrame(checkboxAnim, m_bChecked);
-	trap->R_Animate(checkboxAnim, 0, x, y);
+	trap->R_Animate(checkboxAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
 
 	if (m_bHasLabel)
 	{
 		trap->R_ColorModFont(cl.font16, 150, 135, 100);
-		trap->R_DrawText(cl.font16, szLabel, x + w + 6, y + 3, 0, 0, ALIGN_LEFT, ALIGN_TOP);
+		trap->R_DrawText(cl.font16, szLabel, m_pOwner->x + x + w + 6, m_pOwner->y + y + 3, 0, 0, ALIGN_LEFT, ALIGN_TOP);
 	}
 }
 
@@ -68,7 +68,7 @@ void D2Widget_Checkbox::RemoveLabel()
  */
 bool D2Widget_Checkbox::HandleMouseDown(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
+	if (dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
 	{
 		return true;
 	}
@@ -81,7 +81,7 @@ bool D2Widget_Checkbox::HandleMouseDown(DWORD dwX, DWORD dwY)
  */
 bool D2Widget_Checkbox::HandleMouseClick(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
+	if (dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
 	{
 		m_bChecked = !m_bChecked;
 		return true;
