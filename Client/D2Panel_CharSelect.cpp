@@ -29,7 +29,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	{
 		// Exit button pressed
 		delete cl.pActiveMenu;
-		cl.pActiveMenu = new D2Menu_Main();
+		D2Client_GoToContextMenu();
 		return;
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_ok"))

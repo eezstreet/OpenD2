@@ -1,6 +1,7 @@
 #include "D2Client.hpp"
 #include "D2Menu_Trademark.hpp"
 #include "D2Menu_Main.hpp"
+#include "D2Menu_TCPIP.hpp"
 
 D2ModuleImportStrc* trap = nullptr;
 D2GameConfigStrc* config = nullptr;
@@ -29,6 +30,24 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	cl.fontFormal12 = trap->R_RegisterFont("fontformal12");
 	cl.fontExocet10 = trap->R_RegisterFont("fontExocet10");
 	cl.fontRidiculous = trap->R_RegisterFont("fontridiculous");
+}
+
+/*
+ *	Go back to the "main" menu, whereever it should be.
+ *	The Trademark menu always goes to the main menu, but after that we depend on the charSelectContext to guide us.
+ *	@author	eezstreet
+ */
+void D2Client_GoToContextMenu()
+{
+	switch (cl.charSelectContext)
+	{
+		case CSC_SINGLEPLAYER:
+			cl.pActiveMenu = new D2Menu_Main();
+			break;
+		case CSC_TCPIP:
+			cl.pActiveMenu = new D2Menu_TCPIP();
+			break;
+	}
 }
 
 /*

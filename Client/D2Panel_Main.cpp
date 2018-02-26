@@ -92,7 +92,7 @@ void D2Panel_Main::Draw()
  *	Tries to advance to the character select screen.
  *	If there's no save files present, it advances to the character creation screen instead.
  */
-static void D2PanelMain_AdvanceToCharSelect()
+void D2Client_AdvanceToCharSelect()
 {
 	int nNumFiles = 0;
 	char** szFileList = trap->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
@@ -119,7 +119,8 @@ void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
 	{	// singleplayer button got clicked
 		trap->NET_SetPlayerCount(1);	// only one player can join
-		D2PanelMain_AdvanceToCharSelect();
+		cl.charSelectContext = CSC_SINGLEPLAYER;
+		D2Client_AdvanceToCharSelect();
 		return;
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_mul"))

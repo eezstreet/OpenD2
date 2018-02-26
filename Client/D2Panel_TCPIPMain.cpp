@@ -82,11 +82,13 @@ void D2Panel_TCPIPMain::EnableButtons(bool bEnable)
  *	The signal for when a button on the TCP/IP menu is clicked.
  *	@author	eezstreet
  */
+extern void D2Client_AdvanceToCharSelect();
 void D2Panel_TCPIPMain::PanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget)
 {
 	if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_host"))
 	{
 		trap->NET_SetPlayerCount(MAX_PLAYERS_REAL);	// we have no way of adjusting the max players from the menu
+		D2Client_AdvanceToCharSelect();
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))
 	{

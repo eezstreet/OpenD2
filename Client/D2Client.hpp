@@ -29,6 +29,13 @@ enum D2Client_GameState
 	GS_INGAME,		// in the actual game itself
 };
 
+// The "context" associated with the charselect menu. That is, where we should go back to if we change our mind
+enum D2Client_CharSelectContext
+{
+	CSC_SINGLEPLAYER,	// Singleplayer context - return to main menu after game complete or we cancel charselect
+	CSC_TCPIP,			// TCP/IP context - return to TCP/IP menu
+};
+
 // Global status structure
 struct D2Client
 {
@@ -53,6 +60,7 @@ struct D2Client
 	char				szCurrentSave[MAX_D2PATH];
 
 	D2Menu*				pActiveMenu;
+	D2Client_CharSelectContext	charSelectContext;
 };
 
 /////////////////////////////////////////////////
@@ -76,3 +84,4 @@ char16_t* Client_className(int nCharClass);
 //	Client functions
 
 void D2Client_CreateServer();
+void D2Client_GoToContextMenu();

@@ -27,7 +27,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 		}
 		else
 		{
-			cl.pActiveMenu = new D2Menu_Main();
+			D2Client_GoToContextMenu();
 		}
 		return;
 	}

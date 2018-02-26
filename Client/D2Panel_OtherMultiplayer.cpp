@@ -68,6 +68,7 @@ void D2Panel_OtherMultiplayer::PanelSignal(D2Panel* pCallingPanel, D2Widget* pCa
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_tcpip"))
 	{
 		delete cl.pActiveMenu;
+		cl.charSelectContext = CSC_TCPIP;
 		cl.pActiveMenu = new D2Menu_TCPIP();
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_cancel"))
