@@ -118,6 +118,7 @@ void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
 	{	// singleplayer button got clicked
+		cl.szCurrentIPDestination[0] = '\0';	// set IP to blank (this means that it's a local game)
 		trap->NET_SetPlayerCount(1);	// only one player can join
 		cl.charSelectContext = CSC_SINGLEPLAYER;
 		D2Client_AdvanceToCharSelect();

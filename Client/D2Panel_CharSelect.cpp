@@ -40,7 +40,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 			delete cl.pActiveMenu;
 			cl.pActiveMenu = new D2Menu_Loading();
 			cl.gamestate = GS_LOADING;
-			D2Client_CreateServer();
+			D2Client_SetupServerConnection();
 			return;
 		}
 	}

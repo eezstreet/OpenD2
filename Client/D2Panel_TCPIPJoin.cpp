@@ -12,13 +12,17 @@
  *	Function that gets called when a button is pressed on the panel
  *	@author	eezstreet
  */
+extern void D2Client_AdvanceToCharSelect();
 static void JoinGamePanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget)
 {
 	D2Menu_TCPIP* pTCPIPMenu = (D2Menu_TCPIP*)cl.pActiveMenu;
-	
-	if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))
-	{
+	D2Panel_TCPIPJoin* pTCPPanel = (D2Panel_TCPIPJoin*)pCallingPanel;
 
+	if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))
+	{	// copy the IP
+		cl.bLocalServer = false;
+		D2Lib::qwctomb(cl.szCurrentIPDestination, 32, pTCPPanel->GetEnteredIP());
+		D2Client_AdvanceToCharSelect();
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_cancel"))
 	{
@@ -83,4 +87,13 @@ void D2Panel_TCPIPJoin::Draw()
 
 	// Draw the widgets
 	DrawAllWidgets();
+}
+
+/*
+ *	Get the IP that we typed in
+ *	@author	eezstreet
+ */
+char16_t* D2Panel_TCPIPJoin::GetEnteredIP()
+{
+	return m_ipEntry->GetText();
 }

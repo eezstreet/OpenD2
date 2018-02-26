@@ -87,6 +87,8 @@ void D2Panel_TCPIPMain::PanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWi
 {
 	if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_host"))
 	{
+		// set IP to 0 (this means that it's a local game)
+		cl.szCurrentIPDestination[0] = '\0';
 		trap->NET_SetPlayerCount(MAX_PLAYERS_REAL);	// we have no way of adjusting the max players from the menu
 		D2Client_AdvanceToCharSelect();
 	}

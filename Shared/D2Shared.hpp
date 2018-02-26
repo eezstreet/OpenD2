@@ -25,7 +25,7 @@
 #define GAME_HOMEPATH		"Diablo II"
 #define	GAME_CONFIG_PATH	"D2.ini"
 #define GAME_SAVE_PATH		"Save"
-#define GAME_PORT			6112
+#define GAME_PORT			4000
 
 /*
  *	The following languages are known to exist:

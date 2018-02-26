@@ -16,4 +16,5 @@ public:
 	D2Panel_TCPIPJoin();
 	virtual ~D2Panel_TCPIPJoin();
 	virtual void Draw();
+	char16_t* GetEnteredIP();
 };

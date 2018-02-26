@@ -54,10 +54,26 @@ void D2Client_GoToContextMenu()
  *	Set up local game server
  *	@author	eezstreet
  */
-void D2Client_CreateServer()
+void D2Client_SetupServerConnection()
 {
-	trap->NET_Listen(GAME_PORT);
-	cl.bLocalServer = true;
+	if (cl.szCurrentIPDestination[0] != '\0')
+	{
+		// If we have an IP, this means that we need to connect to that server. Not host one.
+		if (!trap->NET_Connect(cl.szCurrentIPDestination, GAME_PORT))
+		{
+			// Error out!
+			trap->Warning(__FILE__, __LINE__, "Failed to connect to server.");
+			cl.gamestate = GS_MAINMENU;
+			D2Client_GoToContextMenu();
+		}
+		cl.bLocalServer = false;
+	}
+	else
+	{
+		trap->NET_Listen(GAME_PORT);
+		cl.bLocalServer = true;
+	}
+	
 }
 
 /*

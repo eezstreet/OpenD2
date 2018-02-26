@@ -58,6 +58,7 @@ struct D2Client
 	font_handle			fontRidiculous;
 
 	char				szCurrentSave[MAX_D2PATH];
+	char				szCurrentIPDestination[32];
 
 	D2Menu*				pActiveMenu;
 	D2Client_CharSelectContext	charSelectContext;
@@ -83,5 +84,5 @@ char16_t* Client_className(int nCharClass);
 //
 //	Client functions
 
-void D2Client_CreateServer();
+void D2Client_SetupServerConnection();
 void D2Client_GoToContextMenu();
