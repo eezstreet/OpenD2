@@ -303,6 +303,24 @@ static void D2Client_Shutdown()
 }
 
 /*
+ *	This gets called whenever we receive a packet.
+ *	@author	eezstreet
+ */
+static bool D2Client_HandlePacket(D2Packet* pPacket)
+{
+	switch (pPacket->nPacketType)
+	{
+		case D2SPACKET_COMPRESSIONINFO:
+			ClientPacket::ProcessCompressionPacket(pPacket);
+			break;
+		case D2SPACKET_SAVESTATUS:
+			ClientPacket::ProcessSavegameStatusPacket(pPacket);
+			break;
+	}
+	return true;
+}
+
+/*
  *	GetModuleAPI allows us to exchange a series of function pointers with the engine.
  */
 static D2ModuleExportStrc gExports{ 0 };
@@ -325,6 +343,7 @@ extern "C"
 		gExports.nApiVersion = D2CLIENTAPI_VERSION;
 		gExports.RunModuleFrame = D2Client_RunModuleFrame;
 		gExports.CleanupModule = D2Client_Shutdown;
+		gExports.HandlePacket = D2Client_HandlePacket;
 
 		return &gExports;
 	}

@@ -848,6 +848,16 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 }
 
 /*
+ *	Backend command - clear the screen for drawing
+ *	@author	eezstreet
+ */
+static void RB_Clear(SDLCommand* pCommand)
+{
+	SDL_SetRenderDrawColor(gpRenderer, 0, 0, 0, 255);
+	SDL_RenderClear(gpRenderer);
+}
+
+/*
  *
  *	Backend - All functions enumerated
  *
@@ -865,6 +875,7 @@ static RenderProcessCommand RenderingCommands[RCMD_MAX] = {
 	RB_ColorModulateFont,
 	RB_DrawRectangle,
 	RB_DrawTokenInstance,
+	RB_Clear,
 };
 
 
@@ -1931,4 +1942,14 @@ void Renderer_SDL_DrawTokenInstance(anim_handle instance, int x, int y, int tran
 	pCommand->DrawToken.translvl = translvl;
 	pCommand->DrawToken.palette = palette;
 	numDrawCommandsThisFrame++;
+}
+
+/*
+ *	Clear the backbuffer
+ *	@author	eezstreet
+ */
+void Renderer_SDL_Clear()
+{
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame++];
+	pCommand->cmdType = RCMD_CLEAR;
 }

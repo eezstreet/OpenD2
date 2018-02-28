@@ -46,6 +46,7 @@ static D2Renderer RenderTargets[OD2RT_MAX] = {
 		Renderer_SDL_ColorModulateFont,
 		Renderer_SDL_DrawRectangle,
 		Renderer_SDL_DrawTokenInstance,
+		Renderer_SDL_Clear,
 	},
 
 	{	// OpenGL Renderer
@@ -114,5 +115,6 @@ namespace Renderer
 		pExport->R_ColorModFont = RenderTarget->RF_ColorModFont;
 		pExport->R_DrawRectangle = RenderTarget->RF_DrawRectangle;
 		pExport->R_DrawTokenInstance = RenderTarget->RF_DrawTokenInstance;
+		pExport->R_Clear = RenderTarget->RF_Clear;
 	}
 }

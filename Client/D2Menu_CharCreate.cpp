@@ -465,12 +465,13 @@ bool D2Menu_CharCreate::HandleKeyDown(DWORD dwKey)
  */
 bool D2Menu_CharCreate::TrySaveCharacter()
 {
-	D2Savegame	save{ 0 };
 	char		szSavePath[MAX_D2PATH]{ 0 };
 	char		szPlayerName[16]{ 0 };
 	int			nIteration = 0;
 	const int	nMaxIterations = 10;
 	fs_handle	f;
+
+	memset(&cl.currentSave, 0, sizeof(cl.currentSave));
 
 	// convert player name to ascii
 	D2Lib::qwctomb(szPlayerName, 16, pDynamicPanel->GetName());
@@ -502,27 +503,27 @@ bool D2Menu_CharCreate::TrySaveCharacter()
 	trap->FS_Open(szSavePath, &f, FS_WRITE, true);
 
 	// set some basic flags about the save
-	save.header.dwMagic = D2SAVE_MAGIC;
-	save.header.dwVersion = D2SAVE_VERSION;
-	save.header.dwFileSize = sizeof(save.header);
-	save.header.dwCreationTime = time(nullptr);
-	save.header.dwModificationTime = save.header.dwCreationTime;
+	cl.currentSave.header.dwMagic = D2SAVE_MAGIC;
+	cl.currentSave.header.dwVersion = D2SAVE_VERSION;
+	cl.currentSave.header.dwFileSize = sizeof(cl.currentSave.header);
+	cl.currentSave.header.dwCreationTime = time(nullptr);
+	cl.currentSave.header.dwModificationTime = cl.currentSave.header.dwCreationTime;
 
-	save.header.nCharStatus |= (1 << D2STATUS_NEWBIE);
+	cl.currentSave.header.nCharStatus |= (1 << D2STATUS_NEWBIE);
 	if (pDynamicPanel->HardcoreChecked())
 	{
-		save.header.nCharStatus |= (1 << D2STATUS_HARDCORE);
+		cl.currentSave.header.nCharStatus |= (1 << D2STATUS_HARDCORE);
 	}
 
-	save.header.nCharClass = m_nSelectedClass;
+	cl.currentSave.header.nCharClass = m_nSelectedClass;
 	if (m_nSelectedClass == D2CLASS_ASSASSIN || m_nSelectedClass == D2CLASS_DRUID || pDynamicPanel->ExpansionChecked())
 	{	// FIXME: assassin and druid should probably have the expansion checkbox greyed out
-		save.header.nCharStatus |= (1 << D2STATUS_EXPANSION);
+		cl.currentSave.header.nCharStatus |= (1 << D2STATUS_EXPANSION);
 	}
 
 	// write the save header!
 	// the rest of the data gets filled out later
-	trap->FS_Write(f, &save.header, sizeof(save.header), 1);
+	trap->FS_Write(f, &cl.currentSave.header, sizeof(cl.currentSave.header), 1);
 	trap->FS_CloseFile(f);
 
 	D2Lib::strncpyz(cl.szCurrentSave, szSavePath, MAX_D2PATH);

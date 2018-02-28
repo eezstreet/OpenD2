@@ -659,6 +659,7 @@ struct D2ModuleImportStrc
 	void			(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
 	void			(*R_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
 	void			(*R_DrawTokenInstance)(anim_handle token, int x, int y, int translvl, int palette);
+	void			(*R_Clear)();
 };
 
 struct D2ModuleExportStrc

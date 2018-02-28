@@ -409,3 +409,28 @@ void D2Widget_CharSelectList::Selected(int nNewSelection)
 		dynamic_cast<D2Panel_CharSelect*>(m_pOwner)->ValidateSelection();
 	}
 }
+
+/*
+ *	We need to load up the selected save.
+ *	@author	eezstreet
+ */
+void D2Widget_CharSelectList::LoadSave()
+{
+	CharacterSaveData* pCurrent;
+
+	if (nCurrentSelection == -1)
+	{
+		return;
+	}
+
+	// Advance nCurrentSelection times through the linked list
+	pCurrent = pCharacterData;
+	for (int i = 0; i < nCurrentSelection && pCurrent != nullptr; i++, pCurrent = pCurrent->pNext);
+
+	if (pCurrent == nullptr)
+	{	// invalid selection
+		return;
+	}
+
+	memcpy(&cl.currentSave.header, &pCurrent->header, sizeof(pCurrent->header));
+}

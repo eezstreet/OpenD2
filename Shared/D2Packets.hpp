@@ -182,12 +182,20 @@ enum D2ServerPacketTypes
 	D2SPACKET_NPCHEAL = 0xAB,		// BYTE actorType, DWORD actorID, BYTE actorLife (sizeof = 7)
 	D2SPACKET_ASSIGNNPC = 0xAC,		// DWORD actorID, WORD actorCode, WORD x, WORD y, BYTE actorLife, BYTE packetLength, VOID stateInfo (sizeof = variable)
 	D2SPACKET_UNKNOWNAD = 0xAD,		// (sizeof = 9)
+#if GAME_MINOR_VERSION >= 11
 	D2SPACKET_WARDEN = 0xAE,		// warden code, do not use
-	D2SPACKET_CONNECTIONINFO=0xAF,	// BYTE protocolVer (sizeof = 2) - sends information about the server
+	D2SPACKET_COMPRESSIONINFO=0xAF,	// BYTE protocolVer (sizeof = 2) - tell the client what kind of compression we are using
 	D2SPACKET_CONNECTIONTERM=0xB0,	// (sizeof = 1) - Connection was forcibly terminated
 	D2SPACKET_UNKNOWNB1 = 0xB1,		// (sizeof = 53)
 	D2SPACKET_UNKNOWNB2 = 0xB2,		// (sizeof = variable)
 	D2SPACKET_UNKNOWNB3 = 0xB3,		// (sizeof = 5)
+#else
+	D2SPACKET_COMPRESSIONINFO=0xAE,	// BYTE rejectMessage (sizeof = 2) - tell the client what form of compression is to be used
+	D2SPACKET_UNCOMPRESSED=0xAF,	// (sizeof = 1) - tell the client that subsequent packets will NOT be compressed
+	D2SPACKET_CONNECTIONTERM=0xB1,	// (sizeof = 1) - tell the client to take a hike!
+	D2SPACKET_SAVELOAD=0xB2,		// (sizeof = ?) - tell the client to load a particular D2S file
+	D2SPACKET_SAVESTATUS=0xB3,		// BYTE saveStatus (sizeof = 2) - tell the client that we are in need of their savegame
+#endif
 	D2SPACKET_MAX,
 };
 
@@ -296,10 +304,16 @@ enum D2ClientPacketTypes
 	D2CPACKET_BELTQUICK = 0x63,		// DWORD item (sizeof = 5) - shift-click item to belt
 	D2CPACKET_HACKDETECT64 = 0x64,	// (sizeof = 9) - hack detection
 	D2CPACKET_HACKDETECT65 = 0x65,	// hack detection
+#if GAME_MINOR_VERSION >= 11
 	D2CPACKET_WARDEN = 0x66,		// (sizeof = variable) - warden/hack detection related. Do not use.
 	D2CPACKET_HACKDETECT67 = 0x67,	// hack detection
 	D2CPACKET_JOINREQUEST = 0x68,	// DWORD serverHash, WORD serverToken, BYTE characterType, DWORD version, DWORD unknown, DWORD unknown, 00, char[15] characterName, 00 (sizeof = 37) - try to join this server
 	D2CPACKET_LEAVEGAME = 0x69,		// (sizeof = 1) - leave the server
+#else
+	D2CPACKET_JOINLOCAL = 0x66,		// (sizeof = 46) - join a local game. (singleplayer, or TCP/IP as host)
+	D2CPACKET_JOINREMOTE = 0x67,	// (sizeof = 29) - join a remotely-hosted game (TCP/IP as client, or battle.net)
+	D2CPACKET_LEAVEGAME = 0x68,		// (sizeof = 1) - leave the server
+#endif
 	D2CPACKET_UNUSED6A = 0x6A,
 	D2CPACKET_JOINGAME = 0x6B,		// (sizeof = 1) - join the game
 	D2CPACKET_UNUSED6C = 0x6C,
@@ -309,11 +323,87 @@ enum D2ClientPacketTypes
 	D2CPACKET_MAX,
 };
 
+// D2SPACKET_SAVESTATUS return codes
+enum D2SaveStatus
+{	// default to 9
+	SAVESTATUS_0,	// not used?
+	SAVESTATUS_1,	// maps to 0
+	SAVESTATUS_2,	// maps to 1
+	SAVESTATUS_3,	// maps to 2
+	SAVESTATUS_4,	// maps to 3
+	SAVESTATUS_5,	// maps to 4
+	SAVESTATUS_6,	// maps to 5
+	SAVESTATUS_7,	// maps to 10
+	SAVESTATUS_8,	// maps to 11
+	SAVESTATUS_9,	// maps to 12
+	SAVESTATUS_10,	// maps to 13
+	SAVESTATUS_11,	// maps to 14
+	SAVESTATUS_12,	// maps to 15
+	SAVESTATUS_13,	// maps to 16
+	SAVESTATUS_14,	// maps to 17
+	SAVESTATUS_15,	// maps to 18
+	SAVESTATUS_16,	// maps to 19
+	SAVESTATUS_17,	// maps to 20
+	SAVESTATUS_18,	// maps to 21
+	SAVESTATUS_19,	// maps to 22
+	SAVESTATUS_20,	// maps to 23
+	SAVESTATUS_21,	// maps to 24
+	SAVESTATUS_22,	// not used?
+	SAVESTATUS_23,	// maps to 25
+	SAVESTATUS_24,	// maps to 26
+	SAVESTATUS_25,	// maps to 27
+	SAVESTATUS_26,	// maps to 28
+};
+
 // Base packet type
 struct D2Packet
 {
 	// Each packet contains a single byte header, followed by variable data.
 	BYTE nPacketType;
+
+	union
+	{
+		struct
+		{
+			BYTE nCompressionType;
+		} ServerCompressionInfo;
+
+		struct
+		{
+			BYTE nSaveStatus;
+		} ServerSaveStatus;
+
+		struct
+		{
+#if GAME_MINOR_VERSION >= 11
+#else
+			char szGameName[24];	// in battle.net games, this is the room name. it is a single byte (0x01) in others.
+			BYTE nGameMode;			// 1 in TCP, 2 in singleplayer, 0 in other contexts
+			BYTE nClass;			// character class
+			BYTE nTemplate;			// unused Character Template system remnants
+			BYTE nDifficulty;		// normal/nightmare/hell
+			char szCharName[16];	// character name
+			WORD nUnknown1;
+			DWORD nUnknown2;
+			BYTE nUnknown3;
+			BYTE nUnknown4;
+			BYTE nLocale;			// the language. for localization purposes maybe?
+#endif
+		} ClientLocalJoinRequest;
+
+		struct
+		{
+#if GAME_MINOR_VERSION >= 11
+#else
+			DWORD unk1;	// edx (0x00) ? // +00
+			WORD unk2; // cx (0x01) ?	// +04
+			BYTE unk3; // eax (0x0A) ?	// +06
+			DWORD dwVersion;					// +07
+			BYTE nLocale; // language	// +0B
+			char szCharName[16];		// +0C
+#endif
+		} ClientRemoteJoinRequest;
+	} packetData;
 
 	// Methods to read and write
 	size_t ReadServer(char* buffer, size_t bufferSize);

@@ -1,5 +1,6 @@
 #pragma once
 #include "../Shared/D2Common_Shared.hpp"
+#include "../Shared/D2Packets.hpp"
 
 /////////////////////////////////////////////////
 //
@@ -57,8 +58,9 @@ struct D2Client
 	font_handle			fontFormal12;
 	font_handle			fontRidiculous;
 
-	char				szCurrentSave[MAX_D2PATH];
+	char				szCurrentSave[MAX_D2PATH];	// current save path
 	char				szCurrentIPDestination[32];
+	D2Savegame			currentSave;				// the actual save data
 
 	D2Menu*				pActiveMenu;
 	D2Client_CharSelectContext	charSelectContext;
@@ -84,5 +86,13 @@ char16_t* Client_className(int nCharClass);
 //
 //	Client functions
 
+// D2Client.cpp
 void D2Client_SetupServerConnection();
 void D2Client_GoToContextMenu();
+
+// D2Client_Packets.cpp
+namespace ClientPacket
+{
+	void ProcessCompressionPacket(D2Packet* pPacket);
+	void ProcessSavegameStatusPacket(D2Packet* pPacket);
+}

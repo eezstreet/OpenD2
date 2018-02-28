@@ -596,6 +596,8 @@ struct D2Renderer
 	void		(*RF_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
 
 	void		(*RF_DrawTokenInstance)(anim_handle instance, int x, int y, int translvl, int palette);
+
+	void		(*RF_Clear)();
 };
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
@@ -665,6 +667,8 @@ namespace DCC
 // Diablo2.cpp
 int InitGame(int argc, char** argv, DWORD pid);
 DWORD GetMilliseconds();
+bool ServerProcessPacket(D2Packet* pPacket);
+bool ClientProcessPacket(D2Packet* pPacket);
 
 // FileSystem.cpp
 namespace FS

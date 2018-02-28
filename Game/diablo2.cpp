@@ -390,6 +390,24 @@ static void ReadGameConfig(D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpe
 }
 
 /*
+ *	Tell the server to deal with a packet.
+ *	@author	eezstreet
+ */
+bool ServerProcessPacket(D2Packet* pPacket)
+{
+	return imports[MODULE_SERVER]->HandlePacket(pPacket);
+}
+
+/*
+ *	Tell the client to deal with a packet.
+ *	@author	eezstreet
+ */
+bool ClientProcessPacket(D2Packet* pPacket)
+{
+	return imports[MODULE_CLIENT]->HandlePacket(pPacket);
+}
+
+/*
  *	Initialize the game (from main entrypoint)
  */
 OpenD2Modules currentModule = MODULE_CLIENT;

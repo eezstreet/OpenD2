@@ -24,6 +24,8 @@ public:
 	void ValidateSelection();
 	void SelectSave(int nNewSave);
 
+	void AssignSelectedSave();
+
 	virtual void Draw();
 };
 

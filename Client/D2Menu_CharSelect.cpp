@@ -112,6 +112,8 @@ void D2Menu_CharSelect::DeleteCanceled()
  */
 bool D2Menu_CharSelect::CharacterChosen()
 {
-	// don't check this for now
+	// in the future we will want to bring up a popup that states that the hardcore character is dead and cannot be played.
+	// however for now, just assume everything is OK
+
 	return true;
 }

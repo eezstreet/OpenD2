@@ -32,6 +32,7 @@ public:
 
 	void AddSave(D2SaveHeader& header, char* path);
 	char16_t* GetSelectedCharacterName();
+	void LoadSave();
 
 	virtual void OnWidgetAdded();
 	virtual void Draw();

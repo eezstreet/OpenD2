@@ -198,7 +198,7 @@ namespace D2Lib
 			return 0;
 		}
 
-		while (len <= destLen && src[len] > 0)
+		while (len < destLen - 1 && src[len] > 0)
 		{
 			dest[len] = src[len];
 			len++;

@@ -24,6 +24,7 @@
 static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
 	D2Menu_CharSelect* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
+	D2Panel_CharSelect* pCharPanel = dynamic_cast<D2Panel_CharSelect*>(pCallerPanel);
 
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_exit"))
 	{
@@ -37,6 +38,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 		// OK button pressed
 		if (pCharMenu->CharacterChosen())
 		{
+			pCharPanel->AssignSelectedSave();
 			delete cl.pActiveMenu;
 			cl.pActiveMenu = new D2Menu_Loading();
 			cl.gamestate = GS_LOADING;
@@ -154,6 +156,19 @@ void D2Panel_CharSelect::SelectSave(int nSaveNumber)
 	if (charSelectList != nullptr)
 	{
 		charSelectList->Selected(nSaveNumber);
+	}
+}
+
+/*
+ *	We got told to load up the save.
+ *	@author	eezstreet
+ */
+void D2Panel_CharSelect::AssignSelectedSave()
+{
+	// Propagate this to the char select list
+	if (charSelectList != nullptr)
+	{
+		charSelectList->LoadSave();
 	}
 }
 
