@@ -5,7 +5,7 @@
 enum D2ServerPacketTypes
 {
 	D2SPACKET_GAMELOADING = 0x00,	// (sizeof = 1) - Game is loading still
-	D2SPACKET_GAMEFLAGS = 0x01,		// BYTE difficulty, WORD unknown, WORD hardcore, BYTE expansion, BYTE ladder  (sizeof = 8) - sends the server flags to the client
+	D2SPACKET_GAMEFLAGS = 0x01,		// Variable size, based on version. Sends metadata about the server to the client
 	D2SPACKET_LOADSUCCESS = 0x02,	// (sizeof = 1) - first stage loading completed successfully
 	D2SPACKET_LOADACT = 0x03,		// BYTE act, DWORD mapID, WORD areaID, DWORD unknown (sizeof = 12) - start loading acts
 	D2SPACKET_LOADCOMPLETE = 0x04,	// (sizeof = 1) - game has finished loading completely
@@ -309,15 +309,16 @@ enum D2ClientPacketTypes
 	D2CPACKET_HACKDETECT67 = 0x67,	// hack detection
 	D2CPACKET_JOINREQUEST = 0x68,	// DWORD serverHash, WORD serverToken, BYTE characterType, DWORD version, DWORD unknown, DWORD unknown, 00, char[15] characterName, 00 (sizeof = 37) - try to join this server
 	D2CPACKET_LEAVEGAME = 0x69,		// (sizeof = 1) - leave the server
+	D2CPACKET_JOINGAME = 0x6B,		// (sizeof = 1) - join the game
+	D2CPACKET_PING = 0x6D,			// DWORD tickCount, DWORD delay, 00 00 00 00 (sizeof = 13) - ping the server to keep the connection alive
 #else
 	D2CPACKET_JOINLOCAL = 0x66,		// (sizeof = 46) - join a local game. (singleplayer, or TCP/IP as host)
 	D2CPACKET_JOINREMOTE = 0x67,	// (sizeof = 29) - join a remotely-hosted game (TCP/IP as client, or battle.net)
 	D2CPACKET_LEAVEGAME = 0x68,		// (sizeof = 1) - leave the server
+	D2CPACKET_SAVEEND = 0x6A,		// (sizeof = 1) - the savefile is finished sending
+	D2CPACKET_SAVECHUNK = 0x6B,		// BYTE chunkSize, DWORD saveSize, BYTE[256] chunk (sizeof = variable)
+	D2CPACKET_PING = 0x6C,			// DWORD tickCount, DWORD lastTickCount (sizeof = 9) - ping the server to keep the connection alive
 #endif
-	D2CPACKET_UNUSED6A = 0x6A,
-	D2CPACKET_JOINGAME = 0x6B,		// (sizeof = 1) - join the game
-	D2CPACKET_UNUSED6C = 0x6C,
-	D2CPACKET_PING = 0x6D,			// DWORD tickCount, DWORD delay, 00 00 00 00 (sizeof = 13) - ping the server to keep the connection alive
 	D2CPACKET_UNUSED6E = 0x6E,
 	D2CPACKET_UNUSED6F = 0x6F,
 	D2CPACKET_MAX,
@@ -364,12 +365,37 @@ struct D2Packet
 	union
 	{
 		struct
-		{
+		{	// packet 0x6C on C->S (1.10)
+			DWORD dwTickCount;
+#if GAME_MINOR_VERSION >= 11
+			DWORD dwDelay;
+#endif 
+			DWORD dwUnknown;
+		} Ping;
+
+		struct
+		{	// packet 0x01 (1.10)
+			BYTE nDifficulty;
+			DWORD unk1;
+			BYTE nExpansion;
+			BYTE nUnk4;
+			WORD unk2;
+		} ServerMetaData;
+
+		struct
+		{	// packet 0xAE (1.10)
 			BYTE nCompressionType;
 		} ServerCompressionInfo;
 
 		struct
-		{
+		{	// packet 0xB2 (1.10)
+			BYTE nUnk1;
+			BYTE nUnk2; // boolean value
+			DWORD nUnk3;
+		} ServerSaveFile;
+
+		struct
+		{	// packet 0xB3 (1.10)
 			BYTE nSaveStatus;
 		} ServerSaveStatus;
 
@@ -397,12 +423,19 @@ struct D2Packet
 #else
 			DWORD unk1;	// edx (0x00) ? // +00
 			WORD unk2; // cx (0x01) ?	// +04
-			BYTE unk3; // eax (0x0A) ?	// +06
+			BYTE nCharClass; // eax (0x0A) ?	// +06
 			DWORD dwVersion;					// +07
 			BYTE nLocale; // language	// +0B
 			char szCharName[16];		// +0C
 #endif
 		} ClientRemoteJoinRequest;
+
+		struct
+		{
+			BYTE nChunkSize;		// how big the chunk to send is, in bytes
+			DWORD dwSaveSize;		// how big the save file is, in bytes
+			BYTE nChunkBytes[256];	// the chunk bytes themselves
+		} ClientSendSaveChunk;
 	} packetData;
 
 	// Methods to read and write

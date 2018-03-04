@@ -226,6 +226,32 @@ static void D2Client_LoadData()
 }
 
 /*
+ *	Ping the server, telling it that we're still alive.
+ *	@author	eezstreet
+ */
+static void D2Client_PingServer()
+{
+	DWORD dwTicks;
+	D2Packet packet;
+
+	if (cl.bLocalServer || !cl.bValidatedSave)
+	{	// We don't need to do this in a local server, or if we haven't started the handshake yet.
+		return;
+	}
+
+	dwTicks = trap->Milliseconds();
+
+	if (dwTicks - cl.dwLastPingPacket >= 5000)
+	{	// Send one packet every 5 seconds
+		packet.nPacketType = D2CPACKET_PING;
+		packet.packetData.Ping.dwTickCount = dwTicks;
+		packet.packetData.Ping.dwUnknown = 0;
+		trap->NET_SendClientPacket(&packet);
+		cl.dwLastPingPacket = dwTicks;
+	}
+}
+
+/*
  *	Runs a single frame on the client.
  */
 static void D2Client_RunClientFrame()
@@ -259,6 +285,12 @@ static void D2Client_RunClientFrame()
 	if (cl.gamestate == GS_LOADING)
 	{
 		D2Client_LoadData();
+	}
+
+	// Ping the server
+	if (cl.gamestate == GS_LOADING || cl.gamestate == GS_INGAME)
+	{
+		D2Client_PingServer();
 	}
 
 	// Clear out data
@@ -315,6 +347,12 @@ static bool D2Client_HandlePacket(D2Packet* pPacket)
 			break;
 		case D2SPACKET_SAVESTATUS:
 			ClientPacket::ProcessSavegameStatusPacket(pPacket);
+			break;
+		case D2SPACKET_GAMEFLAGS:
+			ClientPacket::ProcessServerMetaPacket(pPacket);
+			break;
+		case D2SPACKET_PONG:
+			ClientPacket::ProcessPongPacket(pPacket);
 			break;
 	}
 	return true;

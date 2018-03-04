@@ -58,12 +58,16 @@ struct D2Client
 	font_handle			fontFormal12;
 	font_handle			fontRidiculous;
 
-	char				szCurrentSave[MAX_D2PATH];	// current save path
+	char				szCurrentSave[MAX_D2PATH_ABSOLUTE];	// current save path
 	char				szCurrentIPDestination[32];
 	D2Savegame			currentSave;				// the actual save data
 
 	D2Menu*				pActiveMenu;
 	D2Client_CharSelectContext	charSelectContext;
+
+	DWORD				dwLastPingPacket;
+	bool				bValidatedSave;
+	DWORD				dwPing;				// only valid on network games
 };
 
 /////////////////////////////////////////////////
@@ -95,4 +99,6 @@ namespace ClientPacket
 {
 	void ProcessCompressionPacket(D2Packet* pPacket);
 	void ProcessSavegameStatusPacket(D2Packet* pPacket);
+	void ProcessServerMetaPacket(D2Packet* pPacket);
+	void ProcessPongPacket(D2Packet* pPacket);
 }

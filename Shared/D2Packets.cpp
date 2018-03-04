@@ -32,7 +32,7 @@ size_t D2Packet::ReadServer(char* buffer, size_t bufferSize)
 		case D2CPACKET_STAMINAOFF:
 		case D2CPACKET_SWAPWEAPONS:
 		case D2CPACKET_LEAVEGAME:
-		case D2CPACKET_JOINGAME:
+		case D2CPACKET_SAVEEND:
 			break; // sizeof = 1
 	}
 
@@ -67,12 +67,20 @@ size_t D2Packet::ReadClient(char* buffer, size_t bufferSize)
 		case D2SPACKET_UNKNOWN72:
 		case D2SPACKET_SWITCHWEAPONS:
 		case D2SPACKET_CONNECTIONTERM:
+		case D2SPACKET_PONG:
 			break;
 		case D2SPACKET_COMPRESSIONINFO:
 			packetData.ServerCompressionInfo.nCompressionType = buffer[dwAmount++];
 			break;
 		case D2SPACKET_SAVESTATUS:
 			packetData.ServerSaveStatus.nSaveStatus = buffer[dwAmount++];
+			break;
+		case D2SPACKET_GAMEFLAGS:
+			packetData.ServerMetaData.nDifficulty = buffer[dwAmount++];
+			packetData.ServerMetaData.unk1 = *(DWORD*)(buffer + dwAmount++);
+			packetData.ServerMetaData.nExpansion = buffer[dwAmount++];
+			packetData.ServerMetaData.nUnk4 = buffer[dwAmount++];
+			packetData.ServerMetaData.unk2 = *(WORD*)(buffer + dwAmount++);
 			break;
 	}
 	
@@ -123,13 +131,6 @@ size_t D2Packet::WriteServer(char* buffer, size_t bufferSize)
  *	Write a packet to the server.
  *	@author	eezstreet
  */
-const BYTE __joinName_Constant[16] =
-{
-	0x00, 0x00, 0x00, 0xFA,
-	0xD9, 0xE2, 0xA3, 0x86,
-	0x03, 0xB2, 0x01, 0x0C,
-	0x02, 0x00, 0x00, 0x70,
-};
 
 size_t D2Packet::WriteClient(char* buffer, size_t bufferSize)
 {
@@ -150,7 +151,7 @@ size_t D2Packet::WriteClient(char* buffer, size_t bufferSize)
 	case D2CPACKET_STAMINAOFF:
 	case D2CPACKET_SWAPWEAPONS:
 	case D2CPACKET_LEAVEGAME:
-	case D2CPACKET_JOINGAME:
+	case D2CPACKET_SAVEEND:
 		break; // sizeof = 1
 	case D2CPACKET_JOINLOCAL:
 		memcpy(buffer + dwAmount, packetData.ClientLocalJoinRequest.szGameName, 16);
@@ -174,12 +175,39 @@ size_t D2Packet::WriteClient(char* buffer, size_t bufferSize)
 		dwAmount += 4;
 		*(WORD*)(buffer + dwAmount) = packetData.ClientRemoteJoinRequest.unk2;
 		dwAmount += 2;
-		buffer[dwAmount++] = packetData.ClientRemoteJoinRequest.unk3;
+		buffer[dwAmount++] = packetData.ClientRemoteJoinRequest.nCharClass;
 		*(DWORD*)(buffer + dwAmount) = packetData.ClientRemoteJoinRequest.dwVersion;
 		dwAmount += 4;
 		buffer[dwAmount++] = packetData.ClientRemoteJoinRequest.nLocale;
 		D2Lib::strncpyz(buffer + dwAmount, packetData.ClientRemoteJoinRequest.szCharName, 16);
 		dwAmount += 16;
+		break;
+	case D2CPACKET_PING:
+		*(DWORD*)(buffer + dwAmount) = packetData.Ping.dwTickCount;
+		dwAmount += 4;
+#if GAME_MINOR_VERSION >= 11
+		*(DWORD*)(buffer + dwAmount) = packetData.Ping.dwDelay;
+		dwAmount += 4;
+#endif
+		*(DWORD*)(buffer + dwAmount) = packetData.Ping.dwUnknown;
+		dwAmount += 4;
+		break;
+	case D2CPACKET_SAVECHUNK:
+		buffer[dwAmount++] = packetData.ClientSendSaveChunk.nChunkSize;
+		*(DWORD*)(buffer + dwAmount) = packetData.ClientSendSaveChunk.dwSaveSize;
+		dwAmount += 4;
+		for (int i = 0; i < packetData.ClientSendSaveChunk.nChunkSize; i++)
+		{
+			buffer[dwAmount++] = packetData.ClientSendSaveChunk.nChunkBytes[i];
+		}
+		if (packetData.ClientSendSaveChunk.nChunkSize != 0xFF)
+		{
+			buffer[dwAmount++] = '\0';
+		}
+		else
+		{
+			buffer[dwAmount++] = (unsigned char)0xF6;
+		}
 		break;
 	}
 

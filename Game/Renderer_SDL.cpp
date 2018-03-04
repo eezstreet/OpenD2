@@ -27,6 +27,10 @@ public:
 
 	SDL_Texture* GetTextureForFrame(int nFrame)
 	{
+		if (pTexture == nullptr)
+		{
+			return nullptr;
+		}
 		return pTexture[nFrame];
 	}
 
@@ -66,6 +70,13 @@ SDLLRUItem::SDLLRUItem(handle itemHandle, int d) : LRUQueueItem(itemHandle, d)
 	DCCFile* pFile = DCC::GetContents(itemHandle);
 	DCCDirection* pDir = &pFile->directions[d];
 	int n;
+
+	pTexture = nullptr;
+
+	if (pFile == nullptr)
+	{	// FIXME: this somehow got passed in. try investigating!
+		return;
+	}
 
 	if (d >= pFile->header.nNumberDirections)
 	{	// tried to enter an invalid direction! don't do this!
@@ -810,6 +821,11 @@ static void RB_DrawTokenInstance(SDLCommand* pCmd)
 		SDL_Texture* pTexture = pItem->GetTextureForFrame((int)pInstance->currentFrame);
 		DWORD dwWidth = pItem->GetDirectionWidth();
 		DWORD dwHeight = pItem->GetDirectionHeight();
+
+		if (pTexture == nullptr)
+		{	// or uh...don't actually. that's a bad idea.
+			return;
+		}
 
 		// The destination rectangle is oriented from the upper left corner, but whenever we do a draw call,
 		// we are orienting from the "base point" of the token's DCC files. So we need to correct that.

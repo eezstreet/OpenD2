@@ -59,8 +59,8 @@ namespace ClientPacket
 			response.nPacketType = D2CPACKET_JOINREMOTE;
 			response.packetData.ClientRemoteJoinRequest.nLocale = 0;	// FIXME
 			response.packetData.ClientRemoteJoinRequest.unk1 = 0x00;
-			response.packetData.ClientRemoteJoinRequest.unk2 = 0x01;	// if this is not 1 then you get "Unable to Join Game"
-			response.packetData.ClientRemoteJoinRequest.unk3 = 0x00;
+			response.packetData.ClientRemoteJoinRequest.unk2 = 0x01;
+			response.packetData.ClientRemoteJoinRequest.nCharClass = cl.currentSave.header.nCharClass;
 			response.packetData.ClientRemoteJoinRequest.dwVersion = GAME_MINOR_VERSION;
 			D2Lib::strncpyz(response.packetData.ClientRemoteJoinRequest.szCharName,
 				cl.currentSave.header.szCharacterName, 16);
@@ -174,5 +174,71 @@ namespace ClientPacket
 		delete cl.pActiveMenu;
 		cl.pActiveMenu = new D2Menu_LoadError(gwaTBLErrorEntries[wResponse]);
 		trap->NET_Disconnect();
+	}
+
+	/*
+	 *	Received metadata about the server.
+	 *	This is the largest step of the handshake - once we have the metadata we need to send the *entire* savegame.
+	 *	@author	eezstreet
+	 */
+	void ProcessServerMetaPacket(D2Packet* pPacket)
+	{
+		// We should verify that the metadata from the server is actually accurate and makes sense.
+		// Even if we charge through this step, the server will slap us with an invalid savestate packet.
+		// Still, we should do this to be nice and not overuse bandwidth...
+		// FIXME: ?
+		fs_handle f;
+		size_t fileSize, remainder, chunks;
+		D2Packet packet;
+
+		cl.bValidatedSave = true;
+
+		memset(&packet, 0, sizeof(packet));
+
+		// Open savegame
+		fileSize = trap->FS_Open(cl.szCurrentSave, &f, FS_READ, true);
+		if (f == INVALID_HANDLE || fileSize == 0)
+		{
+			trap->Error(__FILE__, __LINE__, "Couldn't load savegame!");
+			return;
+		}
+
+		chunks = fileSize / 255;
+		remainder = fileSize - (chunks * 255);
+
+		// Send whole chunks
+		packet.nPacketType = D2CPACKET_SAVECHUNK;
+		packet.packetData.ClientSendSaveChunk.dwSaveSize = fileSize;
+		packet.packetData.ClientSendSaveChunk.nChunkSize = 255;
+		for (size_t i = 0; i < chunks; i++)
+		{
+			trap->FS_Read(f, packet.packetData.ClientSendSaveChunk.nChunkBytes, 255, 1);
+			trap->NET_SendClientPacket(&packet);
+		}
+
+		// Send remainder
+		packet.packetData.ClientSendSaveChunk.nChunkSize = remainder;
+		trap->FS_Read(f, packet.packetData.ClientSendSaveChunk.nChunkBytes, remainder, 1);
+		trap->NET_SendClientPacket(&packet);
+
+		// Close savegame, send completion packet
+		trap->FS_CloseFile(f);
+		packet.nPacketType = D2CPACKET_SAVEEND;
+		trap->NET_SendClientPacket(&packet);
+
+		// Send a ping packet
+		packet.nPacketType = D2CPACKET_PING;
+		packet.packetData.Ping.dwTickCount = trap->Milliseconds();
+		packet.packetData.Ping.dwUnknown = 0;
+		trap->NET_SendClientPacket(&packet);
+	}
+
+	/*
+	 *	Received a PONG packet, we can calculate our ping (approx)
+	 *	@author	eezstreet
+	 */
+	void ProcessPongPacket(D2Packet* pPacket)
+	{
+		cl.dwPing = trap->Milliseconds() - cl.dwLastPingPacket;
 	}
 }

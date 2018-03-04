@@ -433,4 +433,5 @@ void D2Widget_CharSelectList::LoadSave()
 	}
 
 	memcpy(&cl.currentSave.header, &pCurrent->header, sizeof(pCurrent->header));
+	D2Lib::strncpyz(cl.szCurrentSave, pCurrent->path, MAX_D2PATH_ABSOLUTE);
 }
