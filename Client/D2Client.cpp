@@ -187,7 +187,8 @@ static void D2Client_LoadData()
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 1)
-	{	// load (and transmit, if we're on a non-local server) the savegame
+	{	// load interface
+
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 2)
@@ -222,6 +223,7 @@ static void D2Client_LoadData()
 	else if (cl.nLoadState == 9)
 	{	// go ingame
 		cl.nLoadState = 0;
+		cl.gamestate = GS_INGAME;
 	}
 }
 
@@ -267,16 +269,21 @@ static void D2Client_RunClientFrame()
 	// Pipe in input events
 	D2Client_HandleInput();
 
-	// Process any waiting signals from the menus
-	if (cl.pActiveMenu != nullptr && cl.pActiveMenu->WaitingSignal())
+	// Handle menus
+	if (cl.pActiveMenu != nullptr && cl.gamestate != GS_LOADING)
 	{
-		D2Menu::ProcessMenuSignals(cl.pActiveMenu);
+		if (cl.pActiveMenu->WaitingSignal())
+		{ // Process any waiting signals from the menus
+			D2Menu::ProcessMenuSignals(cl.pActiveMenu);
+		}
+		if (cl.pActiveMenu != nullptr)
+		{	// it can become null between now and then
+			cl.pActiveMenu->Draw();
+		}
 	}
-
-	// Draw stuff
-	if (cl.pActiveMenu != nullptr)
+	else if (cl.pLoadingMenu != nullptr && cl.nLoadState != 0)
 	{
-		cl.pActiveMenu->Draw();
+		cl.pLoadingMenu->Draw();
 	}
 
 	trap->R_Present();

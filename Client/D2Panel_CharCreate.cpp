@@ -38,7 +38,8 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 		if (pMenu->TrySaveCharacter())
 		{
 			delete cl.pActiveMenu;
-			cl.pActiveMenu = new D2Menu_Loading();
+			cl.pActiveMenu = nullptr;
+			cl.pLoadingMenu = new D2Menu_Loading();
 			cl.gamestate = GS_LOADING;
 			D2Client_SetupServerConnection();
 			return;

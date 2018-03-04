@@ -62,7 +62,8 @@ struct D2Client
 	char				szCurrentIPDestination[32];
 	D2Savegame			currentSave;				// the actual save data
 
-	D2Menu*				pActiveMenu;
+	D2Menu*				pActiveMenu;				// drawn when not loading
+	D2Menu*				pLoadingMenu;				// drawn when loading
 	D2Client_CharSelectContext	charSelectContext;
 
 	DWORD				dwLastPingPacket;
