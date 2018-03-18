@@ -428,6 +428,10 @@ int InitGame(int argc, char** argv, DWORD pid)
 	FS::LogSearchPaths();
 	ReadGameConfig(&config, &openD2Config);
 	TBL::Init();
+	
+	if (openD2Config.szBasePath[0] == 0x0) {
+		Log::Error("diablo2.cpp", 437, "Basepath is not set. Run with the +basepath=\"...\" parameter.");
+	}
 
 	Window::InitSDL(&config, &openD2Config); // renderer also gets initialized here
 	Renderer::MapRenderTargetExports(&exports);
