@@ -21,11 +21,19 @@ If you would like to contribute to this project, please fork it and submit pull 
 
 
 ### Compiling
-To compile this project, all you will need is CMake.
-*Currently the project only compiles and runs on Windows. More rewriting is needed to get this working on other platforms.*
-On Windows, Visual Studio 2017 or later is needed in order to compile.
+
+#### Windows
+To compile this project on Windows, all you will need is CMake and Visual Studio 2017 or later.
 
 Run cmake-gui and set the Source directory to this folder. Set the "Where to build the files" to be ./Build. (This is so that the git repository doesn't pick this up as a source directory). Then, simply open the project file in whatever IDE you want.
+
+#### Linux
+Compilation on linux requires only the SDL runtime to be installed.
+
+After that, compile by using these commands:
+
+	cmake .
+	make
 
 ### Running
 *Generally speaking* you will want to run the game from a separate directory from the main game, in order to not screw up your original installation.

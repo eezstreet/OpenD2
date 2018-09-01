@@ -39,7 +39,7 @@ namespace COF
 		int i;
 
 		// Make sure we aren't hitting the maximum size of the hash table
-		Log_ErrorAssert(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE);
+		Log_ErrorAssertReturn(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE);
 
 		snprintf(cof, MAX_COFFILE_NAMELEN, "%s%s%s.cof", token, animation, hitclass);
 		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\COF\\%s", type, token, cof);
@@ -70,10 +70,10 @@ namespace COF
 
 		// Read the whole file at once
 		dwFileSize = MPQ::FileSize(pArchive, file);
-		Log_WarnAssert(dwFileSize != 0, INVALID_HANDLE);
+		Log_WarnAssertReturn(dwFileSize != 0, INVALID_HANDLE);
 
 		pHash->pCOFContents = (BYTE*)malloc(dwFileSize);
-		Log_ErrorAssert(pHash->pCOFContents != nullptr, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pHash->pCOFContents != nullptr, INVALID_HANDLE);
 
 		MPQ::ReadFile(pArchive, file, pHash->pCOFContents, dwFileSize);
 

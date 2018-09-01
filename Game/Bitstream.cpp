@@ -50,7 +50,7 @@ void Bitstream::LoadStream(BYTE* pNewStream, size_t dwNewSizeBytes)
 	dwStreamStartByte = 0;
 	dwStreamStartBit = 0;
 	
-#ifndef BIG_ENDIAN
+#ifndef D2_BIG_ENDIAN
 	dwReadBit = dwCurrentByte = 0;
 #endif
 }
@@ -303,8 +303,8 @@ int Bitstream::ReadBits(int numBits)
 		return 0;
 	}
 
-	Log_ErrorAssert(pStream != nullptr, 0);
-	Log_ErrorAssert(numBits >= -31 && numBits <= 32, 0);
+	Log_ErrorAssertReturn(pStream != nullptr, 0);
+	Log_ErrorAssertReturn(numBits >= -31 && numBits <= 32, 0);
 
 	value = 0;
 	valueBits = 0;
@@ -345,7 +345,7 @@ int Bitstream::ReadBits(int numBits)
 		}
 	}
 
-	Log_ErrorAssert(dwCurrentByte <= dwTotalStreamSizeBytes, 0);
+	Log_ErrorAssertReturn(dwCurrentByte <= dwTotalStreamSizeBytes, 0);
 
 	return value;
 }

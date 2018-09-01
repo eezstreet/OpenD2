@@ -66,7 +66,7 @@ namespace Token
 		token_handle out;
 		int i;
 
-		Log_ErrorAssert(gnNumTokensRegistered < MAX_TOKEN_HASH, INVALID_HANDLE);
+		Log_ErrorAssertReturn(gnNumTokensRegistered < MAX_TOKEN_HASH, INVALID_HANDLE);
 
 		snprintf(registerName, 8, "%s%s", tokenName, szWeaponClass);
 		out = D2Lib::strhash(registerName, 0, MAX_TOKEN_HASH);

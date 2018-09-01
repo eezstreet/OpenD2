@@ -35,7 +35,7 @@ namespace TBL
 		DWORD dwTableSize = 0;
 		size_t strTableRead = 0;
 
-		Log_ErrorAssert(gnLastUsedTBL < MAX_TBL_FILES, INVALID_HANDLE);
+		Log_ErrorAssertReturn(gnLastUsedTBL < MAX_TBL_FILES, INVALID_HANDLE);
 
 		// Search the existing TBL file records to see if one already exists
 		for (int i = 0; i < gnLastUsedTBL; i++)
@@ -60,7 +60,7 @@ namespace TBL
 
 		// Allocate file buffer and read
 		pFileBuffer = (BYTE*)malloc(pTBL->dwFileSize);
-		Log_ErrorAssert(pFileBuffer, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pFileBuffer, INVALID_HANDLE);
 		pReadHead = pFileBuffer;
 		MPQ::ReadFile(pTBL->pArchive, pTBL->archiveHandle, pFileBuffer, pTBL->dwFileSize);
 
@@ -79,25 +79,25 @@ namespace TBL
 
 		// Allocate and read indices
 		pTBL->pIndices = (WORD*)malloc(sizeof(WORD) * pTBL->header.NodesNumber);
-		Log_ErrorAssert(pTBL->pIndices, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->pIndices, INVALID_HANDLE);
 		memcpy(pTBL->pIndices, pReadHead, sizeof(WORD) * pTBL->header.NodesNumber);
 		pReadHead += sizeof(WORD) * pTBL->header.NodesNumber;
 
 		// Allocate and read hash tables
 		pTBL->pHashNodes = (TBLHashNode*)malloc(sizeof(TBLHashNode) * pTBL->header.HashTableSize);
-		Log_ErrorAssert(pTBL->pHashNodes, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->pHashNodes, INVALID_HANDLE);
 		memcpy(pTBL->pHashNodes, pReadHead, sizeof(TBLHashNode) * pTBL->header.HashTableSize);
 		pReadHead += sizeof(TBLHashNode) * pTBL->header.HashTableSize;
 
 		// Allocate data tables
 		pTBL->pDataNodes = (TBLDataNode*)malloc(sizeof(TBLDataNode) * pTBL->header.HashTableSize);
-		Log_ErrorAssert(pTBL->pDataNodes, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->pDataNodes, INVALID_HANDLE);
 		memset(pTBL->pDataNodes, 0, sizeof(TBLDataNode) * pTBL->header.HashTableSize);
 
 		// Allocate strings
 		dwTableSize = sizeof(char16_t) * (pTBL->dwFileSize - (pReadHead - pFileBuffer));
 		pTBL->szStringTable = (char16_t*)malloc(dwTableSize);
-		Log_ErrorAssert(pTBL->szStringTable, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->szStringTable, INVALID_HANDLE);
 		memset(pTBL->szStringTable, 0, dwTableSize);
 
 		// Compute data tables

@@ -2,6 +2,12 @@
 
 #include <memory>
 #include <inttypes.h>
+#include <stdlib.h>
+#include <uchar.h>
+#include <stdarg.h>
+#include <string.h>
+#include <limits.h>
+#include <math.h>
 
 #ifdef WIN32
 #include "IgnoreWarnings.h"
@@ -66,23 +72,17 @@
 #define NL "\n"
 #define D2EXPORT	__attribute__((visibility("default")))
 #define D2IMPORT
+#define __cdecl
 #endif
 
 //////////////////////////////////////////////////
 //
 // Standard Types
 
-#ifndef WIN32
 typedef uint64_t QWORD;
 typedef uint32_t DWORD;
 typedef uint16_t WORD;
 typedef uint8_t BYTE;
-#else
-typedef unsigned long long	QWORD;
-typedef unsigned long		DWORD;
-typedef unsigned short		WORD;
-typedef unsigned char		BYTE;
-#endif
 
 #define LOWORD(_dw)     ((WORD)(((DWORD*)(_dw)) & 0xffff))
 #define HIWORD(_dw)     ((WORD)((((DWORD*)(_dw)) >> 16) & 0xffff))

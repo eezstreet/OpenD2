@@ -48,7 +48,7 @@ namespace MPQ
 	 *	Some important information follows this, like the number of files and so on.
 	 */
 
-#ifdef BIG_ENDIAN
+#ifdef D2_BIG_ENDIAN
 	static DWORD gdwFirstHeader = 0x4D50511A;
 	static DWORD gdwSecondHeader = 0x20000000;
 #else
@@ -65,14 +65,14 @@ namespace MPQ
 		FS::Read(pMPQ->f, &dwFirstByte);
 		FS::Read(pMPQ->f, &dwSecondByte);
 
-		Log_ErrorAssert(dwFirstByte == gdwFirstHeader && dwSecondByte == gdwSecondHeader, false);
+		Log_ErrorAssertReturn(dwFirstByte == gdwFirstHeader && dwSecondByte == gdwSecondHeader, false);
 
 		// Read length of file data
 		FS::Read(pMPQ->f, &pMPQ->dwArchiveSize);
 
 		// Read the version number. This HAS to be 0.
 		FS::Read(pMPQ->f, &wVersion, sizeof(WORD));
-		Log_ErrorAssert(wVersion == 0, false);
+		Log_ErrorAssertReturn(wVersion == 0, false);
 
 		// Read sector size
 		FS::Read(pMPQ->f, &pMPQ->wSectorSize, sizeof(WORD));

@@ -34,7 +34,7 @@ bool BIN_Read(char* szBinName, void** pDestinationData, size_t* pFileSize)
 	}
 
 	*pFileSize = trap->MPQ_FileSize(pArchive, f);
-	Log_ErrorAssert(*pFileSize != 0, false);
+	Log_ErrorAssertReturn(*pFileSize != 0, false);
 
 	*pDestinationData = malloc(*pFileSize);
 	trap->MPQ_ReadFile(pArchive, f, (BYTE*)*pDestinationData, *pFileSize);
