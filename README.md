@@ -30,7 +30,7 @@ Run cmake-gui and set the Source directory to this folder. Set the "Where to bui
 #### Linux
 Compilation on linux requires only the SDL runtime to be installed.
 
-After that, compile by using these commands:
+After that, compile using these commands:
 
 	cmake .
 	make
