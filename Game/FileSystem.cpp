@@ -265,7 +265,7 @@ namespace FS
 		fs_handle outHandle = 0;
 		FILE* fileHandle;
 
-		Log_ErrorAssert(gnNumFilesOpened < MAX_CONCURRENT_FILES_OPEN, 0);
+		Log_ErrorAssertReturn(gnNumFilesOpened < MAX_CONCURRENT_FILES_OPEN, 0);
 
 		SanitizeFilePath(filename);
 		if (mode == FS_READ)

@@ -665,7 +665,7 @@ namespace DCC
 };
 
 // Diablo2.cpp
-int InitGame(int argc, char** argv, DWORD pid);
+int InitGame(int argc, char** argv);
 DWORD GetMilliseconds();
 bool ServerProcessPacket(D2Packet* pPacket);
 bool ClientProcessPacket(D2Packet* pPacket);
@@ -712,8 +712,11 @@ namespace IN
 }
 
 // Logging.cpp
-#define Log_WarnAssert(x, y) if(!(x)) { Log::Warning(__FILE__, __LINE__, "" #x); return y; }
-#define Log_ErrorAssert(x, y) if(!(x)) { Log::Error(__FILE__, __LINE__, "" #x); return y; }
+#define Log_WarnAssert(x) if(!(x)) { Log::Warning(__FILE__, __LINE__, "" #x); }
+#define Log_ErrorAssert(x) if(!(x)) { Log::Error(__FILE__, __LINE__, "" #x); }
+
+#define Log_WarnAssertReturn(x, y) if(!(x)) { Log::Warning(__FILE__, __LINE__, "" #x); return y; }
+#define Log_ErrorAssertReturn(x, y) if(!(x)) { Log::Error(__FILE__, __LINE__, "" #x); return y; }
 namespace Log
 {
 	void InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);

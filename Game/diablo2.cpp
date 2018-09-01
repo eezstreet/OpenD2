@@ -412,7 +412,7 @@ bool ClientProcessPacket(D2Packet* pPacket)
  */
 OpenD2Modules currentModule = MODULE_CLIENT;
 
-int InitGame(int argc, char** argv, DWORD pid)
+int InitGame(int argc, char** argv)
 {
 	D2GameConfigStrc config{ 0 };
 	OpenD2ConfigStrc openD2Config{ 0 };

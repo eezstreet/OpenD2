@@ -81,12 +81,12 @@ namespace FSMPQ
 		}
 
 		MPQSearchPath* pNew = (MPQSearchPath*)malloc(sizeof(MPQSearchPath));
-		Log_ErrorAssert(pNew != nullptr, nullptr);
+		Log_ErrorAssertReturn(pNew != nullptr, nullptr);
 
 		pNew->pArchive = (D2MPQArchive*)malloc(sizeof(D2MPQArchive));
 		if (pNew->pArchive == nullptr)
 		{	// couldn't allocate memory
-			Log_ErrorAssert(!"Ran out of memory when adding MPQ search path.", nullptr);
+			Log_ErrorAssertReturn(!"Ran out of memory when adding MPQ search path.", nullptr);
 		}
 
 		D2Lib::strncpyz(pNew->szName, szMPQName, MAX_D2PATH);

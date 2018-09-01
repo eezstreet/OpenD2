@@ -148,7 +148,7 @@ namespace INI
 			switch (pCurrent->dwType)
 			{
 			case CMD_BOOLEAN:
-				pField->fieldValues.bValue = *(bool*)((DWORD)pData + pCurrent->nOffset);
+				pField->fieldValues.bValue = *(bool*)(pData + pCurrent->nOffset);
 				pField->fieldType = INI_BOOL;
 				if (pField->fieldValues.bValue == (bool)pCurrent->dwDefault)
 				{
@@ -158,7 +158,7 @@ namespace INI
 			case CMD_BYTE:
 			case CMD_WORD:
 			case CMD_DWORD:
-				pField->fieldValues.nValue = *(int*)((DWORD)pData + pCurrent->nOffset);
+				pField->fieldValues.nValue = *(int*)(pData + pCurrent->nOffset);
 				pField->fieldType = INI_INTEGER;
 				if (pField->fieldValues.nValue == pCurrent->dwDefault)
 				{
@@ -166,7 +166,7 @@ namespace INI
 				}
 				break;
 			case CMD_STRING:
-				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)((DWORD)pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
+				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)(pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
 				pField->fieldType = INI_STRING;
 				if (pField->fieldValues.szValue[0] == '\0')
 				{

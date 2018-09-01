@@ -9,7 +9,12 @@ option(BUILD_D2CLIENT "Build D2Client" ON)
 option(BUILD_D2GAME "Build D2Game" ON)
 
 # Common options
-set(STATIC_LIBRARIES dbghelp.lib psapi.lib)
+if(WIN32)
+	set(STATIC_LIBRARIES dbghelp.lib psapi.lib)
+else()
+	set(CMAKE_CXX_STANDARD 11)
+	set(CMAKE_CXX_COMPILER g++)
+endif()
 
 # Add shared files
 file(GLOB_RECURSE SHARED_SRC Shared/*.h Shared/*.hpp Shared/*.c Shared/*.cpp)
@@ -38,15 +43,23 @@ if(BUILD_GAME)
 	set(GAME_SRC ${GAME_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
 
 	link_directories("Shared")
-	link_directories("Libraries/sdl/x86")
 
-	add_executable(game WIN32 ${GAME_SRC})
-	set_target_properties(game PROPERTIES OUTPUT_NAME game)
-	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
-
-	set(SDL_LIBRARY SDL2.lib SDL2main.lib SDL2test.lib SDL2_net.lib)
-
-	target_link_libraries(game ${STATIC_LIBRARIES} ${SDL_LIBRARY})
+	if(WIN32)
+		link_directories("Libraries/sdl/x86")
+		add_executable(game WIN32 ${GAME_SRC})
+		set_target_properties(game PROPERTIES OUTPUT_NAME game)
+		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
+		set(SDL_LIBRARY SDL2.lib SDL2main.lib SDL2test.lib SDL2_net.lib)
+		target_link_libraries(game ${STATIC_LIBRARIES} ${SDL_LIBRARY})
+	else()
+		add_executable(game ${GAME_SRC})
+		set_target_properties(game PROPERTIES OUTPUT_NAME game)
+		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
+		find_package(SDL2 REQUIRED)
+		include_directories(${SDL2_INCLUDE_DIRS})
+		target_link_libraries(game ${SDL2_LIBRARIES} SDL2_net m dl)
+	endif()
+	
 	target_compile_definitions(game PUBLIC D2EXE)
 endif()
 
