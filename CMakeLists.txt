@@ -26,6 +26,13 @@ if(BUILD_GAME)
 
 	file(GLOB_RECURSE GAME_SRC Game/*.h Game/*.hpp Game/*.c Game/*.cpp)
 
+	# Remove files which are platform specific but not accustomed to our platform
+	if(WIN32)
+		list(REMOVE_ITEM GAME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Game/Platform_Linux.cpp)
+	else()
+		list(REMOVE_ITEM GAME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Game/Platform_Windows.cpp)
+	endif()
+
 	file(GLOB_RECURSE SDL_SRC Libraries/sdl/*)
 	file(GLOB_RECURSE ADPCM_SRC Libraries/adpcm/*)
 	file(GLOB_RECURSE HUFFMAN_SRC Libraries/huffman/*)
@@ -44,6 +51,7 @@ if(BUILD_GAME)
 
 	link_directories("Shared")
 
+	# More platform-specific inclusions
 	if(WIN32)
 		link_directories("Libraries/sdl/x86")
 		add_executable(game WIN32 ${GAME_SRC})

@@ -79,10 +79,17 @@
 //
 // Standard Types
 
+#ifndef _WIN32
 typedef uint64_t QWORD;
 typedef uint32_t DWORD;
 typedef uint16_t WORD;
 typedef uint8_t BYTE;
+#else
+typedef unsigned long long	QWORD;
+typedef unsigned long		DWORD;
+typedef unsigned short		WORD;
+typedef unsigned char		BYTE;
+#endif
 
 #define LOWORD(_dw)     ((WORD)(((DWORD*)(_dw)) & 0xffff))
 #define HIWORD(_dw)     ((WORD)((((DWORD*)(_dw)) >> 16) & 0xffff))

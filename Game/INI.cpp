@@ -148,25 +148,40 @@ namespace INI
 			switch (pCurrent->dwType)
 			{
 			case CMD_BOOLEAN:
+#ifdef _WIN32
+				pField->fieldValues.bValue = *(bool*)((DWORD)pData + pCurrent->nOffset);
+#else
 				pField->fieldValues.bValue = *(bool*)(pData + pCurrent->nOffset);
+#endif
+				
 				pField->fieldType = INI_BOOL;
 				if (pField->fieldValues.bValue == (bool)pCurrent->dwDefault)
 				{
 					bWroteField = false;
 				}
 				break;
+
 			case CMD_BYTE:
 			case CMD_WORD:
 			case CMD_DWORD:
+#ifdef _WIN32
+				pField->fieldValues.nValue = *(int*)((DWORD)pData + pCurrent->nOffset);
+#else
 				pField->fieldValues.nValue = *(int*)(pData + pCurrent->nOffset);
+#endif
 				pField->fieldType = INI_INTEGER;
 				if (pField->fieldValues.nValue == pCurrent->dwDefault)
 				{
 					bWroteField = false;
 				}
 				break;
+
 			case CMD_STRING:
+#ifdef _WIN32
+				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)((DWORD)pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
+#else
 				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)(pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
+#endif
 				pField->fieldType = INI_STRING;
 				if (pField->fieldValues.szValue[0] == '\0')
 				{
