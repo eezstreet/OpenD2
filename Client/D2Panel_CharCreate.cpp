@@ -61,8 +61,8 @@ D2Panel_CharCreate_Static::D2Panel_CharCreate_Static() : D2Panel()
 	AddWidget(pCancelButton);
 	AddWidget(pOKButton);
 
-	pCancelButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_EXIT));
-	pOKButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_OK));
+	pCancelButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_EXIT));
+	pOKButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OK));
 
 	pCancelButton->AttachClickSignal(PanelSignal);
 	pOKButton->AttachClickSignal(PanelSignal);
@@ -103,9 +103,9 @@ D2Panel_CharCreate_Dynamic::D2Panel_CharCreate_Dynamic() : D2Panel()
 	AddWidget(pExpansionCheckbox);
 	AddWidget(pHardcoreCheckbox);
 
-	pNameEntry->AttachLabel(trap->TBL_FindStringFromIndex(5125));
-	pExpansionCheckbox->AttachLabel(trap->TBL_FindStringFromIndex(22731));
-	pHardcoreCheckbox->AttachLabel(trap->TBL_FindStringFromIndex(5126));
+	pNameEntry->AttachLabel(engine->TBL_FindStringFromIndex(5125));
+	pExpansionCheckbox->AttachLabel(engine->TBL_FindStringFromIndex(22731));
+	pHardcoreCheckbox->AttachLabel(engine->TBL_FindStringFromIndex(5126));
 }
 
 D2Panel_CharCreate_Dynamic::~D2Panel_CharCreate_Dynamic()

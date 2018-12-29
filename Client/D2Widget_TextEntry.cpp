@@ -20,22 +20,22 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 	if (bCharSelect)
 	{
 		backgroundTexture = 
-			trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
-		backgroundAnim = trap->R_RegisterAnimation(backgroundTexture, "textbox", 0);
+			engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
+		backgroundAnim = engine->R_RegisterAnimation(backgroundTexture, "textbox", 0);
 	}
 	else if (bIP)
 	{
-		backgroundTexture = trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
-		backgroundAnim = trap->R_RegisterAnimation(backgroundTexture, "ipaddressbox", 0);
+		backgroundTexture = engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
+		backgroundAnim = engine->R_RegisterAnimation(backgroundTexture, "ipaddressbox", 0);
 	}
 	else
 	{
 		backgroundTexture = 
-			trap->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox2.dc6", "textbox2", PAL_UNITS);
-		backgroundAnim = trap->R_RegisterAnimation(backgroundTexture, "textbox2", 0);
+			engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox2.dc6", "textbox2", PAL_UNITS);
+		backgroundAnim = engine->R_RegisterAnimation(backgroundTexture, "textbox2", 0);
 	}
 
-	trap->R_PollTexture(backgroundTexture, (DWORD*)&this->w, (DWORD*)&this->h);
+	engine->R_PollTexture(backgroundTexture, (DWORD*)&this->w, (DWORD*)&this->h);
 }
 
 /*
@@ -44,7 +44,7 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
  */
 D2Widget_TextEntry::~D2Widget_TextEntry()
 {
-	trap->R_DeregisterTexture(nullptr, backgroundTexture);
+	engine->R_DeregisterTexture(nullptr, backgroundTexture);
 }
 
 /*
@@ -73,20 +73,20 @@ void D2Widget_TextEntry::DetachLabel()
 void D2Widget_TextEntry::Draw()
 {
 	// draw background
-	trap->R_Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
+	engine->R_Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
 
 	// draw a label, if present
 	if (m_bHasAttachedText)
 	{
-		trap->R_ColorModFont(cl.font16, 150, 135, 100);
-		trap->R_DrawText(cl.font16, szLabel, m_pOwner->x + x, m_pOwner->y + y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
+		engine->R_ColorModFont(cl.font16, 150, 135, 100);
+		engine->R_DrawText(cl.font16, szLabel, m_pOwner->x + x, m_pOwner->y + y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
 	}
 
 	if (szTextBuffer[0] != '\0')
 	{
 		// draw text, if present
-		trap->R_ColorModFont(cl.fontFormal12, 255, 255, 255);
-		trap->R_DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
+		engine->R_ColorModFont(cl.fontFormal12, 255, 255, 255);
+		engine->R_DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
 	}
 }
 

@@ -44,6 +44,6 @@ void DataTables_Free();
 //
 //	Global Variables
 
-extern D2ModuleImportStrc* trap;
+extern D2ModuleImportStrc* engine;
 extern D2GameConfigStrc* gpConfig;
 extern OpenD2ConfigStrc* gpOpenConfig;

@@ -72,7 +72,7 @@ namespace ClientPacket
 #endif
 
 		// Send the response packet
-		trap->NET_SendClientPacket(&response);
+		engine->NET_SendClientPacket(&response);
 	}
 
 
@@ -173,7 +173,7 @@ namespace ClientPacket
 		cl.gamestate = GS_MAINMENU;
 		delete cl.pActiveMenu;
 		cl.pActiveMenu = new D2Menu_LoadError(gwaTBLErrorEntries[wResponse]);
-		trap->NET_Disconnect();
+		engine->NET_Disconnect();
 	}
 
 	/*
@@ -196,10 +196,10 @@ namespace ClientPacket
 		memset(&packet, 0, sizeof(packet));
 
 		// Open savegame
-		fileSize = trap->FS_Open(cl.szCurrentSave, &f, FS_READ, true);
+		fileSize = engine->FS_Open(cl.szCurrentSave, &f, FS_READ, true);
 		if (f == INVALID_HANDLE || fileSize == 0)
 		{
-			trap->Error(__FILE__, __LINE__, "Couldn't load savegame!");
+			engine->Error(__FILE__, __LINE__, "Couldn't load savegame!");
 			return;
 		}
 
@@ -212,25 +212,25 @@ namespace ClientPacket
 		packet.packetData.ClientSendSaveChunk.nChunkSize = 255;
 		for (size_t i = 0; i < chunks; i++)
 		{
-			trap->FS_Read(f, packet.packetData.ClientSendSaveChunk.nChunkBytes, 255, 1);
-			trap->NET_SendClientPacket(&packet);
+			engine->FS_Read(f, packet.packetData.ClientSendSaveChunk.nChunkBytes, 255, 1);
+			engine->NET_SendClientPacket(&packet);
 		}
 
 		// Send remainder
 		packet.packetData.ClientSendSaveChunk.nChunkSize = remainder;
-		trap->FS_Read(f, packet.packetData.ClientSendSaveChunk.nChunkBytes, remainder, 1);
-		trap->NET_SendClientPacket(&packet);
+		engine->FS_Read(f, packet.packetData.ClientSendSaveChunk.nChunkBytes, remainder, 1);
+		engine->NET_SendClientPacket(&packet);
 
 		// Close savegame, send completion packet
-		trap->FS_CloseFile(f);
+		engine->FS_CloseFile(f);
 		packet.nPacketType = D2CPACKET_SAVEEND;
-		trap->NET_SendClientPacket(&packet);
+		engine->NET_SendClientPacket(&packet);
 
 		// Send a ping packet
 		packet.nPacketType = D2CPACKET_PING;
-		packet.packetData.Ping.dwTickCount = trap->Milliseconds();
+		packet.packetData.Ping.dwTickCount = engine->Milliseconds();
 		packet.packetData.Ping.dwUnknown = 0;
-		trap->NET_SendClientPacket(&packet);
+		engine->NET_SendClientPacket(&packet);
 	}
 
 	/*
@@ -239,6 +239,6 @@ namespace ClientPacket
 	 */
 	void ProcessPongPacket(D2Packet* pPacket)
 	{
-		cl.dwPing = trap->Milliseconds() - cl.dwLastPingPacket;
+		cl.dwPing = engine->Milliseconds() - cl.dwLastPingPacket;
 	}
 }

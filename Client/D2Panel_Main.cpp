@@ -39,12 +39,12 @@ D2Panel_Main::D2Panel_Main() : D2Panel()
 	AddWidget(m_cinematicsButton);
 	AddWidget(m_exitButton);
 
-	m_singleplayerButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_SINGLEPLAYER));
-	m_battleNetButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_BATTLENET));
-	m_multiplayerButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_MULTIPLAYER));
-	m_creditsButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CREDITS));
-	m_cinematicsButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CINEMATICS));
-	m_exitButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_EXIT));
+	m_singleplayerButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_SINGLEPLAYER));
+	m_battleNetButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_BATTLENET));
+	m_multiplayerButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_MULTIPLAYER));
+	m_creditsButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CREDITS));
+	m_cinematicsButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CINEMATICS));
+	m_exitButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_EXIT));
 
 	// Disable the battle.net button and the gateway button.
 	// Closed Battle.net is not allowed in OpenD2.
@@ -95,7 +95,7 @@ void D2Panel_Main::Draw()
 void D2Client_AdvanceToCharSelect()
 {
 	int nNumFiles = 0;
-	char** szFileList = trap->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
+	char** szFileList = engine->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
 
 	delete cl.pActiveMenu;
 	if (nNumFiles <= 0)
@@ -105,7 +105,7 @@ void D2Client_AdvanceToCharSelect()
 	else
 	{
 		cl.pActiveMenu = new D2Menu_CharSelect(szFileList, nNumFiles);
-		trap->FS_FreeFileList(szFileList, nNumFiles);
+		engine->FS_FreeFileList(szFileList, nNumFiles);
 	}
 }
 
@@ -119,7 +119,7 @@ void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "b_sp"))
 	{	// singleplayer button got clicked
 		cl.szCurrentIPDestination[0] = '\0';	// set IP to blank (this means that it's a local game)
-		trap->NET_SetPlayerCount(1);	// only one player can join
+		engine->NET_SetPlayerCount(1);	// only one player can join
 		cl.charSelectContext = CSC_SINGLEPLAYER;
 		D2Client_AdvanceToCharSelect();
 		return;
@@ -145,7 +145,7 @@ void D2Panel_Main::PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	}
 	else
 	{	// ? not sure how else this got called
-		trap->Warning(__FILE__, __LINE__,
+		engine->Warning(__FILE__, __LINE__,
 			"D2Panel_Main::PanelSignal got called but the widget identifier was not understood.");
 	}
 }

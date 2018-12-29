@@ -37,17 +37,17 @@ static void JoinGamePanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget
 D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
 {
 	// Create background
-	panelBackground = trap->R_RegisterDC6Texture(DC6_PANEL_BACKGROUND, "PopUpOkCancel2", 0, 1, PAL_UNITS);
+	panelBackground = engine->R_RegisterDC6Texture(DC6_PANEL_BACKGROUND, "PopUpOkCancel2", 0, 1, PAL_UNITS);
 
-	ipText = trap->TBL_FindStringFromIndex(TBLTEXT_DESC);
+	ipText = engine->TBL_FindStringFromIndex(TBLTEXT_DESC);
 
 	// Create widgets
 	m_okButton = new D2Widget_Button(155, 130, DC6_PANEL_BUTTON, "medium", 0, 0, 1, 1, 1, 1);
 	m_cancelButton = new D2Widget_Button(15, 130, DC6_PANEL_BUTTON, "medium", 0, 0, 1, 1, 1, 1);
 	m_ipEntry = new D2Widget_TextEntry(25, 70, true, true, false, true);
 
-	m_okButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_OK));
-	m_cancelButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
+	m_okButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OK));
+	m_cancelButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
 	m_okButton->SetFont(cl.fontRidiculous);
 	m_cancelButton->SetFont(cl.fontRidiculous);
 
@@ -68,7 +68,7 @@ D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
  */
 D2Panel_TCPIPJoin::~D2Panel_TCPIPJoin()
 {
-	trap->R_DeregisterTexture("PopUpOkCancel2", panelBackground);
+	engine->R_DeregisterTexture("PopUpOkCancel2", panelBackground);
 }
 
 /*
@@ -79,11 +79,11 @@ void D2Panel_TCPIPJoin::Draw()
 {
 	// Draw the background
 	DWORD dwWidth = 0, dwHeight = 0;
-	trap->R_PollTexture(panelBackground, &dwWidth, &dwHeight);
-	trap->R_DrawTexture(panelBackground, x, y, dwWidth, dwHeight, 0, 0);
+	engine->R_PollTexture(panelBackground, &dwWidth, &dwHeight);
+	engine->R_DrawTexture(panelBackground, x, y, dwWidth, dwHeight, 0, 0);
 
 	// Draw the text
-	trap->R_DrawText(cl.font16, ipText, x + 45, y + 25, 175, 40, ALIGN_CENTER, ALIGN_TOP);
+	engine->R_DrawText(cl.font16, ipText, x + 45, y + 25, 175, 40, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the widgets
 	DrawAllWidgets();

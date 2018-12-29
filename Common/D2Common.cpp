@@ -6,7 +6,7 @@
 
 static bool gbCommonInitialized = false;
 
-D2ModuleImportStrc* trap = nullptr;
+D2ModuleImportStrc* engine = nullptr;
 D2GameConfigStrc* gpConfig = nullptr;
 OpenD2ConfigStrc* gpOpenConfig = nullptr;
 
@@ -25,7 +25,7 @@ D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pCon
 		return;	// already initialized the game
 	}
 
-	trap = pTrap;
+	engine = pTrap;
 	gpConfig = pConfig;
 	gpOpenConfig = pOpenConfig;
 

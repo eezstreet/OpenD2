@@ -19,9 +19,9 @@ D2Panel_TCPIPMain::D2Panel_TCPIPMain() : D2Panel()
 	m_joinGameButton = new D2Widget_Button(265, 230, MAIN_BUTTON_DC6, "3wide", 0, 1, 2, 3, 4, 5);
 	m_cancelButton = new D2Widget_Button(40, 535, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 
-	m_hostGameButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_HOSTGAME));
-	m_joinGameButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_JOINGAME));
-	m_cancelButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
+	m_hostGameButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_HOSTGAME));
+	m_joinGameButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_JOINGAME));
+	m_cancelButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
 
 	m_hostGameButton->AttachIdentifier("b_host");
 	m_joinGameButton->AttachIdentifier("b_join");
@@ -54,7 +54,7 @@ D2Panel_TCPIPMain::~D2Panel_TCPIPMain()
 void D2Panel_TCPIPMain::Draw()
 {
 	// Draw the big title at the top of the screen
-	trap->R_DrawText(cl.font42, trap->TBL_FindStringFromIndex(5117), 0, 70, 800, 50, ALIGN_CENTER, ALIGN_TOP);
+	engine->R_DrawText(cl.font42, engine->TBL_FindStringFromIndex(5117), 0, 70, 800, 50, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw all of the widgets
 	DrawAllWidgets();
@@ -89,7 +89,7 @@ void D2Panel_TCPIPMain::PanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWi
 	{
 		// set IP to 0 (this means that it's a local game)
 		cl.szCurrentIPDestination[0] = '\0';
-		trap->NET_SetPlayerCount(MAX_PLAYERS_REAL);	// we have no way of adjusting the max players from the menu
+		engine->NET_SetPlayerCount(MAX_PLAYERS_REAL);	// we have no way of adjusting the max players from the menu
 		D2Client_AdvanceToCharSelect();
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))

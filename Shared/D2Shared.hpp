@@ -562,6 +562,7 @@ struct OpenD2ConfigStrc
 //	Module Exports
 
 #define D2CLIENTAPI_VERSION	1
+#define D2SERVERAPI_VERSION	1
 
 enum OpenD2Modules
 {

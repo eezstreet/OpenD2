@@ -94,11 +94,11 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 	okButton->AttachClickSignal(PanelSignal);
 	exitButton->AttachClickSignal(PanelSignal);
 
-	createCharButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CREATECHAR));
-	deleteCharButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_DELETECHAR));
-	convertExpansionButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CONVERTCHAR));
-	okButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_OK));
-	exitButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_EXIT));
+	createCharButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CREATECHAR));
+	deleteCharButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_DELETECHAR));
+	convertExpansionButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CONVERTCHAR));
+	okButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OK));
+	exitButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_EXIT));
 
 	createCharButton->AttachIdentifier("cs_new");
 	deleteCharButton->AttachIdentifier("cs_delete");
@@ -130,7 +130,7 @@ void D2Panel_CharSelect::Draw()
 
 	if (szCharName && szCharName[0])
 	{
-		trap->R_DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
+		engine->R_DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
 	}
 
 	// Draw the widgets
@@ -228,7 +228,7 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 	confirmYesButton = new D2Widget_Button(420, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 	confirmNoButton = new D2Widget_Button(280, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 
-	background = trap->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
+	background = engine->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
 
 	AddWidget(confirmYesButton);
 	AddWidget(confirmNoButton);
@@ -239,8 +239,8 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 	confirmYesButton->AttachIdentifier("csc_ok");
 	confirmNoButton->AttachIdentifier("csc_cancel");
 
-	confirmYesButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_YES));
-	confirmNoButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_NO));
+	confirmYesButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_YES));
+	confirmNoButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_NO));
 }
 
 /*
@@ -252,7 +252,7 @@ D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
 	delete confirmYesButton;
 	delete confirmNoButton;
 
-	trap->R_DeregisterTexture("PopUpOkCancel2", INVALID_HANDLE);
+	engine->R_DeregisterTexture("PopUpOkCancel2", INVALID_HANDLE);
 }
 
 /*
@@ -262,7 +262,7 @@ D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
 void D2Panel_CharDeleteConfirm::Draw()
 {
 	// Draw the background
-	trap->R_DrawTexture(background, 268, 212, 264, 176, 0, 0);
+	engine->R_DrawTexture(background, 268, 212, 264, 176, 0, 0);
 
 	// And the widgets too
 	DrawAllWidgets();

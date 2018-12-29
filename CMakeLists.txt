@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 option(BUILD_GAME "Build Executable" ON)
 option(BUILD_D2CLIENT "Build D2Client" ON)
-option(BUILD_D2GAME "Build D2Game" ON)
+option(BUILD_D2SERVER "Build D2Server" ON)
 
 # Common options
 if(WIN32)
@@ -113,16 +113,20 @@ endif()
 
 
 # Build D2Game.dll
-#if(BUILD_D2GAME)
-#	message("Including D2Game.dll files")
-#
-#	file(GLOB_RECURSE D2GAME_SRC Server/*.h Server/*.hpp Server/*.c Server/*.cpp)
-#	source_group("Server" FILES ${D2GAME_SRC})
-#	set(D2GAME_SRC ${D2GAME_SRC} ${SHARED_SRC})
-#
-#	add_library(D2Game SHARED ${D2GAME_SRC})
-#	set_target_properties(D2Game PROPERTIES OUTPUT_NAME D2Game)
-#	set_target_properties(D2Game PROPERTIES LINKER_LANGUAGE CXX)
-#	target_link_libraries(D2Game ${STATIC_LIBRARIES})
-#	target_compile_definitions(D2Game PUBLIC D2GAME)
-#endif
+if(BUILD_D2SERVER)
+	message("Including D2Server.dll files")
+
+	file(GLOB_RECURSE D2SERVER_SRC Server/*.h Server/*.hpp Server/*.c Server/*.cpp)
+
+	source_group("Server" FILES ${D2SERVER_SRC})
+	source_group("Shared" FILES ${SHARED_SRC})
+
+	set(D2SERVER_SRC ${D2SERVER_SRC} ${SHARED_SRC})
+
+	add_library(D2Server SHARED ${D2SERVER_SRC})
+	set_target_properties(D2Server PROPERTIES OUTPUT_NAME D2Server)
+	set_target_properties(D2Server PROPERTIES LINKER_LANGUAGE CXX)
+
+	target_link_libraries(D2Server ${STATIC_LIBRARIES})
+	target_compile_definitions(D2Server PUBLIC D2SERVER)
+endif()

@@ -29,18 +29,18 @@ char16_t* Client_className(int nCharClass)
 	{
 		case D2CLASS_AMAZON:
 		default:
-			return trap->TBL_FindStringFromIndex(4011);
+			return engine->TBL_FindStringFromIndex(4011);
 		case D2CLASS_ASSASSIN:
-			return trap->TBL_FindStringFromIndex(4013);
+			return engine->TBL_FindStringFromIndex(4013);
 		case D2CLASS_BARBARIAN:
-			return trap->TBL_FindStringFromIndex(4007);
+			return engine->TBL_FindStringFromIndex(4007);
 		case D2CLASS_DRUID:
-			return trap->TBL_FindStringFromIndex(4012);
+			return engine->TBL_FindStringFromIndex(4012);
 		case D2CLASS_NECROMANCER:
-			return trap->TBL_FindStringFromIndex(4009);
+			return engine->TBL_FindStringFromIndex(4009);
 		case D2CLASS_PALADIN:
-			return trap->TBL_FindStringFromIndex(4008);
+			return engine->TBL_FindStringFromIndex(4008);
 		case D2CLASS_SORCERESS:
-			return trap->TBL_FindStringFromIndex(4010);
+			return engine->TBL_FindStringFromIndex(4010);
 	}
 }

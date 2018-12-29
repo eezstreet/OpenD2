@@ -1,9 +1,8 @@
-#include "D2Game.hpp"
+#include "D2Server.hpp"
 
-D2ModuleImportStrc* trap = nullptr;
+D2ModuleImportStrc* engine = nullptr;
 D2GameConfigStrc* config = nullptr;
 OpenD2ConfigStrc* openConfig = nullptr;
-D2ServerGlobals sv;
 
 /*
  *	Called every frame on the server.
@@ -23,15 +22,7 @@ static void D2Server_InitializeServer(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	config = pConfig;
 	openConfig = pOpenConfig;
 
-	memset(&sv, 0, sizeof(sv));
-
-	D2Common_Init(trap, pConfig, pOpenConfig);
-
-	// Create the acts.
-	for (int i = 0; i < MAX_ACTS; i++)
-	{
-		sv.pAct[i] = new D2Act();
-	}
+	D2Common_Init(engine, pConfig, pOpenConfig);
 }
 
 /*
@@ -39,11 +30,6 @@ static void D2Server_InitializeServer(D2GameConfigStrc* pConfig, OpenD2ConfigStr
  */
 static void D2Server_Shutdown()
 {
-	// Delete the acts.
-	for (int i = 0; i < MAX_ACTS; i++)
-	{
-		delete sv.pAct[i];
-	}
 }
 
 /*
@@ -59,7 +45,7 @@ static OpenD2Modules D2Server_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
 
 	D2Server_RunFrame();
 
-	if (sv.bKillServer)
+	/*if (sv.bKillServer)
 	{
 		return MODULE_NONE;
 	}
@@ -67,7 +53,7 @@ static OpenD2Modules D2Server_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
 	if (sv.bDedicatedServer)
 	{	// If we're running a dedicated server, we should only be running the server stuff.
 		return MODULE_SERVER;
-	}
+	}*/
 
 	return MODULE_CLIENT;
 }
@@ -86,14 +72,14 @@ extern "C"
 			return nullptr;
 		}
 
-		if (pImports->nApiVersion != D2API_VERSION)
+		if (pImports->nApiVersion != D2SERVERAPI_VERSION)
 		{ // not the right API version
 			return nullptr;
 		}
 
-		trap = pImports;
+		engine = pImports;
 
-		gExports.nApiVersion = D2API_VERSION;
+		gExports.nApiVersion = D2SERVERAPI_VERSION;
 		gExports.RunModuleFrame = D2Server_RunModuleFrame;
 		gExports.CleanupModule = D2Server_Shutdown;
 

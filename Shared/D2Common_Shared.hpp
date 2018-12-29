@@ -288,12 +288,12 @@ D2COMMONAPI void D2Common_Shutdown();
 //
 //	Preprocessor Macros
 
-#define Log_WarnAssert(x)	if(!x) { trap->Warning(__FILE__, __LINE__, #x); }
-#define Log_ErrorAssert(x)	if(!x) { trap->Error(__FILE__, __LINE__, #x); }
-#define WarnWithDescription(x, y)	if(!x) { trap->Warning(__FILE__, __LINE__, y); }
-#define AssertWithDescription(x, y)	if(!x) { trap->Error(__FILE__, __LINE__, y); }
+#define Log_WarnAssert(x)	if(!x) { engine->Warning(__FILE__, __LINE__, #x); }
+#define Log_ErrorAssert(x)	if(!x) { engine->Error(__FILE__, __LINE__, #x); }
+#define WarnWithDescription(x, y)	if(!x) { engine->Warning(__FILE__, __LINE__, y); }
+#define AssertWithDescription(x, y)	if(!x) { engine->Error(__FILE__, __LINE__, y); }
 
-#define Log_WarnAssertReturn(x, y)	if(!x) { trap->Warning(__FILE__, __LINE__, #x); return y; }
-#define Log_ErrorAssertReturn(x, y)	if(!x) { trap->Error(__FILE__, __LINE__, #x); return y; }
-#define WarnWithDescriptionReturn(x, y, z)	if(!x) { trap->Warning(__FILE__, __LINE__, y); return z; }
-#define AssertWithDescriptionReturn(x, y, z)	if(!x) { trap->Error(__FILE__, __LINE__, y); return z; }
+#define Log_WarnAssertReturn(x, y)	if(!x) { engine->Warning(__FILE__, __LINE__, #x); return y; }
+#define Log_ErrorAssertReturn(x, y)	if(!x) { engine->Error(__FILE__, __LINE__, #x); return y; }
+#define WarnWithDescriptionReturn(x, y, z)	if(!x) { engine->Warning(__FILE__, __LINE__, y); return z; }
+#define AssertWithDescriptionReturn(x, y, z)	if(!x) { engine->Error(__FILE__, __LINE__, y); return z; }

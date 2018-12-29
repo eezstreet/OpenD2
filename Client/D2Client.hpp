@@ -75,7 +75,7 @@ struct D2Client
 //
 //	Global variables
 
-extern D2ModuleImportStrc* trap;
+extern D2ModuleImportStrc* engine;
 extern D2GameConfigStrc* config;
 extern OpenD2ConfigStrc* openConfig;
 extern D2Client cl;

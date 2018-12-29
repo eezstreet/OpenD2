@@ -26,9 +26,9 @@ D2Panel_OtherMultiplayer::D2Panel_OtherMultiplayer() : D2Panel()
 	m_openBattleNetButton->Disable();
 
 	// Attach text to the buttons
-	m_openBattleNetButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_OPENBNET));
-	m_TCPIPButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_TCPIP));
-	m_cancelButton->AttachText(trap->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
+	m_openBattleNetButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OPENBNET));
+	m_TCPIPButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_TCPIP));
+	m_cancelButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
 
 	// Attach identifiers to literally everything on this menu
 	m_TCPIPButton->AttachIdentifier("b_tcpip");

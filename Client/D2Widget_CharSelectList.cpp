@@ -99,12 +99,12 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
 
-	frameHandle = trap->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
+	frameHandle = engine->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
 		"charselectbox", 0, 1, PAL_UNITS);
-	greyFrameHandle = trap->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
+	greyFrameHandle = engine->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
 		"charselectboxgrey", 0, 1, PAL_UNITS);
-	trap->R_SetTextureBlendMode(frameHandle, BLEND_ALPHA);
-	trap->R_SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
+	engine->R_SetTextureBlendMode(frameHandle, BLEND_ALPHA);
+	engine->R_SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
 }
 
 /*
@@ -119,7 +119,7 @@ D2Widget_CharSelectList::~D2Widget_CharSelectList()
 		CharacterSaveData* pNext = pCurrent->pNext;
 		if (pCurrent->tokenInstance != INVALID_HANDLE)
 		{
-			trap->TOK_DestroyTokenInstance(pCurrent->tokenInstance);
+			engine->TOK_DestroyTokenInstance(pCurrent->tokenInstance);
 		}
 		free(pCurrent);
 		pCurrent = pNext;
@@ -141,19 +141,19 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 
 	// Register the animations for it.
 	// TODO: use the actual anims (it just uses hth, lit, no weapon for now..)
-	pSaveData->token = trap->TOK_Register(TOKEN_CHAR, gszClassTokens[header.nCharClass], "hth");
-	pSaveData->tokenInstance = trap->TOK_CreateTokenAnimInstance(pSaveData->token);
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEGS, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_RIGHTARM, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SHIELD, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL1, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
-	trap->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
-	trap->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
-	trap->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 4);
-	trap->TOK_SetInstanceActive(pSaveData->tokenInstance, true);	// always set it as active so scrolling is smooth
+	pSaveData->token = engine->TOK_Register(TOKEN_CHAR, gszClassTokens[header.nCharClass], "hth");
+	pSaveData->tokenInstance = engine->TOK_CreateTokenAnimInstance(pSaveData->token);
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEGS, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_RIGHTARM, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SHIELD, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL1, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
+	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
+	engine->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
+	engine->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 4);
+	engine->TOK_SetInstanceActive(pSaveData->tokenInstance, true);	// always set it as active so scrolling is smooth
 
 	// Add it to the linked list
 	pSaveData->pNext = pCharacterData;
@@ -217,13 +217,13 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 			(pSaveData->header.nCharStatus & (1 << D2STATUS_DEAD)))
 		{
 			// Dead hardcore player gets a grey frame
-			trap->R_DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
+			engine->R_DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
 				nSlotWidth, nSlotHeight, 0, 0);
 		}
 		else
 		{
 			// Use the normal frame
-			trap->R_DrawTexture(frameHandle, (bRightSlot ? x + nSlotWidth : x), y + (nSlotY * nSlotHeight),
+			engine->R_DrawTexture(frameHandle, (bRightSlot ? x + nSlotWidth : x), y + (nSlotY * nSlotHeight),
 				nSlotWidth, nSlotHeight, 0, 0);
 		}
 	}
@@ -240,11 +240,11 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Set font color to be gold. Or red if this is a hardcore character.
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE))
 	{
-		trap->R_ColorModFont(cl.font16, 186, 102, 100);
+		engine->R_ColorModFont(cl.font16, 186, 102, 100);
 	}
 	else
 	{
-		trap->R_ColorModFont(cl.font16, 171, 156, 135);
+		engine->R_ColorModFont(cl.font16, 171, 156, 135);
 	}
 	
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
@@ -282,36 +282,36 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	if (szCharacterTitle && szCharacterTitle[0])
 	{
 		// Draw the character title if we have one.
-		trap->R_DrawText(cl.font16, (char16_t*)szCharacterTitle, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		engine->R_DrawText(cl.font16, (char16_t*)szCharacterTitle, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	}
 	nY += 15;
 
 	// Draw character name
-	trap->R_DrawText(cl.font16, pSaveData->name, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	engine->R_DrawText(cl.font16, pSaveData->name, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	nY += 15;
 
 	// Draw character level and class
-	trap->R_ColorModFont(cl.font16, 255, 255, 255);
+	engine->R_ColorModFont(cl.font16, 255, 255, 255);
 	// Format it so that it will read "Level %d <Class>
 	D2Lib::qsnprintf(szCharacterLevelClass, 32, u"%s %s",
-		trap->TBL_FindStringFromIndex(5017),
+		engine->TBL_FindStringFromIndex(5017),
 		Client_className(pSaveData->header.nCharClass));
 	// Reformat it again so that the level is filled in
 	D2Lib::qsnprintf(szDisplayString, 32, szCharacterLevelClass, pSaveData->header.nCharLevel);
 	// Now draw it!
-	trap->R_DrawText(cl.font16, szDisplayString, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	engine->R_DrawText(cl.font16, szDisplayString, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	nY += 15;
 
 	// Draw whether this is an expansion character
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
 	{
-		trap->R_ColorModFont(cl.font16, 65, 200, 50);
-		trap->R_DrawText(cl.font16, trap->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		engine->R_ColorModFont(cl.font16, 65, 200, 50);
+		engine->R_DrawText(cl.font16, engine->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	}
-	trap->R_ColorModFont(cl.font16, 255, 255, 255);
+	engine->R_ColorModFont(cl.font16, 255, 255, 255);
 
 	// Draw the token instance
-	trap->R_DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
+	engine->R_DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
 }
 
 /*

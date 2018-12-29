@@ -3,7 +3,7 @@
 #include "D2Menu_Main.hpp"
 #include "D2Menu_TCPIP.hpp"
 
-D2ModuleImportStrc* trap = nullptr;
+D2ModuleImportStrc* engine = nullptr;
 D2GameConfigStrc* config = nullptr;
 OpenD2ConfigStrc* openConfig = nullptr;
 D2Client cl;
@@ -18,18 +18,18 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 
 	memset(&cl, 0, sizeof(D2Client));
 
-	cl.dwStartMS = trap->Milliseconds();
+	cl.dwStartMS = engine->Milliseconds();
 
 	// Set first menu to be trademark menu
 	cl.gamestate = GS_TRADEMARK;
 	cl.pActiveMenu = new D2Menu_Trademark();
 
-	cl.font16 = trap->R_RegisterFont("font16");
-	cl.font30 = trap->R_RegisterFont("font30");
-	cl.font42 = trap->R_RegisterFont("font42");
-	cl.fontFormal12 = trap->R_RegisterFont("fontformal12");
-	cl.fontExocet10 = trap->R_RegisterFont("fontExocet10");
-	cl.fontRidiculous = trap->R_RegisterFont("fontridiculous");
+	cl.font16 = engine->R_RegisterFont("font16");
+	cl.font30 = engine->R_RegisterFont("font30");
+	cl.font42 = engine->R_RegisterFont("font42");
+	cl.fontFormal12 = engine->R_RegisterFont("fontformal12");
+	cl.fontExocet10 = engine->R_RegisterFont("fontExocet10");
+	cl.fontRidiculous = engine->R_RegisterFont("fontridiculous");
 }
 
 /*
@@ -59,10 +59,10 @@ void D2Client_SetupServerConnection()
 	if (cl.szCurrentIPDestination[0] != '\0')
 	{
 		// If we have an IP, this means that we need to connect to that server. Not host one.
-		if (!trap->NET_Connect(cl.szCurrentIPDestination, GAME_PORT))
+		if (!engine->NET_Connect(cl.szCurrentIPDestination, GAME_PORT))
 		{
 			// Error out!
-			trap->Warning(__FILE__, __LINE__, "Failed to connect to server.");
+			engine->Warning(__FILE__, __LINE__, "Failed to connect to server.");
 			cl.gamestate = GS_MAINMENU;
 			D2Client_GoToContextMenu();
 		}
@@ -70,7 +70,7 @@ void D2Client_SetupServerConnection()
 	}
 	else
 	{
-		trap->NET_Listen(GAME_PORT);
+		engine->NET_Listen(GAME_PORT);
 		cl.bLocalServer = true;
 	}
 	
@@ -81,7 +81,7 @@ void D2Client_SetupServerConnection()
  */
 static void D2Client_HandleInput()
 {
-	trap->In_PumpEvents(openConfig);
+	engine->In_PumpEvents(openConfig);
 
 	// All of the input data now lives in the OpenD2 config (yeah...) and we can iterate over it.
 	for (DWORD i = 0; i < openConfig->dwNumPendingCommands; i++)
@@ -183,7 +183,7 @@ static void D2Client_LoadData()
 {
 	if (cl.nLoadState == 0)
 	{	// load D2Common
-		D2Common_Init(trap, config, openConfig);
+		D2Common_Init(engine, config, openConfig);
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 1)
@@ -241,14 +241,14 @@ static void D2Client_PingServer()
 		return;
 	}
 
-	dwTicks = trap->Milliseconds();
+	dwTicks = engine->Milliseconds();
 
 	if (dwTicks - cl.dwLastPingPacket >= 5000)
 	{	// Send one packet every 5 seconds
 		packet.nPacketType = D2CPACKET_PING;
 		packet.packetData.Ping.dwTickCount = dwTicks;
 		packet.packetData.Ping.dwUnknown = 0;
-		trap->NET_SendClientPacket(&packet);
+		engine->NET_SendClientPacket(&packet);
 		cl.dwLastPingPacket = dwTicks;
 	}
 }
@@ -258,7 +258,7 @@ static void D2Client_PingServer()
  */
 static void D2Client_RunClientFrame()
 {
-	cl.dwMS = trap->Milliseconds();
+	cl.dwMS = engine->Milliseconds();
 
 	// Clear out menu signals
 	if (cl.pActiveMenu != nullptr)
@@ -286,7 +286,7 @@ static void D2Client_RunClientFrame()
 		cl.pLoadingMenu->Draw();
 	}
 
-	trap->R_Present();
+	engine->R_Present();
 
 	// Load stuff, if we need to
 	if (cl.gamestate == GS_LOADING)
@@ -383,7 +383,7 @@ extern "C"
 			return nullptr;
 		}
 
-		trap = pImports;
+		engine = pImports;
 
 		gExports.nApiVersion = D2CLIENTAPI_VERSION;
 		gExports.RunModuleFrame = D2Client_RunModuleFrame;
