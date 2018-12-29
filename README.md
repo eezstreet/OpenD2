@@ -43,12 +43,14 @@ The original game options are preserved:
 
 And OpenD2 adds a few of its own, which start with `+` instead of `-`:
 
-* `+basepath="..."`` - Set the basepath (ie, where your game is installed to). Replace the ... with the path.
+* `+basepath="..."` - Set the basepath (ie, where your game is installed to). Replace the ... with the path.
 * `+homepath="..."` - Set the homepath (ie, where your game saves data to). Replace the ... with the path. Defaults to `<user>/My Documents/My Games/Diablo II`.
 * `+modpath="..."` - Set the modpath (ie, where mods overwriting content will read from)
 * `+sdlnoaccel` - Disables hardware acceleration
 * `+borderless` - Run in borderless windowed mode
 * `+logflags=...` - Set the priority for logging information. These are flags. 1 = Log Crashes, 2 = Log messages, 4 = Log debug info, 8 = Log system info, 16 = "prettify" the log
+
+*Generally speaking*, you will want to run with `+basepath="C:/Program Files (x86)/Diablo II"` (assuming you have the default install directory)
 
 In order to play, you must host a game in TCP/IP in vanilla Diablo 2 (version 1.10) and join it through the OpenD2 client. This is because OpenD2 does not have a serverside yet.
 
