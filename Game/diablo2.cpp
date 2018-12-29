@@ -422,7 +422,7 @@ int InitGame(int argc, char** argv)
 	ParseCommandline(argc, argv, &config, &openD2Config);
 
 	Network::Init();
-	Threadpool::Init();
+//	Threadpool::Init();
 	FS::Init(&openD2Config);
 	Log::InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
 	FS::LogSearchPaths();
@@ -527,7 +527,7 @@ int InitGame(int argc, char** argv)
 	COF::DeregisterAll();
 	Log::Shutdown();
 	FS::Shutdown();
-	Threadpool::Shutdown();
+	//Threadpool::Shutdown();
 
 	return 0;
 }
