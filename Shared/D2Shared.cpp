@@ -105,6 +105,25 @@ namespace D2Lib
 	}
 
 	/*
+	 *	File Name Bottom Level Directory (FNBLD)
+	 *	Gets the file name from a directory.
+	 *	e.g., fnbld("data/global/excel/levels.txt") -> "levels.txt"
+	 */
+	char* fnbld(char* szFileName)
+	{
+		char* fn = szFileName;
+		while (*szFileName)
+		{
+			if (*szFileName == '/' || *szFileName == '\\')
+			{
+				fn = szFileName + 1;
+			}
+			szFileName++;
+		}
+		return fn;
+	}
+
+	/*
 	*	Compares two strings for inequality, char16_t version.
 	*	Case-insensitive. Searches up to a fixed length of characters.
 	*/

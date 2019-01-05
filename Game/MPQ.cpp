@@ -18,7 +18,28 @@ namespace MPQ
 	static char* gszHashTable = "(hash table)";
 	static char* gszBlockTable = "(block table)";
 
-	// Converts ASCII characters to uppercase
+	// Converts ASCII characters to uppercase. Converts slashes into backslashes.
+	static unsigned char AsciiToUpperTable[256] =
+	{
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+		0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+		0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x5C,
+		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+		0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+		0x60, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+		0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+		0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+		0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+		0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+		0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+		0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
+		0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+		0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF
+	};
+
+	// Converts ASCII characters to uppercase. Does NOT convert slashes into backslashes.
 	static unsigned char AsciiToUpperTable_Slash[256] =
 	{
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
@@ -93,6 +114,167 @@ namespace MPQ
 		pMPQ->dwFileCount = pMPQ->dwNumBlockEntries; // the number of files is equivalent to the number of blocks (?)
 
 		return true;
+	}
+
+	/*
+	 *	Hashes a filename string.
+	 *	Converts slashes into backslashes.
+	 *	@author	Zezula
+	 */
+	static DWORD HashString(D2MPQArchive* pMPQ, const char * szFileName, DWORD dwHashType)
+	{
+		DWORD  dwSeed1 = 0x7FED7FED;
+		DWORD  dwSeed2 = 0xEEEEEEEE;
+		DWORD  ch;
+
+		while (*szFileName != 0)
+		{
+			// Convert the input character to uppercase
+			// DON'T convert slash (0x2F) to backslash (0x5C)
+			ch = AsciiToUpperTable[*szFileName++];
+
+			dwSeed1 = pMPQ->dwSlackSpace[dwHashType + ch] ^ (dwSeed1 + dwSeed2);
+			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5) + 3;
+		}
+
+		return dwSeed1;
+	}
+
+	/*
+	 *	Hashes a filename string.
+	 *	Does NOT convert slashes to backslashes.
+	 *	@author	Zezula
+	 */
+	static DWORD HashStringSlash(D2MPQArchive* pMPQ, const char * szFileName, DWORD dwHashType)
+	{
+		DWORD  dwSeed1 = 0x7FED7FED;
+		DWORD  dwSeed2 = 0xEEEEEEEE;
+		DWORD  ch;
+
+		while (*szFileName != 0)
+		{
+			// Convert the input character to uppercase
+			// DON'T convert slash (0x2F) to backslash (0x5C)
+			ch = AsciiToUpperTable_Slash[*szFileName++];
+
+			dwSeed1 = pMPQ->dwSlackSpace[dwHashType + ch] ^ (dwSeed1 + dwSeed2);
+			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5) + 3;
+		}
+
+		return dwSeed1;
+	}
+
+	/*
+	 *	Determine file key
+	 *	@author	Zezula
+	 */
+	DWORD DecryptFileKey(D2MPQArchive* pMPQ, char * szFileName, unsigned long long MpqPos, DWORD dwFileSize, DWORD dwFlags)
+	{
+		DWORD dwFileKey;
+		DWORD dwMpqPos = (DWORD)MpqPos;
+
+		// File key is calculated from plain name
+		szFileName = D2Lib::fnbld(szFileName);
+		dwFileKey = HashString(pMPQ, szFileName, MPQ_HASH_FILE_KEY);
+
+		// Fix the key, if needed
+		if (dwFlags & MPQ_FILE_FIX_KEY)
+			dwFileKey = (dwFileKey + dwMpqPos) ^ dwFileSize;
+
+		// Return the key
+		return dwFileKey;
+	}
+
+	/*
+	 *	Attempt to determine a file's encryption key based on expected file content.
+	 *	@author	Zezula
+	 */
+	DWORD DetectFileKeyByKnownContent(void *pvEncryptedData, DWORD* pdwSlackSpace, DWORD dwDecrypted0, DWORD dwDecrypted1)
+	{
+		DWORD* EncryptedData = (DWORD*)pvEncryptedData;
+		DWORD dwKey1PlusKey2;
+		DWORD DataBlock[2];
+
+		// Get the value of the combined encryption key
+		dwKey1PlusKey2 = (EncryptedData[0] ^ dwDecrypted0) - 0xEEEEEEEE;
+
+		// Try all 256 combinations of dwKey1
+		for (DWORD i = 0; i < 0x100; i++)
+		{
+			DWORD dwSaveKey1;
+			DWORD dwKey1 = dwKey1PlusKey2 - pdwSlackSpace[MPQ_HASH_KEY2_MIX + i];
+			DWORD dwKey2 = 0xEEEEEEEE;
+
+			// Modify the second key and decrypt the first DWORD
+			dwKey2 += pdwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFF)];
+			DataBlock[0] = EncryptedData[0] ^ (dwKey1 + dwKey2);
+
+			// Did we obtain the same value like dwDecrypted0?
+			if (DataBlock[0] == dwDecrypted0)
+			{
+				// Save this key value
+				dwSaveKey1 = dwKey1;
+
+				// Rotate both keys
+				dwKey1 = ((~dwKey1 << 0x15) + 0x11111111) | (dwKey1 >> 0x0B);
+				dwKey2 = DataBlock[0] + dwKey2 + (dwKey2 << 5) + 3;
+
+				// Modify the second key again and decrypt the second DWORD
+				dwKey2 += pdwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFF)];
+				DataBlock[1] = EncryptedData[1] ^ (dwKey1 + dwKey2);
+
+				// Now compare the results
+				if (DataBlock[1] == dwDecrypted1)
+					return dwSaveKey1;
+			}
+		}
+
+		// Key not found
+		return 0;
+	}
+
+	/*
+	 *	Attempt to determine a file's decryption key by deduction based on its type
+	 *	@author	Zezula
+	 */
+#define MPQ_WAV_KEY		0x46464952
+#define MPQ_EXE_KEY1	0x00905A4D
+#define MPQ_EXE_KEY2	0x00000003
+#define MPQ_XML_KEY1	0x6D783F3C
+#define MPQ_XML_KEY2	0x6576206C
+	DWORD DetectFileKeyByContent(void *pvEncryptedData, DWORD* pdwSlackSpace, DWORD dwSectorSize, DWORD dwFileSize)
+	{
+		DWORD dwFileKey = 0;
+
+		if (dwSectorSize >= 0x0C)
+		{	// It's probably a WAV file.
+			dwFileKey = DetectFileKeyByKnownContent(pvEncryptedData, pdwSlackSpace, MPQ_WAV_KEY, dwFileSize - 8);
+			if (dwFileKey != 0)
+			{
+				return dwFileKey;
+			}
+		}
+
+		if (dwSectorSize >= 0x40)
+		{	// It's probably an EXE file.
+			dwFileKey = DetectFileKeyByKnownContent(pvEncryptedData, pdwSlackSpace, MPQ_EXE_KEY1, MPQ_EXE_KEY2);
+			if (dwFileKey != 0)
+			{
+				return dwFileKey;
+			}
+		}
+
+		if (dwSectorSize >= 0x04)
+		{	// It's probably an XML file.
+			dwFileKey = DetectFileKeyByKnownContent(pvEncryptedData, pdwSlackSpace, MPQ_XML_KEY1, MPQ_XML_KEY2);
+			if (dwFileKey != 0)
+			{
+				return dwFileKey;
+			}
+		}
+
+		// Not found, sorry.
+		return dwFileKey;
 	}
 
 	/*
@@ -214,6 +396,10 @@ namespace MPQ
 		FS::Read(pMPQ->f, pMPQ->pBlockTable, sizeof(MPQBlock), pMPQ->dwNumBlockEntries);
 		DecryptMPQBlock(pMPQ, pMPQ->pBlockTable, sizeof(MPQBlock) * pMPQ->dwNumBlockEntries, MPQ_KEY_BLOCK_TABLE);
 
+		// Allocate name table
+		pMPQ->pNameTable = (MPQName*)calloc(pMPQ->dwNumBlockEntries, sizeof(MPQName));
+		memset(pMPQ->pNameTable, 0, sizeof(MPQName) * pMPQ->dwNumBlockEntries);
+
 		return true; // all went well
 	}
 
@@ -262,38 +448,16 @@ namespace MPQ
 		// Close the file handle
 		FS::CloseFile(pMPQ->f);
 
-		// Free the hash and block tables
+		// Free the hash, name and block tables
 		free(pMPQ->pHashTable);
 		free(pMPQ->pBlockTable);
+		free(pMPQ->pNameTable);
 
 		// Free sector offset table (if present)
 		if (pMPQ->pSectorOffsets != nullptr)
 		{
 			free(pMPQ->pSectorOffsets);
 		}
-	}
-
-	/*
-	 *	Hashes a filename string
-	 *	@author	Zezula
-	 */
-	static DWORD HashStringSlash(D2MPQArchive* pMPQ, const char * szFileName, DWORD dwHashType)
-	{
-		DWORD  dwSeed1 = 0x7FED7FED;
-		DWORD  dwSeed2 = 0xEEEEEEEE;
-		DWORD  ch;
-
-		while (*szFileName != 0)
-		{
-			// Convert the input character to uppercase
-			// DON'T convert slash (0x2F) to backslash (0x5C)
-			ch = AsciiToUpperTable_Slash[*szFileName++];
-
-			dwSeed1 = pMPQ->dwSlackSpace[dwHashType + ch] ^ (dwSeed1 + dwSeed2);
-			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5) + 3;
-		}
-
-		return dwSeed1;
 	}
 
 	/*
@@ -328,6 +492,8 @@ namespace MPQ
 
 			if (pHash->dwMethodA == dwName1 && pHash->dwMethodB == dwName2 && dwBlockIndex < pMPQ->dwNumBlockEntries)
 			{
+				// Copy name to name table
+				D2Lib::strncpyz(pMPQ->pNameTable[dwBlockIndex], szFileName, MAX_D2PATH);
 				return (fs_handle)dwBlockIndex;
 			}
 
@@ -485,6 +651,7 @@ namespace MPQ
 		DWORD dwNumBlocks;
 		size_t dwTotalAmountRead = 0;
 		DWORD dwBufferFilled = 0;
+		DWORD dwEncryptionKey = 0;
 
 		char* pTempBuffer;
 
@@ -539,20 +706,24 @@ namespace MPQ
 
 		if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
 		{
-			// FIXME: apply fixes from Paul's code here
-			return 0;
+			// Decrypt the key 
+			dwEncryptionKey = DecryptFileKey(pMPQ, pMPQ->pNameTable[fFile], pBlock->dwFilePos, pBlock->dwFSize, pBlock->dwFlags);
 		}
 
 		if (pBlock->dwFlags & MPQ_FILE_IMPLODE || pBlock->dwFlags & MPQ_FILE_COMPRESS)
 		{	// Compressed file. Around 90% of the blocks are compressed in this manner.
 			dwNumBlocks = ((pBlock->dwFSize - 1) / pMPQ->wSectorSize) + 2;
 
+			// Read the sector header to determine what we need to read
 			FS::Seek(pMPQ->f, pBlock->dwFilePos, FS_SEEK_SET);
 			FS::Read(pMPQ->f, gdwFileHeaderBuffer, sizeof(DWORD), dwNumBlocks);
 
-			if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
-			{	// FIXME: apply fixes from Paul's code here
-				return 0;
+			// If this is an encrypted file, we need to fix the header
+			if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED)
+			{
+				// For this one, we use the encryption key - 1.
+				// Don't know why, just roll with it. Probably a bug on Blizzard's part.
+				DecryptMPQBlock(pMPQ, gdwFileHeaderBuffer, dwNumBlocks << 2, dwEncryptionKey - 1);
 			}
 
 			for (int i = 0; i < dwNumBlocks - 1; i++)
@@ -560,6 +731,12 @@ namespace MPQ
 				DWORD dwBlockLengthRead = gdwFileHeaderBuffer[i + 1] - gdwFileHeaderBuffer[i];
 				BYTE nMethod;
 				size_t dwAmountRead = FS::Read(pMPQ->f, pTempBuffer, sizeof(BYTE), dwBlockLengthRead);
+
+				// Decrypt it!
+				if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED)
+				{
+					DecryptMPQBlock(pMPQ, pTempBuffer, dwAmountRead, dwEncryptionKey);
+				}
 
 				if (dwAmountRead == pMPQ->wSectorSize
 					|| (i == dwNumBlocks - 2 && dwAmountRead == (pBlock->dwFSize & (pMPQ->wSectorSize - 1))))
@@ -570,30 +747,29 @@ namespace MPQ
 					continue;
 				}
 
-				if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
-				{	// FIXME: apply fixes from Paul's code here
-					return 0;
-				}
-
-				if (pBlock->dwFlags & MPQ_FILE_IMPLODE)
-				{	// Diablo 1 style compression (PKWARE)
-					nMethod = MPQ_COMPRESSION_PKWARE;
-				}
-				else if (pBlock->dwFlags & MPQ_FILE_COMPRESS)
-				{	// StarCraft and Diablo 2 style compression (mixed method)
-					nMethod = *(pTempBuffer);
-					pTempBuffer++;
-					dwBlockLengthRead--;
-				}
-
-				for (int j = 0; CompressionModels[j].pFunc != nullptr; j++)
+				if (pBlock->dwCSize < pBlock->dwFSize)
 				{
-					if (nMethod & CompressionModels[j].nCompressionType)
+					// Only decompress if the compress size is smaller than the real size
+					if (pBlock->dwFlags & MPQ_FILE_IMPLODE)
+					{	// Diablo 1 style compression (PKWARE)
+						nMethod = MPQ_COMPRESSION_PKWARE;
+					}
+					else if (pBlock->dwFlags & MPQ_FILE_COMPRESS)
+					{	// StarCraft and Diablo 2 style compression (mixed method)
+						nMethod = *(pTempBuffer);
+						pTempBuffer++;
+						dwBlockLengthRead--;
+					}
+
+					for (int j = 0; CompressionModels[j].pFunc != nullptr; j++)
 					{
-						dwBufferFilled = dwBufferLen;
-						CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer + dwTotalAmountRead, &dwBufferFilled);
-						// Pipe previous output into new input
-						memcpy(pTempBuffer, buffer, dwBlockLengthRead);
+						if (nMethod & CompressionModels[j].nCompressionType)
+						{
+							dwBufferFilled = dwBufferLen;
+							CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer + dwTotalAmountRead, &dwBufferFilled);
+							// Pipe previous output into new input
+							memcpy(pTempBuffer, buffer, dwBlockLengthRead);
+						}
 					}
 				}
 
@@ -606,11 +782,6 @@ namespace MPQ
 			DWORD dwFullBlocks, dwPartialBlock;
 			DWORD dwFileSize = pBlock->dwCSize;
 			DWORD dwReadSize = 0x60000;
-
-			if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED || pBlock->dwFlags & MPQ_FILE_FIX_KEY)
-			{	// FIXME: apply fixes from Paul's code here
-				return 0;
-			}
 
 			if (dwFileSize < dwReadSize)
 			{	// This last block is very short, we need to only read that part

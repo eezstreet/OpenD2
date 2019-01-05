@@ -702,6 +702,9 @@ namespace D2Lib
 	void strncpyz(char *dest, const char *src, int destsize);
 	DWORD strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);
 
+	// File name management
+	char* fnbld(char* szFileName);
+
 	// String Management - UTF-16
 	int qstricmpn(char16_t* s1, char16_t* s2, int n);
 	int qstricmp(char16_t* s1, char16_t* s2);

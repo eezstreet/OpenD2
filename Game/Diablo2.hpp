@@ -174,6 +174,9 @@ struct MPQBlock
 };
 #pragma pack(pop,enter_include)
 
+// @author eezstreet
+typedef char MPQName[MAX_D2PATH];
+
 /*
  *	@author eezstreet
  */
@@ -194,6 +197,7 @@ struct D2MPQArchive
 	DWORD*			pSectorOffsets;
 	DWORD			dwSectorCount;
 
+	MPQName*		pNameTable;				// Names of each file in the MPQ. Only filled as used.
 	fs_handle		f;						// FS file handle
 };
 
