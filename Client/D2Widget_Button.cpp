@@ -25,6 +25,8 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 
 	engine->R_PollTexture(texture_up, (DWORD*)&this->w, (DWORD*)&this->h);
 
+	clickedSound = engine->S_RegisterSound("data\\global\\sfx\\cursor\\button.wav");
+
 	bDisabled = false;
 	bDown = false;
 	bHasClickSignal = false;
@@ -159,6 +161,8 @@ bool D2Widget_Button::HandleMouseClick(DWORD dwX, DWORD dwY)
 			{
 				m_pOwner->NotifySignalReady(clickSignal, this);
 			}
+
+			engine->S_PlaySound(clickedSound, 0);
 			return true;
 		}
 	}

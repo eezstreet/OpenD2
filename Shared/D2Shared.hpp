@@ -113,6 +113,8 @@ typedef handle font_handle;
 typedef handle cof_handle;
 typedef handle token_handle;
 typedef handle thread_handle;
+typedef handle sfx_handle;
+typedef handle mus_handle;
 
 typedef BYTE pixel[3];
 typedef pixel D2Palette[256];
@@ -555,6 +557,8 @@ struct OpenD2ConfigStrc
 	DWORD			dwLogFlags;
 	D2CommandQueue*	pCmds;
 	DWORD			dwNumPendingCommands;
+	DWORD			dwAudioDevice;
+	DWORD			dwAudioChannels;
 };
 
 //////////////////////////////////////////////////
@@ -637,6 +641,11 @@ struct D2ModuleImportStrc
 	void			(*TOK_SetInstanceActive)(anim_handle handle, bool bNewActive);
 	void			(*TOK_SetTokenInstanceMode)(anim_handle handle, int modeNum);
 	void			(*TOK_SetTokenInstanceDirection)(anim_handle handle, int dirNum);
+
+	// Audio calls
+	sfx_handle		(*S_RegisterSound)(char* szAudioFile);
+	mus_handle		(*S_RegisterMusic)(char* szAudioFile);
+	void			(*S_PlaySound)(sfx_handle handle, int loops);
 
 	// Renderer calls (should always be last)
 	tex_handle		(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);

@@ -49,6 +49,7 @@ struct D2SystemInfoStrc
 
 /*
  *	Bitstreams are used for both DCCs and networking.
+ *	Based partially on id Tech 4's bitstreams.
  *	@author	eezstreet
  */
 class Bitstream
@@ -103,7 +104,8 @@ private:
 /*
  *	EVERYTHING TO DO WITH MPQ FILES
  *	The structure containing data about MPQ files
- *	@author Tom Amigo/Paul Siramy/eezstreet/Zezula
+ *	Pieced together with code from Tom Amigo, Paul Siramy, and Zezula
+ *	@author	eezstreet
  */
 
  // Compression types for multiple compressions
@@ -201,7 +203,8 @@ struct D2MPQArchive
 
 /*
  *	String Archive TBLs
- *	@author kambala/eezstreet
+ *	Based on code from QTblEditor by kambala
+ *	@author eezstreet
  */
 
 #define MAX_TBL_FILE_HANDLE	16
@@ -257,7 +260,8 @@ struct TBLFile
 
 /*
  *	Font TBLs
- *	@author	Necrolis
+ *	Based on structures provided by Necrolis
+ *	@author	eezstreet
  */
 
 #pragma pack(push,enter_include)
@@ -291,7 +295,8 @@ struct TBLFontFile
 
 /*
  *	DC6 Files
- *	@author eezstreet (w. help from Paul Siramy)
+ *	Pieced together from code by Paul Siramy and SVR.
+ *	@author eezstreet
  */
 #define MAX_DC6_CELL_SIZE	256
 
@@ -341,6 +346,7 @@ struct DC6Image
 
 /*
  *	DCC Files
+ *	Pieced together with code from Necrolis, SVR, and Paul Siramy
  */
 #pragma pack(push,enter_include)
 #pragma pack(1)
@@ -462,6 +468,7 @@ struct DCCCell
  *	So for example, the Amazon's first attack animation, using a staff, would be:
  *	AMA1STF.cof (AM for the AMazon token, A1 for the first attack animation, STF for the STaFf.
  *	For optimization (?), some COF metadata is stored in animdata.d2, however we don't need this for our purposes.
+ *	These structures are provided by Paul Siramy.
  */
 
 #pragma pack(push,enter_include)
@@ -555,6 +562,7 @@ struct AnimTokenInstance
 
 /*
  *	Renderer related structures
+ *	@author	eezstreet
  */
 struct D2Renderer
 {
@@ -602,27 +610,22 @@ struct D2Renderer
 
 extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
 
-/*
- *	Networking functions
- */
-namespace Network
-{
-	void SendServerPacket(int nClientMask, D2Packet* pPacket);
-	void SendClientPacket(D2Packet* pPacket);
-	void SetMaxPlayerCount(DWORD dwNewPlayerCount);
-	DWORD ReadClientPackets(DWORD dwTimeout);
-	DWORD ReadServerPackets(DWORD dwTimeout);
-	bool ConnectToServer(char* szServerAddress, DWORD dwPort);
-	void DisconnectFromServer();
-	void StartListen(DWORD dwPort);
-	void StopListening();
-	void Init();
-	void Shutdown();
-};
-
 /////////////////////////////////////////////////////////
 //
 //	Functions
+
+// Audio.cpp
+namespace Audio
+{
+	void Init(OpenD2ConfigStrc* openconfig);
+	void Shutdown();
+	sfx_handle RegisterSound(char* szAudioFile);
+	mus_handle RegisterMusic(char* szAudioFile);
+	void PlaySound(sfx_handle handle, int loops);
+	void SetMasterVolume(float fNewVolume);
+	void SetMusicVolume(float fNewVolume);
+	void SetSoundVolume(float fNewVolume);
+}
 
 // COF.cpp
 namespace COF
@@ -736,6 +739,22 @@ namespace MPQ
 	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
 	void Cleanup();
 }
+
+// Network.cpp
+namespace Network
+{
+	void SendServerPacket(int nClientMask, D2Packet* pPacket);
+	void SendClientPacket(D2Packet* pPacket);
+	void SetMaxPlayerCount(DWORD dwNewPlayerCount);
+	DWORD ReadClientPackets(DWORD dwTimeout);
+	DWORD ReadServerPackets(DWORD dwTimeout);
+	bool ConnectToServer(char* szServerAddress, DWORD dwPort);
+	void DisconnectFromServer();
+	void StartListen(DWORD dwPort);
+	void StopListening();
+	void Init();
+	void Shutdown();
+};
 
 // Palette.cpp
 namespace Pal

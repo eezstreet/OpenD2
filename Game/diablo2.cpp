@@ -77,6 +77,8 @@ D2CmdArgStrc OpenD2CommandArguments[] = {
 	{"VIDEO",		"BORDERLESS",	"borderless",	CMD_BOOLEAN,	co(bBorderless),	0x00},
 	{"VIDEO",		"NORENDERTEXT",	"norendertext",	CMD_BOOLEAN,	co(bNoRenderText),	0x00},
 	{"FILEIO",		"LOGFLAGS",		"logflags",		CMD_DWORD,		co(dwLogFlags),		PRIORITY_ALL},
+	{"AUDIO",		"AUDIODEVICE",	"audiodevice",	CMD_DWORD,		co(dwAudioDevice),	0},
+	{"AUDIO",		"AUDIOCHANNELS","audiochannels",CMD_DWORD,		co(dwAudioChannels),2},
 	{"",			"",				"",				0,				0x0000,				0x00},
 };
 #undef co
@@ -138,6 +140,10 @@ static D2ModuleImportStrc exports = {
 	TokenInstance::SetInstanceActive,
 	TokenInstance::SetTokenInstanceMode,
 	TokenInstance::SetTokenInstanceDirection,
+
+	Audio::RegisterSound,
+	Audio::RegisterMusic,
+	Audio::PlaySound,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
@@ -435,6 +441,7 @@ int InitGame(int argc, char** argv)
 	
 	Window::InitSDL(&config, &openD2Config); // renderer also gets initialized here
 	Renderer::MapRenderTargetExports(&exports);
+	Audio::Init(&openD2Config);
 
 	if (config.dwFramerate > 0)
 	{
@@ -519,6 +526,7 @@ int InitGame(int argc, char** argv)
 
 	CleanupAllModules();
 
+	Audio::Shutdown();
 	Window::ShutdownSDL();	// renderer also gets shut down here
 
 	Network::Shutdown();
