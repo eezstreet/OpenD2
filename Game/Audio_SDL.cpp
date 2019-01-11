@@ -31,7 +31,7 @@ namespace Audio_SDL
 			pConfig->dwAudioDevice = 0;
 		}
 
-		Log_WarnAssertReturn(SDL_GetNumAudioDevices(false) >= pConfig->dwAudioDevice);
+		Log_WarnAssertVoidReturn(SDL_GetNumAudioDevices(false) >= pConfig->dwAudioDevice);
 		Log::Print(OpenD2LogFlags::PRIORITY_MESSAGE, "Output Device: %s\n", SDL_GetAudioDeviceName(pConfig->dwAudioDevice, false));
 
 		int result = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
