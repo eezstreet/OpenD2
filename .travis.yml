@@ -35,5 +35,4 @@ matrix:
 
 script:
     - cmake -G "Unix Makefiles" -DCMAKE_SOURCE_DIR="./"
-    - cd ./build
     - make
