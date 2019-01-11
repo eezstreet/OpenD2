@@ -33,5 +33,6 @@ env:
 
 
 script:
-    - cmake
+    - cmake -G "Unix Makefiles" -DCMAKE_SOURCE_DIR="./" -DCMAKE_BINARY_DIR="./build"
+    - cd ./build
     - make
