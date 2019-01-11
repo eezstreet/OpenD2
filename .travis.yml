@@ -17,21 +17,20 @@ install:
     - (cd SDL2_net-2.0.1 && ./configure && make && sudo make install && cd ..)
     - (cd SDL2_mixer-2.0.4 && ./configure && make && sudo make install && cd ..)
 
-env: 
-    matrix:
-        include:
-            # Linux x64 gcc
-            - os: linux
-              compiler: gcc
+matrix:
+     include:
+        # Linux x64 gcc
+        - os: linux
+          compiler: gcc
 
-            # macOS
-            - os: osx
-              compiler: clang
+        # macOS
+        - os: osx
+          compiler: clang
 
-            # Linux i686 gcc
-            - os: linux
-              compiler: gcc
-              env: host=i686-linux-gnu
+        # Linux i686 gcc
+        - os: linux
+          compiler: gcc
+          env: host=i686-linux-gnu
 
 
 script:
