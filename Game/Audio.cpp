@@ -35,24 +35,39 @@ namespace Audio
 		return Audio_SDL::PlaySound(handle, loops);
 	}
 
+	void PlayMusic(mus_handle music, int loops)
+	{
+		return Audio_SDL::PlayMusic(music, loops);
+	}
+
+	void PauseAudio()
+	{
+		return Audio_SDL::PauseAudio();
+	}
+
+	void ResumeAudio()
+	{
+		return Audio_SDL::ResumeAudio();
+	}
+
 	// Change master volume
-	void SetMasterVolume(float fNewVolume)
+	void SetMasterVolume(float volume)
 	{
 		// Just pipe it into SDL for now
-		Audio_SDL::SetMasterVolume(fNewVolume);
+		Audio_SDL::SetMasterVolume(volume);
 	}
 
 	// Change music volume
-	void SetMusicVolume(float fNewVolume)
+	void SetMusicVolume(float volume)
 	{
 		// Just pipe it into SDL for now
-		Audio_SDL::SetMusicVolume(fNewVolume);
+		Audio_SDL::SetMusicVolume(volume);
 	}
 
 	// Change sound volume
-	void SetSoundVolume(float fNewVolume)
+	void SetSoundVolume(float volume)
 	{
 		// Just pipe it into SDL for now
-		Audio_SDL::SetSoundVolume(fNewVolume);
+		Audio_SDL::SetSoundVolume(volume);
 	}
 }

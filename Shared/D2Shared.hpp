@@ -208,6 +208,28 @@ enum D2InputCommand
 	IN_TEXTINPUT,
 	IN_TEXTEDITING,
 	IN_QUIT,
+	IN_WINDOW
+};
+
+enum D2WindowEventType
+{
+	WINDOWEVENT_NONE,           /**< Never used */
+	WINDOWEVENT_SHOWN,          /**< Window has been shown */
+	WINDOWEVENT_HIDDEN,         /**< Window has been hidden */
+	WINDOWEVENT_EXPOSED,        /**< Window has been exposed and should be redrawn */
+	WINDOWEVENT_MOVED,          /**< Window has been moved to data1, data2 */
+	WINDOWEVENT_RESIZED,        /**< Window has been resized to data1xdata2 */
+	WINDOWEVENT_SIZE_CHANGED,   /**< The window size has changed, either as a result of an API call or through the system or user changing the window size. */
+	WINDOWEVENT_MINIMIZED,      /**< Window has been minimized */
+	WINDOWEVENT_MAXIMIZED,      /**< Window has been maximized */
+	WINDOWEVENT_RESTORED,       /**< Window has been restored to normal size and position */
+	WINDOWEVENT_ENTER,          /**< Window has gained mouse focus */
+	WINDOWEVENT_LEAVE,          /**< Window has lost mouse focus */
+	WINDOWEVENT_FOCUS_GAINED,   /**< Window has gained keyboard focus */
+	WINDOWEVENT_FOCUS_LOST,     /**< Window has lost keyboard focus */
+	WINDOWEVENT_CLOSE,          /**< The window manager requests that the window be closed */
+	WINDOWEVENT_TAKE_FOCUS,     /**< Window is being offered a focus (should SetWindowInputFocus() on itself or a subwindow, or ignore) */
+	WINDOWEVENT_HIT_TEST
 };
 
 // This is a direct mapping of the SDL scancodes, with a few extra things thrown in
@@ -500,6 +522,12 @@ struct D2GameConfigStrc     // size 0x3C7
 /*
  *	The command queue is iterated through on the client, and filled in by the engine when requested.
  */
+
+struct WindowEvent
+{
+	D2WindowEventType event;
+};
+
 struct D2CommandQueue
 {
 	D2InputCommand cmdType;
@@ -525,6 +553,7 @@ struct D2CommandQueue
 
 	union
 	{
+		WindowEvent			window;
 		MouseMotionEvent	motion;
 		ButtonEvent			button;
 		TextEvent			text;
@@ -646,6 +675,12 @@ struct D2ModuleImportStrc
 	sfx_handle		(*S_RegisterSound)(char* szAudioFile);
 	mus_handle		(*S_RegisterMusic)(char* szAudioFile);
 	void			(*S_PlaySound)(sfx_handle handle, int loops);
+	void			(*S_PlayMusic)(mus_handle handle, int loops);
+	void			(*S_PauseAudio)();
+	void			(*S_ResumeAudio)();
+	void			(*S_SetMasterVolume)(float volume);
+	void			(*S_SetMusicVolume)(float volume);
+	void			(*S_SetSoundVolume)(float volume);
 
 	// Renderer calls (should always be last)
 	tex_handle		(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);

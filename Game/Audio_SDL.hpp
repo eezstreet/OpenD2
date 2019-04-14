@@ -14,10 +14,13 @@ namespace Audio_SDL
 	void FlushAudioData();
 
 	void PlaySound(sfx_handle handle, int loops);
+	void PlayMusic(mus_handle handle, int loops);
+	void PauseAudio();
+	void ResumeAudio();
 
-	void SetMasterVolume(float fNewVolume);
-	void SetMusicVolume(float fNewVolume);
-	void SetSoundVolume(float fNewVolume);
+	void SetMasterVolume(float volume);
+	void SetMusicVolume(float volume);
+	void SetSoundVolume(float volume);
 
 	struct SoundCacheEntry
 	{

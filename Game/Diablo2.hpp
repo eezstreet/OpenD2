@@ -701,9 +701,12 @@ namespace Audio
 	sfx_handle RegisterSound(char* szAudioFile);
 	mus_handle RegisterMusic(char* szAudioFile);
 	void PlaySound(sfx_handle handle, int loops);
-	void SetMasterVolume(float fNewVolume);
-	void SetMusicVolume(float fNewVolume);
-	void SetSoundVolume(float fNewVolume);
+	void PlayMusic(mus_handle handle, int loops);
+	void PauseAudio();
+	void ResumeAudio();
+	void SetMasterVolume(float volume);
+	void SetMusicVolume(float volume);
+	void SetSoundVolume(float volume);
 }
 
 // COF.cpp
