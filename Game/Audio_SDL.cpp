@@ -202,33 +202,65 @@ namespace Audio_SDL
 	}
 
 	// Play a sound
-	void PlaySound(sfx_handle sound, int loops)
+	void PlaySound(sfx_handle handle, int loops)
 	{
-		if (sound == INVALID_HANDLE || sound >= MAX_SDL_SOUNDFILES)
+		if (handle == INVALID_HANDLE || handle >= MAX_SDL_SOUNDFILES)
 		{
 			return;
 		}
 
-		if (!gpSoundCache[sound].pChunk)
+		if (!gpSoundCache[handle].pChunk)
 		{
 			return;
 		}
 
-		Mix_PlayChannel(-1, gpSoundCache[sound].pChunk, 0);
+		Mix_PlayChannel(-1, gpSoundCache[handle].pChunk, 0);
+	}
+
+	// Play music
+	void PlayMusic(mus_handle handle, int loops)
+	{
+		if (handle == INVALID_HANDLE || handle >= MAX_SDL_SOUNDFILES)
+		{
+			return;
+		}
+
+		if (!gpSoundCache[handle].pChunk)
+		{
+			return;
+		}
+
+		Mix_PlayMusic(gpSoundCache[handle].pMusic, loops);
+	}
+
+	void PauseAudio()
+	{
+		Mix_Pause(-1);
+		Mix_PauseMusic();
+	}
+
+	void ResumeAudio()
+	{
+		Mix_Resume(-1);
+		Mix_ResumeMusic();
 	}
 
 	// Change the master volume
-	void SetMasterVolume(float fNewVolume)
+	void SetMasterVolume(float volume)
 	{
+		SetMusicVolume(volume);
+		SetSoundVolume(volume);
 	}
 
 	// Change the music volume
-	void SetMusicVolume(float fNewVolume)
+	void SetMusicVolume(float volume)
 	{
+		Mix_VolumeMusic(volume);
 	}
 
 	// Change the sound volume
-	void SetSoundVolume(float fNewVolume)
+	void SetSoundVolume(float volume)
 	{
+		Mix_Volume(-1, volume);
 	}
 }

@@ -72,6 +72,11 @@ namespace IN
 		{
 			switch (ev.type)
 			{
+			case SDL_WINDOWEVENT:
+				gProcessedCommands[gdwNumProcessedCommands].cmdType = IN_WINDOW;
+				gProcessedCommands[gdwNumProcessedCommands].cmdData.window.event = (D2WindowEventType)ev.window.event;
+				gdwNumProcessedCommands++;
+				break;
 			case SDL_MOUSEMOTION:
 				//				if (D2Win_InFocus(ev.motion.windowID))
 			{

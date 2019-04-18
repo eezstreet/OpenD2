@@ -729,13 +729,14 @@ namespace MPQ
 			for (int i = 0; i < dwNumBlocks - 1; i++)
 			{
 				DWORD dwBlockLengthRead = gdwFileHeaderBuffer[i + 1] - gdwFileHeaderBuffer[i];
+				DWORD dwInputLength;
 				BYTE nMethod;
 				size_t dwAmountRead = FS::Read(pMPQ->f, pTempBuffer, sizeof(BYTE), dwBlockLengthRead);
 
 				// Decrypt it!
 				if (pBlock->dwFlags & MPQ_FILE_ENCRYPTED)
 				{
-					DecryptMPQBlock(pMPQ, pTempBuffer, dwAmountRead, dwEncryptionKey);
+					DecryptMPQBlock(pMPQ, pTempBuffer, dwAmountRead, dwEncryptionKey + i);
 				}
 
 				if (dwAmountRead == pMPQ->wSectorSize
@@ -761,14 +762,16 @@ namespace MPQ
 						dwBlockLengthRead--;
 					}
 
+					dwInputLength = dwBlockLengthRead;
 					for (int j = 0; CompressionModels[j].pFunc != nullptr; j++)
 					{
 						if (nMethod & CompressionModels[j].nCompressionType)
 						{
 							dwBufferFilled = dwBufferLen;
-							CompressionModels[j].pFunc(pTempBuffer, &dwBlockLengthRead, buffer + dwTotalAmountRead, &dwBufferFilled);
+							CompressionModels[j].pFunc(pTempBuffer, &dwInputLength, buffer + dwTotalAmountRead, &dwBufferFilled);
 							// Pipe previous output into new input
-							memcpy(pTempBuffer, buffer, dwBlockLengthRead);
+							memcpy(pTempBuffer, buffer + dwTotalAmountRead, dwBufferFilled);
+							dwInputLength = dwBufferFilled;
 						}
 					}
 				}

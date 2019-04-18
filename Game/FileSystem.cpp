@@ -486,7 +486,7 @@ namespace FS
 		for (int i = FS_MAXPATH - 1; i >= 0; i--)	// go in reverse since we're reading
 		{
 			D2Lib::strncpyz(szBuffer, pszPaths[i], dwBufferLen);
-			strcat(szBuffer, szFileName);
+			strncat(szBuffer, szFileName, strlen(szFileName));
 			f = fopen(szBuffer, "r");
 			if (f != nullptr)
 			{	// at this point, szBuffer will point to the correct file path

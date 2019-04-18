@@ -77,6 +77,22 @@ void D2Client_SetupServerConnection()
 }
 
 /*
+ *	Handle window events
+ */
+static void D2Client_HandleWindowEvent(WindowEvent windowEvent)
+{
+	switch (windowEvent.event)
+	{
+		case D2WindowEventType::WINDOWEVENT_FOCUS_GAINED:
+			engine->S_ResumeAudio();
+			break;
+		case D2WindowEventType::WINDOWEVENT_FOCUS_LOST:
+			engine->S_PauseAudio();
+			break;
+	}
+}
+
+/*
  *	Pump input
  */
 static void D2Client_HandleInput()
@@ -87,10 +103,12 @@ static void D2Client_HandleInput()
 	for (DWORD i = 0; i < openConfig->dwNumPendingCommands; i++)
 	{
 		D2CommandQueue* pCmd = &openConfig->pCmds[i];
-		
-		// Handle all of the different event types
+				// Handle all of the different event types
 		switch (pCmd->cmdType)
 		{
+			case IN_WINDOW:
+				D2Client_HandleWindowEvent(pCmd->cmdData.window);
+				break;
 			case IN_MOUSEMOVE:
 				cl.dwMouseX = pCmd->cmdData.motion.x;
 				cl.dwMouseY = pCmd->cmdData.motion.y;

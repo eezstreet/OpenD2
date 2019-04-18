@@ -144,6 +144,12 @@ static D2ModuleImportStrc exports = {
 	Audio::RegisterSound,
 	Audio::RegisterMusic,
 	Audio::PlaySound,
+	Audio::PlayMusic,
+	Audio::PauseAudio,
+	Audio::ResumeAudio,
+	Audio::SetMasterVolume,
+	Audio::SetMusicVolume,
+	Audio::SetSoundVolume
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
