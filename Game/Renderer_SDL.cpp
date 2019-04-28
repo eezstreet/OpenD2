@@ -982,6 +982,11 @@ void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig,
 	}
 
 	gpRenderer = SDL_CreateRenderer(pWindow, -1, dwFlags);
+	if (!pConfig->bWindowed)
+	{
+		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+		SDL_RenderSetLogicalSize(gpRenderer, 800, 600);
+	}
 
 	// Make sure that the renderer got created with the info that we want
 	SDL_RendererInfo ri;

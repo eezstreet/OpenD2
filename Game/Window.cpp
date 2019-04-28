@@ -16,9 +16,13 @@ namespace Window
 	{
 		SDL_Window* pWin = nullptr;
 		DWORD dwWindowFlags = 0;
+		int windowX = 800;
+		int windowY = 600;
 
 		if (!pConfig->bWindowed)
 		{
+			windowX = 0;
+			windowY = 0;
 			dwWindowFlags |= SDL_WINDOW_FULLSCREEN;
 		}
 		if (pOpenConfig->bBorderless)
@@ -31,7 +35,7 @@ namespace Window
 		}
 
 		// TODO: make the size based on resolution
-		pWin = SDL_CreateWindow("Diablo II", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, dwWindowFlags);
+		pWin = SDL_CreateWindow("Diablo II", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowX, windowY, dwWindowFlags);
 
 		return pWin;
 	}
