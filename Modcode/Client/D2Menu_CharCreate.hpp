@@ -1,5 +1,5 @@
 #pragma once
-#include "../Shared/D2Common_Shared.hpp"
+#include "../../Shared/D2Common_Shared.hpp"
 #include "D2Menu.hpp"
 #include "D2Panel_CharCreate.hpp"
 

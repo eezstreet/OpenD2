@@ -1,5 +1,5 @@
 #pragma once
-#include "../Shared/D2DataTables.hpp"
+#include "../../Shared/D2DataTables.hpp"
 
 ////////////////////////////////////////////
 //

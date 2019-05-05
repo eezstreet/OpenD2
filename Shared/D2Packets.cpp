@@ -1,13 +1,13 @@
 #include "D2Packets.hpp"
 
 #ifdef D2EXE
-#include "../Game/Diablo2.hpp"
+#include "../Engine/Diablo2.hpp"
 #elif defined(D2CLIENT)
-#include "../Client/D2Client.hpp"
+#include "../Modcode/Client/D2Client.hpp"
 #elif defined(D2GAME)
-#include "../Server/D2Game.hpp"
+#include "../Modcode/Server/D2Game.hpp"
 #else
-#include "../Common/D2Common.hpp"
+#include "../Modcode/Common/D2Common.hpp"
 #endif
 
 /*

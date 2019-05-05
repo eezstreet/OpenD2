@@ -24,13 +24,13 @@ source_group("Shared" FILES ${SHARED_SRC})
 if(BUILD_GAME)
 	message("Including game.exe files")
 
-	file(GLOB_RECURSE GAME_SRC Game/*.h Game/*.hpp Game/*.c Game/*.cpp)
+	file(GLOB_RECURSE ENGINE_SRC Engine/*.h Engine/*.hpp Engine/*.c Engine/*.cpp)
 
 	# Remove files which are platform specific but not accustomed to our platform
 	if(WIN32)
-		list(REMOVE_ITEM GAME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Game/Platform_Linux.cpp)
+		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Linux.cpp)
 	else()
-		list(REMOVE_ITEM GAME_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Game/Platform_Windows.cpp)
+		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Windows.cpp)
 	endif()
 
 	file(GLOB_RECURSE SDL_SRC Libraries/sdl/*)
@@ -38,7 +38,7 @@ if(BUILD_GAME)
 	file(GLOB_RECURSE HUFFMAN_SRC Libraries/huffman/*)
 	file(GLOB_RECURSE PKWARE_SRC Libraries/pkware/*)
 
-	source_group("Game" FILES ${GAME_SRC})
+	source_group("Engine" FILES ${ENGINE_SRC})
 	source_group("Libraries\\adpcm" FILES ${ADPCM_SRC})
 	source_group("Libraries\\huffman" FILES ${HUFFMAN_SRC})
 	source_group("Libraries\\pkware" FILES ${PKWARE_SRC})
@@ -47,20 +47,20 @@ if(BUILD_GAME)
 
 	set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC})
 
-	set(GAME_SRC ${GAME_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
+	set(ENGINE_SRC ${ENGINE_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
 
 	link_directories("Shared")
 
 	# More platform-specific inclusions
 	if(WIN32)
 		link_directories("Libraries/sdl/x86")
-		add_executable(game WIN32 ${GAME_SRC})
+		add_executable(game WIN32 ${ENGINE_SRC})
 		set_target_properties(game PROPERTIES OUTPUT_NAME game)
 		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 		set(SDL_LIBRARY SDL2.lib SDL2main.lib SDL2test.lib SDL2_net.lib SDL2_mixer.lib)
 		target_link_libraries(game ${STATIC_LIBRARIES} ${SDL_LIBRARY})
 	else()
-		add_executable(game ${GAME_SRC})
+		add_executable(game ${ENGINE_SRC})
 		set_target_properties(game PROPERTIES OUTPUT_NAME game)
 		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 		find_package(SDL2 REQUIRED)
@@ -72,10 +72,10 @@ if(BUILD_GAME)
 endif()
 
 # Build D2Common.dll
-if(BUILD_D2CLIENT OR BUILD_D2GAME)
+if(BUILD_D2CLIENT OR BUILD_D2SERVER)
 	message("Including D2Common.dll files")
 
-	file(GLOB_RECURSE D2COMMON_SRC Common/*.h Common/*hpp Common/*.c Common/*.cpp)
+	file(GLOB_RECURSE D2COMMON_SRC Modcode/Common/*.h Modcode/Common/*hpp Modcode/Common/*.c Modcode/Common/*.cpp)
 
 	source_group("Common" FILES ${D2COMMON_SRC})
 	source_group("Shared" FILES ${SHARED_SRC})
@@ -96,7 +96,7 @@ endif()
 if(BUILD_D2CLIENT)
 	message("Including D2Client.dll files")
 
-	file(GLOB_RECURSE D2CLIENT_SRC Client/*.h Client/*.hpp Client/*.c Client/*.cpp)
+	file(GLOB_RECURSE D2CLIENT_SRC Modcode/Client/*.h Modcode/Client/*.hpp Modcode/Client/*.c Modcode/Client/*.cpp)
 
 	source_group("Client" FILES ${D2CLIENT_SRC})
 	source_group("Shared" FILES ${SHARED_SRC})
@@ -116,7 +116,7 @@ endif()
 if(BUILD_D2SERVER)
 	message("Including D2Server.dll files")
 
-	file(GLOB_RECURSE D2SERVER_SRC Server/*.h Server/*.hpp Server/*.c Server/*.cpp)
+	file(GLOB_RECURSE D2SERVER_SRC Modcode/Server/*.h Modcode/Server/*.hpp Modcode/Server/*.c Modcode/Server/*.cpp)
 
 	source_group("Server" FILES ${D2SERVER_SRC})
 	source_group("Shared" FILES ${SHARED_SRC})
