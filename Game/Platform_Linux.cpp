@@ -218,7 +218,7 @@ namespace Sys
 		}
 		else if (nModule == MODULE_SERVER)
 		{
-			bModuleFound = FS::Find("liD2Game.so", szModulePath, MAX_D2PATH_ABSOLUTE);
+			bModuleFound = FS::Find("libD2Server.so", szModulePath, MAX_D2PATH_ABSOLUTE);
 		}
 		Log_ErrorAssertReturn(bModuleFound, nullptr);
 
