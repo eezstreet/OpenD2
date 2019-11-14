@@ -4,6 +4,8 @@ cmake_policy(SET CMP0015 NEW)
 project(OpenD2)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
+
 option(BUILD_GAME "Build Executable" ON)
 option(BUILD_D2CLIENT "Build D2Client" ON)
 option(BUILD_D2SERVER "Build D2Server" ON)
@@ -65,7 +67,7 @@ if(BUILD_GAME)
 		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 		find_package(SDL2 REQUIRED)
 		include_directories(${SDL2_INCLUDE_DIRS})
-		target_link_libraries(game ${SDL2_LIBRARIES} SDL2_net SDL2_mixer m dl)
+                target_link_libraries(game ${SDL2_LIBRARIES} SDL2 SDL2_net SDL2_mixer m dl)
 	endif()
 	
 	target_compile_definitions(game PUBLIC D2EXE)
