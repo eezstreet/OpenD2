@@ -300,7 +300,7 @@ namespace Sys
 		}
 		else if (nModule == MODULE_SERVER)
 		{
-			bModuleFound = FS::Find("D2Game.dll", szModulePath, MAX_D2PATH_ABSOLUTE);
+			bModuleFound = FS::Find("D2Server.dll", szModulePath, MAX_D2PATH_ABSOLUTE);
 		}
 		Log_ErrorAssertReturn(bModuleFound, nullptr);
 
