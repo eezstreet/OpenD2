@@ -65,9 +65,9 @@ if(BUILD_GAME)
 		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 		find_package(SDL2 REQUIRED)
 		include_directories(${SDL2_INCLUDE_DIRS})
-		target_link_libraries(game ${SDL2_LIBRARIES} SDL2_net SDL2_mixer m dl)
+		target_link_libraries(game ${SDL2_LIBRARIES} SDL2 SDL2_net SDL2_mixer m dl)
 	endif()
-	
+
 	target_compile_definitions(game PUBLIC D2EXE)
 endif()
 
@@ -107,12 +107,12 @@ if(BUILD_D2CLIENT)
 	set_target_properties(D2Client PROPERTIES OUTPUT_NAME D2Client)
 	set_target_properties(D2Client PROPERTIES LINKER_LANGUAGE CXX)
 
-	target_link_libraries(D2Client ${STATIC_LIBRARIES})
+	target_link_libraries(D2Client ${STATIC_LIBRARIES} D2Common)
 	target_compile_definitions(D2Client PUBLIC D2CLIENT)
 endif()
 
 
-# Build D2Game.dll
+# Build D2Server.dll
 if(BUILD_D2SERVER)
 	message("Including D2Server.dll files")
 
@@ -127,6 +127,6 @@ if(BUILD_D2SERVER)
 	set_target_properties(D2Server PROPERTIES OUTPUT_NAME D2Server)
 	set_target_properties(D2Server PROPERTIES LINKER_LANGUAGE CXX)
 
-	target_link_libraries(D2Server ${STATIC_LIBRARIES})
+	target_link_libraries(D2Server ${STATIC_LIBRARIES} D2Common)
 	target_compile_definitions(D2Server PUBLIC D2SERVER)
 endif()
