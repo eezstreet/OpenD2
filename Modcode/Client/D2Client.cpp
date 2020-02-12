@@ -207,10 +207,15 @@ static void D2Client_LoadData()
 	else if (cl.nLoadState == 1)
 	{	// load interface
 
+		// Prime the server for init.
+		if (cl.bLocalServer)
+		{
+			cl.bClientReadyForServer = true;
+		}
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 2)
-	{	// load D2Game, if necessary
+	{	// D2Game is loaded on this step if we are running a local game. The client need not do anything here.
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 3)
@@ -340,7 +345,7 @@ static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
 		return MODULE_NONE;
 	}
 
-	if (cl.bLocalServer)
+	if (cl.bLocalServer && cl.bClientReadyForServer)
 	{	// If we're running a local server, we need to run that next (it will *always* run the client in the next step)
 		return MODULE_SERVER;
 	}

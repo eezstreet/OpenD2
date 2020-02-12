@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 2.6)
-cmake_policy(SET CMP0015 NEW)
+cmake_minimum_required(VERSION 3.4)
+
+set(CMAKE_CXX_STANDARD 14)
 
 project(OpenD2)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 option(BUILD_GAME "Build Executable" ON)
 option(BUILD_D2CLIENT "Build D2Client" ON)
@@ -22,50 +22,50 @@ source_group("Shared" FILES ${SHARED_SRC})
 
 # Build game.exe
 if(BUILD_GAME)
-	message("Including game.exe files")
+	message(STATUS "Including game.exe files")
 
 	file(GLOB_RECURSE ENGINE_SRC Engine/*.h Engine/*.hpp Engine/*.c Engine/*.cpp)
 
-	# Remove files which are platform specific but not accustomed to our platform
+	# Use the included SDL on Windows, use find_package to find SDL on Linux
 	if(WIN32)
 		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Linux.cpp)
+		file(GLOB_RECURSE SDL_SRC Libraries/sdl/*)
+		file(GLOB_RECURSE ADPCM_SRC Libraries/adpcm/*)
+		file(GLOB_RECURSE HUFFMAN_SRC Libraries/huffman/*)
+		file(GLOB_RECURSE PKWARE_SRC Libraries/pkware/*)
+
+		source_group("Engine" FILES ${ENGINE_SRC})
+		source_group("Libraries\\adpcm" FILES ${ADPCM_SRC})
+		source_group("Libraries\\huffman" FILES ${HUFFMAN_SRC})
+		source_group("Libraries\\pkware" FILES ${PKWARE_SRC})
+		source_group("Libraries\\SDL" FILES ${SDL_SRC})
+		source_group("Shared" FILES ${SHARED_SRC})
+
+		set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC})
+
+		set(ENGINE_SRC ${ENGINE_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
+		set(SDL2_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/sdl/x86")
+		set(SDL2_LIBRARIES "${SDL2_LIBRARY_DIR}/SDL2.lib" "${SDL2_LIBRARY_DIR}/SDL2main.lib"
+			"${SDL2_LIBRARY_DIR}/SDL2main.lib" "${SDL2_LIBRARY_DIR}/SDL2test.lib"
+			"${SDL2_LIBRARY_DIR}/SDL2_net.lib" "${SDL2_LIBRARY_DIR}/SDL2_mixer.lib"
+		)
 	else()
 		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Windows.cpp)
+
+		find_package(SDL2 REQUIRED)
 	endif()
 
-	file(GLOB_RECURSE SDL_SRC Libraries/sdl/*)
-	file(GLOB_RECURSE ADPCM_SRC Libraries/adpcm/*)
-	file(GLOB_RECURSE HUFFMAN_SRC Libraries/huffman/*)
-	file(GLOB_RECURSE PKWARE_SRC Libraries/pkware/*)
+	add_executable(game ${ENGINE_SRC})
+	set_target_properties(game PROPERTIES OUTPUT_NAME game)
+	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
+	
+	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES})
+	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS})
 
-	source_group("Engine" FILES ${ENGINE_SRC})
-	source_group("Libraries\\adpcm" FILES ${ADPCM_SRC})
-	source_group("Libraries\\huffman" FILES ${HUFFMAN_SRC})
-	source_group("Libraries\\pkware" FILES ${PKWARE_SRC})
-	source_group("Libraries\\SDL" FILES ${SDL_SRC})
-	source_group("Shared" FILES ${SHARED_SRC})
-
-	set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC})
-
-	set(ENGINE_SRC ${ENGINE_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
-
-	link_directories("Shared")
-
-	# More platform-specific inclusions
 	if(WIN32)
-		link_directories("Libraries/sdl/x86")
-		add_executable(game WIN32 ${ENGINE_SRC})
-		set_target_properties(game PROPERTIES OUTPUT_NAME game)
-		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
-		set(SDL_LIBRARY SDL2.lib SDL2main.lib SDL2test.lib SDL2_net.lib SDL2_mixer.lib)
-		target_link_libraries(game ${STATIC_LIBRARIES} ${SDL_LIBRARY})
+		set_target_properties(game PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
 	else()
-		add_executable(game ${ENGINE_SRC})
-		set_target_properties(game PROPERTIES OUTPUT_NAME game)
-		set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
-		find_package(SDL2 REQUIRED)
-		include_directories(${SDL2_INCLUDE_DIRS})
-		target_link_libraries(game ${SDL2_LIBRARIES} SDL2 SDL2_net SDL2_mixer m dl)
+		target_link_libraries(game PRIVATE m dl)
 	endif()
 
 	target_compile_definitions(game PUBLIC D2EXE)

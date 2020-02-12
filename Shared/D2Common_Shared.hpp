@@ -281,6 +281,7 @@ struct D2Savegame
 
 // D2Common.cpp
 D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
+D2COMMONAPI void D2Common_ConstructWorld();
 D2COMMONAPI void D2Common_Shutdown();
 
 

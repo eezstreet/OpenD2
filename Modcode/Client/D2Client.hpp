@@ -42,6 +42,7 @@ struct D2Client
 {
 	D2Client_GameState	gamestate;
 	bool				bLocalServer;
+	bool				bClientReadyForServer;
 	bool				bKillGame;
 	DWORD				dwMouseX;
 	DWORD				dwMouseY;

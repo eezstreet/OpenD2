@@ -124,6 +124,60 @@ namespace D2Lib
 	}
 
 	/*
+	 *	File Name Bottom Level Directory with Safe Buffer (FNBLDB)
+	 *	Gets the file name from a directory.
+	 *	The input string is not modified.
+	 *	e.g., fnbldb("data/global/excel/levels.txt") -> "levels.txt"
+	 */
+	char* fnbldb(char* szFileName)
+	{
+		static char szStaticBuffer[MAX_D2PATH_ABSOLUTE];
+		strncpyz(szStaticBuffer, szFileName, MAX_D2PATH_ABSOLUTE);
+		return fnbld(szStaticBuffer);
+	}
+
+	/*
+	 *	File Name Extension (FNEXT)
+	 *	Gets the extension of a given file path.
+	 *	e.g., fnext("data/global/excel/levels.txt") -> ".txt"
+	 */
+	char* fnext(char* szFileName)
+	{
+		char* szCurrent = szFileName;
+		while (szCurrent != '\0' && strchr(szCurrent + 1, '.') != nullptr)
+		{
+			szCurrent++;
+		}
+
+		return szCurrent;
+	}
+
+	/*
+	 *	File Name, Extension Stripped (FNEXTSTR)
+	 *	Gets the file path without any extension.
+	 *	e.g., fnextstr("data/global/excel/levels.txt") -> "data/global/excel/levels"
+	 */
+	char* fnextstr(char* szFileName)
+	{
+		char* szExtensionString = fnext(szFileName);
+		*szExtensionString = '\0';
+		return szFileName;
+	}
+
+	/*
+	 *	File Name, Extension Stripped with Safe Buffer (FNEXTSTRB)
+	 *	Gets the file path without any extension.
+	 *	The input string is not modified.
+	 *	e.g., fnextstrb("data/global/excel/levels.txt") -> "data/global/excel/levels"
+	 */
+	char* fnextstrb(char* szFileName)
+	{
+		static char szStaticBuffer[MAX_D2PATH_ABSOLUTE];
+		strncpyz(szStaticBuffer, szFileName, MAX_D2PATH_ABSOLUTE);
+		return fnextstr(szStaticBuffer);
+	}
+
+	/*
 	*	Compares two strings for inequality, char16_t version.
 	*	Case-insensitive. Searches up to a fixed length of characters.
 	*/

@@ -654,11 +654,11 @@ struct D2ModuleImportStrc
 	tbl_handle		(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
 	char16_t*		(*TBL_FindStringFromText)(char16_t* szReference);
 
-	// Token calls
+	// Token calls (TODO: Make part of the modcode, not part of the engine)
 	token_handle	(*TOK_Register)(D2TokenType type, char* tokenName, char* szWeaponClass);
 	void			(*TOK_Deregister)(token_handle token);
 
-	// Token instance calls
+	// Token instance calls (TODO: Make part of the modcode, not part of the engine)
 	anim_handle		(*TOK_CreateTokenAnimInstance)(token_handle token);
 	void			(*TOK_SwapTokenAnimToken)(anim_handle handle, token_handle newhandle);
 	void			(*TOK_DestroyTokenInstance)(anim_handle handle);
@@ -739,6 +739,10 @@ namespace D2Lib
 
 	// File name management
 	char* fnbld(char* szFileName);
+	char* fnbldb(char* szFileName);
+	char* fnext(char* szFileName);
+	char* fnextstr(char* szFileName);
+	char* fnextstrb(char* szFileName);
 
 	// String Management - UTF-16
 	int qstricmpn(char16_t* s1, char16_t* s2, int n);
