@@ -15,9 +15,9 @@ D2Menu_LoadError::D2Menu_LoadError(WORD wStringIndex) : D2Menu()
  */
 void D2Menu_LoadError::Draw()
 {
-	engine->R_Clear();
-	engine->R_ColorModFont(cl.font16, 255, 255, 255);
-	engine->R_DrawText(cl.font16, szErrorText, 20, 200, 780, 20, ALIGN_CENTER, ALIGN_TOP);
+	engine->renderer->Clear();
+	engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
+	engine->renderer->DrawText(cl.font16, szErrorText, 20, 200, 780, 20, ALIGN_CENTER, ALIGN_TOP);
 }
 
 /*

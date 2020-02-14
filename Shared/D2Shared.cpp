@@ -13,7 +13,7 @@ namespace D2Lib
 	/*
 	*	Compares two strings for case-insensitive equality, with a limited length.
 	*/
-	int stricmpn(char* s1, char* s2, int n)
+	int stricmpn(const char* s1, const char* s2, int n)
 	{
 		int		c1, c2;
 
@@ -47,7 +47,7 @@ namespace D2Lib
 	*		0 if the strings are lexicographically identical
 	*		1 if s1 (first argument) comes after s2 lexicographically
 	*/
-	int stricmp(char* s1, char* s2)
+	int stricmp(const char* s1, const char* s2)
 	{
 		return (s1 && s2) ? stricmpn(s1, s2, 99999) : -1;
 	}
@@ -84,7 +84,7 @@ namespace D2Lib
 	*	Returns a hash value from 0-dwMaxHashSize, used for hash tables.
 	*	Do not use for MPQ-related hash functions, those are special!
 	*/
-	DWORD strhash(char* szString, size_t dwLen, size_t dwMaxHashSize)
+	DWORD strhash(const char* szString, size_t dwLen, size_t dwMaxHashSize)
 	{
 		DWORD hash = 0;
 		int c;
@@ -181,7 +181,7 @@ namespace D2Lib
 	*	Compares two strings for inequality, char16_t version.
 	*	Case-insensitive. Searches up to a fixed length of characters.
 	*/
-	int qstricmpn(char16_t* s1, char16_t* s2, int n)
+	int qstricmpn(const char16_t* s1, const char16_t* s2, int n)
 	{
 		int		c1, c2;
 
@@ -211,7 +211,7 @@ namespace D2Lib
 	/*
 	*	Compares two strings for inequality, char16_t version. Unlimited length, case insensitive.
 	*/
-	int qstricmp(char16_t* s1, char16_t* s2)
+	int qstricmp(const char16_t* s1, const char16_t* s2)
 	{
 		return qstricmpn(s1, s2, 99999);
 	}
@@ -220,7 +220,7 @@ namespace D2Lib
 	*	Compares two strings for inequality. char16_t version.
 	*	Case sensitive. Searches up to a fixed length of characters.
 	*/
-	int qstrcmpn(char16_t* s1, char16_t* s2, int n)
+	int qstrcmpn(const char16_t* s1, const char16_t* s2, int n)
 	{
 		int		c1, c2;
 
@@ -244,7 +244,7 @@ namespace D2Lib
 	*	Compares two strings for inequality. char16_t version.
 	*	Case sensitive. Unlimited length.
 	*/
-	int qstrcmp(char16_t* s1, char16_t* s2)
+	int qstrcmp(const char16_t* s1, const char16_t* s2)
 	{
 		return qstrcmpn(s1, s2, 99999);
 	}
@@ -252,7 +252,7 @@ namespace D2Lib
 	/*
 	*	Safe string copy for char16_t
 	*/
-	size_t qstrncpyz(char16_t* dest, char16_t* src, size_t destLen)
+	size_t qstrncpyz(char16_t* dest, const char16_t* src, size_t destLen)
 	{
 		size_t len = 0;
 
@@ -283,10 +283,11 @@ namespace D2Lib
 	/*
 	*	Finds the length of a char16_t string.
 	*/
-	size_t qstrlen(char16_t* s1)
+	size_t qstrlen(const char16_t* s1)
 	{
 		size_t len = 0;
-		while (*s1++) len++;
+		char16_t* s2 = (char16_t*)s1;
+		while (*s2++) len++;
 		return len;
 	}
 
@@ -460,7 +461,7 @@ namespace D2Lib
 	/*
 	*	Converts a char string to a char16_t string.
 	*/
-	size_t qmbtowc(char16_t* dest, size_t destLen, char* src)
+	size_t qmbtowc(char16_t* dest, size_t destLen, const char* src)
 	{
 		size_t len = 0;
 		while (len < destLen && src[len] > 0)
@@ -476,7 +477,7 @@ namespace D2Lib
 	*	Converts a char16_t string to char string.
 	*	Note that any non-representable characters will be transformed into code point 1.
 	*/
-	size_t qwctomb(char* dest, size_t destLen, char16_t* src)
+	size_t qwctomb(char* dest, size_t destLen, const char16_t* src)
 	{
 		size_t len = 0;
 		while (len < destLen && src[len] > 0)

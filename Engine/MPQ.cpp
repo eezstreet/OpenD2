@@ -464,7 +464,7 @@ namespace MPQ
 	 *	Retrieves a file number (file handle) from the archive
 	 *	@author	Zezula/eezstreet
 	 */
-	fs_handle FetchHandle(D2MPQArchive* pMPQ, char* szFileName)
+	fs_handle FetchHandle(D2MPQArchive* pMPQ, const char* szFileName)
 	{
 		DWORD dwHashIndexMask = pMPQ->dwNumHashEntries - 1;
 		DWORD dwStartIndex = HashStringSlash(pMPQ, szFileName, MPQ_HASH_TABLE_INDEX);

@@ -15,15 +15,15 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 
 	// register all of the textures
 	snprintf(typeBuffer, 32, "%s_up", szButtonType);
-	texture_up = engine->R_RegisterDC6Texture(szDC6Path, typeBuffer, dwStartEnabled, dwEndEnabled, PAL_UNITS);
+	texture_up = engine->renderer->TextureFromStitchedDC6(szDC6Path, typeBuffer, dwStartEnabled, dwEndEnabled, PAL_UNITS);
 
 	snprintf(typeBuffer, 32, "%s_dn", szButtonType);
-	texture_down = engine->R_RegisterDC6Texture(szDC6Path, typeBuffer, dwStartDown, dwEndDown, PAL_UNITS);
+	texture_down = engine->renderer->TextureFromStitchedDC6(szDC6Path, typeBuffer, dwStartDown, dwEndDown, PAL_UNITS);
 
 	snprintf(typeBuffer, 32, "%s_ds", szButtonType);
-	texture_disabled = engine->R_RegisterDC6Texture(szDC6Path, typeBuffer, dwStartDisabled, dwEndDisabled, PAL_UNITS);
+	texture_disabled = engine->renderer->TextureFromStitchedDC6(szDC6Path, typeBuffer, dwStartDisabled, dwEndDisabled, PAL_UNITS);
 
-	engine->R_PollTexture(texture_up, (DWORD*)&this->w, (DWORD*)&this->h);
+	engine->renderer->PollTexture(texture_up, (DWORD*)&this->w, (DWORD*)&this->h);
 
 	clickedSound = engine->S_RegisterSound("data\\global\\sfx\\cursor\\button.wav");
 
@@ -58,34 +58,34 @@ void D2Widget_Button::Draw()
 	{
 		if (bAlphaModulateDisable)
 		{
-			engine->R_ColorModTexture(texture_disabled, 122, 122, 122);
+			engine->renderer->ColorModTexture(texture_disabled, 122, 122, 122);
 		}
-		engine->R_DrawTexture(texture_disabled, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
+		engine->renderer->DrawTexture(texture_disabled, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
 		if (bAlphaModulateDisable)
 		{
-			engine->R_ColorModTexture(texture_disabled, 255, 255, 255);
+			engine->renderer->ColorModTexture(texture_disabled, 255, 255, 255);
 		}
 	}
 	else if (bDown)
 	{
-		engine->R_DrawTexture(texture_down, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
+		engine->renderer->DrawTexture(texture_down, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
 	}
 	else
 	{
-		engine->R_DrawTexture(texture_up, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
+		engine->renderer->DrawTexture(texture_up, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
 	}
 
 	if (bHasText)
 	{
-		engine->R_ColorModFont(font, 0, 0, 0);	// buttons only have text in black exocet, font16
+		engine->renderer->ColorModFont(font, 0, 0, 0);	// buttons only have text in black exocet, font16
 		if (bDown)
 		{ // shift the x and y a little bit to make it look like we're pressing the button
-			engine->R_DrawText(font, buttonTextBuffer, m_pOwner->x + x - 2, m_pOwner->y + y + 2, 
+			engine->renderer->DrawText(font, buttonTextBuffer, m_pOwner->x + x - 2, m_pOwner->y + y + 2, 
 				w, h, ALIGN_CENTER, ALIGN_CENTER);
 		}
 		else
 		{
-			engine->R_DrawText(font, buttonTextBuffer, m_pOwner->x + x, m_pOwner->y + y, w, h, ALIGN_CENTER, ALIGN_CENTER);
+			engine->renderer->DrawText(font, buttonTextBuffer, m_pOwner->x + x, m_pOwner->y + y, w, h, ALIGN_CENTER, ALIGN_CENTER);
 		}
 		
 	}

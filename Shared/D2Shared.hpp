@@ -590,6 +590,53 @@ struct OpenD2ConfigStrc
 	DWORD			dwAudioChannels;
 };
 
+class IRenderer
+{
+public:
+	//
+	virtual void Present() = 0;
+
+	//
+	virtual tex_handle TextureFromStitchedDC6(const char* dc6Path, const char* handle, DWORD start, DWORD end, int palette) = 0;
+	virtual tex_handle TextureFromAnimatedDC6(const char* dc6Path, const char* handle, int palette) = 0;
+	virtual void DrawTexture(tex_handle texture, int x, int y, int w, int h, int u, int v) = 0;
+	virtual void DrawTextureFrames(tex_handle texture, int x, int y, DWORD startFrame, DWORD endFrame) = 0;
+	virtual void DrawTextureFrame(tex_handle texture, int x, int y, DWORD frame) = 0;
+	virtual void DeregisterTexture(const char* handleName, tex_handle texture) = 0;
+	virtual void SetTextureBlendMode(tex_handle texture, D2ColorBlending blendMode) = 0;
+	virtual void PollTexture(tex_handle texture, DWORD* width, DWORD* height) = 0;
+	virtual bool PixelPerfectDetect(anim_handle anim, int srcX, int srcY, int drawX, int drawY, bool bAllowAlpha) = 0;
+
+	//
+	virtual anim_handle RegisterDC6Animation(tex_handle texture, const char* szHandlename, DWORD startingFrame) = 0;
+	virtual void DeregisterAnimation(anim_handle anim) = 0;
+	virtual void Animate(anim_handle anim, DWORD framerate, int x, int y) = 0;
+	virtual void SetAnimFrame(anim_handle anim, DWORD frame) = 0;
+	virtual DWORD GetAnimFrame(anim_handle anim) = 0;
+	virtual void AddAnimKeyframe(anim_handle anim, int frame, AnimKeyframeCallback callback, int extraInt) = 0;
+	virtual void RemoveAnimKeyframe(anim_handle anim) = 0;
+	virtual DWORD GetAnimFrameCount(anim_handle anim) = 0;
+
+	//
+	virtual font_handle RegisterFont(const char* fontName) = 0;
+	virtual void DeregisterFont(font_handle font) = 0;
+	virtual void DrawText(font_handle font, const char16_t* text, int x, int y, int w, int h,
+		D2TextAlignment alignHorz, D2TextAlignment alignVert) = 0;
+
+	//
+	virtual void AlphaModTexture(tex_handle texture, int alpha) = 0;
+	virtual void ColorModTexture(tex_handle texture, int red, int green, int blue) = 0;
+	virtual void AlphaModFont(font_handle font, int alpha) = 0;
+	virtual void ColorModFont(font_handle font, int red, int green, int blue) = 0;
+
+	//
+	virtual void DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a) = 0;
+
+	virtual void DrawTokenInstance(anim_handle instance, int x, int y, int translvl, int palette) = 0;
+
+	virtual void Clear() = 0;
+};
+
 //////////////////////////////////////////////////
 //
 //	Module Exports
@@ -609,6 +656,7 @@ enum OpenD2Modules
 struct D2ModuleImportStrc
 {	// These get imported from the engine
 	int nApiVersion;
+	IRenderer* renderer;
 
 	// Basic functions
 	void			(*Print)(OpenD2LogFlags nPriority, char* szFormat, ...);
@@ -617,10 +665,10 @@ struct D2ModuleImportStrc
 	DWORD			(__cdecl *Milliseconds)();
 
 	// Filesystem calls
-	size_t			(*FS_Open)(char* szFileName, fs_handle* f, OpenD2FileModes mode, bool bBinary);
+	size_t			(*FS_Open)(const char* szFileName, fs_handle* f, OpenD2FileModes mode, bool bBinary);
 	size_t			(*FS_Read)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
 	size_t			(*FS_Write)(fs_handle f, void* buffer, size_t dwBufferLen, size_t dwCount);
-	size_t			(*FS_WritePlaintext)(fs_handle f, char* text);
+	size_t			(*FS_WritePlaintext)(fs_handle f, const char* text);
 	void			(*FS_CloseFile)(fs_handle f);
 	void			(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
 	size_t			(*FS_Tell)(fs_handle f);
@@ -644,7 +692,7 @@ struct D2ModuleImportStrc
 	void			(*In_StopTextEditing)();
 
 	// MPQ calls
-	fs_handle		(*MPQ_FindFile)(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+	fs_handle		(*MPQ_FindFile)(const char* szFileName, const char* szMPQName, D2MPQArchive** pArchiveOut);
 	size_t			(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
 	size_t			(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
 
@@ -681,37 +729,6 @@ struct D2ModuleImportStrc
 	void			(*S_SetMasterVolume)(float volume);
 	void			(*S_SetMusicVolume)(float volume);
 	void			(*S_SetSoundVolume)(float volume);
-
-	// Renderer calls (should always be last)
-	tex_handle		(*R_RegisterDC6Texture)(char *szFileName, char* szHandleName, DWORD dwStart, DWORD dwEnd, int nPalette);
-	tex_handle		(*R_RegisterAnimatedDC6)(char *szFileName, char* szHandleName, int nPalette);
-	void			(*R_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
-	void			(*R_DrawTextureFrames)(tex_handle texture, int x, int y, DWORD dwStart, DWORD dwEnd);
-	void			(*R_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
-	void			(*R_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
-	void			(*R_Present)();
-	void			(*R_DeregisterTexture)(char* szTexName, tex_handle texture);
-	void			(*R_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
-	bool			(*R_PixelPerfectDetect)(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
-	anim_handle		(*R_RegisterAnimation)(tex_handle texture, char* szHandle, DWORD dwStartingFrame);
-	void			(*R_DeregisterAnimation)(anim_handle anim);
-	void			(*R_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
-	void			(*R_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
-	DWORD			(*R_GetAnimFrame)(anim_handle anim);
-	void			(*R_AddAnimKeyframe)(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt);
-	void			(*R_RemoveAnimKeyframe)(anim_handle anim);
-	DWORD			(*R_GetAnimFrameCount)(anim_handle anim);
-	font_handle		(*R_RegisterFont)(char* szFontName);
-	void			(*R_DeregisterFont)(font_handle font);
-	void			(*R_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
-		D2TextAlignment alignHorz, D2TextAlignment alignVert);
-	void			(*R_AlphaModTexture)(tex_handle texture, int nAlpha);
-	void			(*R_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
-	void			(*R_AlphaModFont)(font_handle font, int nAlpha);
-	void			(*R_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
-	void			(*R_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
-	void			(*R_DrawTokenInstance)(anim_handle token, int x, int y, int translvl, int palette);
-	void			(*R_Clear)();
 };
 
 struct D2ModuleExportStrc
@@ -732,10 +749,10 @@ typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports)
 namespace D2Lib
 {
 	// String Management - ASCII
-	int stricmpn(char* s1, char* s2, int n);
-	int stricmp(char* s1, char* s2);
+	int stricmpn(const char* s1, const char* s2, int n);
+	int stricmp(const char* s1, const char* s2);
 	void strncpyz(char *dest, const char *src, int destsize);
-	DWORD strhash(char* szString, size_t dwLen, size_t dwMaxHashSize);
+	DWORD strhash(const char* szString, size_t dwLen, size_t dwMaxHashSize);
 
 	// File name management
 	char* fnbld(char* szFileName);
@@ -745,14 +762,14 @@ namespace D2Lib
 	char* fnextstrb(char* szFileName);
 
 	// String Management - UTF-16
-	int qstricmpn(char16_t* s1, char16_t* s2, int n);
-	int qstricmp(char16_t* s1, char16_t* s2);
-	int qstrcmpn(char16_t* s1, char16_t* s2, int n);
-	int qstrcmp(char16_t* s1, char16_t* s2);
-	size_t qstrncpyz(char16_t* dest, char16_t* src, size_t destLen);
-	size_t qstrlen(char16_t* s1);
-	size_t qmbtowc(char16_t* dest, size_t destLen, char* src);
-	size_t qwctomb(char* dest, size_t destLen, char16_t* src);
+	int qstricmpn(const char16_t* s1, const char16_t* s2, int n);
+	int qstricmp(const char16_t* s1, const char16_t* s2);
+	int qstrcmpn(const char16_t* s1, const char16_t* s2, int n);
+	int qstrcmp(const char16_t* s1, const char16_t* s2);
+	size_t qstrncpyz(char16_t* dest, const char16_t* src, size_t destLen);
+	size_t qstrlen(const char16_t* s1);
+	size_t qmbtowc(char16_t* dest, size_t destLen, const char* src);
+	size_t qwctomb(char* dest, size_t destLen, const char16_t* src);
 	void qstrverse(char16_t* s, int start, size_t len);
 	char16_t* qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
 	char16_t* qstrchr(char16_t* str, char16_t chr);

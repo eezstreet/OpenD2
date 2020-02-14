@@ -17,7 +17,7 @@ namespace TBLFont
 	/*
 	 *	Registers a font TBL file.
 	 */
-	tbl_handle RegisterFont(char* szFontName)
+	tbl_handle RegisterFont(const char* szFontName)
 	{
 		char szFilePath[MAX_D2PATH]{ 0 };
 		fs_handle file;

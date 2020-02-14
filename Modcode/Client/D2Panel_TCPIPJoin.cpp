@@ -37,7 +37,7 @@ static void JoinGamePanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget
 D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
 {
 	// Create background
-	panelBackground = engine->R_RegisterDC6Texture(DC6_PANEL_BACKGROUND, "PopUpOkCancel2", 0, 1, PAL_UNITS);
+	panelBackground = engine->renderer->TextureFromStitchedDC6(DC6_PANEL_BACKGROUND, "PopUpOkCancel2", 0, 1, PAL_UNITS);
 
 	ipText = engine->TBL_FindStringFromIndex(TBLTEXT_DESC);
 
@@ -68,7 +68,7 @@ D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
  */
 D2Panel_TCPIPJoin::~D2Panel_TCPIPJoin()
 {
-	engine->R_DeregisterTexture("PopUpOkCancel2", panelBackground);
+	engine->renderer->DeregisterTexture("PopUpOkCancel2", panelBackground);
 }
 
 /*
@@ -79,11 +79,11 @@ void D2Panel_TCPIPJoin::Draw()
 {
 	// Draw the background
 	DWORD dwWidth = 0, dwHeight = 0;
-	engine->R_PollTexture(panelBackground, &dwWidth, &dwHeight);
-	engine->R_DrawTexture(panelBackground, x, y, dwWidth, dwHeight, 0, 0);
+	engine->renderer->PollTexture(panelBackground, &dwWidth, &dwHeight);
+	engine->renderer->DrawTexture(panelBackground, x, y, dwWidth, dwHeight, 0, 0);
 
 	// Draw the text
-	engine->R_DrawText(cl.font16, ipText, x + 45, y + 25, 175, 40, ALIGN_CENTER, ALIGN_TOP);
+	engine->renderer->DrawText(cl.font16, ipText, x + 45, y + 25, 175, 40, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the widgets
 	DrawAllWidgets();

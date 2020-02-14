@@ -113,7 +113,7 @@ namespace FSMPQ
 	 *	We need to route all of the existing MPQ_Read calls through an ReadFile function to make it work.
 	 *	@author	eezstreet
 	 */
-	fs_handle FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut)
+	fs_handle FindFile(const char* szFileName, const char* szMPQName, D2MPQArchive** pArchiveOut)
 	{
 		MPQSearchPath* pCurrent = gpMPQSearchPaths;
 		fs_handle f;

@@ -130,7 +130,7 @@ void D2Panel_CharSelect::Draw()
 
 	if (szCharName && szCharName[0])
 	{
-		engine->R_DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
+		engine->renderer->DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
 	}
 
 	// Draw the widgets
@@ -228,7 +228,7 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 	confirmYesButton = new D2Widget_Button(420, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 	confirmNoButton = new D2Widget_Button(280, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 
-	background = engine->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
+	background = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
 
 	AddWidget(confirmYesButton);
 	AddWidget(confirmNoButton);
@@ -252,7 +252,7 @@ D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
 	delete confirmYesButton;
 	delete confirmNoButton;
 
-	engine->R_DeregisterTexture("PopUpOkCancel2", INVALID_HANDLE);
+	engine->renderer->DeregisterTexture("PopUpOkCancel2", INVALID_HANDLE);
 }
 
 /*
@@ -262,7 +262,7 @@ D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
 void D2Panel_CharDeleteConfirm::Draw()
 {
 	// Draw the background
-	engine->R_DrawTexture(background, 268, 212, 264, 176, 0, 0);
+	engine->renderer->DrawTexture(background, 268, 212, 264, 176, 0, 0);
 
 	// And the widgets too
 	DrawAllWidgets();

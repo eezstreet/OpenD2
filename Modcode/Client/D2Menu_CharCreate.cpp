@@ -42,12 +42,12 @@ static const char* szAnimNameSpecial[CCA_MAX] = {
  */
 D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 {
-	tex_handle fireTex = engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\fire.DC6", "ccfire", PAL_FECHAR);
+	tex_handle fireTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\fire.DC6", "ccfire", PAL_FECHAR);
 
-	backgroundTex = engine->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", 
+	backgroundTex = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", 
 		"ccback", 0, 11, PAL_FECHAR);
-	fireAnim = engine->R_RegisterAnimation(fireTex, "ccfire", 0);
-	engine->R_SetTextureBlendMode(fireTex, BLEND_ADD);
+	fireAnim = engine->renderer->RegisterDC6Animation(fireTex, "ccfire", 0);
+	engine->renderer->SetTextureBlendMode(fireTex, BLEND_ADD);
 
 	// start gobbling text input events. any keystroke will be interpreted as text
 	engine->In_StartTextEditing();
@@ -90,11 +90,11 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 				szCharacterClassFolders[i], szCharacterClassShort[i], szAnimName[j]);
 			snprintf(szHandle, 32, "%s%s", szCharacterClassShort[i], szAnimName[j]);
 
-			CreateData[i].animTextureHandle[j] = engine->R_RegisterAnimatedDC6(szPath, szHandle, PAL_FECHAR);
+			CreateData[i].animTextureHandle[j] = engine->renderer->TextureFromAnimatedDC6(szPath, szHandle, PAL_FECHAR);
 			CreateData[i].animAnimHandle[j] = 
-				engine->R_RegisterAnimation(CreateData[i].animTextureHandle[j], szHandle, 0);
+				engine->renderer->RegisterDC6Animation(CreateData[i].animTextureHandle[j], szHandle, 0);
 
-			engine->R_PollTexture(CreateData[i].animTextureHandle[j], nullptr, (DWORD*)&CreateData[i].nDrawBaselineY[j]);
+			engine->renderer->PollTexture(CreateData[i].animTextureHandle[j], nullptr, (DWORD*)&CreateData[i].nDrawBaselineY[j]);
 			if (j != 0)
 			{
 				CreateData[i].nDrawBaselineY[j] -= CreateData[i].nDrawBaselineY[0];
@@ -108,14 +108,14 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 					szCharacterClassFolders[i], szCharacterClassShort[i], szAnimNameSpecial[j]);
 				snprintf(szHandle, 32, "%s%s", szCharacterClassShort[i], szAnimNameSpecial[j]);
 
-				CreateData[i].specialAnimTextureHandle[j] = engine->R_RegisterAnimatedDC6(szPath, szHandle, PAL_FECHAR);
+				CreateData[i].specialAnimTextureHandle[j] = engine->renderer->TextureFromAnimatedDC6(szPath, szHandle, PAL_FECHAR);
 				CreateData[i].specialAnimAnimHandle[j] = 
-					engine->R_RegisterAnimation(CreateData[i].specialAnimTextureHandle[j], szHandle, 0);
+					engine->renderer->RegisterDC6Animation(CreateData[i].specialAnimTextureHandle[j], szHandle, 0);
 
 				// special animations are additively blended for the necro and sorc
 				if (i == D2CLASS_SORCERESS || i == D2CLASS_NECROMANCER)
 				{
-					engine->R_SetTextureBlendMode(CreateData[i].specialAnimTextureHandle[j], BLEND_ADD);
+					engine->renderer->SetTextureBlendMode(CreateData[i].specialAnimTextureHandle[j], BLEND_ADD);
 				}
 			}
 			else
@@ -197,20 +197,20 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 D2Menu_CharCreate::~D2Menu_CharCreate()
 {
 	// we can reasonably unregister any textures here, we probably won't see them again for a long time
-	engine->R_DeregisterTexture(nullptr, backgroundTex);
-	engine->R_DeregisterTexture("ccfire", INVALID_HANDLE);
-	engine->R_DeregisterAnimation(fireAnim);
+	engine->renderer->DeregisterTexture(nullptr, backgroundTex);
+	engine->renderer->DeregisterTexture("ccfire", INVALID_HANDLE);
+	engine->renderer->DeregisterAnimation(fireAnim);
 
 	for (int i = 0; i < D2CLASS_MAX; i++)
 	{
 		for (int j = 0; j < CCA_MAX; j++)
 		{
-			engine->R_DeregisterAnimation(CreateData[i].animAnimHandle[j]);
-			engine->R_DeregisterTexture(nullptr, CreateData[i].animTextureHandle[j]);
+			engine->renderer->DeregisterAnimation(CreateData[i].animAnimHandle[j]);
+			engine->renderer->DeregisterTexture(nullptr, CreateData[i].animTextureHandle[j]);
 			if (CreateData[i].bSpecialAnimPresent[j])
 			{
-				engine->R_DeregisterAnimation(CreateData[i].specialAnimAnimHandle[j]);
-				engine->R_DeregisterTexture(nullptr, CreateData[i].specialAnimTextureHandle[j]);
+				engine->renderer->DeregisterAnimation(CreateData[i].specialAnimAnimHandle[j]);
+				engine->renderer->DeregisterTexture(nullptr, CreateData[i].specialAnimTextureHandle[j]);
 			}
 		}
 	}
@@ -232,12 +232,12 @@ void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
 	
 	if (pMenu->CreateData[nExtraInt].status == CCA_FrontToBack)
 	{
-		engine->R_SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleBack], 0);
+		engine->renderer->SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleBack], 0);
 		pMenu->CreateData[nExtraInt].status = CCA_IdleBack;
 	}
 	else if (pMenu->CreateData[nExtraInt].status == CCA_BackToFront)
 	{
-		engine->R_SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleFront], 0);
+		engine->renderer->SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleFront], 0);
 		pMenu->CreateData[nExtraInt].status = CCA_IdleFront;
 	}
 }
@@ -250,10 +250,10 @@ void D2Menu_CharCreate::Draw()
 	int i = D2CLASS_BARBARIAN;
 
 	// draw background
-	engine->R_DrawTexture(backgroundTex, 0, 0, 800, 600, 0, 0);
+	engine->renderer->DrawTexture(backgroundTex, 0, 0, 800, 600, 0, 0);
 
 	// draw choose class text
-	engine->R_DrawText(cl.font30, szChooseClassStr, 0, 25, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+	engine->renderer->DrawText(cl.font30, szChooseClassStr, 0, 25, 800, 600, ALIGN_CENTER, ALIGN_TOP);
 
 	// draw the characters in each of their position
 	m_nHighlightedClass = D2CLASS_MAX;
@@ -262,15 +262,15 @@ void D2Menu_CharCreate::Draw()
 		if (CreateData[i].status == CCA_IdleBack || CreateData[i].status == CCA_IdleBackSel)
 		{
 			// Idle in the back - we need to handle whether our mouse cursor is over top of it or not
-			if (engine->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
+			if (engine->renderer->PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
 				cl.dwMouseX, cl.dwMouseY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
 			{	// mouse is over this thing
 				m_nHighlightedClass = i;
 				if (CreateData[i].status == CCA_IdleBack)
 				{
 					// set new status frame to be the same as current
-					engine->R_SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel],
-						engine->R_GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack]));
+					engine->renderer->SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel],
+						engine->renderer->GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack]));
 				}
 				CreateData[i].status = CCA_IdleBackSel;
 			}
@@ -279,21 +279,21 @@ void D2Menu_CharCreate::Draw()
 				if (CreateData[i].status == CCA_IdleBackSel)
 				{
 					// set new status frame to be the same as current
-					engine->R_SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack],
-						engine->R_GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel]));
+					engine->renderer->SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack],
+						engine->renderer->GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel]));
 				}
 				CreateData[i].status = CCA_IdleBack;
 			}
-			engine->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
+			engine->renderer->Animate(CreateData[i].animAnimHandle[CreateData[i].status],
 				8, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
 		}
 		else
 		{
-			engine->R_Animate(CreateData[i].animAnimHandle[CreateData[i].status],
+			engine->renderer->Animate(CreateData[i].animAnimHandle[CreateData[i].status],
 				25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
 			if (CreateData[i].bSpecialAnimPresent[CreateData[i].status] && i != m_nSelectedClass)
 			{
-				engine->R_Animate(CreateData[i].specialAnimAnimHandle[CreateData[i].status],
+				engine->renderer->Animate(CreateData[i].specialAnimAnimHandle[CreateData[i].status],
 					25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos + CreateData[i].nSpecialYOffset);
 			}
 		}
@@ -335,7 +335,7 @@ void D2Menu_CharCreate::Draw()
 		// Always draw the special animation of the selected thing on top
 		if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CreateData[m_nSelectedClass].status])
 		{
-			engine->R_Animate(CreateData[m_nSelectedClass].specialAnimAnimHandle[CreateData[m_nSelectedClass].status],
+			engine->renderer->Animate(CreateData[m_nSelectedClass].specialAnimAnimHandle[CreateData[m_nSelectedClass].status],
 				25, CreateData[m_nSelectedClass].nDrawXPos,
 				CreateData[m_nSelectedClass].nDrawYPos + CreateData[m_nSelectedClass].nSpecialYOffset);
 		}
@@ -344,17 +344,17 @@ void D2Menu_CharCreate::Draw()
 	// draw current class text
 	if (m_nHighlightedClass != D2CLASS_MAX)
 	{
-		engine->R_DrawText(cl.font30, 
+		engine->renderer->DrawText(cl.font30, 
 			CreateData[m_nHighlightedClass].szCharClassName, 0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-		engine->R_ColorModFont(cl.font16, 255, 255, 255);
-		engine->R_DrawText(cl.font16,
+		engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
+		engine->renderer->DrawText(cl.font16,
 			CreateData[m_nHighlightedClass].szCharClassDescription, 0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
 	}
 
 	DrawAllPanels();
 
 	// draw fire
-	engine->R_Animate(fireAnim, 25, 380, 160);
+	engine->renderer->Animate(fireAnim, 25, 380, 160);
 }
 
 /*
@@ -369,18 +369,18 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 	{
 		if (m_nSelectedClass == i)
 		{	// selected class ALWAYS uses alpha in per pixel collision
-			if (engine->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
+			if (engine->renderer->PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
 				dwX, dwY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, false))
 			{
 				// we clicked inside its bounds
 				CreateData[m_nSelectedClass].status = CCA_FrontToBack;
 
 				anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_FrontToBack];
-				engine->R_SetAnimFrame(anim, 0);
-				engine->R_AddAnimKeyframe(anim, engine->R_GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
+				engine->renderer->SetAnimFrame(anim, 0);
+				engine->renderer->AddAnimKeyframe(anim, engine->renderer->GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
 				if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_FrontToBack])
 				{
-					engine->R_SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
+					engine->renderer->SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
 				}
 				m_nSelectedClass = D2CLASS_MAX;
 
@@ -390,28 +390,28 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 		}
 		else
 		{
-			if (engine->R_PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
+			if (engine->renderer->PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
 				dwX, dwY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
 			{	// we selected a class
 				if (m_nSelectedClass != D2CLASS_MAX)
 				{	// tell the other class to go to transition
 					anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_FrontToBack];
 					CreateData[m_nSelectedClass].status = CCA_FrontToBack;
-					engine->R_SetAnimFrame(anim, 0);
-					engine->R_AddAnimKeyframe(anim, engine->R_GetAnimFrameCount(anim) - 1, AnimationKeyframe, m_nSelectedClass);
+					engine->renderer->SetAnimFrame(anim, 0);
+					engine->renderer->AddAnimKeyframe(anim, engine->renderer->GetAnimFrameCount(anim) - 1, AnimationKeyframe, m_nSelectedClass);
 					if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_FrontToBack])
 					{
-						engine->R_SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
+						engine->renderer->SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
 					}
 				}
 				CreateData[i].status = CCA_BackToFront;
 				m_nSelectedClass = i;
 				anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_BackToFront];
-				engine->R_SetAnimFrame(anim, 0);
-				engine->R_AddAnimKeyframe(anim, engine->R_GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
+				engine->renderer->SetAnimFrame(anim, 0);
+				engine->renderer->AddAnimKeyframe(anim, engine->renderer->GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
 				if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_BackToFront])
 				{
-					engine->R_SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_BackToFront], 0);
+					engine->renderer->SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_BackToFront], 0);
 				}
 				ShowPanel(pDynamicPanel);
 				return true;

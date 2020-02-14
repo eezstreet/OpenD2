@@ -1,9 +1,9 @@
 #include "Audio_SDL.hpp"
+#include "../Shared/D2HashMap.hpp"
 
 namespace Audio_SDL
 {
-	static SoundCacheEntry* gpSoundCache;
-	static bool gbSoundCacheFull = false;
+	static HashMap<char, AudioChunk, 128, MAX_D2PATH> gpSoundCache;
 
 	// Start up the audio subsystem
 	void Init(OpenD2ConfigStrc* pConfig)
@@ -41,11 +41,6 @@ namespace Audio_SDL
 			Log::Warning(__FILE__, __LINE__, "Could not open audio device.");
 			return;
 		}
-
-		// Initialize the sound cache
-		size_t dwSoundCacheSize = sizeof(SoundCacheEntry) * MAX_SDL_SOUNDFILES;
-		gpSoundCache = (SoundCacheEntry*)malloc(dwSoundCacheSize);
-		memset(gpSoundCache, 0, dwSoundCacheSize);
 	}
 
 	// Shut down the audio subsystem
@@ -53,41 +48,11 @@ namespace Audio_SDL
 	{
 		// Free the sound cache
 		FlushAudioData();
-		free(gpSoundCache);
 
 		// We don't need anything other than WAV support.
 		// However, if we wanted to support MP3 or OGG, we could use Mix_Quit here.
 
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	}
-
-	// Find the next free slot in the sound table
-	handle FindNextFreeSoundEntry(char* szAudioPath)
-	{
-		if (gbSoundCacheFull)
-		{
-			return INVALID_HANDLE;
-		}
-
-		// Hash it. If the current spot is occupied, continue until we find it.
-		DWORD dwAttempts = 1;
-		handle currentHandle = D2Lib::strhash(szAudioPath, strlen(szAudioPath), MAX_SDL_SOUNDFILES);
-		while (dwAttempts < MAX_SDL_SOUNDFILES && gpSoundCache[currentHandle].szSoundPath[0] && D2Lib::stricmp(gpSoundCache[currentHandle].szSoundPath, szAudioPath))
-		{
-			currentHandle++;
-			currentHandle %= MAX_SDL_SOUNDFILES;
-			dwAttempts++;
-		}
-
-		if (dwAttempts >= MAX_SDL_SOUNDFILES)
-		{
-			// Ran out of possible attempts - thing's full, don't bother hashing anything else
-			gbSoundCacheFull = true;
-			return INVALID_HANDLE;
-		}
-
-		// Current handle is good
-		return currentHandle;
 	}
 
 	// Load a WAV into memory
@@ -123,16 +88,16 @@ namespace Audio_SDL
 	// Register a sound effect for playing
 	sfx_handle RegisterSound(char* szAudioPath)
 	{
-		sfx_handle ourHandle = FindNextFreeSoundEntry(szAudioPath);
+		bool bAlreadyAvailable = false;
+		sfx_handle ourHandle = gpSoundCache.NextFree(szAudioPath, bAlreadyAvailable);
 		if (ourHandle == INVALID_HANDLE)
 		{
 			Log::Warning(__FILE__, __LINE__, "Ran out of free sound space.");
 			return ourHandle;
 		}
 
-		if (gpSoundCache[ourHandle].szSoundPath[0])
+		if (bAlreadyAvailable)
 		{
-			// Found what was already existing
 			return ourHandle;
 		}
 
@@ -146,22 +111,23 @@ namespace Audio_SDL
 
 		SDL_RWops* sdlFile = SDL_RWFromMem(pWavData, dwWavSize);
 		Log_WarnAssert(sdlFile);
-		gpSoundCache[ourHandle].pChunk = Mix_LoadWAV_RW(sdlFile, true);
-		D2Lib::strncpyz(gpSoundCache[ourHandle].szSoundPath, szAudioPath, MAX_D2PATH);
+		gpSoundCache[ourHandle].bIsMusic = false;
+		gpSoundCache[ourHandle].data.pChunk = Mix_LoadWAV_RW(sdlFile, true);
 		return ourHandle;
 	}
 
 	// Register a music effect for playing
 	mus_handle RegisterMusic(char* szAudioPath)
 	{
-		mus_handle ourHandle = FindNextFreeSoundEntry(szAudioPath);
+		bool bAlreadyPresent = false;
+		mus_handle ourHandle = gpSoundCache.NextFree(szAudioPath, bAlreadyPresent);
 		if (ourHandle == INVALID_HANDLE)
 		{
 			Log::Warning(__FILE__, __LINE__, "Ran out of free sound space.");
 			return ourHandle;
 		}
 
-		if (gpSoundCache[ourHandle].szSoundPath[0])
+		if(bAlreadyPresent)
 		{
 			// Found what was already existing
 			return ourHandle;
@@ -177,28 +143,15 @@ namespace Audio_SDL
 
 		SDL_RWops* sdlFile = SDL_RWFromMem(pWavData, dwWavSize);
 		Log_WarnAssert(sdlFile);
-		gpSoundCache[ourHandle].pMusic = Mix_LoadMUS_RW(sdlFile, true);
-		D2Lib::strncpyz(gpSoundCache[ourHandle].szSoundPath, szAudioPath, MAX_D2PATH);
+		gpSoundCache[ourHandle].bIsMusic = true;
+		gpSoundCache[ourHandle].data.pMusic = Mix_LoadMUS_RW(sdlFile, true);
 		return ourHandle;
 	}
 
 	// Flush out all the audio data. Should be done when loading a new act.
 	void FlushAudioData()
 	{
-		for (DWORD i = 0; i < MAX_SDL_SOUNDFILES; i++)
-		{
-			if (gpSoundCache[i].szSoundPath[0])
-			{
-				if (gpSoundCache[i].pChunk)
-				{
-					Mix_FreeChunk(gpSoundCache[i].pChunk);
-				}
-				else if (gpSoundCache[i].pMusic)
-				{
-					Mix_FreeMusic(gpSoundCache[i].pMusic);
-				}
-			}
-		}
+		gpSoundCache = HashMap<char, AudioChunk, 128, MAX_D2PATH>();
 	}
 
 	// Play a sound
@@ -209,12 +162,13 @@ namespace Audio_SDL
 			return;
 		}
 
-		if (!gpSoundCache[handle].pChunk)
+		if (gpSoundCache[handle].bIsMusic)
 		{
+			// is actually music
 			return;
 		}
 
-		Mix_PlayChannel(-1, gpSoundCache[handle].pChunk, 0);
+		Mix_PlayChannel(-1, gpSoundCache[handle].data.pChunk, 0);
 	}
 
 	// Play music
@@ -225,12 +179,12 @@ namespace Audio_SDL
 			return;
 		}
 
-		if (!gpSoundCache[handle].pChunk)
-		{
+		if (!gpSoundCache[handle].bIsMusic)
+		{	// is not actually music
 			return;
 		}
 
-		Mix_PlayMusic(gpSoundCache[handle].pMusic, loops);
+		Mix_PlayMusic(gpSoundCache[handle].data.pMusic, loops);
 	}
 
 	void PauseAudio()

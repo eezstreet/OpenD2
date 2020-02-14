@@ -9,7 +9,7 @@
 D2Menu_TCPIP::D2Menu_TCPIP() : D2Menu()
 {
 	backgroundTexture =
-		engine->R_RegisterDC6Texture("data\\global\\ui\\FrontEnd\\TCPIPscreen.dc6", "tcpip", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\TCPIPscreen.dc6", "tcpip", 0, 11, PAL_UNITS);
 
 	m_joinMenu = new D2Panel_TCPIPJoin();
 	m_mainMenu = new D2Panel_TCPIPMain();
@@ -43,13 +43,13 @@ D2Menu_TCPIP::~D2Menu_TCPIP()
 void D2Menu_TCPIP::Draw()
 {
 	// Draw the background
-	engine->R_DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
+	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
 	// Draw the "Your IP Address is:" string
-	engine->R_DrawText(cl.fontFormal12, m_yourIPString, 0, 110, 800, 15, ALIGN_CENTER, ALIGN_TOP);
+	engine->renderer->DrawText(cl.fontFormal12, m_yourIPString, 0, 110, 800, 15, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the IP string
-	engine->R_DrawText(cl.fontFormal12, m_yourIP, 0, 130, 800, 15, ALIGN_CENTER, ALIGN_TOP);
+	engine->renderer->DrawText(cl.fontFormal12, m_yourIP, 0, 130, 800, 15, ALIGN_CENTER, ALIGN_TOP);
 
 	// Draw the panel
 	DrawAllPanels();

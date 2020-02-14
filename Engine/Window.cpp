@@ -56,7 +56,7 @@ namespace Window
 	void ShutdownSDL()
 	{
 		DCC::GlobalShutdown();
-		RenderTarget->RF_Shutdown();
+		delete RenderTarget;
 		SDL_DestroyWindow(gpWindow);
 		SDL_Quit();
 	}

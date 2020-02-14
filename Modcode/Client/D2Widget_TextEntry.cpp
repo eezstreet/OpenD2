@@ -20,22 +20,22 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 	if (bCharSelect)
 	{
 		backgroundTexture = 
-			engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
-		backgroundAnim = engine->R_RegisterAnimation(backgroundTexture, "textbox", 0);
+			engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
+		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "textbox", 0);
 	}
 	else if (bIP)
 	{
-		backgroundTexture = engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
-		backgroundAnim = engine->R_RegisterAnimation(backgroundTexture, "ipaddressbox", 0);
+		backgroundTexture = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
+		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "ipaddressbox", 0);
 	}
 	else
 	{
 		backgroundTexture = 
-			engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox2.dc6", "textbox2", PAL_UNITS);
-		backgroundAnim = engine->R_RegisterAnimation(backgroundTexture, "textbox2", 0);
+			engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox2.dc6", "textbox2", PAL_UNITS);
+		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "textbox2", 0);
 	}
 
-	engine->R_PollTexture(backgroundTexture, (DWORD*)&this->w, (DWORD*)&this->h);
+	engine->renderer->PollTexture(backgroundTexture, (DWORD*)&this->w, (DWORD*)&this->h);
 }
 
 /*
@@ -44,7 +44,7 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
  */
 D2Widget_TextEntry::~D2Widget_TextEntry()
 {
-	engine->R_DeregisterTexture(nullptr, backgroundTexture);
+	engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
 }
 
 /*
@@ -73,20 +73,20 @@ void D2Widget_TextEntry::DetachLabel()
 void D2Widget_TextEntry::Draw()
 {
 	// draw background
-	engine->R_Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
+	engine->renderer->Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
 
 	// draw a label, if present
 	if (m_bHasAttachedText)
 	{
-		engine->R_ColorModFont(cl.font16, 150, 135, 100);
-		engine->R_DrawText(cl.font16, szLabel, m_pOwner->x + x, m_pOwner->y + y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
+		engine->renderer->ColorModFont(cl.font16, 150, 135, 100);
+		engine->renderer->DrawText(cl.font16, szLabel, m_pOwner->x + x, m_pOwner->y + y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
 	}
 
 	if (szTextBuffer[0] != '\0')
 	{
 		// draw text, if present
-		engine->R_ColorModFont(cl.fontFormal12, 255, 255, 255);
-		engine->R_DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
+		engine->renderer->ColorModFont(cl.fontFormal12, 255, 255, 255);
+		engine->renderer->DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
 	}
 }
 

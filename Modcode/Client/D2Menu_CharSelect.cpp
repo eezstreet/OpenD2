@@ -15,7 +15,7 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 
 	// Should match the one in the main menu
 	backgroundTexture =
-		engine->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", "charselect", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", "charselect", 0, 11, PAL_UNITS);
 
 	// Create the panels and add them to the menu panel list
 	m_charSelectPanel = new D2Panel_CharSelect();
@@ -64,7 +64,7 @@ D2Menu_CharSelect::~D2Menu_CharSelect()
 	if (bJoiningGame)
 	{
 		// If we are creating/joining a game, we should free up the background texture.
-		engine->R_DeregisterTexture(nullptr, backgroundTexture);
+		engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
 	}
 
 	delete m_charSelectPanel;
@@ -77,7 +77,7 @@ D2Menu_CharSelect::~D2Menu_CharSelect()
 void D2Menu_CharSelect::Draw()
 {
 	// Draw the background
-	engine->R_DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
+	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
 	// And draw all the panels too
 	DrawAllPanels();

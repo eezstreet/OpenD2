@@ -639,55 +639,15 @@ struct DS1File
 };
 #pragma pack(pop, enter_include)
 
-/*
- *	Renderer related structures
- *	@author	eezstreet
- */
-struct D2Renderer
+// The render targets
+enum OpenD2RenderTargets
 {
-	//
-	void		(*RF_Init)(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
-	void		(*RF_Shutdown)();
-	void		(*RF_Present)();
-
-	//
-	tex_handle	(*RF_TextureFromStitchedDC6)(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette);
-	tex_handle	(*RF_TextureFromAnimatedDC6)(char* szDc6Path, char* szHandle, int nPalette);
-	void		(*RF_DrawTexture)(tex_handle texture, int x, int y, int w, int h, int u, int v);
-	void		(*RF_DrawTextureFrames)(tex_handle texture, int x, int y, DWORD dwStartFrame, DWORD dwEndFrame);
-	void		(*RF_DrawTextureFrame)(tex_handle texture, int x, int y, DWORD dwFrame);
-	void		(*RF_DeregisterTexture)(char* handleName, tex_handle texture);
-	void		(*RF_SetTextureBlendMode)(tex_handle texture, D2ColorBlending blendMode);
-	void		(*RF_PollTexture)(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight);
-	bool		(*RF_PixelPerfectDetect)(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha);
-
-	anim_handle	(*RF_RegisterDCCAnimation)(tex_handle texture, char* szHandleName, DWORD dwStartingFrame);
-	void		(*RF_DeregisterAnimation)(anim_handle anim);
-	void		(*RF_Animate)(anim_handle anim, DWORD dwFramerate, int x, int y);
-	void		(*RF_SetAnimFrame)(anim_handle anim, DWORD dwFrame);
-	DWORD		(*RF_GetAnimFrame)(anim_handle anim);
-	void		(*RF_AddAnimKeyframe)(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt);
-	void		(*RF_RemoveAnimKeyframe)(anim_handle anim);
-	DWORD		(*RF_GetAnimFrameCount)(anim_handle anim);
-
-	font_handle	(*RF_RegisterFont)(char* szFontName);
-	void		(*RF_DeregisterFont)(font_handle font);
-	void		(*RF_DrawText)(font_handle font, char16_t* text, int x, int y, int w, int h,
-		D2TextAlignment alignHorz, D2TextAlignment alignVert);
-
-	void		(*RF_AlphaModTexture)(tex_handle texture, int nAlpha);
-	void		(*RF_ColorModTexture)(tex_handle texture, int nRed, int nGreen, int nBlue);
-	void		(*RF_AlphaModFont)(font_handle font, int nAlpha);
-	void		(*RF_ColorModFont)(font_handle font, int nRed, int nGreen, int nBlue);
-
-	void		(*RF_DrawRectangle)(int x, int y, int w, int h, int r, int g, int b, int a);
-
-	void		(*RF_DrawTokenInstance)(anim_handle instance, int x, int y, int translvl, int palette);
-
-	void		(*RF_Clear)();
+	OD2RT_SDL,			// SDL renderer with hardware acceleration (default for now)
+	OD2RT_OPENGL,		// OpenGL
+	OD2RT_MAX
 };
 
-extern D2Renderer* RenderTarget;	// nullptr if there isn't a render target
+extern class IRenderer* RenderTarget;	// nullptr if there isn't a render target
 
 /////////////////////////////////////////////////////////
 //
@@ -723,7 +683,7 @@ namespace COF
 // DC6.cpp
 namespace DC6
 {
-	void LoadImage(char* szPath, DC6Image* pImage);
+	void LoadImage(const char* szPath, DC6Image* pImage);
 	void UnloadImage(DC6Image* pImage);
 	BYTE* GetPixelsAtFrame(DC6Image* pImage, int nDirection, int nFrame, size_t* pNumPixels);
 	void PollFrame(DC6Image* pImage, DWORD nDirection, DWORD nFrame,
@@ -761,10 +721,10 @@ namespace FS
 	void Init(OpenD2ConfigStrc* pConfig);
 	void Shutdown();
 	void LogSearchPaths();
-	size_t Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false);
+	size_t Open(const char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false);
 	size_t Read(fs_handle f, void* buffer, size_t dwBufferLen = 4, size_t dwCount = 1);
 	size_t Write(fs_handle f, void* buffer, size_t dwBufferLen = 1, size_t dwCount = 1);
-	size_t WritePlaintext(fs_handle f, char* text);
+	size_t WritePlaintext(fs_handle f, const char* text);
 	void CloseFile(fs_handle f);
 	void Seek(fs_handle f, size_t offset, int nSeekType);
 	size_t Tell(fs_handle f);
@@ -780,7 +740,7 @@ namespace FSMPQ
 	void Init();
 	void Shutdown();
 	D2MPQArchive* AddSearchPath(char* szMPQName, char* szMPQPath);
-	fs_handle FindFile(char* szFileName, char* szMPQName, D2MPQArchive** pArchiveOut);
+	fs_handle FindFile(const char* szFileName, const char* szMPQName, D2MPQArchive** pArchiveOut);
 }
 
 // INI.cpp
@@ -820,7 +780,7 @@ namespace MPQ
 {
 	void OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
 	void CloseMPQ(D2MPQArchive* pMPQ);
-	fs_handle FetchHandle(D2MPQArchive* pMPQ, char* szFileName);
+	fs_handle FetchHandle(D2MPQArchive* pMPQ, const char* szFileName);
 	size_t FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
 	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
 	void Cleanup();
@@ -872,7 +832,7 @@ namespace Renderer
 // TBL_Font.cpp
 namespace TBLFont
 {
-	tbl_handle RegisterFont(char* szFontName);
+	tbl_handle RegisterFont(const char* szFontName);
 	TBLFontFile* GetPointerFromHandle(tbl_handle handle);
 }
 

@@ -99,12 +99,12 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
 
-	frameHandle = engine->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
+	frameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
 		"charselectbox", 0, 1, PAL_UNITS);
-	greyFrameHandle = engine->R_RegisterDC6Texture("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
+	greyFrameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
 		"charselectboxgrey", 0, 1, PAL_UNITS);
-	engine->R_SetTextureBlendMode(frameHandle, BLEND_ALPHA);
-	engine->R_SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
+	engine->renderer->SetTextureBlendMode(frameHandle, BLEND_ALPHA);
+	engine->renderer->SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
 }
 
 /*
@@ -217,13 +217,13 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 			(pSaveData->header.nCharStatus & (1 << D2STATUS_DEAD)))
 		{
 			// Dead hardcore player gets a grey frame
-			engine->R_DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
+			engine->renderer->DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
 				nSlotWidth, nSlotHeight, 0, 0);
 		}
 		else
 		{
 			// Use the normal frame
-			engine->R_DrawTexture(frameHandle, (bRightSlot ? x + nSlotWidth : x), y + (nSlotY * nSlotHeight),
+			engine->renderer->DrawTexture(frameHandle, (bRightSlot ? x + nSlotWidth : x), y + (nSlotY * nSlotHeight),
 				nSlotWidth, nSlotHeight, 0, 0);
 		}
 	}
@@ -240,11 +240,11 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Set font color to be gold. Or red if this is a hardcore character.
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE))
 	{
-		engine->R_ColorModFont(cl.font16, 186, 102, 100);
+		engine->renderer->ColorModFont(cl.font16, 186, 102, 100);
 	}
 	else
 	{
-		engine->R_ColorModFont(cl.font16, 171, 156, 135);
+		engine->renderer->ColorModFont(cl.font16, 171, 156, 135);
 	}
 	
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
@@ -282,16 +282,16 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	if (szCharacterTitle && szCharacterTitle[0])
 	{
 		// Draw the character title if we have one.
-		engine->R_DrawText(cl.font16, (char16_t*)szCharacterTitle, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		engine->renderer->DrawText(cl.font16, (char16_t*)szCharacterTitle, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	}
 	nY += 15;
 
 	// Draw character name
-	engine->R_DrawText(cl.font16, pSaveData->name, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	engine->renderer->DrawText(cl.font16, pSaveData->name, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	nY += 15;
 
 	// Draw character level and class
-	engine->R_ColorModFont(cl.font16, 255, 255, 255);
+	engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
 	// Format it so that it will read "Level %d <Class>
 	D2Lib::qsnprintf(szCharacterLevelClass, 32, u"%s %s",
 		engine->TBL_FindStringFromIndex(5017),
@@ -299,19 +299,19 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Reformat it again so that the level is filled in
 	D2Lib::qsnprintf(szDisplayString, 32, szCharacterLevelClass, pSaveData->header.nCharLevel);
 	// Now draw it!
-	engine->R_DrawText(cl.font16, szDisplayString, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	engine->renderer->DrawText(cl.font16, szDisplayString, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	nY += 15;
 
 	// Draw whether this is an expansion character
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
 	{
-		engine->R_ColorModFont(cl.font16, 65, 200, 50);
-		engine->R_DrawText(cl.font16, engine->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		engine->renderer->ColorModFont(cl.font16, 65, 200, 50);
+		engine->renderer->DrawText(cl.font16, engine->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	}
-	engine->R_ColorModFont(cl.font16, 255, 255, 255);
+	engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
 
 	// Draw the token instance
-	engine->R_DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
+	engine->renderer->DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
 }
 
 /*

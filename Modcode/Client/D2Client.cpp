@@ -24,12 +24,13 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	cl.gamestate = GS_TRADEMARK;
 	cl.pActiveMenu = new D2Menu_Trademark();
 
-	cl.font16 = engine->R_RegisterFont("font16");
-	cl.font30 = engine->R_RegisterFont("font30");
-	cl.font42 = engine->R_RegisterFont("font42");
-	cl.fontFormal12 = engine->R_RegisterFont("fontformal12");
-	cl.fontExocet10 = engine->R_RegisterFont("fontExocet10");
-	cl.fontRidiculous = engine->R_RegisterFont("fontridiculous");
+	cl.font16 = engine->renderer->RegisterFont("font16");
+	cl.font16 = engine->renderer->RegisterFont("font16");
+	cl.font30 = engine->renderer->RegisterFont("font30");
+	cl.font42 = engine->renderer->RegisterFont("font42");
+	cl.fontFormal12 = engine->renderer->RegisterFont("fontformal12");
+	cl.fontExocet10 = engine->renderer->RegisterFont("fontExocet10");
+	cl.fontRidiculous = engine->renderer->RegisterFont("fontridiculous");
 }
 
 /*
@@ -309,7 +310,7 @@ static void D2Client_RunClientFrame()
 		cl.pLoadingMenu->Draw();
 	}
 
-	engine->R_Present();
+	engine->renderer->Present();
 
 	// Load stuff, if we need to
 	if (cl.gamestate == GS_LOADING)

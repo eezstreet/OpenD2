@@ -60,7 +60,7 @@ namespace DC6
 	*	Loads a DC6 from an MPQ
 	*	@author	eezstreet
 	*/
-	void LoadImage(char* szPath, DC6Image* pImage)
+	void LoadImage(const char* szPath, DC6Image* pImage)
 	{
 		int i, j;
 		size_t dwFileSize;

@@ -969,10 +969,84 @@ void Renderer_SDL_ClearLRUs()
 //	FRONTEND FUNCTIONS
 
 /*
-*	Initializes the HW-Accelerated SDL renderer
-*	@author	eezstreet
-*/
-void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow)
+ *	Finds a texture handle, but does not register it
+ */
+static tex_handle Renderer_SDL_GetTextureInCache(const char* szHandleName)
+{
+	DWORD dwChecked = 0;
+	DWORD dwTextureHash = D2Lib::strhash(szHandleName, CACHEHANDLE_LEN, MAX_SDL_TEXTURECACHE_SIZE);
+
+	while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
+	{
+		if (!D2Lib::stricmp(TextureCache[dwTextureHash].szHandleName, szHandleName))
+		{
+			return dwTextureHash;
+		}
+		else if (TextureCache[dwTextureHash].pTexture == nullptr)
+		{
+			return dwTextureHash;
+		}
+
+		dwTextureHash++;
+		dwTextureHash %= MAX_SDL_TEXTURECACHE_SIZE;
+
+		dwChecked++;
+	}
+
+	return INVALID_HANDLE;
+}
+
+/*
+ *	Creates an animation at the specified hash location
+ */
+static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, const char* szHandle, DWORD dwStartingFrame)
+{
+	SDLDC6AnimationCacheItem* pCache = &AnimCache[anim];
+	DC6Image* pDC6 = &TextureCache[texture].dc6;
+	DWORD dwCenterPos[64]{ 0 };
+
+	D2Lib::strncpyz(pCache->szHandleName, szHandle, CACHEHANDLE_LEN);
+	pCache->texture = texture;
+	pCache->dwFrame = dwStartingFrame;
+	pCache->dwFrameCount = pDC6->header.dwDirections * pDC6->header.dwFrames;
+	pCache->dwLastTick = SDL_GetTicks();
+
+	// build frame data based on the information in the DC6
+	DWORD dwCursorX = 0;
+	DWORD dwCursorY = 0;
+
+	for (int i = 0; i < pDC6->header.dwDirections; i++)
+	{
+		DWORD dwDirectionY = 0;
+
+		for (int j = 0; j < pDC6->header.dwFrames; j++)
+		{
+			DWORD dwFramePos = (i * pDC6->header.dwFrames) + j;
+			Log_WarnAssert(dwFramePos < MAX_SDL_ANIM_FRAMES);
+
+			pCache->frames[dwFramePos].x = dwCursorX;
+			pCache->frames[dwFramePos].y = dwCursorY;
+			pCache->frames[dwFramePos].w = pDC6->pFrames[dwFramePos].fh.dwWidth;
+			pCache->frames[dwFramePos].h = pDC6->pFrames[dwFramePos].fh.dwHeight;
+			pCache->frames[dwFramePos].dwOffsetX = pDC6->pFrames[dwFramePos].fh.dwOffsetX;
+			pCache->frames[dwFramePos].dwOffsetY = pDC6->pFrames[dwFramePos].fh.dwOffsetY;
+			pCache->frames[dwFramePos].dwOffsetY += (pDC6->dwDirectionHeights[i] - pCache->frames[dwFramePos].h);
+			
+			dwCursorX += pDC6->pFrames[dwFramePos].fh.dwWidth;
+
+			if (pDC6->pFrames[dwFramePos].fh.dwHeight > dwDirectionY)
+			{
+				dwDirectionY = pDC6->pFrames[dwFramePos].fh.dwHeight;
+			}
+		}
+
+		dwCursorX = 0;
+		dwCursorY += dwDirectionY;
+		dwCenterPos[i] = dwDirectionY;
+	}
+}
+
+Renderer_SDL::Renderer_SDL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenConfig, SDL_Window * pWindow)
 {
 	DWORD dwFlags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE;
 
@@ -1033,11 +1107,7 @@ void Renderer_SDL_Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig,
 	Renderer_SDL_InitLRUs();
 }
 
-/*
-*	Shuts down the HW-Accelerated SDL renderer
-*	@author	eezstreet
-*/
-void Renderer_SDL_Shutdown()
+Renderer_SDL::~Renderer_SDL()
 {
 	// Free palettes
 	for (int i = 0; i < PAL_MAX_PALETTES; i++)
@@ -1052,11 +1122,7 @@ void Renderer_SDL_Shutdown()
 	SDL_DestroyRenderer(gpRenderer);
 }
 
-/*
-*	Presents the screen
-*	@author	eezstreet
-*/
-void Renderer_SDL_Present()
+void Renderer_SDL::Present()
 {
 	// Clear backbuffer
 	SDL_RenderClear(gpRenderer);
@@ -1081,76 +1147,11 @@ void Renderer_SDL_Present()
 	SDL_RenderPresent(gpRenderer);
 }
 
-/*
- *	Finds a texture handle, but does not register it
- */
-static tex_handle Renderer_SDL_GetTextureInCache(char* szHandleName)
+tex_handle Renderer_SDL::TextureFromStitchedDC6(const char * dc6Path, const char * handleName, DWORD start, DWORD end, int palette)
 {
-	DWORD dwChecked = 0;
-	DWORD dwTextureHash = D2Lib::strhash(szHandleName, CACHEHANDLE_LEN, MAX_SDL_TEXTURECACHE_SIZE);
-
-	while (dwChecked < MAX_SDL_TEXTURECACHE_SIZE)
-	{
-		if (!D2Lib::stricmp(TextureCache[dwTextureHash].szHandleName, szHandleName))
-		{
-			return dwTextureHash;
-		}
-		else if (TextureCache[dwTextureHash].pTexture == nullptr)
-		{
-			return dwTextureHash;
-		}
-
-		dwTextureHash++;
-		dwTextureHash %= MAX_SDL_TEXTURECACHE_SIZE;
-
-		dwChecked++;
-	}
-
-	return INVALID_HANDLE;
-}
-
-/*
- *	Deregisters a texture, wiping it out from the game. We can re-register it later.
- *	@param	szHandleName	The handle name of the texture. You can supply this with nullptr if you don't know it or need it.
- *	@param	texture			The handle of the texture. It's always faster to use the handle.
- */
-void Renderer_SDL_DeregisterTexture(char* szHandleName, tex_handle texture)
-{
-	SDLDC6CacheItem* pCache;
-
-	if (texture == INVALID_HANDLE && szHandleName == nullptr)
-	{	// We don't know *either* the handle or the handle name. Very bad.
-		return;
-	}
-
-	if (texture == INVALID_HANDLE)
-	{	// get the texture from the handle name
-		texture = Renderer_SDL_GetTextureInCache(szHandleName);
-	}
-
-	if (texture == INVALID_HANDLE)
-	{	// still couldn't find it
-		return;
-	}
-
-	pCache = &TextureCache[texture];
-	
-	SDL_DestroyTexture(pCache->pTexture);
-	if (pCache->bHasDC6)
-	{
-		DC6::UnloadImage(&pCache->dc6);
-	}
-	memset(pCache, 0, sizeof(SDLDC6CacheItem));
-}
-
-/*
- *	Registers a tex_handle based on a stitched-together DC6. The DC6 is not animated.
- */
-tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dwStart, DWORD dwEnd, int nPalette)
-{
-	D2Palette* pPal = Pal::GetPalette(nPalette);
+	D2Palette* pPal = Pal::GetPalette(palette);
 	bool bExists = false;
-	tex_handle tex = Renderer_SDL_GetTextureInCache(szHandle);
+	tex_handle tex = Renderer_SDL_GetTextureInCache(handleName);
 	SDLDC6CacheItem* pCache;
 	SDL_Surface* pBigSurface;
 	SDL_Texture* pTexture;
@@ -1167,9 +1168,9 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		return tex; // already registered
 	}
 
-	D2Lib::strncpyz(pCache->szHandleName, szHandle, 32);
+	D2Lib::strncpyz(pCache->szHandleName, handleName, 32);
 
-	DC6::LoadImage(szDc6Path, &pCache->dc6);
+	DC6::LoadImage(dc6Path, &pCache->dc6);
 	pCache->bHasDC6 = true;
 
 	// Calculate how wide it should be
@@ -1178,24 +1179,24 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 	DWORD dwTotalWidth = 0;
 	DWORD dwTotalHeight = 0;
 
-	DC6::StitchStats(&pCache->dc6, dwStart, dwEnd, &dwStitchCols, &dwStitchRows, &dwTotalWidth, &dwTotalHeight);
+	DC6::StitchStats(&pCache->dc6, start, end, &dwStitchCols, &dwStitchRows, &dwTotalWidth, &dwTotalHeight);
 
 	pBigSurface = SDL_CreateRGBSurface(0, dwTotalWidth, dwTotalHeight, 8, 0, 0, 0, 0);
-	SDL_SetSurfacePalette(pBigSurface, PaletteCache[nPalette].pPal);
+	SDL_SetSurfacePalette(pBigSurface, PaletteCache[palette].pPal);
 
-	for (int i = 0; i <= dwEnd - dwStart; i++)
+	for (int i = 0; i <= end - start; i++)
 	{
-		DC6Frame* pFrame = &pCache->dc6.pFrames[dwStart + i];
+		DC6Frame* pFrame = &pCache->dc6.pFrames[start + i];
 
 		int dwBlitToX = (i % dwStitchCols) * 256;
 		int dwBlitToY = (int)floor(i / (float)dwStitchCols) * 255;
 
 		SDL_Surface* pSmallSurface = SDL_CreateRGBSurface(0, pFrame->fh.dwWidth, pFrame->fh.dwHeight + 1,
 			8, 0, 0, 0, 0);
-		SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
+		SDL_SetSurfacePalette(pSmallSurface, PaletteCache[palette].pPal);
 
-		memcpy(pSmallSurface->pixels, 
-			DC6::GetPixelsAtFrame(&pCache->dc6, 0, i + dwStart, nullptr), 
+		memcpy(pSmallSurface->pixels,
+			DC6::GetPixelsAtFrame(&pCache->dc6, 0, i + start, nullptr),
 			pFrame->fh.dwWidth * (pFrame->fh.dwHeight + 1));
 
 		SDL_Rect dstRect = { (int)dwBlitToX, (int)dwBlitToY, (int)pFrame->fh.dwWidth, (int)pFrame->fh.dwHeight + 1 };
@@ -1204,7 +1205,7 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 		SDL_FreeSurface(pSmallSurface);
 	}
 
-	if (!D2Lib::stricmp(szHandle, "textbox"))
+	if (!D2Lib::stricmp(handleName, "textbox"))
 	{
 		SDL_SaveBMP(pBigSurface, "textbox.bmp");
 	}
@@ -1221,14 +1222,11 @@ tex_handle Renderer_SDL_TextureFromDC6(char* szDc6Path, char* szHandle, DWORD dw
 	return tex;
 }
 
-/*
- *	Registers a tex_handle based on an animated DC6
- */
-tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, int nPalette)
+tex_handle Renderer_SDL::TextureFromAnimatedDC6(const char * dc6Path, const char * handleName, int palette)
 {
-	D2Palette* pPal = Pal::GetPalette(nPalette);
+	D2Palette* pPal = Pal::GetPalette(palette);
 	bool bExists = false;
-	tex_handle tex = Renderer_SDL_GetTextureInCache(szHandle);
+	tex_handle tex = Renderer_SDL_GetTextureInCache(handleName);
 	SDLDC6CacheItem* pCache;
 	int bpp = 0;
 	Uint32 dwRMask, dwGMask, dwBMask, dwAMask;
@@ -1247,15 +1245,15 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 		return tex; // already been registered
 	}
 
-	D2Lib::strncpyz(pCache->szHandleName, szHandle, 32);
+	D2Lib::strncpyz(pCache->szHandleName, handleName, 32);
 
-	DC6::LoadImage(szDc6Path, &pCache->dc6);
+	DC6::LoadImage(dc6Path, &pCache->dc6);
 	pCache->bHasDC6 = true;
 
 	DC6Image* pImg = &pCache->dc6;
 
 	// Create the big texture that we will blit into
-	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, pImg->dwTotalWidth, pImg->dwTotalHeight, 
+	SDL_Surface* pBigSurface = SDL_CreateRGBSurface(0, pImg->dwTotalWidth, pImg->dwTotalHeight,
 		bpp, dwRMask, dwGMask, dwBMask, dwAMask);
 
 	// Add each frame into the surface
@@ -1287,7 +1285,7 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 				SDL_CreateRGBSurfaceFrom(DC6::GetPixelsAtFrame(pImg, i, j, nullptr),
 					pFrame->fh.dwWidth, pFrame->fh.dwHeight,
 					8, pFrame->fh.dwWidth, 0, 0, 0, 0);
-			SDL_SetSurfacePalette(pSmallSurface, PaletteCache[nPalette].pPal);
+			SDL_SetSurfacePalette(pSmallSurface, PaletteCache[palette].pPal);
 
 			SDL_Surface* pConvertedSurface = SDL_ConvertSurfaceFormat(pSmallSurface, SDL_PIXELFORMAT_BGRA8888, 0);
 
@@ -1315,10 +1313,136 @@ tex_handle Renderer_SDL_TextureFromAnimatedDC6(char* szDc6Path, char* szHandle, 
 	return tex;
 }
 
-/*
- *	Determines if a point is within an animation's pixels.
- */
-bool Renderer_SDL_PixelPerfectDetect(anim_handle anim, int nSrcX, int nSrcY, int nDrawX, int nDrawY, bool bAllowAlpha)
+void Renderer_SDL::DrawTexture(tex_handle texture, int x, int y, int w, int h, int u, int v)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_DRAWTEXTURE;
+	pCommand->DrawTexture.src.x = u;
+	pCommand->DrawTexture.src.y = v;
+	pCommand->DrawTexture.src.w = pCommand->DrawTexture.dst.w = w;
+	pCommand->DrawTexture.src.h = pCommand->DrawTexture.dst.h = h;
+	pCommand->DrawTexture.dst.x = x;
+	pCommand->DrawTexture.dst.y = y;
+	pCommand->DrawTexture.tex = texture;
+	numDrawCommandsThisFrame++;
+}
+
+void Renderer_SDL::DrawTextureFrames(tex_handle texture, int x, int y, DWORD startFrame, DWORD endFrame)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	if (startFrame > endFrame)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_DRAWTEXTUREFRAMES;
+	pCommand->DrawTextureFrames.tex = texture;
+	pCommand->DrawTextureFrames.dwDstX = x;
+	pCommand->DrawTextureFrames.dwDstY = y;
+	pCommand->DrawTextureFrames.dwStart = startFrame;
+	pCommand->DrawTextureFrames.dwEnd = endFrame;
+	numDrawCommandsThisFrame++;
+}
+
+void Renderer_SDL::DrawTextureFrame(tex_handle texture, int x, int y, DWORD frame)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_DRAWTEXTUREFRAME;
+	pCommand->DrawTextureFrame.tex = texture;
+	pCommand->DrawTextureFrame.dwDstX = x;
+	pCommand->DrawTextureFrame.dwDstY = y;
+	pCommand->DrawTextureFrame.dwFrame = frame;
+	numDrawCommandsThisFrame++;
+}
+
+void Renderer_SDL::DeregisterTexture(const char * handleName, tex_handle texture)
+{
+	SDLDC6CacheItem* pCache;
+
+	if (texture == INVALID_HANDLE && handleName == nullptr)
+	{	// We don't know *either* the handle or the handle name. Very bad.
+		return;
+	}
+
+	if (texture == INVALID_HANDLE)
+	{	// get the texture from the handle name
+		texture = Renderer_SDL_GetTextureInCache(handleName);
+	}
+
+	if (texture == INVALID_HANDLE)
+	{	// still couldn't find it
+		return;
+	}
+
+	pCache = &TextureCache[texture];
+
+	SDL_DestroyTexture(pCache->pTexture);
+	if (pCache->bHasDC6)
+	{
+		DC6::UnloadImage(&pCache->dc6);
+	}
+	memset(pCache, 0, sizeof(SDLDC6CacheItem));
+}
+
+void Renderer_SDL::SetTextureBlendMode(tex_handle texture, D2ColorBlending blendMode)
+{
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDL_SetTextureBlendMode(TextureCache[texture].pTexture, (SDL_BlendMode)blendMode);
+}
+
+void Renderer_SDL::PollTexture(tex_handle texture, DWORD * width, DWORD * height)
+{
+	if (texture == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	if (width != nullptr)
+	{
+		*width = TextureCache[texture].dwWidth;
+	}
+
+	if (height != nullptr)
+	{
+		*height = TextureCache[texture].dwHeight;
+	}
+}
+
+bool Renderer_SDL::PixelPerfectDetect(anim_handle anim, int srcX, int srcY, int drawX, int drawY, bool bAllowAlpha)
 {
 	SDLDC6AnimationCacheItem* pAnimCache;
 	SDLDC6CacheItem* pTexCache;
@@ -1343,12 +1467,12 @@ bool Renderer_SDL_PixelPerfectDetect(anim_handle anim, int nSrcX, int nSrcY, int
 	if (pTexCache->bHasDC6)
 	{
 		pFrame = &pTexCache->dc6.pFrames[pAnimCache->dwFrame];
-		nDrawX += pFrame->fh.dwOffsetX;
-		nDrawY += pFrame->fh.dwOffsetY;
+		drawX += pFrame->fh.dwOffsetX;
+		drawX += pFrame->fh.dwOffsetY;
 		nDrawWidth = pFrame->fh.dwWidth;
 		nDrawHeight = pFrame->fh.dwHeight;
-		nOffsetX = nSrcX - nDrawX;
-		nOffsetY = nSrcY - nDrawY;
+		nOffsetX = srcX - drawX;
+		nOffsetY = srcY - drawY;
 
 		if (nOffsetX > nDrawWidth || nOffsetX < 0 ||
 			nOffsetY > nDrawHeight || nOffsetY < 0)
@@ -1372,106 +1496,19 @@ bool Renderer_SDL_PixelPerfectDetect(anim_handle anim, int nSrcX, int nSrcY, int
 	return false;
 }
 
-/*
- *	Sets a texture's blend mode
- */
-void Renderer_SDL_SetTextureBlendMode(tex_handle texture, D2ColorBlending blendMode)
+anim_handle Renderer_SDL::RegisterDC6Animation(tex_handle texture, const char * handleName, DWORD startingFrame)
 {
-	if (texture == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	SDL_SetTextureBlendMode(TextureCache[texture].pTexture, (SDL_BlendMode)blendMode);
-}
-
-/*
- *	Gets stats about a texture
- */
-void Renderer_SDL_PollTexture(tex_handle texture, DWORD* dwWidth, DWORD* dwHeight)
-{
-	if (texture == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	if (dwWidth != nullptr)
-	{
-		*dwWidth = TextureCache[texture].dwWidth;
-	}
-	
-	if (dwHeight != nullptr)
-	{
-		*dwHeight = TextureCache[texture].dwHeight;
-	}
-}
-
-/*
- *	Creates an animation at the specified hash location
- */
-static void Renderer_SDL_CreateAnimation(anim_handle anim, tex_handle texture, char* szHandle, DWORD dwStartingFrame)
-{
-	SDLDC6AnimationCacheItem* pCache = &AnimCache[anim];
-	DC6Image* pDC6 = &TextureCache[texture].dc6;
-	DWORD dwCenterPos[64]{ 0 };
-
-	D2Lib::strncpyz(pCache->szHandleName, szHandle, CACHEHANDLE_LEN);
-	pCache->texture = texture;
-	pCache->dwFrame = dwStartingFrame;
-	pCache->dwFrameCount = pDC6->header.dwDirections * pDC6->header.dwFrames;
-	pCache->dwLastTick = SDL_GetTicks();
-
-	// build frame data based on the information in the DC6
-	DWORD dwCursorX = 0;
-	DWORD dwCursorY = 0;
-
-	for (int i = 0; i < pDC6->header.dwDirections; i++)
-	{
-		DWORD dwDirectionY = 0;
-
-		for (int j = 0; j < pDC6->header.dwFrames; j++)
-		{
-			DWORD dwFramePos = (i * pDC6->header.dwFrames) + j;
-			Log_WarnAssert(dwFramePos < MAX_SDL_ANIM_FRAMES);
-
-			pCache->frames[dwFramePos].x = dwCursorX;
-			pCache->frames[dwFramePos].y = dwCursorY;
-			pCache->frames[dwFramePos].w = pDC6->pFrames[dwFramePos].fh.dwWidth;
-			pCache->frames[dwFramePos].h = pDC6->pFrames[dwFramePos].fh.dwHeight;
-			pCache->frames[dwFramePos].dwOffsetX = pDC6->pFrames[dwFramePos].fh.dwOffsetX;
-			pCache->frames[dwFramePos].dwOffsetY = pDC6->pFrames[dwFramePos].fh.dwOffsetY;
-			pCache->frames[dwFramePos].dwOffsetY += (pDC6->dwDirectionHeights[i] - pCache->frames[dwFramePos].h);
-			
-			dwCursorX += pDC6->pFrames[dwFramePos].fh.dwWidth;
-
-			if (pDC6->pFrames[dwFramePos].fh.dwHeight > dwDirectionY)
-			{
-				dwDirectionY = pDC6->pFrames[dwFramePos].fh.dwHeight;
-			}
-		}
-
-		dwCursorX = 0;
-		dwCursorY += dwDirectionY;
-		dwCenterPos[i] = dwDirectionY;
-	}
-}
-
-/*
- *	Creates an animation instance from a texture
- */
-anim_handle Renderer_SDL_RegisterDC6Animation(tex_handle texture, char* szHandle, DWORD dwStartingFrame)
-{
-	DWORD dwHash = D2Lib::strhash(szHandle, CACHEHANDLE_LEN, MAX_SDL_ANIMCACHE_SIZE);
+	DWORD dwHash = D2Lib::strhash(handleName, CACHEHANDLE_LEN, MAX_SDL_ANIMCACHE_SIZE);
 	DWORD dwIterations = 0;
 
 	while (dwIterations < MAX_SDL_ANIMCACHE_SIZE)
 	{
 		if (AnimCache[dwHash].texture == INVALID_HANDLE)
 		{
-			Renderer_SDL_CreateAnimation(dwHash, texture, szHandle, dwStartingFrame);
+			Renderer_SDL_CreateAnimation(dwHash, texture, handleName, startingFrame);
 			return dwHash;
 		}
-		else if (!D2Lib::stricmp(AnimCache[dwHash].szHandleName, szHandle))
+		else if (!D2Lib::stricmp(AnimCache[dwHash].szHandleName, handleName))
 		{
 			return dwHash;
 		}
@@ -1485,20 +1522,64 @@ anim_handle Renderer_SDL_RegisterDC6Animation(tex_handle texture, char* szHandle
 	return INVALID_HANDLE;
 }
 
-/*
- *	Destroys an animation instance
- */
-void Renderer_SDL_DeregisterAnimation(anim_handle anim)
+void Renderer_SDL::DeregisterAnimation(anim_handle anim)
 {
 	SDLDC6AnimationCacheItem* pCache = &AnimCache[anim];
 	memset(pCache, 0, sizeof(SDLDC6AnimationCacheItem));
 	pCache->texture = INVALID_HANDLE;
 }
 
-/*
- *	Adds a keyframe to an animation
- */
-void Renderer_SDL_AddAnimKeyframe(anim_handle anim, int nFrame, AnimKeyframeCallback callback, int nExtraInt)
+void Renderer_SDL::Animate(anim_handle anim, DWORD framerate, int x, int y)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (anim == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_ANIMATE;
+	pCommand->Animate.anim = anim;
+	pCommand->Animate.dwFramerate = framerate;
+	pCommand->Animate.dwX = x;
+	pCommand->Animate.dwY = y;
+	numDrawCommandsThisFrame++;
+}
+
+void Renderer_SDL::SetAnimFrame(anim_handle anim, DWORD frame)
+{
+	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
+	{
+		return;
+	}
+
+	if (anim == INVALID_HANDLE)
+	{
+		return;
+	}
+
+	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
+	pCommand->cmdType = RCMD_SETANIMFRAME;
+	pCommand->SetAnimFrame.anim = anim;
+	pCommand->SetAnimFrame.dwAnimFrame = frame;
+	numDrawCommandsThisFrame++;
+}
+
+DWORD Renderer_SDL::GetAnimFrame(anim_handle anim)
+{
+	if (anim == INVALID_HANDLE)
+	{
+		return 0;
+	}
+
+	return AnimCache[anim].dwFrame;
+}
+
+void Renderer_SDL::AddAnimKeyframe(anim_handle anim, int frame, AnimKeyframeCallback callback, int extraInt)
 {
 	if (anim == INVALID_HANDLE)
 	{
@@ -1506,15 +1587,12 @@ void Renderer_SDL_AddAnimKeyframe(anim_handle anim, int nFrame, AnimKeyframeCall
 	}
 
 	AnimCache[anim].bKeyframePresent = true;
-	AnimCache[anim].nKeyframeFrame = nFrame;
+	AnimCache[anim].nKeyframeFrame = frame;
 	AnimCache[anim].keyframeCallback = callback;
-	AnimCache[anim].nExtraInt = nExtraInt;
+	AnimCache[anim].nExtraInt = extraInt;
 }
 
-/*
- *	Removes a keyframe from an animation
- */
-void Renderer_SDL_RemoveAnimKeyframe(anim_handle anim)
+void Renderer_SDL::RemoveAnimKeyframe(anim_handle anim)
 {
 	if (anim == INVALID_HANDLE)
 	{
@@ -1524,10 +1602,7 @@ void Renderer_SDL_RemoveAnimKeyframe(anim_handle anim)
 	AnimCache[anim].bKeyframePresent = false;
 }
 
-/*
- *	Gets the number of frames in an animation
- */
-DWORD Renderer_SDL_GetAnimFrameCount(anim_handle anim)
+DWORD Renderer_SDL::GetAnimFrameCount(anim_handle anim)
 {
 	if (anim == INVALID_HANDLE)
 	{
@@ -1537,12 +1612,9 @@ DWORD Renderer_SDL_GetAnimFrameCount(anim_handle anim)
 	return AnimCache[anim].dwFrameCount;
 }
 
-/*
- *	Creates a font instance
- */
-font_handle Renderer_SDL_RegisterFont(char* szFontName)
+font_handle Renderer_SDL::RegisterFont(const char * fontName)
 {
-	font_handle handle = D2Lib::strhash(szFontName, CACHEHANDLE_LEN, MAX_SDL_FONTCACHE_SIZE);
+	font_handle handle = D2Lib::strhash(fontName, CACHEHANDLE_LEN, MAX_SDL_FONTCACHE_SIZE);
 	DWORD dwHashTries = 0;
 	char filename[MAX_D2PATH]{ 0 };
 	tbl_handle tbl;
@@ -1551,11 +1623,11 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 	int bpp;
 	Uint32 dwRMask, dwGMask, dwBMask, dwAMask;
 	DWORD dwXCounter = 0;
-	
+
 	// Find a free hash table entry
 	while (dwHashTries < MAX_SDL_FONTCACHE_SIZE)
 	{
-		if (!D2Lib::stricmp(FontCache[handle].szHandleName, szFontName))
+		if (!D2Lib::stricmp(FontCache[handle].szHandleName, fontName))
 		{	// we already registered this font? return it
 			return handle;
 		}
@@ -1582,20 +1654,20 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 	 *	I haven't coded support here for non-Latin fonts. If someone can find either d2delta.mpq or d2kfixup.mpq,
 	 *	I might be able to figure out how those are rendered. For now, Latin we go!
 	 */
-	
-	// Register the font TBL file
+
+	 // Register the font TBL file
 	pCache = &FontCache[handle];
-	tbl = TBLFont::RegisterFont(szFontName);
+	tbl = TBLFont::RegisterFont(fontName);
 	pCache->pFontData[0] = TBLFont::GetPointerFromHandle(tbl);
-	D2Lib::strncpyz(pCache->szHandleName, szFontName, 32);
+	D2Lib::strncpyz(pCache->szHandleName, fontName, 32);
 
 	// Load the DC6 file
-	snprintf(filename, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.dc6", GAME_CHARSET, szFontName);
+	snprintf(filename, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.dc6", GAME_CHARSET, fontName);
 	DC6::LoadImage(filename, &pCache->dc6[0]);
 
 	// Create the big surface that we need to blit into
 	SDL_PixelFormatEnumToMasks(SDL_PIXELFORMAT_BGRA8888, &bpp, &dwRMask, &dwGMask, &dwBMask, &dwAMask);
-	pBigSurface = SDL_CreateRGBSurface(0, pCache->dc6[0].dwTotalWidth, pCache->dc6->dwTotalHeight, 
+	pBigSurface = SDL_CreateRGBSurface(0, pCache->dc6[0].dwTotalWidth, pCache->dc6->dwTotalHeight,
 		32, dwRMask, dwGMask, dwBMask, dwAMask);
 
 	// Blit each freaking sprite into the big font surface
@@ -1607,7 +1679,7 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 		DWORD dwFrameHeight = pCache->dc6[0].pFrames[i].fh.dwHeight;
 		SDL_Surface* pTinySurface = SDL_CreateRGBSurfaceFrom(DC6::GetPixelsAtFrame(&pCache->dc6[0], 0, i, nullptr),
 			dwFrameWidth, dwFrameHeight, 8, dwFrameWidth, 0, 0, 0, 0);
-		
+
 		SDL_Rect dst{ (int)dwXCounter, -1, (int)dwFrameWidth, (int)dwFrameHeight };
 
 		// Every font uses units palette.
@@ -1633,23 +1705,7 @@ font_handle Renderer_SDL_RegisterFont(char* szFontName)
 	return handle;
 }
 
-/*
- *	Gets the frame that an animation is on
- */
-DWORD Renderer_SDL_GetAnimFrame(anim_handle anim)
-{
-	if (anim == INVALID_HANDLE)
-	{
-		return 0;
-	}
-
-	return AnimCache[anim].dwFrame;
-}
-
-/*
- *	Deletes a font handle
- */
-void Renderer_SDL_DeregisterFont(font_handle font)
+void Renderer_SDL::DeregisterFont(font_handle font)
 {
 	SDLFontCacheItem* pCache;
 
@@ -1671,144 +1727,7 @@ void Renderer_SDL_DeregisterFont(font_handle font)
 	SDL_DestroyTexture(pCache->pTexture);
 }
 
-/*
- *	Draws the texture by creating a render command.
- *	@author eezstreet
- */
-void Renderer_SDL_DrawTexture(tex_handle texture, int x, int y, int w, int h, int u, int v)
-{
-	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
-	{
-		return;
-	}
-
-	if (texture == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
-	pCommand->cmdType = RCMD_DRAWTEXTURE;
-	pCommand->DrawTexture.src.x = u;
-	pCommand->DrawTexture.src.y = v;
-	pCommand->DrawTexture.src.w = pCommand->DrawTexture.dst.w = w;
-	pCommand->DrawTexture.src.h = pCommand->DrawTexture.dst.h = h;
-	pCommand->DrawTexture.dst.x = x;
-	pCommand->DrawTexture.dst.y = y;
-	pCommand->DrawTexture.tex = texture;
-	numDrawCommandsThisFrame++;
-}
-
-/*
- *	Draws specific texture frames by creating a render command.
- *	@author	eezstreet
- */
-void Renderer_SDL_DrawTextureFrames(tex_handle texture, int x, int y, DWORD dwStartFrame, DWORD dwEndFrame)
-{
-	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
-	{
-		return;
-	}
-
-	if (texture == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	if (dwStartFrame > dwEndFrame)
-	{
-		return;
-	}
-
-	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
-	pCommand->cmdType = RCMD_DRAWTEXTUREFRAMES;
-	pCommand->DrawTextureFrames.tex = texture;
-	pCommand->DrawTextureFrames.dwDstX = x;
-	pCommand->DrawTextureFrames.dwDstY = y;
-	pCommand->DrawTextureFrames.dwStart = dwStartFrame;
-	pCommand->DrawTextureFrames.dwEnd = dwEndFrame;
-	numDrawCommandsThisFrame++;
-}
-
-/*
- *	Draws one specific frame of a texture by creating a render command
- *	@author	eezstreet
- */
-void Renderer_SDL_DrawTextureFrame(tex_handle texture, int x, int y, DWORD dwFrame)
-{
-	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
-	{
-		return;
-	}
-
-	if (texture == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
-	pCommand->cmdType = RCMD_DRAWTEXTUREFRAME;
-	pCommand->DrawTextureFrame.tex = texture;
-	pCommand->DrawTextureFrame.dwDstX = x;
-	pCommand->DrawTextureFrame.dwDstY = y;
-	pCommand->DrawTextureFrame.dwFrame = dwFrame;
-	numDrawCommandsThisFrame++;
-}
-
-/*
- *	Keeps an animation going
- *	@author eezstreet
- */
-void Renderer_SDL_Animate(anim_handle anim, DWORD dwFramerate, int x, int y)
-{
-	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
-	{
-		return;
-	}
-
-	if (anim == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
-	pCommand->cmdType = RCMD_ANIMATE;
-	pCommand->Animate.anim = anim;
-	pCommand->Animate.dwFramerate = dwFramerate;
-	pCommand->Animate.dwX = x;
-	pCommand->Animate.dwY = y;
-	numDrawCommandsThisFrame++;
-}
-
-/*
- *	Sets the frame of an animation
- *	@author	eezstreet
- */
-void Renderer_SDL_SetAnimFrame(anim_handle anim, DWORD dwFrame)
-{
-	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
-	{
-		return;
-	}
-
-	if (anim == INVALID_HANDLE)
-	{
-		return;
-	}
-
-	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
-	pCommand->cmdType = RCMD_SETANIMFRAME;
-	pCommand->SetAnimFrame.anim = anim;
-	pCommand->SetAnimFrame.dwAnimFrame = dwFrame;
-	numDrawCommandsThisFrame++;
-}
-
-/*
- *	Renders a bit of text
- *	@author	eezstreet
- */
-void Renderer_SDL_DrawText(font_handle font, char16_t* szText, int x, int y, int w, int h,
-	D2TextAlignment alignHorz, D2TextAlignment alignVert)
+void Renderer_SDL::DrawText(font_handle font, const char16_t * text, int x, int y, int w, int h, D2TextAlignment alignHorz, D2TextAlignment alignVert)
 {
 	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
 	{
@@ -1829,14 +1748,11 @@ void Renderer_SDL_DrawText(font_handle font, char16_t* szText, int x, int y, int
 	pCommand->DrawText.h = h;
 	pCommand->DrawText.horzAlign = alignHorz;
 	pCommand->DrawText.vertAlign = alignVert;
-	D2Lib::qstrncpyz(pCommand->DrawText.text, szText, MAX_TEXT_DRAW_LINE);
+	D2Lib::qstrncpyz(pCommand->DrawText.text, text, MAX_TEXT_DRAW_LINE);
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Alter the alpha modulation on a texture
- */
-void Renderer_SDL_AlphaModulateTexture(tex_handle texture, int nAlpha)
+void Renderer_SDL::AlphaModTexture(tex_handle texture, int alpha)
 {
 	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
 	{
@@ -1851,14 +1767,11 @@ void Renderer_SDL_AlphaModulateTexture(tex_handle texture, int nAlpha)
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
 	pCommand->cmdType = RCMD_ALPHAMODULATE;
 	pCommand->AlphaModulate.texture = texture;
-	pCommand->AlphaModulate.nAlpha = nAlpha;
+	pCommand->AlphaModulate.nAlpha = alpha;
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Alter the color modulation on a texture
- */
-void Renderer_SDL_ColorModulateTexture(tex_handle texture, int nRed, int nGreen, int nBlue)
+void Renderer_SDL::ColorModTexture(tex_handle texture, int red, int green, int blue)
 {
 	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
 	{
@@ -1873,16 +1786,13 @@ void Renderer_SDL_ColorModulateTexture(tex_handle texture, int nRed, int nGreen,
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
 	pCommand->cmdType = RCMD_COLORMODULATE;
 	pCommand->ColorModulate.texture = texture;
-	pCommand->ColorModulate.nRed = nRed;
-	pCommand->ColorModulate.nGreen = nGreen;
-	pCommand->ColorModulate.nBlue = nBlue;
+	pCommand->ColorModulate.nRed = red;
+	pCommand->ColorModulate.nGreen = green;
+	pCommand->ColorModulate.nBlue = blue;
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Alter the alpha modulation on a font
- */
-void Renderer_SDL_AlphaModulateFont(font_handle font, int nAlpha)
+void Renderer_SDL::AlphaModFont(font_handle font, int alpha)
 {
 	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
 	{
@@ -1897,14 +1807,11 @@ void Renderer_SDL_AlphaModulateFont(font_handle font, int nAlpha)
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
 	pCommand->cmdType = RCMD_ALPHAMODULATEFONT;
 	pCommand->AlphaModulate.texture = font;
-	pCommand->AlphaModulate.nAlpha = nAlpha;
+	pCommand->AlphaModulate.nAlpha = alpha;
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Alter the color modulation on a font
- */
-void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int nBlue)
+void Renderer_SDL::ColorModFont(font_handle font, int red, int green, int blue)
 {
 	if (numDrawCommandsThisFrame >= MAX_SDL_DRAWCOMMANDS_PER_FRAME)
 	{
@@ -1919,16 +1826,13 @@ void Renderer_SDL_ColorModulateFont(font_handle font, int nRed, int nGreen, int 
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
 	pCommand->cmdType = RCMD_COLORMODULATEFONT;
 	pCommand->ColorModulate.texture = font;
-	pCommand->ColorModulate.nRed = nRed;
-	pCommand->ColorModulate.nGreen = nGreen;
-	pCommand->ColorModulate.nBlue = nBlue;
+	pCommand->ColorModulate.nRed = red;
+	pCommand->ColorModulate.nGreen = green;
+	pCommand->ColorModulate.nBlue = blue;
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Draws a rectangle
- */
-void Renderer_SDL_DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a)
+void Renderer_SDL::DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a)
 {
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
 	pCommand->cmdType = RCMD_DRAWRECTANGLE;
@@ -1943,11 +1847,7 @@ void Renderer_SDL_DrawRectangle(int x, int y, int w, int h, int r, int g, int b,
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Start drawing a token instance
- *	@author	eezstreet
- */
-void Renderer_SDL_DrawTokenInstance(anim_handle instance, int x, int y, int translvl, int palette)
+void Renderer_SDL::DrawTokenInstance(anim_handle instance, int x, int y, int translvl, int palette)
 {
 	// Add a drew command
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame];
@@ -1960,11 +1860,7 @@ void Renderer_SDL_DrawTokenInstance(anim_handle instance, int x, int y, int tran
 	numDrawCommandsThisFrame++;
 }
 
-/*
- *	Clear the backbuffer
- *	@author	eezstreet
- */
-void Renderer_SDL_Clear()
+void Renderer_SDL::Clear()
 {
 	SDLCommand* pCommand = &gdrawCommands[numDrawCommandsThisFrame++];
 	pCommand->cmdType = RCMD_CLEAR;

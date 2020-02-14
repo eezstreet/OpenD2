@@ -33,15 +33,17 @@ if(BUILD_GAME)
 		file(GLOB_RECURSE ADPCM_SRC Libraries/adpcm/*)
 		file(GLOB_RECURSE HUFFMAN_SRC Libraries/huffman/*)
 		file(GLOB_RECURSE PKWARE_SRC Libraries/pkware/*)
+		file(GLOB_RECURSE GLEW_SRC Libraries/glew/GL/*)
 
 		source_group("Engine" FILES ${ENGINE_SRC})
 		source_group("Libraries\\adpcm" FILES ${ADPCM_SRC})
 		source_group("Libraries\\huffman" FILES ${HUFFMAN_SRC})
 		source_group("Libraries\\pkware" FILES ${PKWARE_SRC})
 		source_group("Libraries\\SDL" FILES ${SDL_SRC})
+		source_group("Libraries\\glew\\include" FILES ${GLEW_SRC})
 		source_group("Shared" FILES ${SHARED_SRC})
 
-		set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC})
+		set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC} ${GLEW_SRC})
 
 		set(ENGINE_SRC ${ENGINE_SRC} ${SHARED_SRC} ${LIBRARY_SRC})
 		set(SDL2_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/sdl/x86")
@@ -49,18 +51,25 @@ if(BUILD_GAME)
 			"${SDL2_LIBRARY_DIR}/SDL2main.lib" "${SDL2_LIBRARY_DIR}/SDL2test.lib"
 			"${SDL2_LIBRARY_DIR}/SDL2_net.lib" "${SDL2_LIBRARY_DIR}/SDL2_mixer.lib"
 		)
+
+		set(GLUT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/freeglut")
+		set(GLUT_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/freeglut/freeglut.lib")
+		set(GLEW_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew")
+		set(GLEW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew/glew32.lib")
 	else()
 		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Windows.cpp)
 
 		find_package(SDL2 REQUIRED)
+		find_package(GLEW REQUIRED)
+		find_package(GLUT REQUIRED)
 	endif()
 
 	add_executable(game ${ENGINE_SRC})
 	set_target_properties(game PROPERTIES OUTPUT_NAME game)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 	
-	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES})
-	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS})
+	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES} ${GLUT_LIBRARIES})
+	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
 
 	if(WIN32)
 		set_target_properties(game PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)

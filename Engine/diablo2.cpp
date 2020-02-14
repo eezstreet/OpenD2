@@ -87,6 +87,7 @@ D2CmdArgStrc OpenD2CommandArguments[] = {
 
 static D2ModuleImportStrc exports = {
 	D2CLIENTAPI_VERSION,
+	nullptr,
 
 	Log::Print,
 	Log::Warning,

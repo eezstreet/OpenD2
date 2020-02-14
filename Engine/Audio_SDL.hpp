@@ -22,12 +22,32 @@ namespace Audio_SDL
 	void SetMusicVolume(float volume);
 	void SetSoundVolume(float volume);
 
-	struct SoundCacheEntry
+	struct AudioChunk
 	{
-		char szSoundPath[MAX_D2PATH];
 		union {
 			Mix_Chunk* pChunk;
 			Mix_Music* pMusic;
-		};
+		} data;
+
+		bool bIsMusic = false;
+
+		~AudioChunk()
+		{
+			if (bIsMusic && data.pMusic)
+			{
+				Mix_FreeMusic(data.pMusic);
+			}
+			else if (data.pChunk)
+			{
+				Mix_FreeChunk(data.pChunk);
+			}
+		}
+
+		AudioChunk()
+		{
+			data.pChunk = nullptr;
+			data.pMusic = nullptr;
+			bIsMusic = false;
+		}
 	};
 }

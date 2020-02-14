@@ -11,18 +11,6 @@
 
 ///////////////////////////////////////////////////////////////////////
 //
-//	TYPES
-
-// The render targets
-enum OpenD2RenderTargets
-{
-	OD2RT_SDL,			// SDL renderer with hardware acceleration (default for now)
-	OD2RT_OPENGL,		// OpenGL
-	OD2RT_MAX
-};
-
-///////////////////////////////////////////////////////////////////////
-//
 //	FUNCTIONS
 
 // Renderer_SDL.cpp

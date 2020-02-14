@@ -257,23 +257,25 @@ namespace FS
 	 *	Open a file with the select mode.
 	 *	@return	The size of the file
 	 */
-	size_t Open(char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
+	size_t Open(const char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 	{
 		char path[MAX_D2PATH_ABSOLUTE]{ 0 };
 		char folder[MAX_D2PATH]{ 0 };
+		char filepathBuffer[MAX_D2PATH_ABSOLUTE]{ 0 };
 		const char* szModeStr = ModeStr(mode, bBinary);
 		fs_handle outHandle = 0;
 		FILE* fileHandle;
 
 		Log_ErrorAssertReturn(gnNumFilesOpened < MAX_CONCURRENT_FILES_OPEN, 0);
 
-		SanitizeFilePath(filename);
+		D2Lib::strncpyz(filepathBuffer, filename, MAX_D2PATH_ABSOLUTE);
+		SanitizeFilePath(filepathBuffer);
 		if (mode == FS_READ)
 		{	// If we're reading, we use the search paths in reverse order
 			for (int i = FS_MAXPATH - 1; i >= 0; i--)
 			{
 				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
-				strcat(path, filename);
+				strcat(path, filepathBuffer);
 
 				if (fileHandle = fopen(path, szModeStr))
 				{
@@ -286,7 +288,7 @@ namespace FS
 			for (int i = 0; i < FS_MAXPATH; i++)
 			{
 				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
-				strcat(path, filename);
+				strcat(path, filepathBuffer);
 
 				if (fileHandle = fopen(path, szModeStr))
 				{
@@ -305,7 +307,7 @@ namespace FS
 		// Push this file handle
 		while (glFileHandles[outHandle].bActive)
 		{
-			if (!D2Lib::stricmp(glFileHandles[outHandle].szFileName, filename))
+			if (!D2Lib::stricmp(glFileHandles[outHandle].szFileName, filepathBuffer))
 			{
 				return outHandle;
 			}
@@ -318,7 +320,7 @@ namespace FS
 		SDL_UnlockMutex(glFileHandles[outHandle].mut);
 		glFileHandles[outHandle].mode = mode;
 		glFileHandles[outHandle].bActive = true;
-		D2Lib::strncpyz(glFileHandles[outHandle].szFileName, filename, MAX_D2PATH);
+		D2Lib::strncpyz(glFileHandles[outHandle].szFileName, filepathBuffer, MAX_D2PATH);
 		gnNumFilesOpened++;
 
 		// Get the length of the file and return it
@@ -403,10 +405,10 @@ namespace FS
 	/*
 	 *	Writes plaintext to a file
 	 */
-	size_t WritePlaintext(fs_handle f, char* text)
+	size_t WritePlaintext(fs_handle f, const char* text)
 	{
 		size_t dwLen = strlen(text);
-		return Write(f, text, dwLen);
+		return Write(f, (void*)text, dwLen);
 	}
 
 	/*

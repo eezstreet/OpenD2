@@ -14,8 +14,8 @@ D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Wid
 	m_bChecked = bStartChecked;
 	m_bHasLabel = false;
 
-	checkboxTex = engine->R_RegisterAnimatedDC6("data\\global\\ui\\FrontEnd\\clickbox.dc6", "clickbox", PAL_FECHAR);
-	checkboxAnim = engine->R_RegisterAnimation(checkboxTex, "clickbox", 0);
+	checkboxTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\clickbox.dc6", "clickbox", PAL_FECHAR);
+	checkboxAnim = engine->renderer->RegisterDC6Animation(checkboxTex, "clickbox", 0);
 }
 
 /*
@@ -33,13 +33,13 @@ D2Widget_Checkbox::~D2Widget_Checkbox()
  */
 void D2Widget_Checkbox::Draw()
 {
-	engine->R_SetAnimFrame(checkboxAnim, m_bChecked);
-	engine->R_Animate(checkboxAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
+	engine->renderer->SetAnimFrame(checkboxAnim, m_bChecked);
+	engine->renderer->Animate(checkboxAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
 
 	if (m_bHasLabel)
 	{
-		engine->R_ColorModFont(cl.font16, 150, 135, 100);
-		engine->R_DrawText(cl.font16, szLabel, m_pOwner->x + x + w + 6, m_pOwner->y + y + 3, 0, 0, ALIGN_LEFT, ALIGN_TOP);
+		engine->renderer->ColorModFont(cl.font16, 150, 135, 100);
+		engine->renderer->DrawText(cl.font16, szLabel, m_pOwner->x + x + w + 6, m_pOwner->y + y + 3, 0, 0, ALIGN_LEFT, ALIGN_TOP);
 	}
 }
 
