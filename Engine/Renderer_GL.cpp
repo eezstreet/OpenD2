@@ -1,15 +1,51 @@
 #include "Renderer_GL.hpp"
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 
 Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenConfig, SDL_Window * pWindow)
 {
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+	context = SDL_GL_CreateContext(pWindow);
+	if (context == nullptr)
+	{
+		Log::Error("SDL_GL_CreateContext() failed: %s\n", SDL_GetError());
+		return;
+	}
+
+	if (SDL_GL_MakeCurrent(pWindow, context))
+	{
+		Log::Error("SDL_GL_MakeCurrent() failed: %s\n", SDL_GetError());
+		return;
+	}
+
+	GLenum result = glewInit();
+	if (result != GLEW_OK)
+	{
+		Log::Error("glewInit() failed: %s\n", glewGetErrorString(result));
+		return;
+	}
+
+	targetWindow = pWindow;
 }
 
 Renderer_GL::~Renderer_GL()
 {
+	if (context)
+	{
+		SDL_GL_DeleteContext(context);
+	}
 }
 
 void Renderer_GL::Present()
 {
+	//clear color and depth buffer 
+	glViewport(0, 0, 800, 600);
+	
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+	SDL_GL_SwapWindow(targetWindow);
 }
 
 tex_handle Renderer_GL::TextureFromStitchedDC6(const char * dc6Path, const char * handle, DWORD start, DWORD end, int palette)
@@ -95,6 +131,10 @@ void Renderer_GL::DeregisterFont(font_handle font)
 {
 }
 
+// Windows is so silly.
+#ifdef _WIN32
+#undef DrawText
+#endif // _WIN32
 void Renderer_GL::DrawText(font_handle font, const char16_t * text, int x, int y, int w, int h, D2TextAlignment alignHorz, D2TextAlignment alignVert)
 {
 }

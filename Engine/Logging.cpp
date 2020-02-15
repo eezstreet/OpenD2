@@ -108,7 +108,7 @@ namespace Log
 	 *	Note that this automatically adds a newline at the end
 	 *	@author eezstreet
 	 */
-	void Print(OpenD2LogFlags nPriority, char* szFormat, ...)
+	void Print(OpenD2LogFlags nPriority, const char* szFormat, ...)
 	{
 		if (!(gdwLogFlags & nPriority))
 		{	// we aren't allowed to print this message, as per user config
@@ -120,7 +120,7 @@ namespace Log
 		char buffer2[2048];
 		va_list args;
 		va_start(args, szFormat);
-		vsnprintf(buffer, 2048, szFormat, args);
+		vsnprintf(buffer, sizeof(buffer), szFormat, args);
 		va_end(args);
 
 		// add the time and newline character
@@ -129,7 +129,7 @@ namespace Log
 		time(&curTime);
 		tp = gmtime(&curTime);
 
-		snprintf(buffer2, 2048, "%02i:%02i:%02i  %s" NL, tp->tm_hour, tp->tm_min, tp->tm_sec, buffer);
+		snprintf(buffer2, sizeof(buffer2), "%02i:%02i:%02i  %s" NL, tp->tm_hour, tp->tm_min, tp->tm_sec, buffer);
 
 		// write and clean up
 		FS::WritePlaintext(glogHandle, buffer2);
@@ -143,7 +143,7 @@ namespace Log
 	 *	@param	szCondition: The text of the condition.
 	 */
 #define MAX_WARNING_TEXT 1024
-	void Warning(char* szFile, int nLine, char* szCondition)
+	void Warning(const char* szFile, const int nLine, const char* szCondition)
 	{
 		char szWarningMessage[MAX_WARNING_TEXT]{ 0 };
 
@@ -155,10 +155,23 @@ namespace Log
 		Print(PRIORITY_MESSAGE, szWarningMessage);
 	}
 
+	void Warning(const char* format, ...)
+	{
+		static char buffer[2048];
+
+		va_list args;
+		va_start(args, format);
+		vsnprintf(buffer, sizeof(buffer), format, args);
+		va_end(args);
+
+		Window::ShowMessageBox(SDL_MESSAGEBOX_WARNING, GAME_NAME " Warning", buffer);
+		Print(PRIORITY_MESSAGE, buffer);
+	}
+
 	/*
 	 *	Fire off an error; a game-breaking event.
 	 */
-	void Error(char* szFile, int nLine, char* szCondition)
+	void Error(const char* szFile, const int nLine, const char* szCondition)
 	{
 		char szErrorMessage[MAX_WARNING_TEXT]{ 0 };
 
@@ -168,6 +181,24 @@ namespace Log
 			"Line: %i" NL "Code: %s", szFile, nLine, szCondition);
 		Window::ShowMessageBox(SDL_MESSAGEBOX_ERROR, GAME_NAME " Error", szErrorMessage);
 		Print(PRIORITY_CRASH, szErrorMessage);
+
+		// pull us out of the main game loop
+		currentModule = MODULE_NONE;
+
+		exit(1);
+	}
+
+	void Error(const char* format, ...)
+	{
+		static char buffer[2048];
+
+		va_list args;
+		va_start(args, format);
+		vsnprintf(buffer, sizeof(buffer), format, args);
+		va_end(args);
+
+		Window::ShowMessageBox(SDL_MESSAGEBOX_ERROR, GAME_NAME " Error", buffer);
+		Print(PRIORITY_CRASH, buffer);
 
 		// pull us out of the main game loop
 		currentModule = MODULE_NONE;

@@ -1,8 +1,14 @@
 #pragma once
 #include "Renderer.hpp"
 
+
+
 class Renderer_GL : public IRenderer
 {
+private:
+	SDL_GLContext context;
+	SDL_Window* targetWindow;
+
 public:
 	Renderer_GL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);
 	~Renderer_GL();

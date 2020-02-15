@@ -659,9 +659,9 @@ struct D2ModuleImportStrc
 	IRenderer* renderer;
 
 	// Basic functions
-	void			(*Print)(OpenD2LogFlags nPriority, char* szFormat, ...);
-	void			(*Warning)(char* szFile, int nLine, char* szCondition);
-	void			(*Error)(char* szFile, int nLine, char* szCondition);
+	void			(*Print)(OpenD2LogFlags nPriority, const char* szFormat, ...);
+	void			(*Warning)(const char* szFile, const int nLine, const char* szCondition);
+	void			(*Error)(const char* szFile, const int nLine, const char* szCondition);
 	DWORD			(__cdecl *Milliseconds)();
 
 	// Filesystem calls
