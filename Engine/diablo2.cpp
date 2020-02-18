@@ -118,10 +118,6 @@ static D2ModuleImportStrc exports = {
 	SDL_StartTextInput,
 	SDL_StopTextInput,
 
-	FSMPQ::FindFile,
-	MPQ::FileSize,
-	MPQ::ReadFile,
-
 	TBL::Register,
 	TBL::FindStringFromIndex,
 	TBL::FindStringIndexFromKey,
@@ -436,7 +432,7 @@ int InitGame(int argc, char** argv)
 
 	Network::Init();
 //	Threadpool::Init();
-	FS::Init(&openD2Config);
+	FS::Init(&config, &openD2Config);
 	Log::InitSystem(GAME_LOG_HEADER, GAME_NAME, &openD2Config);
 	FS::LogSearchPaths();
 	ReadGameConfig(&config, &openD2Config);

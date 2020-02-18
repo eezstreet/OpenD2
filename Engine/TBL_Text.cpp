@@ -51,18 +51,23 @@ namespace TBL
 		// TODO: make this use something other than english
 		snprintf(szPathStr, MAX_D2PATH, "data\\local\\LNG\\%s\\%s.tbl", GAME_LANGUAGE, szTblFile);
 
-		pTBL->archiveHandle = FSMPQ::FindFile(szPathStr, nullptr, &pTBL->pArchive);
+		pTBL->dwFileSize = FS::Open(szPathStr, &pTBL->archiveHandle, FS_READ, true);
 		if (pTBL->archiveHandle == INVALID_HANDLE)
 		{	// couldn't find this TBL file
 			return INVALID_HANDLE;
 		}
-		pTBL->dwFileSize = MPQ::FileSize(pTBL->pArchive, pTBL->archiveHandle);
+		if (pTBL->dwFileSize < sizeof(TBLHeader))
+		{
+			FS::CloseFile(pTBL->archiveHandle);
+			return INVALID_HANDLE;
+		}
 
 		// Allocate file buffer and read
 		pFileBuffer = (BYTE*)malloc(pTBL->dwFileSize);
 		Log_ErrorAssertReturn(pFileBuffer, INVALID_HANDLE);
 		pReadHead = pFileBuffer;
-		MPQ::ReadFile(pTBL->pArchive, pTBL->archiveHandle, pFileBuffer, pTBL->dwFileSize);
+		FS::Read(pTBL->archiveHandle, pFileBuffer, pTBL->dwFileSize);
+		FS::CloseFile(pTBL->archiveHandle);
 
 		// Copy contents from buffer into the file
 		memcpy(&pTBL->header, pReadHead, sizeof(TBLHeader));

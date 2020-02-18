@@ -72,14 +72,15 @@ namespace DC6
 		memset(pImage, 0, sizeof(DC6Image));
 		memset(gpDecodeBuffer, 0, sizeof(BYTE) * DECODE_BUFFER_SIZE);
 
-		pImage->f = FSMPQ::FindFile(szPath, nullptr, (D2MPQArchive**)&pImage->mpq);
+		dwFileSize = FS::Open(szPath, &pImage->f, FS_READ, true);
+		
 		Log_WarnAssert(pImage->f != INVALID_HANDLE);
+		Log_WarnAssert(dwFileSize < DECODE_BUFFER_SIZE);
 
 		// Now comes the fun part: reading and decoding the actual thing
-		dwFileSize = MPQ::FileSize((D2MPQArchive*)pImage->mpq, pImage->f);
+		FS::Read(pImage->f, gpReadBuffer, DECODE_BUFFER_SIZE);
 
-		Log_WarnAssert(MPQ::FileSize((D2MPQArchive*)pImage->mpq, pImage->f) < DECODE_BUFFER_SIZE);
-		MPQ::ReadFile((D2MPQArchive*)pImage->mpq, pImage->f, gpReadBuffer, dwFileSize);
+		FS::CloseFile(pImage->f);
 
 		memcpy(&pImage->header, pByteReadHead, sizeof(pImage->header));
 		pByteReadHead += sizeof(pImage->header);

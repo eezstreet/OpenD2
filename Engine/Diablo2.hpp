@@ -718,7 +718,7 @@ bool ClientProcessPacket(D2Packet* pPacket);
 // FileSystem.cpp
 namespace FS
 {
-	void Init(OpenD2ConfigStrc* pConfig);
+	void Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig);
 	void Shutdown();
 	void LogSearchPaths();
 	size_t Open(const char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary = false);

@@ -691,11 +691,6 @@ struct D2ModuleImportStrc
 	void			(*In_StartTextEditing)();
 	void			(*In_StopTextEditing)();
 
-	// MPQ calls
-	fs_handle		(*MPQ_FindFile)(const char* szFileName, const char* szMPQName, D2MPQArchive** pArchiveOut);
-	size_t			(*MPQ_FileSize)(D2MPQArchive* pMPQ, fs_handle file);
-	size_t			(*MPQ_ReadFile)(D2MPQArchive* pMPQ, fs_handle file, BYTE* buffer, DWORD dwBufferLen);
-
 	// TBL calls
 	tbl_handle		(*TBL_Register)(char* szTBLFile);
 	char16_t*		(*TBL_FindStringFromIndex)(tbl_handle dwIndex);

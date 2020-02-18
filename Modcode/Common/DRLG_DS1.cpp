@@ -14,26 +14,28 @@ DS1File* DS1_Load(char* szFilePath)
 	DWORD dwHash = D2Lib::strhash(szFileStripped, MAX_D2PATH_ABSOLUTE, MAX_DS1_LOADED);
 
 	// Find the file itself
-	D2MPQArchive* pMPQ;
-	fs_handle fileHandle = engine->MPQ_FindFile(szFilePath, nullptr, &pMPQ);
+	fs_handle fileHandle;
+	DWORD dwFileSize = engine->FS_Open(szFilePath, &fileHandle, FS_READ, true);
 
 	if (fileHandle == INVALID_HANDLE)
 	{
 		return nullptr;
 	}
+	if (dwFileSize == 0)
+	{
+		engine->FS_CloseFile(fileHandle);
+		return nullptr;
+	}
 
-	// Find out the file size and allocate that many bytes to read
-	size_t fileSize = engine->MPQ_FileSize(pMPQ, fileHandle);
-	BYTE* fileData = (BYTE*)malloc(fileSize);
+	// Allocate that many bytes to read and then read it
+	BYTE* fileData = (BYTE*)malloc(dwFileSize);
 	if (fileData == nullptr)
 	{
 		return nullptr; // TODO: proper memory allocation
 	}
 
-	// Read the file from the MPQ (or, FIXME: from local disk if -direct is enabled)
-	engine->MPQ_ReadFile(pMPQ, fileHandle, fileData, fileSize);
+	engine->FS_Read(fileHandle, fileData, dwFileSize, 1);
+	engine->FS_CloseFile(fileHandle);
 
-
-
-	free(fileData);
+	free(fileData); // FIXME
 }

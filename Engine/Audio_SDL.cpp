@@ -58,19 +58,17 @@ namespace Audio_SDL
 	// Load a WAV into memory
 	bool LoadWAV(char* szAudioPath, BYTE** ppWavOutput, DWORD& dwSizeBytes)
 	{
-		D2MPQArchive* pArchive;
-		
 		// Find the file and determine how big it should be
-		fs_handle file = FSMPQ::FindFile(szAudioPath, nullptr, &pArchive);
-		if (file == INVALID_HANDLE)
+		fs_handle f;
+		dwSizeBytes = FS::Open(szAudioPath, &f, FS_READ, true);
+		if (f == INVALID_HANDLE)
 		{
 			return false;
 		}
 
-		dwSizeBytes = MPQ::FileSize(pArchive, file);
 		if (dwSizeBytes == 0)
 		{
-			return false;
+			FS::CloseFile(f);
 		}
 
 		// allocate memory for it
@@ -80,7 +78,8 @@ namespace Audio_SDL
 			return false;
 		}
 
-		MPQ::ReadFile(pArchive, file, *ppWavOutput, dwSizeBytes);
+		FS::Read(f, *ppWavOutput, dwSizeBytes);
+		FS::CloseFile(f);
 
 		return true;
 	}

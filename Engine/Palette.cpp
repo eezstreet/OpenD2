@@ -63,27 +63,28 @@ namespace Pal
 	 */
 	static bool RegisterPalette(char* szPalettePath, D2Palette* pPalette)
 	{
-		D2MPQArchive* pArchive = nullptr;
-
 		if (pPalette == nullptr)
 		{	// bad palette pointer
 			return false;
 		}
 
-		fs_handle f = FSMPQ::FindFile(szPalettePath, nullptr, &pArchive);
-		if (f == INVALID_HANDLE || pArchive == nullptr)
+		fs_handle f;
+		DWORD dwPaletteSize = FS::Open(szPalettePath, &f, FS_READ, true);
+		if (f == INVALID_HANDLE)
 		{	// Couldn't register palette
 			return false;
 		}
-
-		size_t dwPaletteSize = MPQ::FileSize(pArchive, f);
 		if (dwPaletteSize != sizeof(D2Palette))
-		{	// Not correct size = don't load
+		{
+			// bad file
+			FS::CloseFile(f);
 			return false;
 		}
 
 		// read the palette
-		MPQ::ReadFile(pArchive, f, **pPalette, dwPaletteSize);
+		FS::Read(f, **pPalette, dwPaletteSize);
+		FS::CloseFile(f);
+
 		return true;
 	}
 

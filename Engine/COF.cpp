@@ -34,7 +34,6 @@ namespace COF
 		COFHash* pHash;
 		cof_handle outHandle;
 		fs_handle file;
-		D2MPQArchive* pArchive;
 		size_t dwFileSize;
 		int i;
 
@@ -45,10 +44,17 @@ namespace COF
 		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\COF\\%s", type, token, cof);
 
 		// Try and load the COF first because it's possible we could be wasting time with the below code
-		file = FSMPQ::FindFile(path, nullptr, &pArchive);
+		dwFileSize = FS::Open(path, &file, FS_READ, true);
 		if (file == INVALID_HANDLE)
 		{
 			Log::Print(PRIORITY_MESSAGE, "Couldn't load %s\n", cof);
+			return INVALID_HANDLE;
+		}
+
+		if (dwFileSize == 0)
+		{
+			Log::Print(PRIORITY_MESSAGE, "Bad COF file: %s\n", cof);
+			FS::CloseFile(file);
 			return INVALID_HANDLE;
 		}
 
@@ -68,14 +74,11 @@ namespace COF
 		D2Lib::strncpyz(pHash->szCOFName, cof, MAX_COFFILE_NAMELEN);
 		D2Lib::strncpyz(pHash->szCOFType, type, MAX_COF_TYPELEN);
 
-		// Read the whole file at once
-		dwFileSize = MPQ::FileSize(pArchive, file);
-		Log_WarnAssertReturn(dwFileSize != 0, INVALID_HANDLE);
-
 		pHash->pCOFContents = (BYTE*)malloc(dwFileSize);
 		Log_ErrorAssertReturn(pHash->pCOFContents != nullptr, INVALID_HANDLE);
 
-		MPQ::ReadFile(pArchive, file, pHash->pCOFContents, dwFileSize);
+		FS::Read(file, pHash->pCOFContents, dwFileSize);
+		FS::CloseFile(file);
 
 		// Copy the header over
 		memcpy(&pHash->pFile->header, pHash->pCOFContents, sizeof(COFHeader));

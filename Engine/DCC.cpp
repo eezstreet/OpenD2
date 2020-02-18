@@ -180,7 +180,7 @@ namespace DCC
 	*	Is responsible for the actual reading of the DCC, from an fs_handle and a hash entry pointer.
 	*	@author	eezstreet
 	*/
-	void Read(DCCHash& dcc, fs_handle fileHandle, D2MPQArchive* pArchive)
+	void Read(DCCHash& dcc, fs_handle fileHandle, DWORD fileSize)
 	{
 		Bitstream* pBits;
 		int i, j;
@@ -189,12 +189,12 @@ namespace DCC
 		dcc.pFile = (DCCFile*)malloc(sizeof(DCCFile));
 		Log_ErrorAssert(dcc.pFile);
 
-		dcc.pFile->dwFileSize = MPQ::FileSize(pArchive, fileHandle);
+		dcc.pFile->dwFileSize = fileSize;
 		dcc.pFile->pFileBytes = (BYTE*)malloc(dcc.pFile->dwFileSize);
 		Log_ErrorAssert(dcc.pFile->pFileBytes);
 
-		// Read into filebytes. 
-		MPQ::ReadFile(pArchive, fileHandle, dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
+		// Read into filebytes.
+		FS::Read(fileHandle, dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
 
 		// Create the bitstream.
 		pBits = new Bitstream();
@@ -282,7 +282,6 @@ namespace DCC
 		anim_handle outHandle;
 		fs_handle fileHandle;
 		DWORD dwNameHash;
-		D2MPQArchive* pArchive = nullptr;
 
 		if (!szPath || !szName)
 		{
@@ -296,10 +295,16 @@ namespace DCC
 
 		// Make sure that the file actually exists first before we start poking the hash table.
 		// That way, we can root out issues of not finding DCCs immediately
-		fileHandle = FSMPQ::FindFile(szPath, nullptr, &pArchive);
+		DWORD fileSize = FS::Open(szPath, &fileHandle, FS_READ, true);
 		if (fileHandle == INVALID_HANDLE)
 		{
 			Log::Print(PRIORITY_DEBUG, "Couldn't load DCC file: %s (%s)\n", szPath, szName);
+			return INVALID_HANDLE;
+		}
+		if (fileSize == 0)
+		{
+			Log::Print(PRIORITY_DEBUG, "Blank DCC file: %s (%s)\n", szPath, szName);
+			FS::CloseFile(fileHandle);
 			return INVALID_HANDLE;
 		}
 
@@ -317,9 +322,10 @@ namespace DCC
 		}
 
 		// Now that we've got a free slot and a file handle, let's go ahead and load the DCC itself
-		Read(DCCHashTable[outHandle], fileHandle, pArchive);
+		Read(DCCHashTable[outHandle], fileHandle, fileSize);
 		D2Lib::strncpyz(DCCHashTable[outHandle].name, szName, MAX_DCC_NAMELEN);
 		DCCHashTable[outHandle].useCount = 0;
+		FS::CloseFile(fileHandle);
 
 		return outHandle;
 	}

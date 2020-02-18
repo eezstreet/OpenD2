@@ -21,13 +21,13 @@ namespace TBLFont
 	{
 		char szFilePath[MAX_D2PATH]{ 0 };
 		fs_handle file;
-		D2MPQArchive* pArchive = nullptr;
 		tbl_handle current = gLastUsedIndex;
 
 		snprintf(szFilePath, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.tbl", GAME_CHARSET, szFontName);
 
-		file = FSMPQ::FindFile(szFilePath, nullptr, &pArchive);
-		MPQ::ReadFile(pArchive, file, (BYTE*)&FontTable[gLastUsedIndex], sizeof(TBLFontFile));
+		FS::Open(szFilePath, &file, FS_READ, true);
+		FS::Read(file, (BYTE*)&FontTable[gLastUsedIndex], sizeof(TBLFontFile));
+		FS::CloseFile(file);
 
 		gLastUsedIndex++;
 

@@ -28,6 +28,10 @@ namespace FS
 	static char gszHomePath[MAX_D2PATH_ABSOLUTE]{ 0 };
 	static char gszBasePath[MAX_D2PATH_ABSOLUTE]{ 0 };
 	static char gszModPath[MAX_D2PATH_ABSOLUTE]{ 0 };
+	static bool bDirect = false; // True if the -direct switch is on.
+	                             // If the -direct switch is on, then we load from the local file system
+	                             // before attempting to read from an MPQ.
+	                             // (We always use the local filesystem in a write.)
 
 	static const char* pszPaths[FS_MAXPATH] = {
 		gszHomePath,
@@ -42,6 +46,14 @@ namespace FS
 		OpenD2FileModes mode;
 		SDL_mutex* mut;
 		bool bActive;
+		bool bLoadedFromMPQ;
+		D2MPQArchive* mpq;
+		fs_handle mpqFileHandle;
+
+		bool Invalid()
+		{
+			return !bActive || (handle == nullptr && mpq == nullptr);
+		}
 	};
 
 	static FSHandleStore glFileHandles[MAX_CONCURRENT_FILES_OPEN]{ 0 };
@@ -127,19 +139,19 @@ namespace FS
 	 *	Initializes the OpenD2 filesystem
 	 *	@author	eezstreet
 	 */
-	void Init(OpenD2ConfigStrc* pConfig)
+	void Init(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig)
 	{
 		// Copy paths from the config to the FS
-		if (pConfig->szHomePath[0] == '\0')
+		if (pOpenConfig->szHomePath[0] == '\0')
 		{
 			Sys::DefaultHomepath(gszHomePath, MAX_D2PATH_ABSOLUTE);
 		}
 		else
 		{
-			D2Lib::strncpyz(gszHomePath, pConfig->szHomePath, MAX_D2PATH_ABSOLUTE);
+			D2Lib::strncpyz(gszHomePath, pOpenConfig->szHomePath, MAX_D2PATH_ABSOLUTE);
 		}
-		D2Lib::strncpyz(gszBasePath, pConfig->szBasePath, MAX_D2PATH_ABSOLUTE);
-		D2Lib::strncpyz(gszModPath, pConfig->szModPath, MAX_D2PATH_ABSOLUTE);
+		D2Lib::strncpyz(gszBasePath, pOpenConfig->szBasePath, MAX_D2PATH_ABSOLUTE);
+		D2Lib::strncpyz(gszModPath, pOpenConfig->szModPath, MAX_D2PATH_ABSOLUTE);
 
 		// Create mutexes for each openable file
 		for (int i = 0; i < MAX_CONCURRENT_FILES_OPEN; i++)
@@ -151,6 +163,9 @@ namespace FS
 		SanitizeSearchPath(gszHomePath);
 		SanitizeSearchPath(gszBasePath);
 		SanitizeSearchPath(gszModPath);
+
+		// Copy over bDirect.
+		bDirect = pConfig->bDirect;
 
 		// Init extensions
 		FSMPQ::Init();
@@ -170,7 +185,10 @@ namespace FS
 			FSHandleStore* pRecord = &glFileHandles[i];
 			if (pRecord->bActive)
 			{
-				fclose(pRecord->handle);
+				if (!pRecord->bLoadedFromMPQ)
+				{
+					fclose(pRecord->handle);
+				}
 			}
 			SDL_DestroyMutex(pRecord->mut);
 		}
@@ -264,28 +282,35 @@ namespace FS
 		char filepathBuffer[MAX_D2PATH_ABSOLUTE]{ 0 };
 		const char* szModeStr = ModeStr(mode, bBinary);
 		fs_handle outHandle = 0;
-		FILE* fileHandle;
+		size_t dwLen = 0;
+		FILE* fileHandle = nullptr;
+		bool bUsedMPQ = false;
+		D2MPQArchive* mpq = nullptr;
+		fs_handle mpqFileHandle = INVALID_HANDLE;
+
+		// FIXME: warn if the handle is already open?
 
 		Log_ErrorAssertReturn(gnNumFilesOpened < MAX_CONCURRENT_FILES_OPEN, 0);
 
 		D2Lib::strncpyz(filepathBuffer, filename, MAX_D2PATH_ABSOLUTE);
 		SanitizeFilePath(filepathBuffer);
-		if (mode == FS_READ)
-		{	// If we're reading, we use the search paths in reverse order
-			for (int i = FS_MAXPATH - 1; i >= 0; i--)
-			{
-				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
-				strcat(path, filepathBuffer);
 
-				if (fileHandle = fopen(path, szModeStr))
-				{
-					break;
-				}
-			}
-		}
-		else
+		if (mode != FS_READ || bDirect)
 		{
-			for (int i = 0; i < FS_MAXPATH; i++)
+			// attempt to use the local filesystem first
+			int start = FS_MAXPATH - 1;
+			int terminal = 0;
+			int add = -1;
+
+			if (mode != FS_READ)
+			{	// flip the terminal and the start
+				int swap = terminal;
+				terminal = start;
+				start = swap;
+				add = 1;
+			}
+
+			for (int i = start; i != terminal; i += add)
 			{
 				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
 				strcat(path, filepathBuffer);
@@ -297,8 +322,30 @@ namespace FS
 			}
 		}
 
+		if (mode == FS_READ && fileHandle == nullptr)
+		{	// try to read it from an MPQ
+			mpqFileHandle = FSMPQ::FindFile(filename, nullptr, &mpq);
+			if (mpqFileHandle != INVALID_HANDLE)
+			{
+				bUsedMPQ = true; 
+			}
+		}
 
-		if (fileHandle == 0)
+		if (mode == FS_READ && mpqFileHandle == INVALID_HANDLE)
+		{	// try one more time to find it
+			for (int i = FS_MAXPATH - 1; i != 0; i--)
+			{
+				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
+				strcat(path, filepathBuffer);
+
+				if (fileHandle = fopen(path, szModeStr))
+				{
+					break;
+				}
+			}
+		}
+
+		if (fileHandle == nullptr && mpqFileHandle == INVALID_HANDLE)
 		{	// file could not be found
 			*f = INVALID_HANDLE;
 			return 0;
@@ -320,14 +367,23 @@ namespace FS
 		SDL_UnlockMutex(glFileHandles[outHandle].mut);
 		glFileHandles[outHandle].mode = mode;
 		glFileHandles[outHandle].bActive = true;
+		glFileHandles[outHandle].bLoadedFromMPQ = bUsedMPQ;
+		glFileHandles[outHandle].mpq = mpq;
+		glFileHandles[outHandle].mpqFileHandle = mpqFileHandle;
 		D2Lib::strncpyz(glFileHandles[outHandle].szFileName, filepathBuffer, MAX_D2PATH);
 		gnNumFilesOpened++;
 
 		// Get the length of the file and return it
-		size_t dwLen = 0;
-		fseek(fileHandle, 0, SEEK_END);
-		dwLen = ftell(fileHandle);
-		rewind(fileHandle);
+		if (bUsedMPQ)
+		{
+			dwLen = MPQ::FileSize(mpq, mpqFileHandle);
+		}
+		else
+		{
+			fseek(fileHandle, 0, SEEK_END);
+			dwLen = ftell(fileHandle);
+			rewind(fileHandle);
+		}
 
 		return dwLen;
 	}
@@ -354,13 +410,20 @@ namespace FS
 		size_t result;
 		FSHandleStore* pSource = GetFileRecord(f);
 
-		if (pSource == nullptr || !pSource->bActive || pSource->handle == 0)
+		if (pSource == nullptr || !pSource->bActive || pSource->Invalid())
 		{	// invalid file of some kind
 			return 0;
 		}
 
 		SDL_LockMutex(pSource->mut);
-		result = fread(buffer, dwBufferLen, dwCount, pSource->handle);
+		if (pSource->bLoadedFromMPQ)
+		{
+			result = MPQ::ReadFile(pSource->mpq, pSource->mpqFileHandle, (BYTE*)buffer, dwBufferLen);
+		}
+		else
+		{
+			result = fread(buffer, dwBufferLen, dwCount, pSource->handle);
+		}
 		SDL_UnlockMutex(pSource->mut);
 
 		return result;
@@ -380,7 +443,7 @@ namespace FS
 		FSHandleStore* pRecord = GetFileRecord(f);
 		size_t result;
 
-		if (!pRecord || pRecord->mode == FS_READ)
+		if (!pRecord || pRecord->mode == FS_READ || pRecord->bLoadedFromMPQ)
 		{
 			// Not allowed to write to something which we opened in read mode
 			return 0;
@@ -418,7 +481,7 @@ namespace FS
 	{
 		FSHandleStore* pRecord = GetFileRecord(f);
 
-		if (pRecord == nullptr || !pRecord->bActive || pRecord->handle == 0)
+		if (pRecord == nullptr || pRecord->Invalid())
 		{
 			// File is probably invalid
 			return;
@@ -426,8 +489,12 @@ namespace FS
 
 		// Lock, write, unlock
 		SDL_LockMutex(pRecord->mut);
-		fclose(pRecord->handle);
+		if (!pRecord->bLoadedFromMPQ)
+		{
+			fclose(pRecord->handle);
+		}
 		pRecord->handle = 0;
+		pRecord->mpq = nullptr;
 		pRecord->bActive = false;
 		gnNumFilesOpened--;
 		SDL_UnlockMutex(pRecord->mut);
@@ -441,11 +508,14 @@ namespace FS
 		// 
 		FSHandleStore* pRecord = GetFileRecord(f);
 
-		if (pRecord == nullptr || !pRecord->bActive || pRecord->handle == 0)
+		if (pRecord == nullptr || pRecord->Invalid())
 		{
 			// not a valid handle
 			return;
 		}
+
+		// Not allowed to Seek() on files from MPQs.
+		Log_WarnAssertReturn(!pRecord->bLoadedFromMPQ);
 
 		SDL_LockMutex(pRecord->mut);
 		fseek(pRecord->handle, offset, nSeekType);
@@ -460,10 +530,13 @@ namespace FS
 		size_t result;
 		FSHandleStore* pFile = GetFileRecord(f);
 
-		if (pFile == nullptr || pFile->handle == 0 || !pFile->bActive)
+		if (pFile == nullptr || pFile->Invalid())
 		{
 			return 0;
 		}
+
+		// Not allowed to Tell() on files from MPQs
+		Log_WarnAssertReturn(!pFile->bLoadedFromMPQ, 0);
 
 		SDL_LockMutex(pFile->mut);
 		result = ftell(pFile->handle);

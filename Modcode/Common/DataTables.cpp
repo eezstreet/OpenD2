@@ -25,19 +25,19 @@ void BIN_Compile(const char* szTextName, D2TxtColumnStrc* pColumns, int* nNumber
 bool BIN_Read(char* szBinName, void** pDestinationData, size_t* pFileSize)
 {
 	D2MPQArchive* pArchive = nullptr;
-	fs_handle f = engine->MPQ_FindFile(szBinName, nullptr, &pArchive);
-	DWORD dwNumRecords = 0;
+	fs_handle f;
+	*pFileSize = engine->FS_Open(szBinName, &f, FS_READ, true);
+	DWORD dwNumRecords = 0; // FIXME: use this
 
 	if (f == INVALID_HANDLE)
 	{
 		return false;	// couldn't find it...this is probably a bad thing
 	}
 
-	*pFileSize = engine->MPQ_FileSize(pArchive, f);
 	Log_ErrorAssertReturn(*pFileSize != 0, false);
 
 	*pDestinationData = malloc(*pFileSize);
-	engine->MPQ_ReadFile(pArchive, f, (BYTE*)*pDestinationData, *pFileSize);
+	engine->FS_Read(f, *pDestinationData, *pFileSize, 1);
 
 	//	Somewhat of a hack here, but the first field in the BIN actually seems to be a DWORD
 	//	that specifies how many records in the file.
