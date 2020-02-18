@@ -1,5 +1,6 @@
-#include "Diablo2.hpp"
-#include <memory>
+#include "DC6.hpp"
+#include "Logging.hpp"
+#include "FileSystem.hpp"
 
 #define DC6_HEADER_VERSION	6
 #define DECODE_BUFFER_SIZE	2048 * 2048

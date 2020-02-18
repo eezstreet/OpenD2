@@ -1,4 +1,5 @@
-#include "Diablo2.hpp"
+#include "Palette.hpp"
+#include "FileSystem.hpp"
 
 /*
  *

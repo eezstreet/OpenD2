@@ -1,4 +1,5 @@
 #include "Audio_SDL.hpp"
+#include "Audio.hpp"
 
 namespace Audio
 {

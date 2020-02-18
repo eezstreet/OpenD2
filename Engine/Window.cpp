@@ -1,4 +1,7 @@
 #include "Diablo2.hpp"
+#include "DCC.hpp"
+#include "Logging.hpp"
+#include "Renderer.hpp"
 #include <assert.h>
 
 ///////////////////////////////////////////////////////

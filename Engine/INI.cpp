@@ -1,4 +1,7 @@
+#include "INI.hpp"
 #include "Diablo2.hpp"
+#include "FileSystem.hpp"
+#include "Logging.hpp"
 
 #define INI_MAX_SECTION_NAMELEN		16
 #define INI_MAX_KEY_NAMELEN			64

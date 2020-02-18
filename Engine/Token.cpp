@@ -1,4 +1,7 @@
-#include "Diablo2.hpp"
+#include "Token.hpp"
+#include "COF.hpp"
+#include "DCC.hpp"
+#include "Logging.hpp"
 
 ////////////////////////////////////////////////////////////
 //

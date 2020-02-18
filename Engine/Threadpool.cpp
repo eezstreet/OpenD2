@@ -1,4 +1,5 @@
 #include "Diablo2.hpp"
+#include "Threadpool.hpp"
 
 #define	THREADPOOL_SIZE	10
 #define MAX_THREAD_JOBS	100

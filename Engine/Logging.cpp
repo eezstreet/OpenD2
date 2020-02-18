@@ -1,4 +1,8 @@
 #include "Diablo2.hpp"
+#include "FileSystem.hpp"
+#include "Logging.hpp"
+#include "Platform.hpp"
+#include "Window.hpp"
 #include <time.h>
 #include <cstdio>
 

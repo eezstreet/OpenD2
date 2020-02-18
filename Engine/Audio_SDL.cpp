@@ -1,5 +1,7 @@
 #include "Audio_SDL.hpp"
 #include "../Shared/D2HashMap.hpp"
+#include "FileSystem.hpp"
+#include "Logging.hpp"
 
 namespace Audio_SDL
 {

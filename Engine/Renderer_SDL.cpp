@@ -1,5 +1,12 @@
 #include "Renderer_SDL.hpp"
 #include "LRUQueue.hpp"
+#include "COF.hpp"
+#include "DCC.hpp"
+#include "DC6.hpp"
+#include "Logging.hpp"
+#include "Palette.hpp"
+#include "TBL_Font.hpp"
+#include "Token.hpp"
 
 ///////////////////////////////////////////////////////////////////////
 //

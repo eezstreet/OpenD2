@@ -1,4 +1,6 @@
-#include "Diablo2.hpp"
+#include "TBL_Text.hpp"
+#include "FileSystem.hpp"
+#include "Logging.hpp"
 
 ////////////////////////////////////////////////////////
 //

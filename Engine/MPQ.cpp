@@ -1,4 +1,6 @@
-#include "Diablo2.hpp"
+#include "MPQ.hpp"
+#include "Logging.hpp"
+#include "FileSystem.hpp"
 #include <memory>
 #include <assert.h>
 #include "../Libraries/adpcm/adpcm.h"

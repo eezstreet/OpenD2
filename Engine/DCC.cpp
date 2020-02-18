@@ -1,4 +1,6 @@
-#include "Diablo2.hpp"
+#include "DCC.hpp"
+#include "Logging.hpp"
+#include "FileSystem.hpp"
 
 #define MAX_DCC_HASH		32768
 #define MAX_DCC_NAMELEN		32

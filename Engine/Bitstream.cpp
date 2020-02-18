@@ -1,4 +1,5 @@
-#include "Diablo2.hpp"
+#include "Bitstream.hpp"
+#include "Logging.hpp"
 
 /*
  *	Creates a new blank bitstream.

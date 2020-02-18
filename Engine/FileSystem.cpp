@@ -1,6 +1,9 @@
-#include "Diablo2.hpp"
-#include <stdlib.h>
-#include <string>
+#include "FileSystem.hpp"
+#include "Logging.hpp"
+#include "FileSystem_MPQ.hpp"
+#include "MPQ.hpp"
+#include "Platform.hpp"
+#include "../Libraries/sdl/SDL_thread.h"
 #include <assert.h>
 
 /*

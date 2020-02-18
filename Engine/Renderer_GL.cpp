@@ -1,6 +1,13 @@
 #include "Renderer_GL.hpp"
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include "DC6.hpp"
+#include "Logging.hpp"
+
+// windows...please...
+#ifdef WIN32
+#undef LoadImage
+#endif // WIN32
 
 Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenConfig, SDL_Window * pWindow)
 {
@@ -50,6 +57,10 @@ void Renderer_GL::Present()
 
 tex_handle Renderer_GL::TextureFromStitchedDC6(const char * dc6Path, const char * handle, DWORD start, DWORD end, int palette)
 {
+	DC6Image dc6;
+	DWORD columns, rows;
+	DWORD totalWidth, totalHeight;
+	DC6::StitchStats(&dc6, start, end, &columns, &rows, &totalWidth, &totalHeight);
 	return tex_handle();
 }
 

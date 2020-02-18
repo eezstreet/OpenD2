@@ -1,4 +1,6 @@
-#include "Diablo2.hpp"
+#include "COF.hpp"
+#include "Logging.hpp"
+#include "FileSystem.hpp"
 
 #define MAX_COFFILE_NAMELEN	16
 #define MAX_COF_TYPELEN		16

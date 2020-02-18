@@ -1,6 +1,17 @@
 #include "Diablo2.hpp"
-#include <cstdlib>
-#include <string>
+#include "Audio.hpp"
+#include "COF.hpp"
+#include "FileSystem.hpp"
+#include "INI.hpp"
+#include "Input.hpp"
+#include "Logging.hpp"
+#include "Network.hpp"
+#include "Platform.hpp"
+#include "Renderer.hpp"
+#include "TBL_Font.hpp"
+#include "TBL_Text.hpp"
+#include "Token.hpp"
+#include "Window.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 

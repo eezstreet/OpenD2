@@ -1,4 +1,5 @@
-#include "Diablo2.hpp"
+#include "TBL_Font.hpp"
+#include "FileSystem.hpp"
 
 ////////////////////////////////////////////////////////
 //

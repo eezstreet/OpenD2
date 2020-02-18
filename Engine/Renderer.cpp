@@ -1,6 +1,8 @@
 #include "Renderer.hpp"
 #include "Renderer_SDL.hpp"
 #include "Renderer_GL.hpp"
+#include "Palette.hpp"
+#include "DCC.hpp"
 
 /*
  *	The renderer in OpenD2 is significantly different from the one in retail Diablo 2.

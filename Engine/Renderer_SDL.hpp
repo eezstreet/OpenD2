@@ -1,5 +1,7 @@
 #pragma once
 #include "Renderer.hpp"
+#include "DC6.hpp"
+#include "TBL_Font.hpp"
 
 #define MAX_SDL_DRAWCOMMANDS_PER_FRAME	0x1000
 #define MAX_SDL_TEXTURECACHE_SIZE		0x100

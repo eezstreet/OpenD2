@@ -1,5 +1,6 @@
-#include "Diablo2.hpp"
-#include <memory>
+#include "FileSystem_MPQ.hpp"
+#include "Logging.hpp"
+#include "MPQ.hpp"
 
 /*
  *	The MPQ file system is an extension of the original filesystem.
