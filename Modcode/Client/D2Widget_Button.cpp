@@ -9,6 +9,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	DWORD dwStartDisabled, DWORD dwEndDisabled)
 	: D2Widget(x, y, 0, 0)
 {
+#if 0
 	char typeBuffer[32]{ 0 };
 
 	font = cl.fontExocet10;
@@ -39,6 +40,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	{
 		bAlphaModulateDisable = false;
 	}
+#endif
 }
 
 /*
@@ -54,6 +56,7 @@ D2Widget_Button::~D2Widget_Button()
  */
 void D2Widget_Button::Draw()
 {
+#if 0
 	if (bDisabled)
 	{
 		if (bAlphaModulateDisable)
@@ -89,6 +92,7 @@ void D2Widget_Button::Draw()
 		}
 		
 	}
+#endif
 }
 
 /*

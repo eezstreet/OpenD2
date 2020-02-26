@@ -24,6 +24,7 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	cl.gamestate = GS_TRADEMARK;
 	cl.pActiveMenu = new D2Menu_Trademark();
 
+	/*
 	cl.font16 = engine->renderer->RegisterFont("font16");
 	cl.font16 = engine->renderer->RegisterFont("font16");
 	cl.font30 = engine->renderer->RegisterFont("font30");
@@ -31,6 +32,7 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 	cl.fontFormal12 = engine->renderer->RegisterFont("fontformal12");
 	cl.fontExocet10 = engine->renderer->RegisterFont("fontExocet10");
 	cl.fontRidiculous = engine->renderer->RegisterFont("fontridiculous");
+	*/
 }
 
 /*

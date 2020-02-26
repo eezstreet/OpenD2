@@ -160,23 +160,24 @@ enum OpenD2LogFlags
 
 enum D2Palettes
 {
-	PAL_ACT1,
-	PAL_ACT2,
-	PAL_ACT3,
-	PAL_ACT4,
-	PAL_ACT5,
-	PAL_ENDGAME,
-	PAL_FECHAR,
-	PAL_LOADING,
-	PAL_MENU0,
-	PAL_MENU1,
-	PAL_MENU2,
-	PAL_MENU3,
-	PAL_MENU4,
-	PAL_SKY,
-	PAL_STATIC,
-	PAL_TRADEMARK,
-	PAL_UNITS,
+	PAL_ACT1,			// Global palette for ACT1
+	PAL_ACT2,			// Global palette for ACT2
+	PAL_ACT3,			// Global palette for ACT3
+	PAL_ACT4,			// Global palette for ACT4
+	PAL_ACT5,			// Global palette for ACT5
+	PAL_ENDGAME,		// Global palette for classic endgame screen
+	PAL_ENDGAME2,		// Global palette for expansion endgame screen
+	PAL_FECHAR,			// Global palette for character selection
+	PAL_LOADING,		// Global palette for loading screen
+	PAL_MENU0,			// battle.net related
+	PAL_MENU1,			// ...
+	PAL_MENU2,			// ...
+	PAL_MENU3,			// ...
+	PAL_MENU4,			// ...
+	PAL_SKY,			// Used for the trademark screen.
+	PAL_STATIC,			// Unknown.
+	PAL_TRADEMARK,		// Unknown.
+	PAL_UNITS,			// Not used. This is a common palette shared between all global palettes. Can be used for artist previews.
 	PAL_MAX_PALETTES,
 };
 
@@ -593,48 +594,28 @@ struct OpenD2ConfigStrc
 class IRenderer
 {
 public:
-	//
+	// These functions are available for use with the client.
 	virtual void Present() = 0;
-
-	//
-	virtual tex_handle TextureFromStitchedDC6(const char* dc6Path, const char* handle, DWORD start, DWORD end, int palette) = 0;
-	virtual tex_handle TextureFromAnimatedDC6(const char* dc6Path, const char* handle, int palette) = 0;
-	virtual void DrawTexture(tex_handle texture, int x, int y, int w, int h, int u, int v) = 0;
-	virtual void DrawTextureFrames(tex_handle texture, int x, int y, DWORD startFrame, DWORD endFrame) = 0;
-	virtual void DrawTextureFrame(tex_handle texture, int x, int y, DWORD frame) = 0;
-	virtual void DeregisterTexture(const char* handleName, tex_handle texture) = 0;
-	virtual void SetTextureBlendMode(tex_handle texture, D2ColorBlending blendMode) = 0;
-	virtual void PollTexture(tex_handle texture, DWORD* width, DWORD* height) = 0;
-	virtual bool PixelPerfectDetect(anim_handle anim, int srcX, int srcY, int drawX, int drawY, bool bAllowAlpha) = 0;
-
-	//
-	virtual anim_handle RegisterDC6Animation(tex_handle texture, const char* szHandlename, DWORD startingFrame) = 0;
-	virtual void DeregisterAnimation(anim_handle anim) = 0;
-	virtual void Animate(anim_handle anim, DWORD framerate, int x, int y) = 0;
-	virtual void SetAnimFrame(anim_handle anim, DWORD frame) = 0;
-	virtual DWORD GetAnimFrame(anim_handle anim) = 0;
-	virtual void AddAnimKeyframe(anim_handle anim, int frame, AnimKeyframeCallback callback, int extraInt) = 0;
-	virtual void RemoveAnimKeyframe(anim_handle anim) = 0;
-	virtual DWORD GetAnimFrameCount(anim_handle anim) = 0;
-
-	//
-	virtual font_handle RegisterFont(const char* fontName) = 0;
-	virtual void DeregisterFont(font_handle font) = 0;
-	virtual void DrawText(font_handle font, const char16_t* text, int x, int y, int w, int h,
-		D2TextAlignment alignHorz, D2TextAlignment alignVert) = 0;
-
-	//
-	virtual void AlphaModTexture(tex_handle texture, int alpha) = 0;
-	virtual void ColorModTexture(tex_handle texture, int red, int green, int blue) = 0;
-	virtual void AlphaModFont(font_handle font, int alpha) = 0;
-	virtual void ColorModFont(font_handle font, int red, int green, int blue) = 0;
-
-	//
-	virtual void DrawRectangle(int x, int y, int w, int h, int r, int g, int b, int a) = 0;
-
-	virtual void DrawTokenInstance(anim_handle instance, int x, int y, int translvl, int palette) = 0;
-
 	virtual void Clear() = 0;
+	virtual void SetGlobalPalette(const D2Palettes palette) = 0;
+
+	virtual class IRenderObject* AddStaticDC6(const char* dc6Path, DWORD start, DWORD end) = 0;
+	virtual void Remove(class IRenderObject* Object) = 0;
+};
+
+/**
+ *	IRenderObject is the base interface of a render object.
+ *	When we want to display something, we add it to the list of rendered objects.
+ *	When we no longer want to display something, we remove it from the list of rendered objects.
+ *	Each renderer has their own render object type.
+ */
+class IRenderObject
+{
+public:
+	virtual void Draw() = 0;
+	virtual void SetPalshift(BYTE palette) = 0;
+	virtual void SetDrawCoords(int x, int y, int w, int h) = 0;
+	virtual void SetTextureCoords(int x, int y, int w, int h) = 0;
 };
 
 //////////////////////////////////////////////////

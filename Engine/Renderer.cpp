@@ -1,5 +1,4 @@
 #include "Renderer.hpp"
-#include "Renderer_SDL.hpp"
 #include "Renderer_GL.hpp"
 #include "Palette.hpp"
 #include "DCC.hpp"
@@ -45,12 +44,15 @@ namespace Renderer
 
 		switch (DesiredRenderTarget)
 		{
+			default:
 			case OD2RT_OPENGL:
 				RenderTarget = new Renderer_GL(pConfig, pOpenConfig, pWindow);
 				break;
+#if 0	// no longer available
 			case OD2RT_SDL:
 				RenderTarget = new Renderer_SDL(pConfig, pOpenConfig, pWindow);
 				break;
+#endif
 		}
 	}
 

@@ -10,6 +10,12 @@
  */
 D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 {
+	engine->renderer->SetGlobalPalette(PAL_SKY);
+	backgroundObject = engine->renderer->AddStaticDC6("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", 0, 11);
+	backgroundObject->SetDrawCoords(0, 0, 800, 600);
+	backgroundObject->SetTextureCoords(0, 0, 800, 600);
+	backgroundObject->SetPalshift(0);
+#if 0
 	tex_handle flameLeftTex =
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
 	tex_handle flameRightTex =
@@ -39,7 +45,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 
 	szCopyrightText = engine->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
 	szAllRightsReservedText = engine->TBL_FindStringFromIndex(TBLINDEX_ALLRIGHTS);
-
+#endif
 	dwStartTicks = engine->Milliseconds();
 }
 
@@ -49,7 +55,10 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
  */
 D2Menu_Trademark::~D2Menu_Trademark()
 {
+	engine->renderer->Remove(backgroundObject);
+#if 0
 	engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
+#endif
 }
 
 /*
@@ -73,6 +82,8 @@ bool D2Menu_Trademark::WaitingSignal()
  */
 void D2Menu_Trademark::Draw()
 {
+	backgroundObject->Draw();
+#if 0
 	// Draw the background
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
@@ -87,6 +98,7 @@ void D2Menu_Trademark::Draw()
 	engine->renderer->DrawText(cl.fontFormal12, szCopyrightText, 0, 500, 800, 600, ALIGN_CENTER, ALIGN_TOP);
 	engine->renderer->DrawText(cl.fontFormal12, szAllRightsReservedText, 0, 525, 800, 600, ALIGN_CENTER, ALIGN_TOP);
 	engine->renderer->ColorModFont(cl.fontFormal12, 255, 255, 255);
+#endif
 }
 
 /*

@@ -42,6 +42,7 @@ static const char* szAnimNameSpecial[CCA_MAX] = {
  */
 D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 {
+#if 0
 	tex_handle fireTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\fire.DC6", "ccfire", PAL_FECHAR);
 
 	backgroundTex = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", 
@@ -189,6 +190,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 
 	// other data
 	m_bFromCharSelect = bFromCharSelect;
+#endif
 }
 
 /*
@@ -196,6 +198,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
  */
 D2Menu_CharCreate::~D2Menu_CharCreate()
 {
+#if 0
 	// we can reasonably unregister any textures here, we probably won't see them again for a long time
 	engine->renderer->DeregisterTexture(nullptr, backgroundTex);
 	engine->renderer->DeregisterTexture("ccfire", INVALID_HANDLE);
@@ -220,6 +223,7 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
 
 	delete pStaticPanel;
 	delete pDynamicPanel;
+#endif
 }
 
 /*
@@ -228,6 +232,7 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
  */
 void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
 {
+#if 0
 	D2Menu_CharCreate* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
 	
 	if (pMenu->CreateData[nExtraInt].status == CCA_FrontToBack)
@@ -240,6 +245,7 @@ void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
 		engine->renderer->SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleFront], 0);
 		pMenu->CreateData[nExtraInt].status = CCA_IdleFront;
 	}
+#endif
 }
 
 /*
@@ -247,6 +253,7 @@ void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
  */
 void D2Menu_CharCreate::Draw()
 {
+#if 0
 	int i = D2CLASS_BARBARIAN;
 
 	// draw background
@@ -355,6 +362,7 @@ void D2Menu_CharCreate::Draw()
 
 	// draw fire
 	engine->renderer->Animate(fireAnim, 25, 380, 160);
+#endif
 }
 
 /*
@@ -362,6 +370,7 @@ void D2Menu_CharCreate::Draw()
  */
 bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 {
+#if 0
 	anim_handle anim;
 
 	// check to see if we clicked on any of the characters
@@ -419,6 +428,8 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 		}
 	}
 	return D2Menu::HandleMouseClicked(dwX, dwY);
+#endif
+	return false;
 }
 
 /*

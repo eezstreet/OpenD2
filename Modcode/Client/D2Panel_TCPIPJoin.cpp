@@ -36,6 +36,7 @@ static void JoinGamePanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget
  */
 D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
 {
+#if 0
 	// Create background
 	panelBackground = engine->renderer->TextureFromStitchedDC6(DC6_PANEL_BACKGROUND, "PopUpOkCancel2", 0, 1, PAL_UNITS);
 
@@ -60,6 +61,7 @@ D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
 
 	m_okButton->AttachIdentifier("b_join");
 	m_cancelButton->AttachIdentifier("b_cancel");
+#endif
 }
 
 /*
@@ -68,7 +70,9 @@ D2Panel_TCPIPJoin::D2Panel_TCPIPJoin() : D2Panel()
  */
 D2Panel_TCPIPJoin::~D2Panel_TCPIPJoin()
 {
+#if 0
 	engine->renderer->DeregisterTexture("PopUpOkCancel2", panelBackground);
+#endif
 }
 
 /*
@@ -77,6 +81,7 @@ D2Panel_TCPIPJoin::~D2Panel_TCPIPJoin()
  */
 void D2Panel_TCPIPJoin::Draw()
 {
+#if 0
 	// Draw the background
 	DWORD dwWidth = 0, dwHeight = 0;
 	engine->renderer->PollTexture(panelBackground, &dwWidth, &dwHeight);
@@ -87,6 +92,7 @@ void D2Panel_TCPIPJoin::Draw()
 
 	// Draw the widgets
 	DrawAllWidgets();
+#endif
 }
 
 /*

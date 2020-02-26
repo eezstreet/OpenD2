@@ -52,6 +52,11 @@ struct DC6Image
 	bool			bPixelsFreed;
 };
 
+// TODO: fix this
+#ifdef LoadImage
+#undef LoadImage
+#endif // LoadImage
+
 // DC6.cpp
 namespace DC6
 {

@@ -14,6 +14,8 @@ private:
 	char16_t* szAllRightsReservedText;
 	DWORD dwStartTicks;
 
+	IRenderObject* backgroundObject;
+
 public:
 	D2Menu_Trademark();
 	virtual ~D2Menu_Trademark();

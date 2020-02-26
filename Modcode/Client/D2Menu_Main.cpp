@@ -6,6 +6,7 @@
  */
 D2Menu_Main::D2Menu_Main() : D2Menu()
 {
+#if 0
 	tex_handle flameLeftTex = 
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
 	tex_handle flameRightTex =
@@ -35,6 +36,7 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 
 	pMainPanel = new D2Panel_Main();
 	AddPanel(pMainPanel);
+#endif
 }
 
 /*
@@ -53,6 +55,7 @@ D2Menu_Main::~D2Menu_Main()
  */
 void D2Menu_Main::Draw()
 {
+#if 0
 	// Draw the background
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
@@ -67,4 +70,5 @@ void D2Menu_Main::Draw()
 	engine->renderer->DrawText(cl.font16, GAME_FULL_UTF16, 20, 560, 0, 0, ALIGN_LEFT, ALIGN_TOP);
 
 	DrawAllPanels();
+#endif
 }

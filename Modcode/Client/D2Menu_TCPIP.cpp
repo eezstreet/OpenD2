@@ -8,6 +8,7 @@
  */
 D2Menu_TCPIP::D2Menu_TCPIP() : D2Menu()
 {
+#if 0
 	backgroundTexture =
 		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\TCPIPscreen.dc6", "tcpip", 0, 11, PAL_UNITS);
 
@@ -24,6 +25,7 @@ D2Menu_TCPIP::D2Menu_TCPIP() : D2Menu()
 
 	m_yourIPString = engine->TBL_FindStringFromIndex(TBLTEXT_YOURIP);
 	m_yourIP = engine->NET_GetLocalIP();
+#endif
 }
 
 /*
@@ -42,6 +44,7 @@ D2Menu_TCPIP::~D2Menu_TCPIP()
  */
 void D2Menu_TCPIP::Draw()
 {
+#if 0
 	// Draw the background
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
@@ -53,6 +56,7 @@ void D2Menu_TCPIP::Draw()
 
 	// Draw the panel
 	DrawAllPanels();
+#endif
 }
 
 /*

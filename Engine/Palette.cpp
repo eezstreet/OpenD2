@@ -46,6 +46,7 @@ namespace Pal
 		{ "data\\global\\palette\\ACT4\\pal.dat",{ 0 } },
 		{ "data\\global\\palette\\ACT5\\pal.dat",{ 0 } },
 		{ "data\\global\\palette\\ENDGAME\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ENDGAME2\\pal.dat",{ 0 } },
 		{ "data\\global\\palette\\FECHAR\\pal.dat",{ 0 } },
 		{ "data\\global\\palette\\LOADING\\pal.dat",{ 0 } },
 		{ "data\\global\\palette\\MENU0\\pal.dat",{ 0 } },

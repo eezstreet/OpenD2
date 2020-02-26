@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.4)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
 project(OpenD2)
 
@@ -41,6 +42,7 @@ if(BUILD_GAME)
 		source_group("Libraries\\pkware" FILES ${PKWARE_SRC})
 		source_group("Libraries\\SDL" FILES ${SDL_SRC})
 		source_group("Libraries\\glew\\include" FILES ${GLEW_SRC})
+		source_group("Libraries\\glm\\" FILES ${GLM_SRC})
 		source_group("Shared" FILES ${SHARED_SRC})
 
 		set(LIBRARY_SRC ${SDL_SRC} ${ADPCM_SRC} ${HUFFMAN_SRC} ${PKWARE_SRC} ${GLEW_SRC})
@@ -56,12 +58,14 @@ if(BUILD_GAME)
 		set(GLUT_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/freeglut/freeglut.lib")
 		set(GLEW_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew")
 		set(GLEW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew/glew32.lib")
+		set(GLM_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glm")
 	else()
 		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Windows.cpp)
 
 		find_package(SDL2 REQUIRED)
 		find_package(GLEW REQUIRED)
 		find_package(GLUT REQUIRED)
+		find_package(GLM REQUIRED)
 	endif()
 
 	add_executable(game ${ENGINE_SRC})
@@ -69,7 +73,7 @@ if(BUILD_GAME)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 	
 	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES} ${GLUT_LIBRARIES})
-	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
+	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLM_INCLUDE_DIRS})
 
 	if(WIN32)
 		set_target_properties(game PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)

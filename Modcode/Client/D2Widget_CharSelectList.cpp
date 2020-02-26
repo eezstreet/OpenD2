@@ -90,6 +90,7 @@ static const CharacterTitle TitleStatus_ExpansionHardcore[] =
 D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h) 
 	: D2Widget(x, y, w, h)
 {
+#if 0
 	// Blank out our own data
 	pCharacterData = nullptr;
 	nNumberSaves = 0;
@@ -105,6 +106,7 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 		"charselectboxgrey", 0, 1, PAL_UNITS);
 	engine->renderer->SetTextureBlendMode(frameHandle, BLEND_ALPHA);
 	engine->renderer->SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
+#endif
 }
 
 /*
@@ -201,6 +203,7 @@ void D2Widget_CharSelectList::Draw()
  */
 void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSaveData* pSaveData, int nSlot)
 {
+#if 0
 	// It draws a visual representation of the character on the left side of each slot, based on what the savegame says.
 	bool bRightSlot = (nSlot % 2) > 0;
 	int nSlotY = nSlot / 2;
@@ -312,6 +315,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 
 	// Draw the token instance
 	engine->renderer->DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
+#endif
 }
 
 /*

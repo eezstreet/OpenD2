@@ -125,6 +125,7 @@ D2Panel_CharSelect::~D2Panel_CharSelect()
  */
 void D2Panel_CharSelect::Draw()
 {
+#if 0
 	// Draw the character name
 	char16_t* szCharName = charSelectList->GetSelectedCharacterName();
 
@@ -135,6 +136,7 @@ void D2Panel_CharSelect::Draw()
 
 	// Draw the widgets
 	DrawAllWidgets();
+#endif
 }
 
 /*
@@ -225,6 +227,7 @@ static void PanelSignal_DeleteConfirm(D2Panel* pCallerPanel, D2Widget* pCallerWi
  */
 D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 {
+#if 0
 	confirmYesButton = new D2Widget_Button(420, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 	confirmNoButton = new D2Widget_Button(280, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 
@@ -241,6 +244,7 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 
 	confirmYesButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_YES));
 	confirmNoButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_NO));
+#endif
 }
 
 /*
@@ -248,11 +252,13 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
  */
 D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
 {
+#if 0
 	// Delete the widgets and deregister the popup texture (this is literally the only place it's used)
 	delete confirmYesButton;
 	delete confirmNoButton;
 
 	engine->renderer->DeregisterTexture("PopUpOkCancel2", INVALID_HANDLE);
+#endif
 }
 
 /*
@@ -261,9 +267,11 @@ D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
  */
 void D2Panel_CharDeleteConfirm::Draw()
 {
+#if 0
 	// Draw the background
 	engine->renderer->DrawTexture(background, 268, 212, 264, 176, 0, 0);
 
 	// And the widgets too
 	DrawAllWidgets();
+#endif
 }

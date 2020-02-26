@@ -6,6 +6,7 @@
  */
 D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bAlwaysFocus, bool bCharSelect, bool bIP) : D2Widget()
 {
+#if 0
 	x = _x;
 	y = _y;
 
@@ -36,6 +37,7 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 	}
 
 	engine->renderer->PollTexture(backgroundTexture, (DWORD*)&this->w, (DWORD*)&this->h);
+#endif
 }
 
 /*
@@ -44,7 +46,9 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
  */
 D2Widget_TextEntry::~D2Widget_TextEntry()
 {
+#if 0
 	engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
+#endif
 }
 
 /*
@@ -72,6 +76,7 @@ void D2Widget_TextEntry::DetachLabel()
  */
 void D2Widget_TextEntry::Draw()
 {
+#if 0
 	// draw background
 	engine->renderer->Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
 
@@ -88,6 +93,7 @@ void D2Widget_TextEntry::Draw()
 		engine->renderer->ColorModFont(cl.fontFormal12, 255, 255, 255);
 		engine->renderer->DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
 	}
+#endif
 }
 
 /*
