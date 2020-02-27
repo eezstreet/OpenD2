@@ -18,17 +18,13 @@ static size_t DrawListSize[RenderPass_NumRenderPasses];
 // UI phase
 static GLint uniform_ui_texture;
 static GLint uniform_ui_globalpal;
-static GLint uniform_ui_palshift;
 static GLint uniform_ui_modelViewProjection;
-static GLint uniform_ui_drawCoord;
-static GLint uniform_ui_drawSize;
-static GLint uniform_ui_texCoord;
-static GLint uniform_ui_texSize;
+static GLint uniform_ui_globalPaletteNum;
 
 static unsigned int global_palette = 0;
 
 static unsigned int global_program[RenderPass_NumRenderPasses];
-static unsigned int global_palette_textures[PAL_MAX_PALETTES];
+static unsigned int global_palette_texture;
 static unsigned int global_palshift_textures[256];
 
 /**
@@ -59,13 +55,10 @@ void GLRenderObject::Render()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, global_palette_textures[global_palette]);
+	glBindTexture(GL_TEXTURE_2D, global_palette_texture);
 	glUniform1i(uniform_ui_texture, 0);
 	glUniform1i(uniform_ui_globalpal, 1);
-	glUniform2fv(uniform_ui_drawCoord, 1, screenCoord);
-	glUniform2fv(uniform_ui_drawSize, 1, screenSize);
-	glUniform2fv(uniform_ui_texCoord, 1, textureCoord);
-	//glUniform2fv(uniform_ui_texSize, 1, textureSize);
+	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -282,16 +275,18 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glGenTextures(PAL_MAX_PALETTES, global_palette_textures);
+	glGenTextures(1, &global_palette_texture);
+	glBindTexture(GL_TEXTURE_2D, global_palette_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, PAL_MAX_PALETTES, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
 	for (int i = 0; i < PAL_MAX_PALETTES; i++)
 	{
-		glBindTexture(GL_TEXTURE_2D, global_palette_textures[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 1, 0, GL_BGR, GL_UNSIGNED_BYTE, Pal::GetPalette(i));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, i, 256, 1, GL_BGR, GL_UNSIGNED_BYTE, Pal::GetPalette(i));
 	}
 
 	glGenVertexArrays(1, &VAO);
@@ -436,8 +431,6 @@ void Renderer_GL::LinkProgram(unsigned int program, const char* programName)
 // uniform byte globalPalette; -- this is the game's global palette
 const char* __staticDC6_Vertex = "#version 330 core                            \n\
 layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>       \n\
-uniform vec2 DrawCoord;                                                        \n\
-uniform vec2 DrawSize;                                                         \n\
 uniform mat4 ModelViewProjection;                                              \n\
 out vec2 TexCoords;                                                            \n\
                                                                                \n\
@@ -451,7 +444,7 @@ void main()                                                                    \
 const char* __staticDC6_Fragment = "#version 330 core                          \n\
 uniform sampler2D Texture;                                                     \n\
 uniform sampler2D GlobalPalette;                                               \n\
-uniform sampler2D Palshift;                                                    \n\
+uniform int GlobalPaletteNum;                                                 \n\
 in vec2 TexCoords;                                                           \n\
                                                                                \n\
 out vec4 outputColor;                                                          \n\
@@ -459,9 +452,8 @@ out vec4 outputColor;                                                          \
 void main()                                                                    \n\
 {                                                                              \n\
 	vec4 BaseTexture = texture2D(Texture, TexCoords);                           \n\
-	vec4 FinalColor = texture2D(GlobalPalette, vec2(BaseTexture.r, 0));        \n\
+	vec4 FinalColor = texture2D(GlobalPalette, vec2(BaseTexture.r, GlobalPaletteNum / 17.0)); \n\
    outputColor = FinalColor;                                                  \n\
-//outputColor = vec4(1.0, 1.0, 0.0, 1.0);                                        \n\
 }                                                                              \
 ";
 
@@ -488,13 +480,9 @@ void Renderer_GL::InitShaders()
 
 		SaveProgram(program, programFile);
 
-		uniform_ui_drawCoord = glGetUniformLocation(program, "DrawCoord");
-		uniform_ui_drawSize = glGetUniformLocation(program, "DrawSize");
 		uniform_ui_globalpal = glGetUniformLocation(program, "GlobalPalette");
-		uniform_ui_palshift = glGetUniformLocation(program, "Palshift");
-		uniform_ui_texCoord = glGetUniformLocation(program, "TexCoord");
-		uniform_ui_texSize = glGetUniformLocation(program, "TexSize");
 		uniform_ui_texture = glGetUniformLocation(program, "Texture");
+		uniform_ui_globalPaletteNum = glGetUniformLocation(program, "GlobalPaletteNum");
 		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, "ModelViewProjection"), 1, false, glm::value_ptr(mvp));
 	});
