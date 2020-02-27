@@ -18,8 +18,7 @@ class GLRenderObject : public IRenderObject
 {
 protected:
 	BYTE palshift;
-	float screenCoord[2];
-	float screenSize[2];
+	float screenCoord[4]; // x y w h
 	float textureCoord[2];
 	float textureSize[2];
 	

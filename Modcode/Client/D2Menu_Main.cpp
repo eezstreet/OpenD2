@@ -6,6 +6,10 @@
  */
 D2Menu_Main::D2Menu_Main() : D2Menu()
 {
+	backgroundObject = engine->renderer->AddStaticDC6("data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6", 0, 11);
+	backgroundObject->SetDrawCoords(0, 0, 800, 600);
+	backgroundObject->SetTextureCoords(0, 0, 800, 600);
+	backgroundObject->SetPalshift(0);
 #if 0
 	tex_handle flameLeftTex = 
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
@@ -33,10 +37,10 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 	backgroundTexture =
 		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\gameselectscreen.dc6", "mainbg", 0, 11, PAL_UNITS);
 #endif
+#endif
 
 	pMainPanel = new D2Panel_Main();
 	AddPanel(pMainPanel);
-#endif
 }
 
 /*
@@ -55,6 +59,7 @@ D2Menu_Main::~D2Menu_Main()
  */
 void D2Menu_Main::Draw()
 {
+	backgroundObject->Draw();
 #if 0
 	// Draw the background
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
@@ -68,7 +73,7 @@ void D2Menu_Main::Draw()
 	// Draw the version number
 	engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
 	engine->renderer->DrawText(cl.font16, GAME_FULL_UTF16, 20, 560, 0, 0, ALIGN_LEFT, ALIGN_TOP);
+#endif
 
 	DrawAllPanels();
-#endif
 }

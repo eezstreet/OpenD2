@@ -18,6 +18,10 @@ private:
 	tex_handle texture_disabled;
 	font_handle font;
 	sfx_handle clickedSound;
+
+	IRenderObject* backgroundObjectUp;
+	IRenderObject* backgroundObjectDown;
+	IRenderObject* backgroundObjectDisabled;
 public:
 	D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonType,
 		DWORD dwStartEnabled, DWORD dwEndEnabled,

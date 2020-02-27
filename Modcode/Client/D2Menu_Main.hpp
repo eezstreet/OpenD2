@@ -12,6 +12,7 @@ private:
 	anim_handle blackRightAnim;
 
 	D2Panel_Main* pMainPanel;
+	IRenderObject* backgroundObject;
 
 public:
 	D2Menu_Main();

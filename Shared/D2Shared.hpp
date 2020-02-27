@@ -591,6 +591,9 @@ struct OpenD2ConfigStrc
 	DWORD			dwAudioChannels;
 };
 
+/**
+ *	Each of the renderers comes from this IRenderer class.
+ */
 class IRenderer
 {
 public:

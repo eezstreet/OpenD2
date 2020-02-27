@@ -20,6 +20,7 @@ static GLint uniform_ui_texture;
 static GLint uniform_ui_globalpal;
 static GLint uniform_ui_modelViewProjection;
 static GLint uniform_ui_globalPaletteNum;
+static GLint uniform_ui_drawPosition;
 
 static unsigned int global_palette = 0;
 
@@ -30,13 +31,9 @@ static unsigned int global_palshift_textures[256];
 /**
  * GLRenderObjects are things that are rendered onscreen.
  */
- // location = 0; in vec4 - render location (x, y, w, h)
- // location = 1; in vec2 - texture coordinate
-// The following uniforms are supported:
-// 
 GLRenderObject::GLRenderObject()
 {
-	
+	bInUse = true;
 }
 
 GLRenderObject::~GLRenderObject()
@@ -59,6 +56,7 @@ void GLRenderObject::Render()
 	glUniform1i(uniform_ui_texture, 0);
 	glUniform1i(uniform_ui_globalpal, 1);
 	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
+	glUniform4fv(uniform_ui_drawPosition, 1, screenCoord);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -71,8 +69,8 @@ void GLRenderObject::SetDrawCoords(int x, int y, int w, int h)
 {
 	screenCoord[0] = x;
 	screenCoord[1] = y;
-	screenSize[0] = w;
-	screenSize[1] = h;
+	screenCoord[2] = w;
+	screenCoord[3] = h;
 }
 
 void GLRenderObject::SetTextureCoords(int u, int v, int w, int h)
@@ -195,12 +193,12 @@ IRenderObject* Renderer_GL::AddStaticDC6(const char* dc6Path, DWORD start, DWORD
 	glBindTexture(GL_TEXTURE_2D, object->texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, totalWidth, totalHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 	
-	for (int i = 0; i < end - start; i++)
+	for (int i = 0; i <= end - start; i++)
 	{
 		DC6Frame* pFrame = &image.pFrames[start + i];
 
 		int dwBlitToX = (i % numFramesWide) * 256;
-		int dwBlitToY = (int)floor(i / (float)numFramesTall) * 255;
+		int dwBlitToY = (int)floor(i / (float)numFramesWide) * 255;
 		
 		glTexSubImage2D(GL_TEXTURE_2D, 0, dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight, GL_RED, GL_UNSIGNED_BYTE, 
 			DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr));
@@ -294,13 +292,13 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 
 	GLfloat vertices[] = {
 		// Pos      // Tex
-		0.0f, 600.0f, 0.0f, 1.0f,
-		800.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 0.0f,
 
-		0.0f, 600.0f, 0.0f, 1.0f,
-		800.0f, 600.0f, 1.0f, 1.0f,
-		800.0f, 0.0f, 1.0f, 0.0f
+		0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 0.0f
 	};
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -432,12 +430,14 @@ void Renderer_GL::LinkProgram(unsigned int program, const char* programName)
 const char* __staticDC6_Vertex = "#version 330 core                            \n\
 layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>       \n\
 uniform mat4 ModelViewProjection;                                              \n\
+uniform vec4 DrawPosition;                                                     \n\
 out vec2 TexCoords;                                                            \n\
                                                                                \n\
 void main()                                                                    \n\
 {                                                                              \n\
+	vec2 NewPos = vec2((vertex.x * DrawPosition.z) + DrawPosition.x, (vertex.y * DrawPosition.w) + DrawPosition.y);                                 \n\
 	TexCoords = vertex.zw;                                                     \n\
-	gl_Position = ModelViewProjection * vec4(vertex.xy, 0.0, 1.0);             \n\
+	gl_Position = ModelViewProjection * vec4(NewPos.xy, 0.0, 1.0);             \n\
 }                                                                              \
 ";
 
@@ -483,6 +483,7 @@ void Renderer_GL::InitShaders()
 		uniform_ui_globalpal = glGetUniformLocation(program, "GlobalPalette");
 		uniform_ui_texture = glGetUniformLocation(program, "Texture");
 		uniform_ui_globalPaletteNum = glGetUniformLocation(program, "GlobalPaletteNum");
+		uniform_ui_drawPosition = glGetUniformLocation(program, "DrawPosition");
 		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, "ModelViewProjection"), 1, false, glm::value_ptr(mvp));
 	});

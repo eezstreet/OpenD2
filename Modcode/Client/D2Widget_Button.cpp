@@ -9,6 +9,12 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	DWORD dwStartDisabled, DWORD dwEndDisabled)
 	: D2Widget(x, y, 0, 0)
 {
+	backgroundObjectUp = engine->renderer->AddStaticDC6(szDC6Path, dwStartEnabled, dwEndEnabled);
+	backgroundObjectUp->SetDrawCoords(x, y, 100, 20);
+	backgroundObjectDown = engine->renderer->AddStaticDC6(szDC6Path, dwStartDown, dwEndDown);
+	backgroundObjectDown->SetDrawCoords(x, y, 100, 20);
+	backgroundObjectDisabled = engine->renderer->AddStaticDC6(szDC6Path, dwStartDisabled, dwEndDisabled);
+	backgroundObjectDisabled->SetDrawCoords(x, y, 100, 20);
 #if 0
 	char typeBuffer[32]{ 0 };
 
@@ -28,6 +34,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 
 	clickedSound = engine->S_RegisterSound("data\\global\\sfx\\cursor\\button.wav");
 
+#endif
 	bDisabled = false;
 	bDown = false;
 	bHasClickSignal = false;
@@ -40,7 +47,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	{
 		bAlphaModulateDisable = false;
 	}
-#endif
+
 }
 
 /*
@@ -56,6 +63,18 @@ D2Widget_Button::~D2Widget_Button()
  */
 void D2Widget_Button::Draw()
 {
+	if (bDisabled)
+	{
+		backgroundObjectDisabled->Draw();
+	}
+	else if (bDown)
+	{
+		backgroundObjectDown->Draw();
+	}
+	else
+	{
+		backgroundObjectUp->Draw();
+	}
 #if 0
 	if (bDisabled)
 	{
