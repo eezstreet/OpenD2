@@ -54,8 +54,6 @@ if(BUILD_GAME)
 			"${SDL2_LIBRARY_DIR}/SDL2_net.lib" "${SDL2_LIBRARY_DIR}/SDL2_mixer.lib"
 		)
 
-		set(GLUT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/freeglut")
-		set(GLUT_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/freeglut/freeglut.lib")
 		set(GLEW_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew")
 		set(GLEW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew/glew32.lib")
 		set(GLM_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glm")
@@ -64,7 +62,6 @@ if(BUILD_GAME)
 
 		find_package(SDL2 REQUIRED)
 		find_package(GLEW REQUIRED)
-		find_package(GLUT REQUIRED)
 		find_package(GLM REQUIRED)
 	endif()
 
@@ -72,8 +69,8 @@ if(BUILD_GAME)
 	set_target_properties(game PROPERTIES OUTPUT_NAME game)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 	
-	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES} ${GLUT_LIBRARIES})
-	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR} ${GLM_INCLUDE_DIRS})
+	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES})
+	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
 
 	if(WIN32)
 		set_target_properties(game PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
