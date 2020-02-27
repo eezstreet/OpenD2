@@ -13,6 +13,7 @@ before_install:
     
 
 install:
+    - apt-get install libglew-dev
     - (cd SDL2-2.0.7 && ./configure && make && sudo make install && cd ..)
     - (cd SDL2_net-2.0.1 && ./configure && make && sudo make install && cd ..)
     - (cd SDL2_mixer-2.0.4 && ./configure && make && sudo make install && cd ..)
