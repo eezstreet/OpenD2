@@ -69,8 +69,38 @@ void GLRenderObject::SetDrawCoords(int x, int y, int w, int h)
 {
 	screenCoord[0] = x;
 	screenCoord[1] = y;
-	screenCoord[2] = w;
-	screenCoord[3] = h;
+	if (w >= 0)
+	{
+		screenCoord[2] = w;
+	}
+		
+	if (h >= 0)
+	{
+		screenCoord[3] = h;
+	}
+}
+
+void GLRenderObject::GetDrawCoords(int* x, int* y, int* w, int* h)
+{
+	if (x)
+	{
+		*x = screenCoord[0];
+	}
+		
+	if (y)
+	{
+		*y = screenCoord[1];
+	}
+		
+	if (w)
+	{
+		*w = screenCoord[2];
+	}
+		
+	if (h)
+	{
+		*h = screenCoord[3];
+	}
 }
 
 void GLRenderObject::SetTextureCoords(int u, int v, int w, int h)
@@ -79,6 +109,12 @@ void GLRenderObject::SetTextureCoords(int u, int v, int w, int h)
 	textureCoord[1] = v;
 	textureSize[0] = w;
 	textureSize[1] = h;
+}
+
+void GLRenderObject::SetWidthHeight(int w, int h)
+{
+	screenCoord[2] = w;
+	screenCoord[3] = h;
 }
 
 /**
@@ -210,6 +246,8 @@ IRenderObject* Renderer_GL::AddStaticDC6(const char* dc6Path, DWORD start, DWORD
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
+	object->SetWidthHeight(totalWidth, totalHeight);
+
 	object->renderPass = RenderPass_UI;
 
 	return object;
@@ -275,7 +313,7 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 
 	glGenTextures(1, &global_palette_texture);
 	glBindTexture(GL_TEXTURE_2D, global_palette_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, PAL_MAX_PALETTES, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 256, PAL_MAX_PALETTES, 0, GL_BGR, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

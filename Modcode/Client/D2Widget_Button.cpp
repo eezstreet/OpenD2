@@ -10,11 +10,11 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	: D2Widget(x, y, 0, 0)
 {
 	backgroundObjectUp = engine->renderer->AddStaticDC6(szDC6Path, dwStartEnabled, dwEndEnabled);
-	backgroundObjectUp->SetDrawCoords(x, y, 100, 20);
+	backgroundObjectUp->SetDrawCoords(x, y, -1, -1);
 	backgroundObjectDown = engine->renderer->AddStaticDC6(szDC6Path, dwStartDown, dwEndDown);
-	backgroundObjectDown->SetDrawCoords(x, y, 100, 20);
+	backgroundObjectDown->SetDrawCoords(x, y, -1, -1);
 	backgroundObjectDisabled = engine->renderer->AddStaticDC6(szDC6Path, dwStartDisabled, dwEndDisabled);
-	backgroundObjectDisabled->SetDrawCoords(x, y, 100, 20);
+	backgroundObjectDisabled->SetDrawCoords(x, y, -1, -1);
 #if 0
 	char typeBuffer[32]{ 0 };
 
@@ -32,9 +32,9 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 
 	engine->renderer->PollTexture(texture_up, (DWORD*)&this->w, (DWORD*)&this->h);
 
+#endif
 	clickedSound = engine->S_RegisterSound("data\\global\\sfx\\cursor\\button.wav");
 
-#endif
 	bDisabled = false;
 	bDown = false;
 	bHasClickSignal = false;
@@ -48,6 +48,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 		bAlphaModulateDisable = false;
 	}
 
+	backgroundObjectUp->GetDrawCoords(nullptr, nullptr, &w, &h);
 }
 
 /*

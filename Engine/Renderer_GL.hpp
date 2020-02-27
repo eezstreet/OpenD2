@@ -38,6 +38,8 @@ public:
 	virtual void SetPalshift(BYTE palette);
 	virtual void SetDrawCoords(int x, int y, int w, int h);
 	virtual void SetTextureCoords(int x, int y, int w, int h);
+	virtual void GetDrawCoords(int* x, int* y, int* w, int* h);
+	void SetWidthHeight(int w, int h);
 };
 
 /**
