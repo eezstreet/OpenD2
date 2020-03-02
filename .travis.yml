@@ -36,5 +36,5 @@ matrix:
 
 script:
     - mkdir build && cd build
-    - cmake -G "Unix Makefiles" -DSDL2MAIN_LIBRARY=/usr/lib64/libSDL2.so
+    - cmake .. -G "Unix Makefiles" -DSDL2MAIN_LIBRARY=/usr/lib64/libSDL2.so
     - make
