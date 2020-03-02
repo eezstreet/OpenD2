@@ -30,6 +30,7 @@
 *.app
 
 # Projects
+build/*
 Build/*
 Win32/*
 game.dir/*
@@ -50,3 +51,6 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+
+# Vim
+*.swp
