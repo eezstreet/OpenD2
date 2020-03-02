@@ -48,5 +48,7 @@ if (GLM_FOUND)
 	set(GLM_INCLUDE_DIRS ${GLM_INCLUDE_DIR})
 endif()
 
+message(STATUS "GLM_INCLUDE_DIR = ${GLM_INCLUDE_DIR}")
+
 # Hide some variables
 mark_as_advanced(GLM_INCLUDE_DIR)

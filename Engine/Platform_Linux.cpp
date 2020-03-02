@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <unistd.h>
 #include <dlfcn.h>
+#include "FileSystem.hpp"
+#include "Logging.hpp"
 
 #define D2REGISTRY_BETA_KEY	"SOFTWARE\\Blizzard Entertainment\\Diablo II Beta"
 #define D2REGISTRY_KEY		"SOFTWARE\\Blizzard Entertainment\\Diablo II"

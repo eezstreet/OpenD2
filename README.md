@@ -28,12 +28,18 @@ To compile this project on Windows, all you will need is CMake and Visual Studio
 Run cmake-gui and set the Source directory to this folder. Set the "Where to build the files" to be ./Build. (This is so that the git repository doesn't pick this up as a source directory). Then, simply open the project file in whatever IDE you want.
 
 #### Linux
-Compilation on linux requires only the SDL runtime to be installed.
+Compilation on Linux requires the following prerequisites:
+  * libglew-dev (or libglew-devel on Red Hat based systems)
+  * libglm-dev (or libglm-devel on Red Hat based systems)
+  * libsdl2-dev (or libsdl2-devel on Red Hat based systems)
 
-After that, compile using these commands:
+After that, the following commands can be used to install:
 
-	cmake .
-	make
+```sh
+mkdir build && cd build
+cmake .. -DSDL2MAIN_LIBRARY=/usr/lib64/libSDL2.so
+make
+```
 
 ### Running
 *Generally speaking* you will want to run the game from a separate directory from the main game, in order to not screw up your original installation.

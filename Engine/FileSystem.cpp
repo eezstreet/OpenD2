@@ -518,7 +518,7 @@ namespace FS
 		}
 
 		// Not allowed to Seek() on files from MPQs.
-		Log_WarnAssertReturn(!pRecord->bLoadedFromMPQ);
+		Log_WarnAssertVoidReturn(!pRecord->bLoadedFromMPQ);
 
 		SDL_LockMutex(pRecord->mut);
 		fseek(pRecord->handle, offset, nSeekType);

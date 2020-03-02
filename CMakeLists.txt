@@ -56,7 +56,7 @@ if(BUILD_GAME)
 
 		set(GLEW_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew")
 		set(GLEW_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glew/glew32.lib")
-		set(GLM_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glm")
+		set(GLM_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/glm")
 	else()
 		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Windows.cpp)
 
@@ -70,7 +70,7 @@ if(BUILD_GAME)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 	
 	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES})
-	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
+	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIR})
 
 	if(WIN32)
 		set_target_properties(game PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
