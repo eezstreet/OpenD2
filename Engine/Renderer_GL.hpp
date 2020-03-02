@@ -1,7 +1,6 @@
 #pragma once
 #include "Renderer.hpp"
 #include <GL/glew.h>
-#include <GL/freeglut.h>
 
 enum GLRenderPasses
 {
