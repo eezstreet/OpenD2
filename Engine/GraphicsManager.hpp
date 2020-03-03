@@ -28,16 +28,24 @@ public:
 	 */
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height) = 0;
 
+	typedef void(*AtlassingCallback)(void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY);
+	/**
+	 *	Iterates over all frames in the graphic, running an AtlassingCallback for every frame.
+	 *	@param callback   The callback for the atlassing function.
+	 *	@param start      The first frame to iterate over
+	 *	@param end        The last frame to iterate over (negative to iterate over all frames)
+	 */
+	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end) = 0;
+
 	/**
 	 *	Gets the graphics data for a subset of frames.
 	 *	The outputted pixels and where they are placed is implementation-specific.
-	 *	@param pixels     Output: pixels to write to
 	 *	@param start      The first frame to query
-	 *	@param end        The last frame to query
+	 *	@param end        The last frame to query (negative to query until the end)
 	 *	@param width      Optional output: width of pixels outputted
 	 *	@param height     Optional output: height of pixels outputted
 	 */
-	virtual void GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height) = 0;
+	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height) = 0;
 };
 
 /**
@@ -53,7 +61,8 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
 };
 
 /**
@@ -62,14 +71,17 @@ public:
 class DC6GraphicsHandle : public IGraphicsHandle
 {
 private:
-	fs_handle fileHandle;
-
+	char filePath[MAX_D2PATH];
+	DC6Image image;
+	bool bLoaded = false;
 public:
 	DC6GraphicsHandle(const char* fileName);
+	~DC6GraphicsHandle();
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
 };
 
 /**
@@ -85,7 +97,8 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
 };
 
 /**
@@ -102,7 +115,24 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
+};
+
+/**
+ *	Usage policy dictates how we store the graphics in memory
+ */
+enum GraphicsUsagePolicy
+{
+	UsagePolicy_SingleUse,  // Just use `new`, the caller will handle cleanup
+
+	UsagePolicy_Permanent,  // Store the graphic in a hash map.
+	                        // The graphic will not be freed until the game is shut down.
+	                        // Good for graphics that will be re-used often.
+
+	UsagePolicy_Temporary,  // Store the graphic in an LRU.
+	                        // The graphic will be removed from memory if it is not used
+	                        // often enough.
 };
 
 /**
@@ -121,7 +151,7 @@ public:
 	GraphicsManager();
 	~GraphicsManager();
 
-	IGraphicsHandle* LoadGraphic(const char* graphicsFile);
+	IGraphicsHandle* LoadGraphic(const char* graphicsFile, GraphicsUsagePolicy policy);
 };
 
 extern GraphicsManager* graphicsManager;

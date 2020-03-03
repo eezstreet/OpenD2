@@ -1,4 +1,5 @@
 #include "GraphicsManager.hpp"
+#include "DC6.hpp"
 #include "Logging.hpp"
 #include "FileSystem.hpp"
 #include "Palette.hpp"
@@ -27,7 +28,12 @@ void DCCGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 
 }
 
-void DCCGraphicsHandle::GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DCCGraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+{
+
+}
+
+void DCCGraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
 {
 
 }
@@ -39,27 +45,125 @@ void DCCGraphicsHandle::GetEntireGraphicsData(void** pixels, int32_t start, int3
 
 DC6GraphicsHandle::DC6GraphicsHandle(const char* fileName)
 {
-	FS::Open(fileName, &fileHandle, FS_READ);
+	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
+}
+
+DC6GraphicsHandle::~DC6GraphicsHandle()
+{
+	DC6::UnloadImage(&image);
 }
 
 size_t DC6GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
 {
-	return 0;
+	if (!bLoaded)
+	{
+		DC6::LoadImage(filePath, &image);
+		bLoaded = true;
+	}
+
+	if (frame < 0 || frame > image.header.dwFrames)
+	{
+		return image.dwTotalWidth * image.dwTotalHeight;
+	}
+	return image.pFrames[frame].fh.dwWidth * image.pFrames[frame].fh.dwHeight;
 }
 
 size_t DC6GraphicsHandle::GetNumberOfFrames()
 {
-	return 0;
+	if (!bLoaded)
+	{
+		DC6::LoadImage(filePath, &image);
+		bLoaded = true;
+	}
+
+	return image.header.dwFrames;
 }
 
 void DC6GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height)
 {
+	if (!bLoaded)
+	{
+		DC6::LoadImage(filePath, &image);
+		bLoaded = true;
+	}
 
+	if (frame < 0 || frame > image.header.dwFrames)
+	{
+		return;
+	}
+
+	if (width)
+	{
+		*width = image.pFrames[frame].fh.dwWidth;
+	}
+
+	if (height)
+	{
+		*height = image.pFrames[frame].fh.dwHeight;
+	}
+
+	if (pixels)
+	{
+		*pixels = DC6::GetPixelsAtFrame(&image, 0, frame, nullptr);
+	}
 }
 
-void DC6GraphicsHandle::GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DC6GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
+	if (!bLoaded)
+	{
+		DC6::LoadImage(filePath, &image);
+		bLoaded = true;
+	}
 
+	if (end < 0)
+	{
+		end = file.header.dwFrames;
+	}
+
+	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
+	DC6::StitchStats(&image, start, end, &dwFrameWidth, &dwFrameHeight, &dwTotalWidth, &dwTotalHeight);
+
+	if (width)
+	{
+		*width = dwTotalWidth;
+	}
+
+	if (height)
+	{
+		*height = dwTotalHeight;
+	}
+}
+
+void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
+{
+	if (!bLoaded)
+	{
+		DC6::LoadImage(filePath, &image);
+		bLoaded = true;
+	}
+
+	if (end < 0)
+	{
+		end = file.header.dwFrames;
+	}
+
+	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
+	DC6::StitchStats(&image, start, end, &dwFrameWidth, &dwFrameHeight, &dwTotalWidth, &dwTotalHeight);
+
+	for (int i = 0; i <= end - start; i++)
+	{
+		DC6Frame* pFrame = &image.pFrames[start + i];
+
+		int dwBlitToX = (i % dwFrameWidth) * 256;
+		int dwBlitToY = (int)floor(i / (float)dwFrameWidth) * 255;
+
+		if (callback)
+		{
+			callback(DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr), start + i,
+				dwBlitToX, dwBlitToY);
+		}
+	}
 }
 
 
@@ -87,7 +191,12 @@ void DT1GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 
 }
 
-void DT1GraphicsHandle::GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DT1GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+{
+
+}
+
+void DT1GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
 {
 
 }
@@ -124,9 +233,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 
 	if (frame == PL2_RGBAPalette)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pRGBAPalette, sizeof(file.pRGBAPalette));
+			*pixels = file.pRGBAPalette;
 		}
 		if (width)
 		{
@@ -135,9 +244,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Shadows && frame < PL2_Light)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pShadows[frame - PL2_Shadows], sizeof(file.pShadows[0]));
+			*pixels = file.pShadows[frame - PL2_Shadows];
 		}
 		if (width)
 		{
@@ -146,9 +255,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Light && frame < PL2_Gamma)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pLight[frame - PL2_Light], sizeof(file.pLight[0]));
+			*pixels = file.pLight[frame - PL2_Light];
 		}
 		if (width)
 		{
@@ -157,9 +266,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame == PL2_Gamma)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pGamma, sizeof(file.pGamma));
+			*pixels = file.pGamma;
 		}
 		if (width)
 		{
@@ -168,9 +277,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Trans25 && frame < PL2_Trans50)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pTrans25[frame - PL2_Trans25], sizeof(file.pTrans25[0]));
+			*pixels = file.pTrans25[frame - PL2_Trans25];
 		}
 		if (width)
 		{
@@ -179,9 +288,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Trans50 && frame < PL2_Trans75)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pTrans50[frame - PL2_Trans50], sizeof(file.pTrans50[0]));
+			*pixels = file.pTrans50[frame - PL2_Trans50];
 		}
 		if (width)
 		{
@@ -190,9 +299,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Trans75 && frame < PL2_Screen)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pTrans75[frame - PL2_Trans75], sizeof(file.pTrans75[0]));
+			*pixels = file.pTrans75[frame - PL2_Trans75];
 		}
 		if (width)
 		{
@@ -201,9 +310,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Screen && frame < PL2_Luminance)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pScreen[frame - PL2_Screen], sizeof(file.pScreen[0]));
+			*pixels = file.pScreen[frame - PL2_Screen];
 		}
 		if (width)
 		{
@@ -212,9 +321,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_Luminance && frame < PL2_States)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pLuminance[frame - PL2_Luminance], sizeof(file.pLuminance[0]));
+			*pixels = file.pLuminance[frame - PL2_Luminance];
 		}
 		if (width)
 		{
@@ -223,9 +332,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_States && frame < PL2_DarkBlend)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pStates[frame - PL2_States], sizeof(file.pStates[0]));
+			*pixels = file.pStates[frame - PL2_States];
 		}
 		if (width)
 		{
@@ -234,9 +343,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_DarkBlend && frame < PL2_DarkenPalette)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pDarkBlend[frame - PL2_DarkBlend], sizeof(file.pDarkBlend[0]));
+			*pixels = file.pDarkBlend[frame - PL2_DarkBlend];
 		}
 		if (width)
 		{
@@ -245,9 +354,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame == PL2_DarkenPalette)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pDarkenPalette, sizeof(file.pDarkenPalette));
+			*pixels = file.pDarkenPalette;
 		}
 		if (width)
 		{
@@ -256,9 +365,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_StandardColors && frame < PL2_StandardShifts)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pStandardColors[frame - PL2_StandardColors], sizeof(file.pStandardColors[0]));
+			*pixels = file.pStandardColors[frame - PL2_StandardColors];
 		}
 		if (width)
 		{
@@ -267,9 +376,9 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 	else if (frame >= PL2_StandardShifts && frame < PL2_NumEntries)
 	{
-		if (pixels && *pixels)
+		if (pixels)
 		{
-			memcpy(*pixels, file.pStandardShifts[frame - PL2_StandardShifts], sizeof(file.pStandardShifts[0]));
+			*pixels = file.pStandardShifts[frame - PL2_StandardShifts];
 		}
 		if (width)
 		{
@@ -278,8 +387,14 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 }
 
-void PL2GraphicsHandle::GetEntireGraphicsData(void** pixels, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void PL2GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
+	// should not be used?
+}
+
+void PL2GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
+{
+
 }
 
 GraphicsManager::GraphicsManager()
@@ -292,7 +407,7 @@ GraphicsManager::~GraphicsManager()
 
 }
 
-IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile)
+IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, GraphicsUsagePolicy policy)
 {
 	// Check the extension on the file
 	char* ext = D2Lib::fnext(graphicsFile);
@@ -302,58 +417,101 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile)
 	if (!D2Lib::stricmp(ext, ".dc6"))
 	{
 		// DC6 loading
-		if (!DC6Graphics.Contains(graphicsFile, &theHandle, &bFull))
+		switch (policy)
 		{
-			if (bFull)
-			{
-				return nullptr; // it's full
-			}
+			case UsagePolicy_SingleUse:
+				return new DC6GraphicsHandle(graphicsFile);
 
-			DC6Graphics.Insert(theHandle, graphicsFile, DC6GraphicsHandle(graphicsFile));
+			case UsagePolicy_Permanent:
+				if (!DC6Graphics.Contains(graphicsFile, &theHandle, &bFull))
+				{
+					if (bFull)
+					{
+						return nullptr; // it's full
+					}
+
+					DC6Graphics.Insert(theHandle, graphicsFile, DC6GraphicsHandle(graphicsFile));
+				}
+				return DC6Graphics.GetPointerTo(theHandle);
+
+			case UsagePolicy_Temporary:
+				// Not yet implemented
 		}
-		return DC6Graphics.GetPointerTo(theHandle);
+		
 	}
 	else if (!D2Lib::stricmp(ext, ".pl2"))
 	{
 		// PL2 loading
-		if (!PL2Graphics.Contains(graphicsFile, &theHandle, &bFull))
+		switch (policy)
 		{
-			if (bFull)
-			{
-				return nullptr; // it's full
-			}
+			case UsagePolicy_SingleUse:
+				return new PL2GraphicsHandle(graphicsFile);
 
-			PL2Graphics.Insert(theHandle, graphicsFile, PL2GraphicsHandle(graphicsFile));
+			case UsagePolicy_Permanent:
+				if (!PL2Graphics.Contains(graphicsFile, &theHandle, &bFull))
+				{
+					if (bFull)
+					{
+						return nullptr; // it's full
+					}
+
+					PL2Graphics.Insert(theHandle, graphicsFile, PL2GraphicsHandle(graphicsFile));
+				}
+				return PL2Graphics.GetPointerTo(theHandle);
+
+			case UsagePolicy_Temporary:
+				// Not yet implemented
 		}
-		return PL2Graphics.GetPointerTo(theHandle);
+		
 	}
 	else if (!D2Lib::stricmp(ext, ".dcc"))
 	{
 		// DCC loading
-		if (!DCCGraphics.Contains(graphicsFile, &theHandle, &bFull))
+		switch (policy)
 		{
-			if (bFull)
-			{
-				return nullptr; // it's full
-			}
+			case UsagePolicy_SingleUse:
+				return new DCCGraphicsHandle(graphicsFile);
 
-			DCCGraphics.Insert(theHandle, graphicsFile, DCCGraphicsHandle(graphicsFile));
+			case UsagePolicy_Permanent:
+				if (!DCCGraphics.Contains(graphicsFile, &theHandle, &bFull))
+				{
+					if (bFull)
+					{
+						return nullptr; // it's full
+					}
+
+					DCCGraphics.Insert(theHandle, graphicsFile, DCCGraphicsHandle(graphicsFile));
+				}
+				return DCCGraphics.GetPointerTo(theHandle);
+
+			case UsagePolicy_Temporary:
+				// Not yet implemented
 		}
-		return DCCGraphics.GetPointerTo(theHandle);
 	}
 	else if (!D2Lib::stricmp(ext, ".dt1"))
 	{
 		// DT1 loading
-		if (!DT1Graphics.Contains(graphicsFile, &theHandle, &bFull))
+		switch (policy)
 		{
-			if (bFull)
-			{
-				return nullptr; // it's full
-			}
+			case UsagePolicy_SingleUse:
+				return new DT1GraphicsHandle(graphicsFile);
 
-			DT1Graphics.Insert(theHandle, graphicsFile, DT1GraphicsHandle(graphicsFile));
+			case UsagePolicy_Permanent:
+				if (!DT1Graphics.Contains(graphicsFile, &theHandle, &bFull))
+				{
+					if (bFull)
+					{
+						return nullptr; // it's full
+					}
+
+					DT1Graphics.Insert(theHandle, graphicsFile, DT1GraphicsHandle(graphicsFile));
+				}
+				return DT1Graphics.GetPointerTo(theHandle);
+
+			case UsagePolicy_Temporary:
+				// Not yet implemented
 		}
-		return DT1Graphics.GetPointerTo(theHandle);
+		
 	}
 	else
 	{
