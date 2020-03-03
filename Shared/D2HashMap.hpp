@@ -45,36 +45,33 @@ public:
 
 	V& operator[](const K* key)
 	{
-		DWORD hashVal = Hash(key);
-		DWORD attempts = 1;
+		handle keyHandle;
+		bool bFull;
 
-		while (!Equals(key, keys[hashVal]) && attempts < M)
+		if (!Contains(key, &keyHandle, &bFull))
 		{
-			if (keys[hashVal][0] == '\0')
+			if (bFull)
 			{
-				break;
+				// hash map is full...should return an error
 			}
-			hashVal++;
-			hashVal %= M;
-			attempts++;
+
+			if (!Equals(key, keys[keyHandle]))
+			{
+				Copy(keys[keyHandle], key, L);
+			}
 		}
 
-		if (!Equals(key, keys[hashVal]))
-		{
-			Copy(keys[hashVal], key, L);
-		}
-
-		if (attempts >= M)
-		{
-			// TODO: throw an error here?
-		}
-
-		return values[hashVal];
+		return values[keyHandle];
 	}
 
 	V& operator[](const handle& handle)
 	{
 		return values[handle];
+	}
+
+	V* GetPointerTo(const handle& handle)
+	{
+		return &values[handle];
 	}
 
 	void Insert(const handle& handle, const K* key, const V& value)
@@ -83,16 +80,25 @@ public:
 		Copy(keys[handle], key, L);
 	}
 
-	handle NextFree(const K* key)
+	bool Contains(const K* key, handle* outHandle = nullptr, bool* bFull = nullptr)
 	{
 		DWORD hashVal = Hash(key);
 		DWORD attempts = 1;
+
+		if (bFull)
+		{
+			*bFull = false;
+		}
 
 		while (!Equals(key, keys[hashVal]) && attempts < M)
 		{
 			if (keys[hashVal][0] == '\0')
 			{
-				break;
+				if (outHandle)
+				{
+					*outHandle = (handle)hashVal;
+				}
+				return false;
 			}
 			hashVal++;
 			hashVal %= M;
@@ -101,40 +107,51 @@ public:
 
 		if (attempts >= M)
 		{
+			if (bFull)
+			{
+				*bFull = true;
+			}
+			return false;
+		}
+
+		if (outHandle)
+		{
+			*outHandle = hashVal;
+		}
+		return true;
+	}
+
+	handle NextFree(const K* key)
+	{
+		handle nextHandle;
+		bool bFull;
+
+		Contains(key, &nextHandle, &bFull);
+		
+		if (bFull)
+		{
 			return INVALID_HANDLE;
 		}
 
-		return (handle)hashVal;
+		return nextHandle;
 	}
 
 	handle NextFree(const K* key, bool& bAlreadyInUse)
 	{
-		DWORD hashVal = Hash(key);
-		DWORD attempts = 1;
+		handle nextHandle;
+		bool bFull;
 
-		while (!Equals(key, keys[hashVal]) && attempts < M)
-		{
-			if (keys[hashVal][0] == '\0')
-			{
-				break;
-			}
-			hashVal++;
-			hashVal %= M;
-			attempts++;
-		}
-
-		if (Equals(key, keys[hashVal]))
+		if (Contains(key, &nextHandle, &bFull))
 		{
 			bAlreadyInUse = true;
 		}
 
-		if (attempts >= M)
+		if (bFull)
 		{
 			return INVALID_HANDLE;
 		}
 
-		Copy(keys[hashVal], key, L);
-
-		return (handle)hashVal;
+		Copy(keys[nextHandle], key, L);
+		return nextHandle;
 	}
 };

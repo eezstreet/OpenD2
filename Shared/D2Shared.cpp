@@ -141,7 +141,7 @@ namespace D2Lib
 	 *	Gets the extension of a given file path.
 	 *	e.g., fnext("data/global/excel/levels.txt") -> ".txt"
 	 */
-	char* fnext(char* szFileName)
+	char* fnext(const char* szFileName)
 	{
 		char* szCurrent = szFileName;
 		while (szCurrent && *szCurrent != '\0' && strchr(szCurrent + 1, '.') != nullptr)

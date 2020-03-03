@@ -61,6 +61,27 @@ public:
 	void Deallocate(GLRenderObject* object);
 };
 
+/**
+ *	Atlas
+ */
+class GLAtlas : public IAtlas
+{
+private:
+	uint32_t numFiles;
+	char** filesInAtlas;
+
+public:
+	GLAtlas();
+
+	virtual bool WasPreCached();
+	virtual void Finalize();
+	virtual bool AddFile(const char* filePath);
+	virtual uint32_t GetTotalAtlasElementCount();
+	virtual void GetAtlasElementTexCoords(uint32_t index, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h);
+	virtual void GetAtlasSize(uint32_t* totalWidth, uint32_t* totalHeight, uint32_t* elementWidth, uint32_t* elementHeight);
+
+	GLAtlas* next;
+};
 
 /**
  * OpenGL renderer
@@ -80,6 +101,7 @@ private:
 
 	GLRenderPool* pool;
 	BYTE defaultPalshift[256];
+	GLAtlas* atlasChain;
 
 	unsigned int VAO, VBO;
 public:
@@ -88,6 +110,7 @@ public:
 	virtual void SetGlobalPalette(const D2Palettes palette);
 
 	virtual IRenderObject* AddStaticDC6(const char* dc6Path, DWORD start, DWORD end);
+	virtual IAtlas* CreateOrLoadAtlas(const char* fileName);
 	virtual void Remove(IRenderObject* Object);
 
 	Renderer_GL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);

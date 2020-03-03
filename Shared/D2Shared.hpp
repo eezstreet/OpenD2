@@ -598,12 +598,81 @@ class IRenderer
 {
 public:
 	// These functions are available for use with the client.
+
+	/**
+	 *	Present the current frame.
+	 */
 	virtual void Present() = 0;
+
+	/**
+	 *	Clear all previous draw calls from IRenderObjects.
+	 */
 	virtual void Clear() = 0;
+
+	/**
+	 *	Set the global render palette.
+	 */
 	virtual void SetGlobalPalette(const D2Palettes palette) = 0;
 
+	/**
+	 *	Create a static DC6 render object.
+	 */
 	virtual class IRenderObject* AddStaticDC6(const char* dc6Path, DWORD start, DWORD end) = 0;
+
+	/**
+	 *	Create (or, if it has already been loaded) an atlas
+	 *	@param fileName      The file to try and load to produce an atlas
+	 */
+	virtual class IAtlas* CreateOrLoadAtlas(const char* fileName) = 0;
+
+	/**
+	 *	Remove a render object resource.
+	 */
 	virtual void Remove(class IRenderObject* Object) = 0;
+};
+
+/**
+ *	IAtlas is a texture that persists in memory for a while.
+ *	We can attach them to render objects.
+ *	Each element in the atlas is a uniform size, but not necessarily drawn in a uniform fashion.
+ */
+class IAtlas
+{
+public:
+	/**
+	 *	Return true if the atlas was loaded from a file.
+	 */
+	virtual bool WasPreCached() = 0;
+
+	/**
+	 *	Finalize creation of this atlas.
+	 */
+	virtual void Finalize() = 0;
+
+	/**
+	 *	Add a file to this atlas.
+	 *	Returns false if the file added was incompatible or there is not enough space.
+	 */
+	virtual bool AddFile(const char* filePath) = 0;
+
+	/**
+	 *	Get the total number of elements in the atlas.
+	 */
+	virtual uint32_t GetTotalAtlasElementCount() = 0;
+
+	/**
+	 *	Get the coordinates of an atlas element from its index
+	 */
+	virtual void GetAtlasElementTexCoords(uint32_t index, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
+
+	/**
+	 *	Get the total width/height of the atlas.
+	 *	@param totalWidth    The overall width of the atlas
+	 *	@param totalHeight   The overall height of the atlas
+	 *	@param elementWidth  How many elements wide the atlas is
+	 *	@param elementHeight How many elements high the atlas is
+	 */
+	virtual void GetAtlasSize(uint32_t* totalWidth, uint32_t* totalHeight, uint32_t* elementWidth, uint32_t* elementHeight) = 0;
 };
 
 /**
@@ -729,32 +798,55 @@ typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports)
 namespace D2Lib
 {
 	// String Management - ASCII
+	// Compare two strings, case insensitive, up to length n
 	int stricmpn(const char* s1, const char* s2, int n);
+	// Compare two string, case insensitive
 	int stricmp(const char* s1, const char* s2);
+	// Copy string from src to dest (safely, and adding the null terminator)
 	void strncpyz(char *dest, const char *src, int destsize);
+	// Compute hash of a string
 	DWORD strhash(const char* szString, size_t dwLen, size_t dwMaxHashSize);
 
 	// File name management
+	// Gets the name of a file, given its full directory path.
 	char* fnbld(char* szFileName);
+	// Buffered version of fnbld
 	char* fnbldb(char* szFileName);
-	char* fnext(char* szFileName);
+	// Gets the file extension of a path
+	char* fnext(const char* szFileName);
+	// Strips the extension from a file path
 	char* fnextstr(char* szFileName);
+	// Buffered version of fnextstr
 	char* fnextstrb(char* szFileName);
 
 	// String Management - UTF-16
+	// Compare two UTF-16 strings, case insensitive, up to length n
 	int qstricmpn(const char16_t* s1, const char16_t* s2, int n);
+	// Compare two UTF-16 strings, case insensitive
 	int qstricmp(const char16_t* s1, const char16_t* s2);
+	// Compare two UTF-16 strings, case sensitive, up to length n
 	int qstrcmpn(const char16_t* s1, const char16_t* s2, int n);
+	// Compare two UTF-16 strings, case sensitive
 	int qstrcmp(const char16_t* s1, const char16_t* s2);
+	// Copy UTF-16 string from src to dest (safely, and adding null terminator)
 	size_t qstrncpyz(char16_t* dest, const char16_t* src, size_t destLen);
+	// Get length of UTF-16 string
 	size_t qstrlen(const char16_t* s1);
+	// Convert ASCII string to UTF-16
 	size_t qmbtowc(char16_t* dest, size_t destLen, const char* src);
+	// Convert UTF-16 string to ASCII
 	size_t qwctomb(char* dest, size_t destLen, const char16_t* src);
+	// Reverse a UTF-16 string
 	void qstrverse(char16_t* s, int start, size_t len);
+	// Convert a number into a UTF-16 string
 	char16_t* qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
+	// Get the first instance of a character in a UTF-16 string
 	char16_t* qstrchr(char16_t* str, char16_t chr);
+	// Format a UTF-16 string (uses va_list for variadic arguments)
 	int qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);
+	// Format a UTF-16 string
 	int qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...);
+	// Compute hash of UTF-16 string
 	DWORD qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
 
 	// Random Numbers
