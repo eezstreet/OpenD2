@@ -592,6 +592,32 @@ struct OpenD2ConfigStrc
 };
 
 /**
+ *	Usage policy dictates how we store the graphics in memory
+ */
+enum GraphicsUsagePolicy
+{
+	UsagePolicy_SingleUse,  // Just use `new`, the caller will handle cleanup
+
+	UsagePolicy_Permanent,  // Store the graphic in a hash map.
+	                        // The graphic will not be freed until the game is shut down.
+	                        // Good for graphics that will be re-used often.
+
+	UsagePolicy_Temporary,  // Store the graphic in an LRU.
+	                        // The graphic will be removed from memory if it is not used
+	                        // often enough.
+};
+
+/**
+ *	Graphics managers are responsible for managing texture resources.
+ */
+class IGraphicsManager
+{
+public:
+	virtual class IGraphicsHandle* LoadGraphic(const char* graphicsFile,
+			GraphicsUsagePolicy policy) = 0;
+}
+
+/**
  *	Each of the renderers comes from this IRenderer class.
  */
 class IRenderer
@@ -615,15 +641,10 @@ public:
 	virtual void SetGlobalPalette(const D2Palettes palette) = 0;
 
 	/**
-	 *	Create a static DC6 render object.
+	 *  Allocate a blank RenderObject.
+	 *  @param stage       What stage of rendering this object should be on
 	 */
-	virtual class IRenderObject* AddStaticDC6(const char* dc6Path, DWORD start, DWORD end) = 0;
-
-	/**
-	 *	Create (or, if it has already been loaded) an atlas
-	 *	@param fileName      The file to try and load to produce an atlas
-	 */
-	virtual class IAtlas* CreateOrLoadAtlas(const char* fileName) = 0;
+	virtual class IRenderObject* AllocateObject(int stage) = 0;
 
 	/**
 	 *	Remove a render object resource.
@@ -685,6 +706,13 @@ class IRenderObject
 {
 public:
 	virtual void Draw() = 0;
+
+	virtual void AttachTextureResource(class IGraphicsHandle* handle, int32_t frame) = 0;
+	virtual void AttachCompositeTextureResource(class IGraphicsHandle* handle, int32_t startFrame, int32_t endFrame) = 0;
+	virtual void AttachPaletteResource(class IGraphicsHandle* handle) = 0;
+	virtual void AttachAnimationResource(class IGraphicsHandle* handle) = 0;
+	virtual void AttachTokenResource(class IGraphicsHandle* handle) = 0;
+
 	virtual void SetPalshift(BYTE palette) = 0;
 	virtual void SetDrawCoords(int x, int y, int w, int h) = 0;
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h) = 0;
@@ -711,6 +739,7 @@ struct D2ModuleImportStrc
 {	// These get imported from the engine
 	int nApiVersion;
 	IRenderer* renderer;
+	IGraphicsManager* graphics;
 
 	// Basic functions
 	void			(*Print)(OpenD2LogFlags nPriority, const char* szFormat, ...);

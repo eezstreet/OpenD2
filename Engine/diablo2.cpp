@@ -2,6 +2,7 @@
 #include "Audio.hpp"
 #include "COF.hpp"
 #include "FileSystem.hpp"
+#include "GraphicsManager.hpp"
 #include "INI.hpp"
 #include "Input.hpp"
 #include "Logging.hpp"
@@ -98,6 +99,7 @@ D2CmdArgStrc OpenD2CommandArguments[] = {
 
 static D2ModuleImportStrc exports = {
 	D2CLIENTAPI_VERSION,
+	nullptr,
 	nullptr,
 
 	Log::Print,
@@ -448,12 +450,15 @@ int InitGame(int argc, char** argv)
 	FS::LogSearchPaths();
 	ReadGameConfig(&config, &openD2Config);
 	TBL::Init();
+
+	graphicsManager = new GraphicsManager();
 	
 	if (openD2Config.szBasePath[0] == 0x0) {
 		Log::Error(__FILE__, __LINE__, "Basepath is not set. Run with the +basepath=\"...\" parameter.");
 	}
 	
 	Window::InitSDL(&config, &openD2Config); // renderer also gets initialized here
+	exports.graphicsManager = graphicsManager;
 	Renderer::MapRenderTargetExports(&exports);
 	Audio::Init(&openD2Config);
 
@@ -545,6 +550,7 @@ int InitGame(int argc, char** argv)
 
 	Network::Shutdown();
 	WriteGameConfig(&config, &openD2Config);
+	delete graphicsManager;
 	TBL::Cleanup();
 	COF::DeregisterAll();
 	Log::Shutdown();

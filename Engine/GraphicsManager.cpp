@@ -161,7 +161,7 @@ void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start,
 		if (callback)
 		{
 			callback(DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr), start + i,
-				dwBlitToX, dwBlitToY);
+				dwBlitToX, dwBlitToY, dwFrameWidth, dwFrameHeight);
 		}
 	}
 }

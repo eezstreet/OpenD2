@@ -9,11 +9,22 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	DWORD dwStartDisabled, DWORD dwEndDisabled)
 	: D2Widget(x, y, 0, 0)
 {
-	backgroundObjectUp = engine->renderer->AddStaticDC6(szDC6Path, dwStartEnabled, dwEndEnabled);
+	IGraphicsHandle* graphic = engine->graphics->LoadGraphic(szDC6Path,
+			UsagePolicy_Permanent);
+
+	backgroundObjectUp = engine->renderer->AllocateObject();
+	backgroundObjectUp->AttachCompositeTextureResource(graphic, dwStartEnabled,
+			dwEndEnabled);
 	backgroundObjectUp->SetDrawCoords(x, y, -1, -1);
-	backgroundObjectDown = engine->renderer->AddStaticDC6(szDC6Path, dwStartDown, dwEndDown);
+
+	backgroundObjectDown = engine->renderer->AllocateObject();
+	backgroundObjectDown->AttachCompositeTextureResource(graphic, dwStartDown,
+			dwEndDown);
 	backgroundObjectDown->SetDrawCoords(x, y, -1, -1);
-	backgroundObjectDisabled = engine->renderer->AddStaticDC6(szDC6Path, dwStartDisabled, dwEndDisabled);
+
+	backgroundObjectDisabled = engine->renderer->AllocateObject();
+	backgroundObjectDisabled->AttachCompositeTextureResource(graphic,
+			dwStartDisabled, dwEndDisabled);
 	backgroundObjectDisabled->SetDrawCoords(x, y, -1, -1);
 #if 0
 	char typeBuffer[32]{ 0 };

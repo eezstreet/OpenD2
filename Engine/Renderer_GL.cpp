@@ -60,6 +60,78 @@ void GLRenderObject::Render()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t frame)
+{
+	if(frame < 0)
+	{
+		frame = 0;
+	}
+
+	if(!handle)
+	{
+		return;
+	}
+
+	void* pixels;
+	uint32_t frameW, frameH;
+
+	handle->GetGraphicsData(&pixels, frame, &frameW, &frameH);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frameW, frameH, 0, GL_RED,
+			GL_UNSIGNED_BYTE, pixels);
+}
+
+void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
+		int32_t startFrame, int32_t endFrame)
+{
+	uint32_t width, height;
+
+	if(!handle)
+	{
+		return;
+	}
+
+	if(startFrame < 0)
+	{
+		startFrame = 0;
+	}
+
+	if(startFrame > endFrame)
+	{
+		int32_t swap;
+		swap = startFrame;
+		startFrame = endFrame;
+		endFrame = swap;
+	}
+
+	handle->GetGraphicsInfo(startFrame, endFrame, &width, &height);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
+			GL_UNSIGNED_BYTE, nullptr);
+
+	handle->IterateFrames([](void* pixels, int32_t frameNum, int32_t frameX,
+				int32_t frameY, int32_t frameW, int32_t frameH) {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+				GL_UNSIGNED_BYTE, pixels);
+	}, 0, -1);
+}
+
+void GLRenderObject::AttachPaletteResource(IGraphicsHandle* handle)
+{
+}
+
+void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
+{
+}
+
+void GLRenderObject::AttachTokenResource(IGraphicsHandle* handle)
+{
+}
+
 void GLRenderObject::SetPalshift(BYTE palette)
 {
 	
@@ -262,47 +334,9 @@ IAtlas* Renderer_GL::CreateOrLoadAtlas(const char* fileName)
 	atlasChain = newAtlas;
 }
 
-IRenderObject* Renderer_GL::AddStaticDC6(const char* dc6Path, DWORD start, DWORD end)
+IRenderObject* Renderer_GL::AllocateObject(int stage)
 {
-	GLRenderObject* object = pool->Allocate();
-	DC6Image image;
-	DWORD numFramesWide, numFramesTall;
-	DWORD totalWidth, totalHeight;
-
-	totalWidth = 0;
-	totalHeight = 0;
-	numFramesWide = 0;
-	numFramesTall = 0;
-
-	DC6::LoadImage(dc6Path, &image);
-	DC6::StitchStats(&image, start, end, &numFramesWide, &numFramesTall, &totalWidth, &totalHeight);
-
-	glGenTextures(1, &object->texture);
-	glBindTexture(GL_TEXTURE_2D, object->texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, totalWidth, totalHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
-	
-	for (int i = 0; i <= end - start; i++)
-	{
-		DC6Frame* pFrame = &image.pFrames[start + i];
-
-		int dwBlitToX = (i % numFramesWide) * 256;
-		int dwBlitToY = (int)floor(i / (float)numFramesWide) * 255;
-		
-		glTexSubImage2D(GL_TEXTURE_2D, 0, dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight, GL_RED, GL_UNSIGNED_BYTE, 
-			DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr));
-	}
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-	object->SetWidthHeight(totalWidth, totalHeight);
-
-	object->renderPass = RenderPass_UI;
-
-	return object;
+	return pool->Allocate();
 }
 
 void Renderer_GL::Remove(IRenderObject* Object)

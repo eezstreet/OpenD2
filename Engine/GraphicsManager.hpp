@@ -28,7 +28,7 @@ public:
 	 */
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height) = 0;
 
-	typedef void(*AtlassingCallback)(void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY);
+	typedef void(*AtlassingCallback)(void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH);
 	/**
 	 *	Iterates over all frames in the graphic, running an AtlassingCallback for every frame.
 	 *	@param callback   The callback for the atlassing function.
@@ -119,27 +119,12 @@ public:
 	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
 };
 
-/**
- *	Usage policy dictates how we store the graphics in memory
- */
-enum GraphicsUsagePolicy
-{
-	UsagePolicy_SingleUse,  // Just use `new`, the caller will handle cleanup
-
-	UsagePolicy_Permanent,  // Store the graphic in a hash map.
-	                        // The graphic will not be freed until the game is shut down.
-	                        // Good for graphics that will be re-used often.
-
-	UsagePolicy_Temporary,  // Store the graphic in an LRU.
-	                        // The graphic will be removed from memory if it is not used
-	                        // often enough.
-};
 
 /**
  *	GraphicsManager provides a format-agnostic interface for handling graphics files.
  *	DCC, DC6, DT1, PL2 ---> IGraphicsHandle, which is queried for stats and pixels.
  */
-class GraphicsManager
+class GraphicsManager : public IGraphicsManager
 {
 private:
 	HashMap<char, DCCGraphicsHandle> DCCGraphics;
@@ -151,7 +136,8 @@ public:
 	GraphicsManager();
 	~GraphicsManager();
 
-	IGraphicsHandle* LoadGraphic(const char* graphicsFile, GraphicsUsagePolicy policy);
+	virtual IGraphicsHandle* LoadGraphic(const char* graphicsFile, 
+			GraphicsUsagePolicy policy);
 };
 
 extern GraphicsManager* graphicsManager;

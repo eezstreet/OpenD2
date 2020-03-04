@@ -10,11 +10,19 @@
  */
 D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 {
+	IGraphicsHandle* background = engine->graphics->LoadGraphic(
+			"data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6",
+			UsagePolicy_SingleUse);
+
 	engine->renderer->SetGlobalPalette(PAL_SKY);
-	backgroundObject = engine->renderer->AddStaticDC6("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", 0, 11);
+	backgroundObject = engine->renderer->AllocateObject();
+	backgroundObject->AttachCompositeTextureResource(background, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetTextureCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);
+
+	// Background isn't needed at this point, it should be in VRAM
+	delete background;
 #if 0
 	tex_handle flameLeftTex =
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
