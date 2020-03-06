@@ -134,6 +134,12 @@ void GLRenderObject::AttachPaletteResource(IGraphicsHandle* handle)
 
 void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 {
+	if (!handle)
+	{
+		return;
+	}
+
+
 }
 
 void GLRenderObject::AttachTokenResource(IGraphicsHandle* handle)
@@ -183,58 +189,10 @@ void GLRenderObject::GetDrawCoords(int* x, int* y, int* w, int* h)
 	}
 }
 
-void GLRenderObject::SetTextureCoords(int u, int v, int w, int h)
-{
-	textureCoord[0] = u;
-	textureCoord[1] = v;
-	textureSize[0] = w;
-	textureSize[1] = h;
-}
-
 void GLRenderObject::SetWidthHeight(int w, int h)
 {
 	screenCoord[2] = w;
 	screenCoord[3] = h;
-}
-
-/**
- *	GLAtlas implementation
- */
-
-GLAtlas::GLAtlas()
-{
-	numFiles = 0;
-}
-
-bool GLAtlas::WasPreCached()
-{
-	return false; // TODO save atlasses to disk and reload them; much faster than building from scratch
-}
-
-void GLAtlas::Finalize()
-{
-
-}
-
-bool GLAtlas::AddFile(const char* filePath)
-{
-	numFiles++;
-	return false;
-}
-
-uint32_t GLAtlas::GetTotalAtlasElementCount()
-{
-	return 0;
-}
-
-void GLAtlas::GetAtlasElementTexCoords(uint32_t index, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)
-{
-
-}
-
-void GLAtlas::GetAtlasSize(uint32_t* totalWidth, uint32_t* totalHeight, uint32_t* elementWidth, uint32_t* elementHeight)
-{
-
 }
 
 /**
@@ -328,19 +286,6 @@ void GLRenderPool::Deallocate(GLRenderObject* object)
 void Renderer_GL::SetGlobalPalette(const D2Palettes palette)
 {
 	global_palette = palette;
-}
-
-IAtlas* Renderer_GL::CreateOrLoadAtlas(const char* fileName)
-{
-	if (atlasChain == nullptr)
-	{
-		atlasChain = new GLAtlas();
-		return atlasChain;
-	}
-
-	GLAtlas* newAtlas = new GLAtlas();
-	newAtlas->next = atlasChain;
-	atlasChain = newAtlas;
 }
 
 IRenderObject* Renderer_GL::AllocateObject(int stage)
@@ -442,8 +387,6 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 	glBindVertexArray(VAO);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
-
-	atlasChain = nullptr;
 }
 
 void Renderer_GL::LoadShaderText(const char* shaderText, unsigned int& shader, unsigned int shaderType)

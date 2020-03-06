@@ -13,7 +13,6 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 	backgroundObject = engine->renderer->AllocateObject(0);
 	backgroundObject->AttachCompositeTextureResource(background, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
-	backgroundObject->SetTextureCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);
 
 	engine->graphics->UnloadGraphic(background);

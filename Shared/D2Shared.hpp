@@ -656,50 +656,6 @@ public:
 };
 
 /**
- *	IAtlas is a texture that persists in memory for a while.
- *	We can attach them to render objects.
- *	Each element in the atlas is a uniform size, but not necessarily drawn in a uniform fashion.
- */
-class IAtlas
-{
-public:
-	/**
-	 *	Return true if the atlas was loaded from a file.
-	 */
-	virtual bool WasPreCached() = 0;
-
-	/**
-	 *	Finalize creation of this atlas.
-	 */
-	virtual void Finalize() = 0;
-
-	/**
-	 *	Add a file to this atlas.
-	 *	Returns false if the file added was incompatible or there is not enough space.
-	 */
-	virtual bool AddFile(const char* filePath) = 0;
-
-	/**
-	 *	Get the total number of elements in the atlas.
-	 */
-	virtual uint32_t GetTotalAtlasElementCount() = 0;
-
-	/**
-	 *	Get the coordinates of an atlas element from its index
-	 */
-	virtual void GetAtlasElementTexCoords(uint32_t index, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h) = 0;
-
-	/**
-	 *	Get the total width/height of the atlas.
-	 *	@param totalWidth    The overall width of the atlas
-	 *	@param totalHeight   The overall height of the atlas
-	 *	@param elementWidth  How many elements wide the atlas is
-	 *	@param elementHeight How many elements high the atlas is
-	 */
-	virtual void GetAtlasSize(uint32_t* totalWidth, uint32_t* totalHeight, uint32_t* elementWidth, uint32_t* elementHeight) = 0;
-};
-
-/**
  *	IRenderObject is the base interface of a render object.
  *	When we want to display something, we add it to the list of rendered objects.
  *	When we no longer want to display something, we remove it from the list of rendered objects.
@@ -719,7 +675,6 @@ public:
 	virtual void SetPalshift(BYTE palette) = 0;
 	virtual void SetDrawCoords(int x, int y, int w, int h) = 0;
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h) = 0;
-	virtual void SetTextureCoords(int x, int y, int w, int h) = 0;
 };
 
 //////////////////////////////////////////////////

@@ -18,8 +18,7 @@ class GLRenderObject : public IRenderObject
 protected:
 	BYTE palshift;
 	float screenCoord[4]; // x y w h
-	float textureCoord[2];
-	float textureSize[2];
+	bool bAnimated;
 	
 
 public:
@@ -36,7 +35,6 @@ public:
 	virtual void Render();	// Internal rendering function, used by the renderer itself.
 	virtual void SetPalshift(BYTE palette);
 	virtual void SetDrawCoords(int x, int y, int w, int h);
-	virtual void SetTextureCoords(int x, int y, int w, int h);
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h);
 	void SetWidthHeight(int w, int h);
 
@@ -68,28 +66,6 @@ public:
 };
 
 /**
- *	Atlas
- */
-class GLAtlas : public IAtlas
-{
-private:
-	uint32_t numFiles;
-	char** filesInAtlas;
-
-public:
-	GLAtlas();
-
-	virtual bool WasPreCached();
-	virtual void Finalize();
-	virtual bool AddFile(const char* filePath);
-	virtual uint32_t GetTotalAtlasElementCount();
-	virtual void GetAtlasElementTexCoords(uint32_t index, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h);
-	virtual void GetAtlasSize(uint32_t* totalWidth, uint32_t* totalHeight, uint32_t* elementWidth, uint32_t* elementHeight);
-
-	GLAtlas* next;
-};
-
-/**
  * OpenGL renderer
  */
 class Renderer_GL : public IRenderer
@@ -107,7 +83,6 @@ private:
 
 	GLRenderPool* pool;
 	BYTE defaultPalshift[256];
-	GLAtlas* atlasChain;
 
 	unsigned int VAO, VBO;
 public:
@@ -115,7 +90,6 @@ public:
 	virtual void Clear();
 	virtual void SetGlobalPalette(const D2Palettes palette);
 
-	virtual IAtlas* CreateOrLoadAtlas(const char* fileName);
 	virtual IRenderObject* AllocateObject(int stage);
 	virtual void Remove(IRenderObject* Object);
 
