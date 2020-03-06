@@ -22,7 +22,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	backgroundObject->SetPalshift(0);
 
 	// Background isn't needed at this point, it should be in VRAM
-	delete background;
+	engine->graphics->UnloadGraphic(background);
 #if 0
 	tex_handle flameLeftTex =
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);

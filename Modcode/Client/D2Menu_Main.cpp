@@ -6,11 +6,17 @@
  */
 D2Menu_Main::D2Menu_Main() : D2Menu()
 {
+	IGraphicsHandle* background = engine->graphics->LoadGraphic(
+		"data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6",
+		UsagePolicy_Permanent // for now
+	);
 	backgroundObject = engine->renderer->AllocateObject(0);
-	//backgroundObject = engine->renderer->AddStaticDC6("data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6", 0, 11);
+	backgroundObject->AttachCompositeTextureResource(background, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetTextureCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);
+
+	engine->graphics->UnloadGraphic(background);
 #if 0
 	tex_handle flameLeftTex = 
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);

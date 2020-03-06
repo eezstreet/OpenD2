@@ -99,7 +99,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 		startFrame = 0;
 	}
 
-	if(startFrame > endFrame)
+	if(startFrame > endFrame && endFrame != -1)
 	{
 		int32_t swap;
 		swap = startFrame;
@@ -108,17 +108,24 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 	}
 
 	handle->GetGraphicsInfo(startFrame, endFrame, &width, &height);
+	screenCoord[2] = width;
+	screenCoord[3] = height;
 
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
 			GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	handle->IterateFrames([](void* pixels, int32_t frameNum, int32_t frameX,
 				int32_t frameY, int32_t frameW, int32_t frameH) {
 		glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
 				GL_UNSIGNED_BYTE, pixels);
-	}, 0, -1);
+	}, startFrame, endFrame);
 }
 
 void GLRenderObject::AttachPaletteResource(IGraphicsHandle* handle)
@@ -338,7 +345,9 @@ IAtlas* Renderer_GL::CreateOrLoadAtlas(const char* fileName)
 
 IRenderObject* Renderer_GL::AllocateObject(int stage)
 {
-	return pool->Allocate();
+	GLRenderObject* allocated = pool->Allocate();
+	allocated->renderPass = RenderPass_UI;
+	return allocated;
 }
 
 void Renderer_GL::Remove(IRenderObject* Object)

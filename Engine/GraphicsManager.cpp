@@ -120,7 +120,7 @@ void DC6GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* wi
 
 	if (end < 0)
 	{
-		end = image.header.dwFrames;
+		end = image.header.dwFrames - 1;
 	}
 
 	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
@@ -147,7 +147,7 @@ void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start,
 
 	if (end < 0)
 	{
-		end = image.header.dwFrames;
+		end = image.header.dwFrames - 1;
 	}
 
 	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
@@ -163,7 +163,7 @@ void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start,
 		if (callback)
 		{
 			callback(DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr), start + i,
-				dwBlitToX, dwBlitToY, dwFrameWidth, dwFrameHeight);
+				dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight);
 		}
 	}
 }
@@ -432,9 +432,9 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DC6Graphics.Insert(theHandle, graphicsFile, DC6GraphicsHandle(graphicsFile));
+					DC6Graphics.Insert(theHandle, graphicsFile, new DC6GraphicsHandle(graphicsFile));
 				}
-				return DC6Graphics.GetPointerTo(theHandle);
+				return DC6Graphics[theHandle];
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
@@ -458,9 +458,9 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					PL2Graphics.Insert(theHandle, graphicsFile, PL2GraphicsHandle(graphicsFile));
+					PL2Graphics.Insert(theHandle, graphicsFile, new PL2GraphicsHandle(graphicsFile));
 				}
-				return PL2Graphics.GetPointerTo(theHandle);
+				return PL2Graphics[theHandle];
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
@@ -484,9 +484,9 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DCCGraphics.Insert(theHandle, graphicsFile, DCCGraphicsHandle(graphicsFile));
+					DCCGraphics.Insert(theHandle, graphicsFile, new DCCGraphicsHandle(graphicsFile));
 				}
-				return DCCGraphics.GetPointerTo(theHandle);
+				return DCCGraphics[theHandle];
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
@@ -509,9 +509,9 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DT1Graphics.Insert(theHandle, graphicsFile, DT1GraphicsHandle(graphicsFile));
+					DT1Graphics.Insert(theHandle, graphicsFile, new DT1GraphicsHandle(graphicsFile));
 				}
-				return DT1Graphics.GetPointerTo(theHandle);
+				return DT1Graphics[theHandle];
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
@@ -524,4 +524,9 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		Log_ErrorAssertReturn(graphicsFile, nullptr);
 	}
 	return nullptr;
+}
+
+void GraphicsManager::UnloadGraphic(IGraphicsHandle* graphic)
+{
+	delete graphic;
 }

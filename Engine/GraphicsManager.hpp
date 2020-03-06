@@ -132,10 +132,10 @@ public:
 class GraphicsManager : public IGraphicsManager
 {
 private:
-	HashMap<char, DCCGraphicsHandle> DCCGraphics;
-	HashMap<char, DC6GraphicsHandle> DC6Graphics;
-	HashMap<char, DT1GraphicsHandle> DT1Graphics;
-	HashMap<char, PL2GraphicsHandle> PL2Graphics;
+	HashMap<char, DCCGraphicsHandle*> DCCGraphics;
+	HashMap<char, DC6GraphicsHandle*> DC6Graphics;
+	HashMap<char, DT1GraphicsHandle*> DT1Graphics;
+	HashMap<char, PL2GraphicsHandle*> PL2Graphics;
 
 public:
 	GraphicsManager();
@@ -143,6 +143,8 @@ public:
 
 	virtual IGraphicsHandle* LoadGraphic(const char* graphicsFile, 
 			GraphicsUsagePolicy policy);
+
+	virtual void UnloadGraphic(IGraphicsHandle* handle);
 };
 
 extern GraphicsManager* graphicsManager;

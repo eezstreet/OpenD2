@@ -272,6 +272,8 @@ namespace DC6
 
 		*pWidth = 0;
 		*pHeight = 0;
+		*pTotalWidth = 0;
+		*pTotalHeight = 0;
 
 		for (int i = dwStart; i <= dwEnd; i++)
 		{

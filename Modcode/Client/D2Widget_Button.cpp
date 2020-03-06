@@ -1,4 +1,5 @@
 #include "D2Widget_Button.hpp"
+#include "../../Shared/D2Shared.hpp"
 
 /*
  *	Creates a new button widget item

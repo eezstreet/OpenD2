@@ -610,11 +610,14 @@ enum GraphicsUsagePolicy
 /**
  *	Graphics managers are responsible for managing texture resources.
  */
+class IGraphicsHandle;
 class IGraphicsManager
 {
 public:
-	virtual class IGraphicsHandle* LoadGraphic(const char* graphicsFile,
+	virtual IGraphicsHandle* LoadGraphic(const char* graphicsFile,
 			GraphicsUsagePolicy policy) = 0;
+
+	virtual void UnloadGraphic(IGraphicsHandle* graphic) = 0;
 };
 
 /**
