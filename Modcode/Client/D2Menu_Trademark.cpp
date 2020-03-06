@@ -15,7 +15,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 			UsagePolicy_SingleUse);
 
 	engine->renderer->SetGlobalPalette(PAL_SKY);
-	backgroundObject = engine->renderer->AllocateObject();
+	backgroundObject = engine->renderer->AllocateObject(0);
 	backgroundObject->AttachCompositeTextureResource(background, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetTextureCoords(0, 0, 800, 600);

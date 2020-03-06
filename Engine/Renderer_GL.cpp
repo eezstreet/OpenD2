@@ -5,6 +5,7 @@
 #include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
 #include <glm/ext/matrix_clip_space.hpp> // glm::perspective
 #include "FileSystem.hpp"
+#include "GraphicsManager.hpp"
 #include "Logging.hpp"
 #include "Palette.hpp"
 #include "DC6.hpp"
@@ -211,11 +212,12 @@ void GLAtlas::Finalize()
 bool GLAtlas::AddFile(const char* filePath)
 {
 	numFiles++;
+	return false;
 }
 
 uint32_t GLAtlas::GetTotalAtlasElementCount()
 {
-
+	return 0;
 }
 
 void GLAtlas::GetAtlasElementTexCoords(uint32_t index, uint32_t* x, uint32_t* y, uint32_t* w, uint32_t* h)

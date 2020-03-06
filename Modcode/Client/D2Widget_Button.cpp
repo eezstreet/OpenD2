@@ -12,17 +12,17 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	IGraphicsHandle* graphic = engine->graphics->LoadGraphic(szDC6Path,
 			UsagePolicy_Permanent);
 
-	backgroundObjectUp = engine->renderer->AllocateObject();
+	backgroundObjectUp = engine->renderer->AllocateObject(0);
 	backgroundObjectUp->AttachCompositeTextureResource(graphic, dwStartEnabled,
 			dwEndEnabled);
 	backgroundObjectUp->SetDrawCoords(x, y, -1, -1);
 
-	backgroundObjectDown = engine->renderer->AllocateObject();
+	backgroundObjectDown = engine->renderer->AllocateObject(0);
 	backgroundObjectDown->AttachCompositeTextureResource(graphic, dwStartDown,
 			dwEndDown);
 	backgroundObjectDown->SetDrawCoords(x, y, -1, -1);
 
-	backgroundObjectDisabled = engine->renderer->AllocateObject();
+	backgroundObjectDisabled = engine->renderer->AllocateObject(0);
 	backgroundObjectDisabled->AttachCompositeTextureResource(graphic,
 			dwStartDisabled, dwEndDisabled);
 	backgroundObjectDisabled->SetDrawCoords(x, y, -1, -1);

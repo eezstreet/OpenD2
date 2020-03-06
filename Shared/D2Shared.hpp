@@ -615,7 +615,7 @@ class IGraphicsManager
 public:
 	virtual class IGraphicsHandle* LoadGraphic(const char* graphicsFile,
 			GraphicsUsagePolicy policy) = 0;
-}
+};
 
 /**
  *	Each of the renderers comes from this IRenderer class.

@@ -458,7 +458,7 @@ int InitGame(int argc, char** argv)
 	}
 	
 	Window::InitSDL(&config, &openD2Config); // renderer also gets initialized here
-	exports.graphicsManager = graphicsManager;
+	exports.graphics = graphicsManager;
 	Renderer::MapRenderTargetExports(&exports);
 	Audio::Init(&openD2Config);
 

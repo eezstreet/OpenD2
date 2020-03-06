@@ -143,7 +143,7 @@ namespace D2Lib
 	 */
 	char* fnext(const char* szFileName)
 	{
-		char* szCurrent = szFileName;
+		char* szCurrent = (char*)szFileName;
 		while (szCurrent && *szCurrent != '\0' && strchr(szCurrent + 1, '.') != nullptr)
 		{
 			szCurrent++;

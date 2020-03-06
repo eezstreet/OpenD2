@@ -6,7 +6,8 @@
  */
 D2Menu_Main::D2Menu_Main() : D2Menu()
 {
-	backgroundObject = engine->renderer->AddStaticDC6("data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6", 0, 11);
+	backgroundObject = engine->renderer->AllocateObject(0);
+	//backgroundObject = engine->renderer->AddStaticDC6("data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6", 0, 11);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetTextureCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);

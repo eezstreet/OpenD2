@@ -1,6 +1,8 @@
 #pragma once
 #include "../Shared/D2Shared.hpp"
 #include "../Shared/D2HashMap.hpp"
+#include "DC6.hpp"
+#include "Palette.hpp"
 
 /**
  *	IGraphicsHandle is just a generic interface for handling various graphic formats in D2.
@@ -58,6 +60,7 @@ private:
 
 public:
 	DCCGraphicsHandle(const char* fileName);
+	DCCGraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
@@ -77,6 +80,7 @@ private:
 public:
 	DC6GraphicsHandle(const char* fileName);
 	~DC6GraphicsHandle();
+	DC6GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
@@ -94,6 +98,7 @@ private:
 
 public:
 	DT1GraphicsHandle(const char* fileName);
+	DT1GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
@@ -109,9 +114,9 @@ class PL2GraphicsHandle : public IGraphicsHandle
 private:
 	fs_handle fileHandle;
 	PL2File file;
-
 public:
 	PL2GraphicsHandle(const char* fileName);
+	PL2GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);

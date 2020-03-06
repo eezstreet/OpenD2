@@ -27,6 +27,8 @@ if(BUILD_GAME)
 
 	file(GLOB_RECURSE ENGINE_SRC Engine/*.h Engine/*.hpp Engine/*.c Engine/*.cpp)
 
+	find_package(OpenGL REQUIRED)
+
 	# Use the included SDL on Windows, use find_package to find SDL on Linux
 	if(WIN32)
 		list(REMOVE_ITEM ENGINE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Platform_Linux.cpp)
@@ -69,7 +71,7 @@ if(BUILD_GAME)
 	set_target_properties(game PROPERTIES OUTPUT_NAME game)
 	set_target_properties(game PROPERTIES LINKER_LANGUAGE CXX)
 	
-	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES})
+	target_link_libraries(game PRIVATE ${SDL2_LIBRARIES} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES})
 	target_include_directories(game PRIVATE ${SDL2_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS} ${GLM_INCLUDE_DIR})
 
 	if(WIN32)
@@ -83,7 +85,7 @@ endif()
 
 # Build D2Common.dll
 if(BUILD_D2CLIENT OR BUILD_D2SERVER)
-	message("Including D2Common.dll files")
+	message(STATUS "Including D2Common.dll files")
 
 	file(GLOB_RECURSE D2COMMON_SRC Modcode/Common/*.h Modcode/Common/*hpp Modcode/Common/*.c Modcode/Common/*.cpp)
 
@@ -104,7 +106,7 @@ endif()
 
 # Build D2Client.dll
 if(BUILD_D2CLIENT)
-	message("Including D2Client.dll files")
+	message(STATUS "Including D2Client.dll files")
 
 	file(GLOB_RECURSE D2CLIENT_SRC Modcode/Client/*.h Modcode/Client/*.hpp Modcode/Client/*.c Modcode/Client/*.cpp)
 
@@ -124,7 +126,7 @@ endif()
 
 # Build D2Server.dll
 if(BUILD_D2SERVER)
-	message("Including D2Server.dll files")
+	message(STATUS "Including D2Server.dll files")
 
 	file(GLOB_RECURSE D2SERVER_SRC Modcode/Server/*.h Modcode/Server/*.hpp Modcode/Server/*.c Modcode/Server/*.cpp)
 

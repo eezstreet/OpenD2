@@ -39,6 +39,12 @@ public:
 	virtual void SetTextureCoords(int x, int y, int w, int h);
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h);
 	void SetWidthHeight(int w, int h);
+
+	virtual void AttachTextureResource(class IGraphicsHandle* handle, int32_t frame);
+	virtual void AttachCompositeTextureResource(class IGraphicsHandle* handle, int32_t startFrame, int32_t endFrame);
+	virtual void AttachPaletteResource(class IGraphicsHandle* handle);
+	virtual void AttachAnimationResource(class IGraphicsHandle* handle);
+	virtual void AttachTokenResource(class IGraphicsHandle* handle);
 };
 
 /**
@@ -109,8 +115,8 @@ public:
 	virtual void Clear();
 	virtual void SetGlobalPalette(const D2Palettes palette);
 
-	virtual IRenderObject* AddStaticDC6(const char* dc6Path, DWORD start, DWORD end);
 	virtual IAtlas* CreateOrLoadAtlas(const char* fileName);
+	virtual IRenderObject* AllocateObject(int stage);
 	virtual void Remove(IRenderObject* Object);
 
 	Renderer_GL(D2GameConfigStrc* pConfig, OpenD2ConfigStrc* pOpenConfig, SDL_Window* pWindow);

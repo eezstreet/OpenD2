@@ -4,6 +4,8 @@
 #include "FileSystem.hpp"
 #include "Palette.hpp"
 
+GraphicsManager* graphicsManager;
+
 /**
  *	DCCGraphicsHandle is the IGraphicsHandle implementation for DCC files.
  */
@@ -118,7 +120,7 @@ void DC6GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* wi
 
 	if (end < 0)
 	{
-		end = file.header.dwFrames;
+		end = image.header.dwFrames;
 	}
 
 	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
@@ -145,7 +147,7 @@ void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start,
 
 	if (end < 0)
 	{
-		end = file.header.dwFrames;
+		end = image.header.dwFrames;
 	}
 
 	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
@@ -436,6 +438,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
+				break;
 		}
 		
 	}
@@ -461,6 +464,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
+				break;
 		}
 		
 	}
@@ -486,6 +490,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
+				break;
 		}
 	}
 	else if (!D2Lib::stricmp(ext, ".dt1"))
@@ -510,6 +515,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 
 			case UsagePolicy_Temporary:
 				// Not yet implemented
+				break;
 		}
 		
 	}
