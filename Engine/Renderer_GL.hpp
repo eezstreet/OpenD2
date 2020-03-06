@@ -18,8 +18,14 @@ class GLRenderObject : public IRenderObject
 protected:
 	BYTE palshift;
 	float screenCoord[4]; // x y w h
-	bool bAnimated;
-	
+
+	struct
+	{
+		bool bIsAnimated;
+		uint64_t lastFrameTime;
+		uint16_t currentFrame;
+		uint16_t numFrames;
+	} animationData;
 
 public:
 	unsigned int texture;

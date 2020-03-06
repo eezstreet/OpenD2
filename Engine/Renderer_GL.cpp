@@ -35,6 +35,7 @@ static unsigned int global_palshift_textures[256];
 GLRenderObject::GLRenderObject()
 {
 	bInUse = true;
+	memset(&animationData, 0, sizeof(animationData));
 }
 
 GLRenderObject::~GLRenderObject()
@@ -139,6 +140,7 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 		return;
 	}
 
+	animationData.bIsAnimated = true;
 
 }
 
