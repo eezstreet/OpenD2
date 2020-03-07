@@ -25,21 +25,26 @@ size_t DCCGraphicsHandle::GetNumberOfFrames()
 	return 0;
 }
 
-void DCCGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height)
+void DCCGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 
 }
 
-void DCCGraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DCCGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 
 }
 
-void DCCGraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
+void DCCGraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
 {
 
 }
 
+void DCCGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+{
+
+}
 
 /**
  *	DC6GraphicsHandle is the IGraphicsHandle implementation for DC6 files.
@@ -81,7 +86,8 @@ size_t DC6GraphicsHandle::GetNumberOfFrames()
 	return image.header.dwFrames;
 }
 
-void DC6GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height)
+void DC6GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 	if (!bLoaded)
 	{
@@ -104,13 +110,23 @@ void DC6GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 		*height = image.pFrames[frame].fh.dwHeight;
 	}
 
+	if (offsetX)
+	{
+		*offsetX = image.pFrames[frame].fh.dwOffsetX;
+	}
+
+	if (offsetY)
+	{
+		*offsetY = image.pFrames[frame].fh.dwOffsetY;
+	}
+
 	if (pixels)
 	{
 		*pixels = DC6::GetPixelsAtFrame(&image, 0, frame, nullptr);
 	}
 }
 
-void DC6GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DC6GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 	if (!bLoaded)
 	{
@@ -123,8 +139,19 @@ void DC6GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* wi
 		end = image.header.dwFrames - 1;
 	}
 
-	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
-	DC6::StitchStats(&image, start, end, &dwFrameWidth, &dwFrameHeight, &dwTotalWidth, &dwTotalHeight);
+
+	DWORD dwTotalWidth, dwTotalHeight;
+	
+	if (bAtlassing)
+	{
+		DC6::AtlasStats(&image, start, end, &dwTotalWidth, &dwTotalHeight);
+	}
+	else
+	{
+		DWORD dwFrameWidth, dwFrameHeight;
+		DC6::StitchStats(&image, start, end, &dwFrameWidth, &dwFrameHeight, &dwTotalWidth, &dwTotalHeight);
+	}
+	
 
 	if (width)
 	{
@@ -137,7 +164,7 @@ void DC6GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* wi
 	}
 }
 
-void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
+void DC6GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
 {
 	if (!bLoaded)
 	{
@@ -150,24 +177,82 @@ void DC6GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start,
 		end = image.header.dwFrames - 1;
 	}
 
-	DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
-	DC6::StitchStats(&image, start, end, &dwFrameWidth, &dwFrameHeight, &dwTotalWidth, &dwTotalHeight);
-
-	for (int i = 0; i <= end - start; i++)
+	if (bAtlassing)
 	{
-		DC6Frame* pFrame = &image.pFrames[start + i];
-
-		int dwBlitToX = (i % dwFrameWidth) * 256;
-		int dwBlitToY = (int)floor(i / (float)dwFrameWidth) * 255;
-
-		if (callback)
+		int currentX = 0;
+		int currentY = 0;
+		for (int i = 0; i <= end - start; i++)
 		{
-			callback(DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr), start + i,
-				dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight);
+			DC6Frame* pFrame = &image.pFrames[start + i];
+			if (callback)
+			{
+				callback(DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr), start + i,
+					currentX, currentY, pFrame->fh.dwWidth, pFrame->fh.dwHeight);
+			}
+
+			currentX += image.dwMaxFrameWidth;
+			if (currentX + image.dwMaxFrameWidth > 4096) // arbitrary cutoff
+			{
+				currentX = 0;
+				currentY += image.dwMaxFrameHeight;
+			}
 		}
 	}
+	else
+	{
+		DWORD dwTotalWidth, dwTotalHeight, dwFrameWidth, dwFrameHeight;
+		DC6::StitchStats(&image, start, end, &dwFrameWidth, &dwFrameHeight, &dwTotalWidth, &dwTotalHeight);
+
+		for (int i = 0; i <= end - start; i++)
+		{
+			DC6Frame* pFrame = &image.pFrames[start + i];
+
+			int dwBlitToX = (i % dwFrameWidth) * 256;
+			int dwBlitToY = (int)floor(i / (float)dwFrameWidth) * 255;
+
+			if (callback)
+			{
+				callback(DC6::GetPixelsAtFrame(&image, 0, start + i, nullptr), start + i,
+					dwBlitToX, dwBlitToY, pFrame->fh.dwWidth, pFrame->fh.dwHeight);
+			}
+		}
+	}
+	
 }
 
+void DC6GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+{
+	*totalWidth = 0;
+	*totalHeight = 0;
+
+	int currentX = 0;
+	int maxX = 0;
+	int currentY = 0;
+	for (int i = 0; i < image.header.dwFrames; i++)
+	{
+		if (i == frame)
+		{
+			*x = currentX;
+			*y = currentY;
+		}
+
+		currentX += image.dwMaxFrameWidth;
+		if (currentX + image.dwMaxFrameWidth > 4096)
+		{
+			maxX = currentX - image.dwMaxFrameWidth;
+			currentX = 0;
+			currentY += image.dwMaxFrameHeight;
+		}
+	}
+
+	if (maxX == 0)
+	{
+		maxX = currentX;
+	}
+
+	*totalWidth = maxX + image.dwMaxFrameWidth;
+	*totalHeight = currentY + image.dwMaxFrameHeight;
+}
 
 /**
  *	DT1GraphicsHandle is the IGraphicsHandle implementation for DT1 files.
@@ -188,17 +273,23 @@ size_t DT1GraphicsHandle::GetNumberOfFrames()
 	return 0;
 }
 
-void DT1GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height)
+void DT1GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 
 }
 
-void DT1GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DT1GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 
 }
 
-void DT1GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
+void DT1GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
+{
+
+}
+
+void DT1GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
 {
 
 }
@@ -226,7 +317,8 @@ size_t PL2GraphicsHandle::GetNumberOfFrames()
 	return PL2_NumEntries;
 }
 
-void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height)
+void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 	if (height)
 	{
@@ -389,12 +481,17 @@ void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* 
 	}
 }
 
-void PL2GraphicsHandle::GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void PL2GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 	// should not be used?
 }
 
-void PL2GraphicsHandle::IterateFrames(AtlassingCallback callback, int32_t start, int32_t end)
+void PL2GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
+{
+
+}
+
+void PL2GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
 {
 
 }

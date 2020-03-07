@@ -18,6 +18,7 @@ class GLRenderObject : public IRenderObject
 protected:
 	BYTE palshift;
 	float screenCoord[4]; // x y w h
+	float textureCoord[4]; //x y w h (normalized)
 
 	struct
 	{
@@ -25,6 +26,8 @@ protected:
 		uint64_t lastFrameTime;
 		uint16_t currentFrame;
 		uint16_t numFrames;
+		uint32_t frameRate;
+		class IGraphicsHandle* attachedAnimationResource;
 	} animationData;
 
 public:
@@ -49,6 +52,8 @@ public:
 	virtual void AttachPaletteResource(class IGraphicsHandle* handle);
 	virtual void AttachAnimationResource(class IGraphicsHandle* handle);
 	virtual void AttachTokenResource(class IGraphicsHandle* handle);
+
+	virtual void SetFramerate(int framerate);
 };
 
 /**

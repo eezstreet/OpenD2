@@ -13,12 +13,43 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	IGraphicsHandle* background = engine->graphics->LoadGraphic(
 			"data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6",
 			UsagePolicy_SingleUse);
+	IGraphicsHandle* flameTexLeft = engine->graphics->LoadGraphic(
+		"data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6",
+		UsagePolicy_Permanent
+	);
+	IGraphicsHandle* flameTexRight = engine->graphics->LoadGraphic(
+		"data\\global\\ui\\FrontEnd\\D2LogoFireRight.dc6",
+		UsagePolicy_Permanent
+	);
+	IGraphicsHandle* blackTexLeft = engine->graphics->LoadGraphic(
+		"data\\global\\ui\\FrontEnd\\D2LogoBlackLeft.dc6",
+		UsagePolicy_Permanent
+	);
+	IGraphicsHandle* blackTexRight = engine->graphics->LoadGraphic(
+		"data\\global\\ui\\FrontEnd\\D2LogoBlackRight.dc6",
+		UsagePolicy_Permanent
+	);
 
 	engine->renderer->SetGlobalPalette(PAL_SKY);
 	backgroundObject = engine->renderer->AllocateObject(0);
 	backgroundObject->AttachCompositeTextureResource(background, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);
+
+	flameLeft = engine->renderer->AllocateObject(0);
+	flameRight = engine->renderer->AllocateObject(0);
+	blackLeft = engine->renderer->AllocateObject(0);
+	blackRight = engine->renderer->AllocateObject(0);
+
+	flameLeft->AttachAnimationResource(flameTexLeft);
+	flameRight->AttachAnimationResource(flameTexRight);
+	blackLeft->AttachAnimationResource(blackTexLeft);
+	blackRight->AttachAnimationResource(blackTexRight);
+
+	flameLeft->SetDrawCoords(400, -50, -1, -1);
+	flameRight->SetDrawCoords(400, -57, -1, -1);
+	blackLeft->SetDrawCoords(400, -7, -1, -1);
+	blackRight->SetDrawCoords(400, -7, -1, -1);
 
 	// Background isn't needed at this point, it should be in VRAM
 	engine->graphics->UnloadGraphic(background);
@@ -63,6 +94,10 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 D2Menu_Trademark::~D2Menu_Trademark()
 {
 	engine->renderer->Remove(backgroundObject);
+	engine->renderer->Remove(flameLeft);
+	engine->renderer->Remove(flameRight);
+	engine->renderer->Remove(blackLeft);
+	engine->renderer->Remove(blackRight);
 #if 0
 	engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
 #endif
@@ -90,6 +125,10 @@ bool D2Menu_Trademark::WaitingSignal()
 void D2Menu_Trademark::Draw()
 {
 	backgroundObject->Draw();
+	blackLeft->Draw();
+	blackRight->Draw();
+	flameLeft->Draw();
+	flameRight->Draw();
 #if 0
 	// Draw the background
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);

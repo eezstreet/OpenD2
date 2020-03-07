@@ -675,6 +675,7 @@ public:
 	virtual void SetPalshift(BYTE palette) = 0;
 	virtual void SetDrawCoords(int x, int y, int w, int h) = 0;
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h) = 0;
+	virtual void SetFramerate(int framerate) = 0;
 };
 
 //////////////////////////////////////////////////

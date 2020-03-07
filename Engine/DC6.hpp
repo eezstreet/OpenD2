@@ -50,6 +50,8 @@ struct DC6Image
 	DWORD			dwTotalWidth;
 	DWORD			dwTotalHeight;
 	bool			bPixelsFreed;
+	DWORD			dwMaxFrameWidth;
+	DWORD			dwMaxFrameHeight;
 };
 
 // TODO: fix this
@@ -67,5 +69,6 @@ namespace DC6
 		DWORD* dwWidth, DWORD* dwHeight, DWORD* dwOffsetX, DWORD* dwOffsetY);
 	void StitchStats(DC6Image* pImage,
 		DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
+	void AtlasStats(DC6Image* pImage, DWORD dwStart, DWORD dwEnd, DWORD* pTotalWidth, DWORD* pTotalHeight);
 	void FreePixels(DC6Image* pImage);
 };

@@ -97,6 +97,9 @@ namespace DC6
 		pImage->pFrames = (DC6Frame*)malloc(sizeof(DC6Frame) * dwNumFrames);
 		Log_ErrorAssert(pImage->pFrames != nullptr);
 
+		pImage->dwMaxFrameWidth = 0;
+		pImage->dwMaxFrameHeight = 0;
+
 		// Read each frame's header, and then decode the blocks
 		for (i = 0; i < pImage->header.dwDirections; i++)
 		{
@@ -129,6 +132,15 @@ namespace DC6
 				if (pFrame->fh.dwHeight > dwDirectionHeight)
 				{
 					dwDirectionHeight = pFrame->fh.dwHeight;
+				}
+
+				if (pFrame->fh.dwWidth > pImage->dwMaxFrameWidth)
+				{
+					pImage->dwMaxFrameWidth = pFrame->fh.dwWidth;
+				}
+				if (pFrame->fh.dwHeight > pImage->dwMaxFrameHeight)
+				{
+					pImage->dwMaxFrameHeight = pFrame->fh.dwHeight;
 				}
 			}
 
@@ -256,10 +268,44 @@ namespace DC6
 		}
 	}
 
+	/**
+	 *	Get row width and height (for atlassed DC6)
+	 */
+	void AtlasStats(DC6Image* pImage, DWORD dwStart, DWORD dwEnd, DWORD* pTotalWidth, DWORD* pTotalHeight)
+	{
+		Log_WarnAssert(dwStart >= 0 && dwStart <= dwEnd && dwStart < pImage->header.dwFrames);
+		Log_WarnAssert(dwEnd >= 0 && dwEnd < pImage->header.dwFrames);
+		Log_WarnAssert(pTotalWidth && pTotalHeight);
+
+		*pTotalWidth = 0;
+		*pTotalHeight = 0;
+
+		int currentX = 0;
+		int maxX = 0;
+		int currentY = 0;
+		for (int i = dwStart; i <= dwEnd; i++)
+		{
+			currentX += pImage->dwMaxFrameWidth;
+			if (currentX + pImage->dwMaxFrameWidth > 4096)
+			{
+				maxX = currentX - pImage->dwMaxFrameWidth;
+				currentX = 0;
+				currentY += pImage->dwMaxFrameHeight;
+			}
+		}
+
+		if (maxX == 0)
+		{
+			maxX = currentX;
+		}
+
+		*pTotalWidth = maxX + pImage->dwMaxFrameWidth;
+		*pTotalHeight = currentY + pImage->dwMaxFrameHeight;
+	}
+
 	/*
 	*	Retrieve row width and height (for stitched DC6)
 	*/
-
 	void StitchStats(DC6Image* pImage,
 		DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight)
 	{

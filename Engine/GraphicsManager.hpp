@@ -28,7 +28,8 @@ public:
 	 *	@param width      Optional output: width of the frame.
 	 *	@param height     Optional output: height of the frame. 
 	 */
-	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height) = 0;
+	virtual void GetGraphicsData(void** pixels, int32_t frame,
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY) = 0;
 
 	typedef void(*AtlassingCallback)(void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH);
 	/**
@@ -37,7 +38,7 @@ public:
 	 *	@param start      The first frame to iterate over
 	 *	@param end        The last frame to iterate over (negative to iterate over all frames)
 	 */
-	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end) = 0;
+	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback) = 0;
 
 	/**
 	 *	Gets the graphics data for a subset of frames.
@@ -47,7 +48,12 @@ public:
 	 *	@param width      Optional output: width of pixels outputted
 	 *	@param height     Optional output: height of pixels outputted
 	 */
-	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height) = 0;
+	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height) = 0;
+
+	/**
+	 *	Gets the atlassed information for a resource and a frame.
+	 */
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight) = 0;
 };
 
 /**
@@ -63,9 +69,11 @@ public:
 	DCCGraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
-	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
-	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
+	virtual void GetGraphicsData(void** pixels, int32_t frame,
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 };
 
 /**
@@ -83,9 +91,11 @@ public:
 	DC6GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
-	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
-	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
+	virtual void GetGraphicsData(void** pixels, int32_t frame,
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 };
 
 /**
@@ -101,9 +111,11 @@ public:
 	DT1GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
-	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
-	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
+	virtual void GetGraphicsData(void** pixels, int32_t frame, 
+		 uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 };
 
 /**
@@ -119,9 +131,11 @@ public:
 	PL2GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
-	virtual void GetGraphicsData(void** pixels, int32_t frame, uint32_t* width, uint32_t* height);
-	virtual void GetGraphicsInfo(int32_t start, int32_t end, uint32_t* width, uint32_t* height);
-	virtual void IterateFrames(AtlassingCallback callback, int32_t start, int32_t end);
+	virtual void GetGraphicsData(void** pixels, int32_t frame,
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 };
 
 

@@ -15,6 +15,10 @@ private:
 	DWORD dwStartTicks;
 
 	IRenderObject* backgroundObject;
+	IRenderObject* flameLeft;
+	IRenderObject* flameRight;
+	IRenderObject* blackLeft;
+	IRenderObject* blackRight;
 
 public:
 	D2Menu_Trademark();

@@ -22,12 +22,24 @@ static GLint uniform_ui_globalpal;
 static GLint uniform_ui_modelViewProjection;
 static GLint uniform_ui_globalPaletteNum;
 static GLint uniform_ui_drawPosition;
+static GLint uniform_ui_textureCoords;
 
 static unsigned int global_palette = 0;
 
 static unsigned int global_program[RenderPass_NumRenderPasses];
 static unsigned int global_palette_texture;
 static unsigned int global_palshift_textures[256];
+
+static GLfloat defaultQuadVertices[] = {
+	// Pos      // Tex
+	0.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 0.0f,
+
+	0.0f, 1.0f, 0.0f, 1.0f,
+	1.0f, 1.0f, 1.0f, 1.0f,
+	1.0f, 0.0f, 1.0f, 0.0f
+};
 
 /**
  * GLRenderObjects are things that are rendered onscreen.
@@ -36,6 +48,11 @@ GLRenderObject::GLRenderObject()
 {
 	bInUse = true;
 	memset(&animationData, 0, sizeof(animationData));
+
+	textureCoord[0] = 0.0f;
+	textureCoord[1] = 0.0f;
+	textureCoord[2] = 1.0f;
+	textureCoord[3] = 1.0f;
 }
 
 GLRenderObject::~GLRenderObject()
@@ -51,6 +68,44 @@ void GLRenderObject::Draw()
 
 void GLRenderObject::Render()
 {
+	if (animationData.bIsAnimated)
+	{
+		// update animation frame and set texture coordinates, if appropriate
+		uint64_t ticks = SDL_GetTicks();
+		uint16_t lastFrame = animationData.currentFrame;
+		animationData.currentFrame += (ticks - animationData.lastFrameTime) / (1000 / animationData.frameRate);
+		animationData.currentFrame %= animationData.numFrames;
+		if (lastFrame != animationData.currentFrame)
+		{
+			// the animation changed frames, as such, we need to define new texture coordinates
+			animationData.lastFrameTime = ticks;
+		}
+
+		uint32_t frameWidth, frameHeight;
+		int32_t offsetX, offsetY;
+		animationData.attachedAnimationResource->GetGraphicsData(nullptr, animationData.currentFrame,
+			&frameWidth, &frameHeight, &offsetX, &offsetY);
+
+		GLfloat drawCoords[] = { screenCoord[0] + offsetX,
+			screenCoord[1] + offsetY + 1, // offset is supposed to be additive downwards, perhaps..?
+			frameWidth,
+			frameHeight - 1
+		};
+
+		uint32_t x, y, w, h;
+		animationData.attachedAnimationResource->GetAtlasInfo(animationData.currentFrame, &x, &y, &w, &h);
+		textureCoord[0] = x / (float)w;
+		textureCoord[1] = y / (float)h;
+		textureCoord[2] = frameWidth / (float)w;
+		textureCoord[3] = frameHeight / (float)h;
+
+		glUniform4fv(uniform_ui_drawPosition, 1, drawCoords);
+	}
+	else
+	{
+		glUniform4fv(uniform_ui_drawPosition, 1, screenCoord);
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glActiveTexture(GL_TEXTURE1);
@@ -58,7 +113,8 @@ void GLRenderObject::Render()
 	glUniform1i(uniform_ui_texture, 0);
 	glUniform1i(uniform_ui_globalpal, 1);
 	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
-	glUniform4fv(uniform_ui_drawPosition, 1, screenCoord);
+	glUniform4fv(uniform_ui_textureCoords, 1, textureCoord);
+	
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -74,10 +130,12 @@ void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t fram
 		return;
 	}
 
+	memset(&animationData, 0, sizeof(animationData));
+
 	void* pixels;
 	uint32_t frameW, frameH;
 
-	handle->GetGraphicsData(&pixels, frame, &frameW, &frameH);
+	handle->GetGraphicsData(&pixels, frame, &frameW, &frameH, nullptr, nullptr);
 
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -95,6 +153,8 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 		return;
 	}
 
+	memset(&animationData, 0, sizeof(animationData));
+
 	if(startFrame < 0)
 	{
 		startFrame = 0;
@@ -108,7 +168,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 		endFrame = swap;
 	}
 
-	handle->GetGraphicsInfo(startFrame, endFrame, &width, &height);
+	handle->GetGraphicsInfo(false, startFrame, endFrame, &width, &height);
 	screenCoord[2] = width;
 	screenCoord[3] = height;
 
@@ -122,11 +182,14 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	handle->IterateFrames([](void* pixels, int32_t frameNum, int32_t frameX,
-				int32_t frameY, int32_t frameW, int32_t frameH) {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
-				GL_UNSIGNED_BYTE, pixels);
-	}, startFrame, endFrame);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	handle->IterateFrames(false, startFrame, endFrame,
+		[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+					GL_UNSIGNED_BYTE, pixels);
+		}
+	);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 }
 
 void GLRenderObject::AttachPaletteResource(IGraphicsHandle* handle)
@@ -140,8 +203,37 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 		return;
 	}
 
+	// turn on animation
 	animationData.bIsAnimated = true;
+	animationData.numFrames = handle->GetNumberOfFrames();
+	animationData.currentFrame = 0;
+	animationData.lastFrameTime = SDL_GetTicks();
+	animationData.frameRate = 25;
+	animationData.attachedAnimationResource = handle;
 
+	// make texture atlas
+	uint32_t width, height;
+	handle->GetGraphicsInfo(true, 0, -1, &width, &height);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
+		GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	handle->IterateFrames(true, 0, -1, 
+		[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+				GL_UNSIGNED_BYTE, pixels);
+			
+		}
+	);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 }
 
 void GLRenderObject::AttachTokenResource(IGraphicsHandle* handle)
@@ -195,6 +287,11 @@ void GLRenderObject::SetWidthHeight(int w, int h)
 {
 	screenCoord[2] = w;
 	screenCoord[3] = h;
+}
+
+void GLRenderObject::SetFramerate(int framerate)
+{
+	animationData.frameRate = framerate;
 }
 
 /**
@@ -372,19 +469,8 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
-	GLfloat vertices[] = {
-		// Pos      // Tex
-		0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 0.0f,
-
-		0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 1.0f, 1.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 0.0f
-	};
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(defaultQuadVertices), defaultQuadVertices, GL_DYNAMIC_DRAW);
 
 	glBindVertexArray(VAO);
 	glEnableVertexAttribArray(0);
@@ -513,12 +599,13 @@ const char* __staticDC6_Vertex = "#version 330 core                            \
 layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>       \n\
 uniform mat4 ModelViewProjection;                                              \n\
 uniform vec4 DrawPosition;                                                     \n\
+uniform vec4 TexPosition;                                                      \n\
 out vec2 TexCoords;                                                            \n\
                                                                                \n\
 void main()                                                                    \n\
 {                                                                              \n\
 	vec2 NewPos = vec2((vertex.x * DrawPosition.z) + DrawPosition.x, (vertex.y * DrawPosition.w) + DrawPosition.y);                                 \n\
-	TexCoords = vertex.zw;                                                     \n\
+	TexCoords = vec2(TexPosition.x + (vertex.z * TexPosition.z), TexPosition.y + (vertex.w * TexPosition.w));                                                     \n\
 	gl_Position = ModelViewProjection * vec4(NewPos.xy, 0.0, 1.0);             \n\
 }                                                                              \
 ";
@@ -566,6 +653,7 @@ void Renderer_GL::InitShaders()
 		uniform_ui_texture = glGetUniformLocation(program, "Texture");
 		uniform_ui_globalPaletteNum = glGetUniformLocation(program, "GlobalPaletteNum");
 		uniform_ui_drawPosition = glGetUniformLocation(program, "DrawPosition");
+		uniform_ui_textureCoords = glGetUniformLocation(program, "TexPosition");
 		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, "ModelViewProjection"), 1, false, glm::value_ptr(mvp));
 	});
