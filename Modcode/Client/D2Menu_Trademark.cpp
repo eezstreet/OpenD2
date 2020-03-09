@@ -46,10 +46,10 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	blackLeft->AttachAnimationResource(blackTexLeft);
 	blackRight->AttachAnimationResource(blackTexRight);
 
-	flameLeft->SetDrawCoords(400, -50, -1, -1);
-	flameRight->SetDrawCoords(400, -50, -1, -1);
-	blackLeft->SetDrawCoords(400, -7, -1, -1);
-	blackRight->SetDrawCoords(400, -7, -1, -1);
+	flameLeft->SetDrawCoords(400, -285, -1, -1);
+	flameRight->SetDrawCoords(400, -285, -1, -1);
+	blackLeft->SetDrawCoords(400, -285, -1, -1);
+	blackRight->SetDrawCoords(400, -285, -1, -1);
 
 	// Background isn't needed at this point, it should be in VRAM
 	engine->graphics->UnloadGraphic(background);
