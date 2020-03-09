@@ -47,7 +47,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	blackRight->AttachAnimationResource(blackTexRight);
 
 	flameLeft->SetDrawCoords(400, -50, -1, -1);
-	flameRight->SetDrawCoords(400, -57, -1, -1);
+	flameRight->SetDrawCoords(400, -50, -1, -1);
 	blackLeft->SetDrawCoords(400, -7, -1, -1);
 	blackRight->SetDrawCoords(400, -7, -1, -1);
 
@@ -110,11 +110,11 @@ bool D2Menu_Trademark::WaitingSignal()
 {
 	DWORD dwTicks;
 	dwTicks = engine->Milliseconds();
-	if (dwTicks - dwStartTicks >= 10000)
+	/*if (dwTicks - dwStartTicks >= 10000)
 	{
 		NotifySignalReady(TrademarkSignal, nullptr, nullptr);
 		return true;
-	}
+	}*/
 	return bSignalReady;
 }
 
@@ -153,7 +153,7 @@ void D2Menu_Trademark::Draw()
 bool D2Menu_Trademark::HandleMouseClicked(DWORD dwX, DWORD dwY)
 {
 	// if mouse is clicked, go to main menu
-	NotifySignalReady(TrademarkSignal, nullptr, nullptr);
+	//NotifySignalReady(TrademarkSignal, nullptr, nullptr);
 	return true;
 }
 

@@ -87,15 +87,15 @@ void GLRenderObject::Render()
 			&frameWidth, &frameHeight, &offsetX, &offsetY);
 
 		GLfloat drawCoords[] = { screenCoord[0] + offsetX,
-			screenCoord[1] + offsetY + 1, // offset is supposed to be additive downwards, perhaps..?
+			screenCoord[1] + 400 - frameHeight + offsetY, // offset is supposed to be additive downwards, perhaps..?
 			frameWidth,
 			frameHeight - 1
 		};
 
 		uint32_t x, y, w, h;
 		animationData.attachedAnimationResource->GetAtlasInfo(animationData.currentFrame, &x, &y, &w, &h);
-		textureCoord[0] = x / (float)w;
-		textureCoord[1] = y / (float)h;
+		textureCoord[0] = (x) / (float)w;
+		textureCoord[1] = (y) / (float)h;
 		textureCoord[2] = frameWidth / (float)w;
 		textureCoord[3] = frameHeight / (float)h;
 
@@ -463,7 +463,10 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 
 	for (int i = 0; i < PAL_MAX_PALETTES; i++)
 	{
+		BYTE rgba[] = { 0, 0, 0, 0 };
+
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, i, 256, 1, GL_BGR, GL_UNSIGNED_BYTE, Pal::GetPalette(i));
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, i, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
 	}
 
 	glGenVertexArrays(1, &VAO);
@@ -707,7 +710,9 @@ void Renderer_GL::Present()
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	glBindVertexArray(VAO);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	// Iterate through the number of drawn things this frame
 	for (int i = 0; i < RenderPass_NumRenderPasses; i++)
 	{
