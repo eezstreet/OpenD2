@@ -70,6 +70,43 @@ void GLRenderObject::Draw()
 
 void GLRenderObject::Render()
 {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, global_palette_texture);
+	glUniform1i(uniform_ui_texture, 0);
+	glUniform1i(uniform_ui_globalpal, 1);
+	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
+
+	switch (drawMode)
+	{
+		case 0:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 1:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 2:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 3:
+			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
+			break;
+		case 4:
+			glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		default:
+		case 5:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 6:
+			glBlendFunc(GL_SRC_COLOR, GL_ONE);
+			break;
+		case 7:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+	}
+
 	if (objectType == RO_Animated)
 	{
 		// update animation frame and set texture coordinates, if appropriate
@@ -104,49 +141,46 @@ void GLRenderObject::Render()
 
 		glUniform4fv(uniform_ui_drawPosition, 1, drawCoords);
 	}
+	else if(objectType == RO_Text)
+	{
+		char16_t* p = data.textData.text;
+		IGraphicsHandle* fontResource = data.textData.attachedFontResource;
+		uint32_t glyphWidth, glyphHeight, glyphOffsetX, glyphOffsetY;
+		uint32_t currentDrawX = screenCoord[0];
+
+		GLfloat drawCoord[] = {
+			screenCoord[0], screenCoord[1], 0, 0
+		};
+
+		while(p && *p)
+		{	// draw each individual letter
+			fontResource->GetGraphicsData(nullptr, *p, &glyphWidth, &glyphHeight, &glyphOffsetX, &glyphOffsetY);
+			
+			textureCoord[0] = glyphOffsetX / (float)w;
+			textureCoord[1] = glyphOffsetY / (float)h;
+			textureCoord[2] = (glyphOffsetX + glyphWidth) / (float)w;
+			textureCoord[3] = (glyphOffsetY + glyphHeight) / (float)h;
+
+			drawCoord[0] = currentDrawX;
+			drawCoord[2] = currentDrawX + glyphWidth;
+			drawCoord[3] = screenCoord[1] + glyphHeight;
+
+			glUniform4fv(uniform_ui_textureCoords, 1, textureCoord);
+			glUniform4fv(uniform_ui_drawPosition, 1, drawCoord);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			currentDrawX += glyphWidth;
+			p++;
+		}
+		return;	
+	}
 	else
 	{
 		glUniform4fv(uniform_ui_drawPosition, 1, screenCoord);
 	}
 
-	switch (drawMode)
-	{
-		case 0:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 1:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 2:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 3:
-			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
-			break;
-		case 4:
-			glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		default:
-		case 5:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 6:
-			glBlendFunc(GL_SRC_COLOR, GL_ONE);
-			break;
-		case 7:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-	}
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, global_palette_texture);
-	glUniform1i(uniform_ui_texture, 0);
-	glUniform1i(uniform_ui_globalpal, 1);
-	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
 	glUniform4fv(uniform_ui_textureCoords, 1, textureCoord);
-	
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

@@ -524,7 +524,28 @@ size_t FontGraphicsHandle::GetNumberOfFrames()
 void FontGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width,
 	uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
+	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
+	if(!fontFile || frame >= 256)
+	{
+		return;
+	}
 
+	if(width)
+	{
+		*width = fontFile->glyphs[frame].nWidth;
+	}
+	if(height)
+	{
+		*height = fontFile->glyphs[frame].nHeight;
+	}
+	if(offsetX)
+	{
+		*offsetX = fontFile->glyphs[frame].dwUnknown4;
+	}
+	if(offsetY)
+	{
+		*offsetY = fontFile->glyphs[frame].wUnknown3;
+	}
 }
 
 void FontGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end,
