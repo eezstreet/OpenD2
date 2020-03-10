@@ -5,7 +5,7 @@
 enum GLRenderPasses
 {
 	RenderPass_UI,
-//	RenderPass_Text,
+	RenderPass_Text,
 	RenderPass_NumRenderPasses,
 };
 
@@ -21,15 +21,30 @@ protected:
 	float textureCoord[4]; //x y w h (normalized)
 	int drawMode;
 
-	struct
+	enum
 	{
-		bool bIsAnimated;
-		uint64_t lastFrameTime;
-		uint16_t currentFrame;
-		uint16_t numFrames;
-		uint32_t frameRate;
-		class IGraphicsHandle* attachedAnimationResource;
-	} animationData;
+		RO_Static,
+		RO_Animated,
+		RO_Text,
+	} objectType;
+
+	union
+	{
+		struct
+		{
+			uint64_t lastFrameTime;
+			uint16_t currentFrame;
+			uint16_t numFrames;
+			uint32_t frameRate;
+			class IGraphicsHandle* attachedAnimationResource;
+		} animationData;
+
+		struct
+		{
+			class IGraphicsHandle* attachedFontResource;
+			char16_t text[128];
+		} textData;
+	} data;
 
 public:
 	unsigned int texture;
@@ -53,9 +68,11 @@ public:
 	virtual void AttachPaletteResource(class IGraphicsHandle* handle);
 	virtual void AttachAnimationResource(class IGraphicsHandle* handle);
 	virtual void AttachTokenResource(class IGraphicsHandle* handle);
+	virtual void AttachFontResource(class IGraphicsHandle* handle);
 
 	virtual void SetFramerate(int framerate);
 	virtual void SetDrawMode(int drawMode);
+	virtual void SetText(const char16_t* text);
 };
 
 /**

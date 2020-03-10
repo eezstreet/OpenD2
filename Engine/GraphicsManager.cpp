@@ -3,6 +3,7 @@
 #include "Logging.hpp"
 #include "FileSystem.hpp"
 #include "Palette.hpp"
+#include "TBL_Font.hpp"
 
 GraphicsManager* graphicsManager;
 
@@ -496,6 +497,66 @@ void PL2GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 
 }
 
+/**
+ *	Font handles are used to load fonts.
+ */
+FontGraphicsHandle::FontGraphicsHandle(const char* graphicsFile, const char* tbl)
+{
+	tblHandle = TBLFont::RegisterFont(tbl);
+	DC6::LoadImage(graphicsFile, &image);
+}
+
+FontGraphicsHandle::~FontGraphicsHandle()
+{
+	DC6::UnloadImage(&image);
+}
+
+size_t FontGraphicsHandle::GetTotalSizeInBytes(int32_t frame)
+{
+	return 0;
+}
+
+size_t FontGraphicsHandle::GetNumberOfFrames()
+{
+	return 0;
+}
+
+void FontGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width,
+	uint32_t* height, int32_t* offsetX, int32_t* offsetY)
+{
+
+}
+
+void FontGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end,
+	uint32_t* width, uint32_t* height)
+{
+	uint32_t maxWidth = 0;
+	uint32_t maxHeight = 0;
+	uint32_t totalHeight = 0;
+
+	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
+	
+	for (int i = 0; i < 256; i++)
+	{
+	}
+}
+
+void FontGraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end,
+	AtlassingCallback callback)
+{
+
+}
+
+void FontGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y,
+	uint32_t* totalWidth, uint32_t* totalHeight)
+{
+	
+}
+
+/**
+ *	The graphics manager.
+ */
+
 GraphicsManager::GraphicsManager()
 {
 
@@ -614,7 +675,6 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 				// Not yet implemented
 				break;
 		}
-		
 	}
 	else
 	{
@@ -626,4 +686,22 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 void GraphicsManager::UnloadGraphic(IGraphicsHandle* graphic)
 {
 	delete graphic;
+}
+
+IGraphicsHandle* GraphicsManager::LoadFont(const char* fontGraphic,
+	const char* fontTBL)
+{
+	handle theHandle;
+	bool bFull;
+
+	if (!Fonts.Contains(fontTBL, &theHandle, &bFull))
+	{
+		if (bFull)
+		{
+			return nullptr; // it's full
+		}
+
+		Fonts.Insert(theHandle, fontTBL, new FontGraphicsHandle(fontGraphic, fontTBL));
+	}
+	return Fonts[theHandle];
 }

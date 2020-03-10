@@ -138,6 +138,28 @@ public:
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 };
 
+/**
+ *	FontGraphicsHandle is the IGraphicsHandle implementation of fonts.
+ */
+class FontGraphicsHandle : public IGraphicsHandle
+{
+private:
+	DC6Image image;
+	tbl_handle tblHandle;
+
+public:
+	FontGraphicsHandle(const char* graphicsFile, const char* tbl);
+	~FontGraphicsHandle();
+
+	virtual size_t GetTotalSizeInBytes(int32_t frame);
+	virtual size_t GetNumberOfFrames();
+	virtual void GetGraphicsData(void** pixels, int32_t frame,
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+};
+
 
 /**
  *	GraphicsManager provides a format-agnostic interface for handling graphics files.
@@ -150,6 +172,7 @@ private:
 	HashMap<char, DC6GraphicsHandle*> DC6Graphics;
 	HashMap<char, DT1GraphicsHandle*> DT1Graphics;
 	HashMap<char, PL2GraphicsHandle*> PL2Graphics;
+	HashMap<char, FontGraphicsHandle*> Fonts;
 
 public:
 	GraphicsManager();
@@ -159,6 +182,9 @@ public:
 			GraphicsUsagePolicy policy);
 
 	virtual void UnloadGraphic(IGraphicsHandle* handle);
+
+	virtual IGraphicsHandle* LoadFont(const char* fontGraphic,
+		const char* fontTBL);
 };
 
 extern GraphicsManager* graphicsManager;

@@ -618,6 +618,9 @@ public:
 			GraphicsUsagePolicy policy) = 0;
 
 	virtual void UnloadGraphic(IGraphicsHandle* graphic) = 0;
+
+	virtual IGraphicsHandle* LoadFont(const char* fontGraphic,
+		const char* fontTBL) = 0;
 };
 
 /**
@@ -671,12 +674,14 @@ public:
 	virtual void AttachPaletteResource(class IGraphicsHandle* handle) = 0;
 	virtual void AttachAnimationResource(class IGraphicsHandle* handle) = 0;
 	virtual void AttachTokenResource(class IGraphicsHandle* handle) = 0;
+	virtual void AttachFontResource(class IGraphicsHandle* handle) = 0;
 
 	virtual void SetPalshift(BYTE palette) = 0;
 	virtual void SetDrawCoords(int x, int y, int w, int h) = 0;
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h) = 0;
 	virtual void SetFramerate(int framerate) = 0;
 	virtual void SetDrawMode(int drawMode) = 0;
+	virtual void SetText(const char16_t* text) = 0;
 };
 
 //////////////////////////////////////////////////

@@ -47,7 +47,8 @@ static GLfloat defaultQuadVertices[] = {
 GLRenderObject::GLRenderObject()
 {
 	bInUse = true;
-	memset(&animationData, 0, sizeof(animationData));
+	memset(&data, 0, sizeof(data));
+	objectType = RO_Static;
 	drawMode = 0;
 
 	textureCoord[0] = 0.0f;
@@ -69,22 +70,23 @@ void GLRenderObject::Draw()
 
 void GLRenderObject::Render()
 {
-	if (animationData.bIsAnimated)
+	if (objectType == RO_Animated)
 	{
 		// update animation frame and set texture coordinates, if appropriate
 		uint64_t ticks = SDL_GetTicks();
-		uint16_t lastFrame = animationData.currentFrame;
-		animationData.currentFrame += (ticks - animationData.lastFrameTime) / (1000 / animationData.frameRate);
-		animationData.currentFrame %= animationData.numFrames;
-		if (lastFrame != animationData.currentFrame)
+		uint16_t lastFrame = data.animationData.currentFrame;
+		
+		data.animationData.currentFrame += (ticks - data.animationData.lastFrameTime) / (1000 / data.animationData.frameRate);
+		data.animationData.currentFrame %= data.animationData.numFrames;
+		if (lastFrame != data.animationData.currentFrame)
 		{
 			// the animation changed frames, as such, we need to define new texture coordinates
-			animationData.lastFrameTime = ticks;
+			data.animationData.lastFrameTime = ticks;
 		}
 
 		uint32_t frameWidth, frameHeight;
 		int32_t offsetX, offsetY;
-		animationData.attachedAnimationResource->GetGraphicsData(nullptr, animationData.currentFrame,
+		data.animationData.attachedAnimationResource->GetGraphicsData(nullptr, data.animationData.currentFrame,
 			&frameWidth, &frameHeight, &offsetX, &offsetY);
 
 		GLfloat drawCoords[] = { screenCoord[0] + offsetX,
@@ -94,7 +96,7 @@ void GLRenderObject::Render()
 		};
 
 		uint32_t x, y, w, h;
-		animationData.attachedAnimationResource->GetAtlasInfo(animationData.currentFrame, &x, &y, &w, &h);
+		data.animationData.attachedAnimationResource->GetAtlasInfo(data.animationData.currentFrame, &x, &y, &w, &h);
 		textureCoord[0] = (x) / (float)w;
 		textureCoord[1] = (y) / (float)h;
 		textureCoord[2] = frameWidth / (float)w;
@@ -160,7 +162,7 @@ void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t fram
 		return;
 	}
 
-	memset(&animationData, 0, sizeof(animationData));
+	objectType = RO_Static;
 
 	void* pixels;
 	uint32_t frameW, frameH;
@@ -183,7 +185,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 		return;
 	}
 
-	memset(&animationData, 0, sizeof(animationData));
+	objectType = RO_Static;
 
 	if(startFrame < 0)
 	{
@@ -234,12 +236,12 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 	}
 
 	// turn on animation
-	animationData.bIsAnimated = true;
-	animationData.numFrames = handle->GetNumberOfFrames();
-	animationData.currentFrame = 0;
-	animationData.lastFrameTime = SDL_GetTicks();
-	animationData.frameRate = 25;
-	animationData.attachedAnimationResource = handle;
+	objectType = RO_Animated;
+	data.animationData.numFrames = handle->GetNumberOfFrames();
+	data.animationData.currentFrame = 0;
+	data.animationData.lastFrameTime = SDL_GetTicks();
+	data.animationData.frameRate = 25;
+	data.animationData.attachedAnimationResource = handle;
 
 	// make texture atlas
 	uint32_t width, height;
@@ -268,6 +270,42 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 
 void GLRenderObject::AttachTokenResource(IGraphicsHandle* handle)
 {
+}
+
+void GLRenderObject::AttachFontResource(IGraphicsHandle* handle)
+{
+	if (!handle)
+	{
+		return;
+	}
+
+	objectType = RO_Text;
+	data.textData.attachedFontResource = handle;
+	data.textData.text[0] = '\0';
+
+	// make texture atlas
+	uint32_t width, height;
+	handle->GetGraphicsInfo(true, 0, -1, &width, &height);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
+		GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	handle->IterateFrames(true, 0, -1,
+		[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+			GL_UNSIGNED_BYTE, pixels);
+
+	}
+	);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 }
 
 void GLRenderObject::SetPalshift(BYTE palette)
@@ -321,12 +359,33 @@ void GLRenderObject::SetWidthHeight(int w, int h)
 
 void GLRenderObject::SetFramerate(int framerate)
 {
-	animationData.frameRate = framerate;
+	data.animationData.frameRate = framerate;
 }
 
 void GLRenderObject::SetDrawMode(int _drawMode)
 {
 	drawMode = _drawMode;
+}
+
+void GLRenderObject::SetText(const char16_t* text)
+{
+	size_t s = 0;
+	char16_t* p = (char16_t*)text;
+
+	while (*p && s < 128)
+	{
+		data.textData.text[s++] = *p;
+		p++;
+	}
+
+	if (s < 128)
+	{
+		data.textData.text[p - text] = '\0';
+	}
+	else
+	{
+		data.textData.text[127] = '\0';
+	}
 }
 
 /**
