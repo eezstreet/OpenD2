@@ -56,6 +56,18 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 
 	// Background isn't needed at this point, it should be in VRAM
 	engine->graphics->UnloadGraphic(background);
+
+	szCopyrightText = engine->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
+	szAllRightsReservedText = engine->TBL_FindStringFromIndex(TBLINDEX_ALLRIGHTS);
+	IGraphicsHandle* formal12 = engine->graphics->LoadFont(
+		"data\\local\\font\\latin\\fontformal12.dc6",
+		"fontformal12"
+	);
+
+	trademark = engine->renderer->AllocateObject(1);
+	allRightsReserved = engine->renderer->AllocateObject(1);
+	trademark->AttachFontResource(formal12);
+	allRightsReserved->AttachFontResource(formal12);
 #if 0
 	tex_handle flameLeftTex =
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
@@ -132,6 +144,8 @@ void D2Menu_Trademark::Draw()
 	blackRight->Draw();
 	flameLeft->Draw();
 	flameRight->Draw();
+	trademark->Draw();
+	allRightsReserved->Draw();
 #if 0
 	// Draw the background
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);

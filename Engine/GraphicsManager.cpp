@@ -536,15 +536,50 @@ void FontGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t
 
 	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
 	
+	uint32_t rowWidth = 0;
 	for (int i = 0; i < 256; i++)
 	{
+		if (image.pFrames[i].fh.dwHeight > maxHeight)
+		{
+			maxHeight = image.pFrames[i].fh.dwHeight;
+		}
+
+		fontFile->glyphs[i].dwUnknown4 = rowWidth;
+		fontFile->glyphs[i].wUnknown3 = totalHeight;
+
+		rowWidth += image.pFrames[i].fh.dwWidth;
+		if ((i + 1) % 16 == 0)
+		{
+			if (rowWidth > maxWidth)
+			{
+				maxWidth = rowWidth;
+			}
+			totalHeight += maxHeight;
+			maxHeight = 0;
+			rowWidth = 0;
+		}
 	}
+
+	*width = maxWidth;
+	*height = totalHeight;
 }
 
 void FontGraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end,
 	AtlassingCallback callback)
 {
+	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
 
+	for (int i = 0; i < image.header.dwFrames; i++)
+	{
+		if (callback)
+		{
+			callback(DC6::GetPixelsAtFrame(&image, 0, i, nullptr),
+				i, fontFile->glyphs[i].dwUnknown4,
+				fontFile->glyphs[i].wUnknown3,
+				image.pFrames[i].fh.dwWidth,
+				image.pFrames[i].fh.dwHeight);
+		}
+	}
 }
 
 void FontGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y,

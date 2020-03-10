@@ -19,6 +19,8 @@ private:
 	IRenderObject* flameRight;
 	IRenderObject* blackLeft;
 	IRenderObject* blackRight;
+	IRenderObject* trademark;
+	IRenderObject* allRightsReserved;
 
 public:
 	D2Menu_Trademark();
