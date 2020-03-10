@@ -19,6 +19,7 @@ protected:
 	BYTE palshift;
 	float screenCoord[4]; // x y w h
 	float textureCoord[4]; //x y w h (normalized)
+	int drawMode;
 
 	struct
 	{
@@ -54,6 +55,7 @@ public:
 	virtual void AttachTokenResource(class IGraphicsHandle* handle);
 
 	virtual void SetFramerate(int framerate);
+	virtual void SetDrawMode(int drawMode);
 };
 
 /**

@@ -48,6 +48,7 @@ GLRenderObject::GLRenderObject()
 {
 	bInUse = true;
 	memset(&animationData, 0, sizeof(animationData));
+	drawMode = 0;
 
 	textureCoord[0] = 0.0f;
 	textureCoord[1] = 0.0f;
@@ -104,6 +105,35 @@ void GLRenderObject::Render()
 	else
 	{
 		glUniform4fv(uniform_ui_drawPosition, 1, screenCoord);
+	}
+
+	switch (drawMode)
+	{
+		case 0:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 1:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 2:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 3:
+			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
+			break;
+		case 4:
+			glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		default:
+		case 5:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
+		case 6:
+			glBlendFunc(GL_SRC_COLOR, GL_ONE);
+			break;
+		case 7:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			break;
 	}
 
 	glActiveTexture(GL_TEXTURE0);
@@ -292,6 +322,11 @@ void GLRenderObject::SetWidthHeight(int w, int h)
 void GLRenderObject::SetFramerate(int framerate)
 {
 	animationData.frameRate = framerate;
+}
+
+void GLRenderObject::SetDrawMode(int _drawMode)
+{
+	drawMode = _drawMode;
 }
 
 /**

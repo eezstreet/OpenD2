@@ -46,6 +46,9 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	blackLeft->AttachAnimationResource(blackTexLeft);
 	blackRight->AttachAnimationResource(blackTexRight);
 
+	flameLeft->SetDrawMode(3);
+	flameRight->SetDrawMode(3);
+
 	flameLeft->SetDrawCoords(400, -285, -1, -1);
 	flameRight->SetDrawCoords(400, -285, -1, -1);
 	blackLeft->SetDrawCoords(400, -285, -1, -1);
