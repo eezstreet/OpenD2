@@ -145,8 +145,12 @@ void GLRenderObject::Render()
 	{
 		char16_t* p = data.textData.text;
 		IGraphicsHandle* fontResource = data.textData.attachedFontResource;
-		uint32_t glyphWidth, glyphHeight, glyphOffsetX, glyphOffsetY;
+		uint32_t glyphWidth, glyphHeight;
+		int32_t glyphOffsetX, glyphOffsetY;
 		uint32_t currentDrawX = screenCoord[0];
+
+		uint32_t w, h;
+		fontResource->GetGraphicsInfo(true, 0, 255, &w, &h);
 
 		GLfloat drawCoord[] = {
 			screenCoord[0], screenCoord[1], 0, 0
@@ -157,13 +161,13 @@ void GLRenderObject::Render()
 			fontResource->GetGraphicsData(nullptr, *p, &glyphWidth, &glyphHeight, &glyphOffsetX, &glyphOffsetY);
 			
 			textureCoord[0] = glyphOffsetX / (float)w;
-			textureCoord[1] = glyphOffsetY / (float)h;
-			textureCoord[2] = (glyphOffsetX + glyphWidth) / (float)w;
-			textureCoord[3] = (glyphOffsetY + glyphHeight) / (float)h;
+			textureCoord[1] = (glyphOffsetY + 11) / (float)h;
+			textureCoord[2] = (glyphWidth) / (float)w;
+			textureCoord[3] = (glyphHeight) / (float)h;
 
 			drawCoord[0] = currentDrawX;
-			drawCoord[2] = currentDrawX + glyphWidth;
-			drawCoord[3] = screenCoord[1] + glyphHeight;
+			drawCoord[2] = glyphWidth;
+			drawCoord[3] = glyphHeight - 1;
 
 			glUniform4fv(uniform_ui_textureCoords, 1, textureCoord);
 			glUniform4fv(uniform_ui_drawPosition, 1, drawCoord);
@@ -405,9 +409,14 @@ void GLRenderObject::SetText(const char16_t* text)
 {
 	size_t s = 0;
 	char16_t* p = (char16_t*)text;
+	uint32_t width = 0;
+	uint32_t glyphWidth;
+	IGraphicsHandle* fontHandle = data.textData.attachedFontResource;
 
 	while (*p && s < 128)
 	{
+		fontHandle->GetGraphicsData(nullptr, *p, &glyphWidth, nullptr, nullptr, nullptr);
+		width += glyphWidth;
 		data.textData.text[s++] = *p;
 		p++;
 	}
@@ -420,6 +429,8 @@ void GLRenderObject::SetText(const char16_t* text)
 	{
 		data.textData.text[127] = '\0';
 	}
+
+	screenCoord[2] = width;
 }
 
 /**

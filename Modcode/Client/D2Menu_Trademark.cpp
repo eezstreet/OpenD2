@@ -64,10 +64,18 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 		"fontformal12"
 	);
 
+	int trademarkWidth, rightsWidth;
+
 	trademark = engine->renderer->AllocateObject(1);
 	allRightsReserved = engine->renderer->AllocateObject(1);
 	trademark->AttachFontResource(formal12);
 	allRightsReserved->AttachFontResource(formal12);
+	trademark->SetText(szCopyrightText);
+	allRightsReserved->SetText(szAllRightsReservedText);
+	trademark->GetDrawCoords(nullptr, nullptr, &trademarkWidth, nullptr);
+	trademark->SetDrawCoords(400 - (trademarkWidth / 2), 500, 0, 0);
+	allRightsReserved->GetDrawCoords(nullptr, nullptr, &rightsWidth, nullptr);
+	allRightsReserved->SetDrawCoords(400 - (rightsWidth / 2), 525, 0, 0);
 #if 0
 	tex_handle flameLeftTex =
 		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
