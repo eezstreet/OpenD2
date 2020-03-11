@@ -536,7 +536,8 @@ void FontGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t*
 	}
 	if(height)
 	{
-		*height = fontFile->glyphs[frame].nHeight;
+		//*height = fontFile->glyphs[frame].nHeight;
+		*height = image.pFrames[frame].fh.dwHeight;
 	}
 	if(offsetX)
 	{
@@ -613,7 +614,7 @@ float FontGraphicsHandle::GetCapHeight()
 {
 	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
 
-	return fontFile->nWidth;
+	return fontFile->nHeight;
 }
 
 /**

@@ -27,29 +27,18 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	backgroundObjectDisabled->AttachCompositeTextureResource(graphic,
 			dwStartDisabled, dwEndDisabled);
 	backgroundObjectDisabled->SetDrawCoords(x, y, -1, -1);
-#if 0
-	char typeBuffer[32]{ 0 };
+	backgroundObjectDisabled->SetColorModulate(1.0f, 1.0f, 1.0f, 0.5f);
+
+	text = engine->renderer->AllocateObject(1);
 
 	font = cl.fontExocet10;
 
-	// register all of the textures
-	snprintf(typeBuffer, 32, "%s_up", szButtonType);
-	texture_up = engine->renderer->TextureFromStitchedDC6(szDC6Path, typeBuffer, dwStartEnabled, dwEndEnabled, PAL_UNITS);
-
-	snprintf(typeBuffer, 32, "%s_dn", szButtonType);
-	texture_down = engine->renderer->TextureFromStitchedDC6(szDC6Path, typeBuffer, dwStartDown, dwEndDown, PAL_UNITS);
-
-	snprintf(typeBuffer, 32, "%s_ds", szButtonType);
-	texture_disabled = engine->renderer->TextureFromStitchedDC6(szDC6Path, typeBuffer, dwStartDisabled, dwEndDisabled, PAL_UNITS);
-
-	engine->renderer->PollTexture(texture_up, (DWORD*)&this->w, (DWORD*)&this->h);
-
-#endif
 	clickedSound = engine->S_RegisterSound("data\\global\\sfx\\cursor\\button.wav");
 
 	bDisabled = false;
 	bDown = false;
 	bHasClickSignal = false;
+	bMovedText = false;
 
 	if (dwStartDisabled == dwStartEnabled)
 	{
@@ -68,7 +57,10 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
  */
 D2Widget_Button::~D2Widget_Button()
 {
-
+	engine->renderer->Remove(text);
+	engine->renderer->Remove(backgroundObjectDisabled);
+	engine->renderer->Remove(backgroundObjectDown);
+	engine->renderer->Remove(backgroundObjectUp);
 }
 
 /*
@@ -82,11 +74,32 @@ void D2Widget_Button::Draw()
 	}
 	else if (bDown)
 	{
+		if (!bMovedText && bHasText)
+		{
+			int x, y;
+
+			text->GetDrawCoords(&x, &y, nullptr, nullptr);
+			text->SetDrawCoords(x - 2, y + 2, 0, 0);
+			bMovedText = true;
+		}
 		backgroundObjectDown->Draw();
 	}
 	else
 	{
+		if (bMovedText && bHasText)
+		{
+			int x, y;
+
+			text->GetDrawCoords(&x, &y, nullptr, nullptr);
+			text->SetDrawCoords(x + 2, y - 2, 0, 0);
+			bMovedText = false;
+		}
 		backgroundObjectUp->Draw();
+	}
+
+	if (bHasText)
+	{
+		text->Draw();
 	}
 #if 0
 	if (bDisabled)
@@ -134,6 +147,14 @@ void D2Widget_Button::AttachText(char16_t* szText)
 {
 	D2Lib::qstrncpyz(buttonTextBuffer, szText, 64);
 	bHasText = true;
+
+	text->AttachFontResource(font);
+	text->SetText(szText);
+	text->SetDrawMode(4);
+
+	int32_t width, height;
+	text->GetDrawCoords(nullptr, nullptr, &width, &height);
+	text->SetDrawCoords(m_pOwner->x + (x + (w/2)) - (width/2), m_pOwner->y + y + (h/2) - (height/2), 0, 0);
 }
 
 /*

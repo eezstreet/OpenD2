@@ -23,6 +23,7 @@ static GLint uniform_ui_modelViewProjection;
 static GLint uniform_ui_globalPaletteNum;
 static GLint uniform_ui_drawPosition;
 static GLint uniform_ui_textureCoords;
+static GLint uniform_ui_colorModulate;
 
 static unsigned int global_palette = 0;
 
@@ -55,6 +56,8 @@ GLRenderObject::GLRenderObject()
 	textureCoord[1] = 0.0f;
 	textureCoord[2] = 1.0f;
 	textureCoord[3] = 1.0f;
+
+	colorModulate[0] = colorModulate[1] = colorModulate[2] = colorModulate[3] = 1.0f;
 }
 
 GLRenderObject::~GLRenderObject()
@@ -77,6 +80,7 @@ void GLRenderObject::Render()
 	glUniform1i(uniform_ui_texture, 0);
 	glUniform1i(uniform_ui_globalpal, 1);
 	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
+	glUniform4fv(uniform_ui_colorModulate, 1, colorModulate);
 
 	switch (drawMode)
 	{
@@ -161,13 +165,13 @@ void GLRenderObject::Render()
 			fontResource->GetGraphicsData(nullptr, *p, &glyphWidth, &glyphHeight, &glyphOffsetX, &glyphOffsetY);
 			
 			textureCoord[0] = glyphOffsetX / (float)w;
-			textureCoord[1] = (glyphOffsetY + fontResource->GetCapHeight() - 1) / (float)h;
+			textureCoord[1] = (glyphOffsetY) / (float)h;
 			textureCoord[2] = (glyphWidth) / (float)w;
 			textureCoord[3] = (glyphHeight) / (float)h;
-
+				
 			drawCoord[0] = currentDrawX;
 			drawCoord[2] = glyphWidth;
-			drawCoord[3] = glyphHeight - 1;
+			drawCoord[3] = glyphHeight;
 
 			glUniform4fv(uniform_ui_textureCoords, 1, textureCoord);
 			glUniform4fv(uniform_ui_drawPosition, 1, drawCoord);
@@ -410,12 +414,17 @@ void GLRenderObject::SetText(const char16_t* text)
 	size_t s = 0;
 	char16_t* p = (char16_t*)text;
 	uint32_t width = 0;
-	uint32_t glyphWidth;
+	uint32_t glyphWidth, glyphHeight;
+	uint32_t height = 0;
 	IGraphicsHandle* fontHandle = data.textData.attachedFontResource;
 
 	while (*p && s < 128)
 	{
-		fontHandle->GetGraphicsData(nullptr, *p, &glyphWidth, nullptr, nullptr, nullptr);
+		fontHandle->GetGraphicsData(nullptr, *p, &glyphWidth, &glyphHeight, nullptr, nullptr);
+		if (height < glyphHeight)
+		{
+			height = glyphHeight;
+		}
 		width += glyphWidth;
 		data.textData.text[s++] = *p;
 		p++;
@@ -431,6 +440,15 @@ void GLRenderObject::SetText(const char16_t* text)
 	}
 
 	screenCoord[2] = width;
+	screenCoord[3] = height;
+}
+
+void GLRenderObject::SetColorModulate(float r, float g, float b, float a)
+{
+	colorModulate[0] = r;
+	colorModulate[1] = g;
+	colorModulate[2] = b;
+	colorModulate[3] = a;
 }
 
 /**
@@ -755,6 +773,7 @@ void main()                                                                    \
 const char* __staticDC6_Fragment = "#version 330 core                          \n\
 uniform sampler2D Texture;                                                     \n\
 uniform sampler2D GlobalPalette;                                               \n\
+uniform vec4 ColorModulate;                                                    \n\
 uniform int GlobalPaletteNum;                                                 \n\
 in vec2 TexCoords;                                                           \n\
                                                                                \n\
@@ -765,6 +784,7 @@ void main()                                                                    \
 	vec4 BaseTexture = texture2D(Texture, TexCoords);                           \n\
 	vec4 FinalColor = texture2D(GlobalPalette, vec2(BaseTexture.r, GlobalPaletteNum / 17.0)); \n\
    outputColor = FinalColor;                                                  \n\
+    outputColor *= ColorModulate;                                             \n\
 }                                                                              \
 ";
 
@@ -796,6 +816,7 @@ void Renderer_GL::InitShaders()
 		uniform_ui_globalPaletteNum = glGetUniformLocation(program, "GlobalPaletteNum");
 		uniform_ui_drawPosition = glGetUniformLocation(program, "DrawPosition");
 		uniform_ui_textureCoords = glGetUniformLocation(program, "TexPosition");
+		uniform_ui_colorModulate = glGetUniformLocation(program, "ColorModulate");
 		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, "ModelViewProjection"), 1, false, glm::value_ptr(mvp));
 	});

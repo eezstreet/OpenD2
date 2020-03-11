@@ -6,6 +6,7 @@ class D2Widget_Button : public D2Widget
 private:
 	bool bDisabled;
 	bool bDown;
+	bool bMovedText;
 	bool bHasText;
 	bool bHasClickSignal;
 	bool bAlphaModulateDisable;
@@ -16,7 +17,9 @@ private:
 	tex_handle texture_up;
 	tex_handle texture_down;
 	tex_handle texture_disabled;
-	font_handle font;
+
+	IRenderObject* text;
+	IGraphicsHandle* font;
 	sfx_handle clickedSound;
 
 	IRenderObject* backgroundObjectUp;
@@ -38,7 +41,7 @@ public:
 	void AttachClickSignal(MenuSignal pClickSignal);
 	void RemoveClickSignal() { bHasClickSignal = false; }
 
-	void SetFont(font_handle newFont) { font = newFont; }
+	void SetFont(IGraphicsHandle* newFont) { font = newFont; }
 
 	virtual void Draw();
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);

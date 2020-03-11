@@ -19,6 +19,7 @@ protected:
 	BYTE palshift;
 	float screenCoord[4]; // x y w h
 	float textureCoord[4]; //x y w h (normalized)
+	float colorModulate[4]; //r g b a (normalized)
 	int drawMode;
 
 	enum
@@ -73,6 +74,7 @@ public:
 	virtual void SetFramerate(int framerate);
 	virtual void SetDrawMode(int drawMode);
 	virtual void SetText(const char16_t* text);
+	virtual void SetColorModulate(float r, float g, float b, float a);
 };
 
 /**

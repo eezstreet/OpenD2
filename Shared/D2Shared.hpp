@@ -682,6 +682,7 @@ public:
 	virtual void SetFramerate(int framerate) = 0;
 	virtual void SetDrawMode(int drawMode) = 0;
 	virtual void SetText(const char16_t* text) = 0;
+	virtual void SetColorModulate(float r, float g, float b, float a) = 0;
 };
 
 //////////////////////////////////////////////////

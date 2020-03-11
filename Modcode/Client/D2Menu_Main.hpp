@@ -5,11 +5,12 @@
 class D2Menu_Main : public D2Menu
 {
 private:
-	tex_handle backgroundTexture;
-	anim_handle flameLeftAnim;
-	anim_handle flameRightAnim;
-	anim_handle blackLeftAnim;
-	anim_handle blackRightAnim;
+	IRenderObject* flameLeft;
+	IRenderObject* flameRight;
+	IRenderObject* blackLeft;
+	IRenderObject* blackRight;
+
+	IRenderObject* versionText;
 
 	D2Panel_Main* pMainPanel;
 	IRenderObject* backgroundObject;
