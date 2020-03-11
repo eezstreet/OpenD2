@@ -36,36 +36,38 @@ namespace Pal
 
 	struct D2PaletteEntry {
 		char szPath[MAX_D2PATH];
+		char szPL2Path[MAX_D2PATH];
 		D2Palette pal;
+		PL2File pl2;
 	};
 
 	static D2PaletteEntry D2Palettes[PAL_MAX_PALETTES] = {
-		{ "data\\global\\palette\\ACT1\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT2\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT3\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT4\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT5\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ENDGAME\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ENDGAME2\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\FECHAR\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\LOADING\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU0\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU1\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU2\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU3\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU4\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\SKY\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\STATIC\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\TRADEMARK\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\UNITS\\pal.dat",{ 0 } },
+		{ "data\\global\\palette\\ACT1\\pal.dat",     "data\\global\\palette\\ACT1\\pal.pl2",     { 0 }, { 0 } },
+		{ "data\\global\\palette\\ACT2\\pal.dat",     "data\\global\\palette\\ACT2\\pal.pl2",     { 0 }, { 0 } },
+		{ "data\\global\\palette\\ACT3\\pal.dat",     "data\\global\\palette\\ACT3\\pal.pl2",     { 0 }, { 0 } },
+		{ "data\\global\\palette\\ACT4\\pal.dat",     "data\\global\\palette\\ACT4\\pal.pl2",     { 0 }, { 0 } },
+		{ "data\\global\\palette\\ACT5\\pal.dat",     "data\\global\\palette\\ACT5\\pal.pl2",     { 0 }, { 0 } },
+		{ "data\\global\\palette\\ENDGAME\\pal.dat",  "data\\global\\palette\\ENDGAME\\pal.pl2",  { 0 }, { 0 } },
+		{ "data\\global\\palette\\ENDGAME2\\pal.dat", "data\\global\\palette\\ENDGAME2\\pal.pl2", { 0 }, { 0 } },
+		{ "data\\global\\palette\\FECHAR\\pal.dat",   "data\\global\\palette\\FECHAR\\pal.pl2",   { 0 }, { 0 } },
+		{ "data\\global\\palette\\LOADING\\pal.dat",  "data\\global\\palette\\LOADING\\pal.pl2",  { 0 }, { 0 } },
+		{ "data\\global\\palette\\MENU0\\pal.dat",    "data\\global\\palette\\MENU0\\pal.pl2",    { 0 }, { 0 } },
+		{ "data\\global\\palette\\MENU1\\pal.dat",    "data\\global\\palette\\MENU1\\pal.pl2",    { 0 }, { 0 } },
+		{ "data\\global\\palette\\MENU2\\pal.dat",    "data\\global\\palette\\MENU2\\pal.pl2",    { 0 }, { 0 } },
+		{ "data\\global\\palette\\MENU3\\pal.dat",    "data\\global\\palette\\MENU3\\pal.pl2",    { 0 }, { 0 } },
+		{ "data\\global\\palette\\MENU4\\pal.dat",    "data\\global\\palette\\MENU4\\pal.pl2",    { 0 }, { 0 } },
+		{ "data\\global\\palette\\SKY\\pal.dat",      "data\\global\\palette\\SKY\\pal.pl2",      { 0 }, { 0 } },
+		{ "data\\global\\palette\\STATIC\\pal.dat",   "data\\global\\palette\\STATIC\\pal.pl2",   { 0 }, { 0 } },
+		{ "data\\global\\palette\\TRADEMARK\\pal.dat","data\\global\\palette\\TRADEMARK\\pal.pl2",{ 0 }, { 0 } },
+		{ "data\\global\\palette\\UNITS\\pal.dat",    "data\\global\\palette\\UNITS\\pal.pl2",    { 0 }, { 0 } },
 	};
 
 	/*
 	 *	Registers a palette and stores it in pPalette argument
 	 */
-	static bool RegisterPalette(char* szPalettePath, D2Palette* pPalette)
+	static bool RegisterPalette(const char* szPalettePath, const char* szPL2Path, D2Palette* pPalette, PL2File* pl2)
 	{
-		if (pPalette == nullptr)
+		if (pPalette == nullptr || pl2 == nullptr)
 		{	// bad palette pointer
 			return false;
 		}
@@ -87,6 +89,23 @@ namespace Pal
 		FS::Read(f, **pPalette, dwPaletteSize);
 		FS::CloseFile(f);
 
+		// open the PL2 now
+		dwPaletteSize = FS::Open(szPL2Path, &f, FS_READ, true);
+		if (f == INVALID_HANDLE)
+		{	// bad PL2 file
+			return false;
+		}
+		if(dwPaletteSize != sizeof(PL2File))
+		{
+			// bad file
+			FS::CloseFile(f);
+			return false;
+		}
+
+		// read the PL2 file
+		FS::Read(f, pl2, dwPaletteSize);
+		FS::CloseFile(f);
+
 		return true;
 	}
 
@@ -98,7 +117,7 @@ namespace Pal
 		for (int i = 0; i < PAL_MAX_PALETTES; i++)
 		{
 			D2PaletteEntry* pEntry = &D2Palettes[i];
-			if (!RegisterPalette(pEntry->szPath, &pEntry->pal))
+			if (!RegisterPalette(pEntry->szPath, pEntry->szPL2Path, &pEntry->pal, &pEntry->pl2))
 			{
 				return false;
 			}
@@ -117,5 +136,25 @@ namespace Pal
 			return nullptr;
 		}
 		return &D2Palettes[nIndex].pal;
+	}
+
+	/**
+	 *  Gets the color modulation for a particular color.
+	 */
+	bool GetPL2ColorModulation(int palette, int color, float& R, float& G, float& B)
+	{
+		if(!gbPalettesInitialized || nIndex < 0 || nIndex >= PAL_MAX_PALETTES)
+		{
+			return false;
+		}
+		if(color < 0 || color >= 13)
+		{
+			return false;
+		}
+		
+		R = D2Palettes[nIndex].pl2.pStandardColors[color][0] / 255.0f;
+		G = D2Palettes[nIndex].pl2.pStandardColors[color][1] / 255.0f;
+		B = D2Palettes[nIndex].pl2.pStandardColors[color][2] / 255.0f;
+		return true;
 	}
 }

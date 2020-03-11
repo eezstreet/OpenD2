@@ -49,4 +49,5 @@ namespace Pal
 {
 	bool Init();
 	D2Palette* GetPalette(int nIndex);
+	bool GetPL2ColorModulation(int palette, int color, float& R, float& G, float& B);
 }

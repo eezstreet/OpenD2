@@ -647,6 +647,11 @@ public:
 	virtual void SetGlobalPalette(const D2Palettes palette) = 0;
 
 	/**
+	 *  Get the global render palette.
+	 */
+	virtual D2Palettes GetGlobalPalette() = 0;
+
+	/**
 	 *  Allocate a blank RenderObject.
 	 *  @param stage       What stage of rendering this object should be on
 	 */
@@ -745,6 +750,9 @@ struct D2ModuleImportStrc
 	char16_t*		(*TBL_FindStringFromIndex)(tbl_handle dwIndex);
 	tbl_handle		(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
 	char16_t*		(*TBL_FindStringFromText)(char16_t* szReference);
+
+	// Palette calls
+	bool			(*PAL_GetPL2ColorModulation)(int palette, int color, float& R, float& G, float& B);
 
 	// Token calls (TODO: Make part of the modcode, not part of the engine)
 	token_handle	(*TOK_Register)(D2TokenType type, char* tokenName, char* szWeaponClass);

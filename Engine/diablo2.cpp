@@ -7,6 +7,7 @@
 #include "Input.hpp"
 #include "Logging.hpp"
 #include "Network.hpp"
+#include "Palette.hpp"
 #include "Platform.hpp"
 #include "Renderer.hpp"
 #include "TBL_Font.hpp"
@@ -135,6 +136,8 @@ static D2ModuleImportStrc exports = {
 	TBL::FindStringFromIndex,
 	TBL::FindStringIndexFromKey,
 	TBL::FindStringText,
+
+	Pal::GetPL2ColorModulation,
 
 	Token::RegisterToken,
 	Token::DeregisterToken,

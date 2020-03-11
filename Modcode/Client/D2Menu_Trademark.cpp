@@ -71,6 +71,13 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	trademark->SetText(szCopyrightText);
 	allRightsReserved->SetText(szAllRightsReservedText);
 
+	float r, g, b;
+	if(engine->PAL_GetPL2ColorModulation(engine->renderer->GetGlobalPalette(), 5, r, g, b))
+	{
+		trademark->SetColorModulation(r, g, b, 1.0f);
+		allRightsReserved->SetColorModulation(r, g, b, 1.0f);
+	}
+
 	trademark->GetDrawCoords(nullptr, nullptr, &trademarkWidth, nullptr);
 	trademark->SetDrawCoords(400 - (trademarkWidth / 2), 500, 0, 0);
 

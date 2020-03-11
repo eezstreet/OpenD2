@@ -544,6 +544,11 @@ void Renderer_GL::SetGlobalPalette(const D2Palettes palette)
 	global_palette = palette;
 }
 
+D2Palettes Renderer_GL::GetGlobalPalette(const D2Palettes palette)
+{
+	return (D2Palettes)global_palette;
+}
+
 IRenderObject* Renderer_GL::AllocateObject(int stage)
 {
 	GLRenderObject* allocated = pool->Allocate();

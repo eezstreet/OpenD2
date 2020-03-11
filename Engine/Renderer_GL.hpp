@@ -121,6 +121,7 @@ public:
 	virtual void Present();
 	virtual void Clear();
 	virtual void SetGlobalPalette(const D2Palettes palette);
+	virtual D2Palettes GetGlobalPalette();
 
 	virtual IRenderObject* AllocateObject(int stage);
 	virtual void Remove(IRenderObject* Object);
