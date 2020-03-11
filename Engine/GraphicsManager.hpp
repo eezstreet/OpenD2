@@ -54,6 +54,11 @@ public:
 	 *	Gets the atlassed information for a resource and a frame.
 	 */
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight) = 0;
+
+	/**
+	 *	Get cap height (for font resource only)
+	 */
+	virtual float GetCapHeight() { return 0.0f; }
 };
 
 /**
@@ -158,6 +163,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual float GetCapHeight() override;
 };
 
 

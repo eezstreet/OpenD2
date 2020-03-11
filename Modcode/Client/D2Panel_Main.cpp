@@ -28,8 +28,8 @@ D2Panel_Main::D2Panel_Main() : D2Panel()
 	m_cinematicsButton = new D2Widget_Button(410, 495, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	m_exitButton = new D2Widget_Button(265, 535, MAIN_BUTTON_DC6, "3wide", 0, 1, 2, 3, 4, 5);
 
-	m_creditsButton->SetFont(cl.fontRidiculous);
-	m_cinematicsButton->SetFont(cl.fontRidiculous);
+	//m_creditsButton->SetFont(cl.fontRidiculous);
+	//m_cinematicsButton->SetFont(cl.fontRidiculous);
 
 	AddWidget(m_singleplayerButton);
 	AddWidget(m_battleNetButton);

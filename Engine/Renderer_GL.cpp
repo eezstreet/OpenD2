@@ -161,7 +161,7 @@ void GLRenderObject::Render()
 			fontResource->GetGraphicsData(nullptr, *p, &glyphWidth, &glyphHeight, &glyphOffsetX, &glyphOffsetY);
 			
 			textureCoord[0] = glyphOffsetX / (float)w;
-			textureCoord[1] = (glyphOffsetY + 11) / (float)h;
+			textureCoord[1] = (glyphOffsetY + fontResource->GetCapHeight() - 1) / (float)h;
 			textureCoord[2] = (glyphWidth) / (float)w;
 			textureCoord[3] = (glyphHeight) / (float)h;
 

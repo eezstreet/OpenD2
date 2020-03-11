@@ -20,19 +20,21 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 
 	cl.dwStartMS = engine->Milliseconds();
 
+	cl.font16 = engine->graphics->LoadFont("data\\local\\font\\latin\\font16.dc6", "font16");
+	cl.font30 = engine->graphics->LoadFont("data\\local\\font\\latin\\font30.dc6", "font30");
+	cl.font42 = engine->graphics->LoadFont("data\\local\\font\\latin\\font42.dc6", "font42");
+	cl.fontFormal12 = engine->graphics->LoadFont("data\\local\\font\\latin\\fontformal12.dc6",
+		"fontformal12");
+	cl.fontExocet10 = engine->graphics->LoadFont("data\\local\\font\\latin\\fontexocet10.dc6",
+		"fontexocet10");
+	cl.fontRidiculous = engine->graphics->LoadFont(
+		"data\\local\\font\\latin\\fontridiculous.dc6",
+		"fontridiculous"
+	);
+
 	// Set first menu to be trademark menu
 	cl.gamestate = GS_TRADEMARK;
 	cl.pActiveMenu = new D2Menu_Trademark();
-
-	/*
-	cl.font16 = engine->renderer->RegisterFont("font16");
-	cl.font16 = engine->renderer->RegisterFont("font16");
-	cl.font30 = engine->renderer->RegisterFont("font30");
-	cl.font42 = engine->renderer->RegisterFont("font42");
-	cl.fontFormal12 = engine->renderer->RegisterFont("fontformal12");
-	cl.fontExocet10 = engine->renderer->RegisterFont("fontExocet10");
-	cl.fontRidiculous = engine->renderer->RegisterFont("fontridiculous");
-	*/
 }
 
 /*

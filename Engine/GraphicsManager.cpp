@@ -609,6 +609,13 @@ void FontGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y,
 	
 }
 
+float FontGraphicsHandle::GetCapHeight()
+{
+	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
+
+	return fontFile->nWidth;
+}
+
 /**
  *	The graphics manager.
  */
