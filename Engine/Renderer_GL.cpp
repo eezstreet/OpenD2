@@ -206,15 +206,24 @@ void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t fram
 
 	objectType = RO_Static;
 
-	void* pixels;
-	uint32_t frameW, frameH;
+	if(handle->AreGraphicsLoaded())
+	{
+		texture = (unsigned int)handle->GetLoadedGraphicsData();
+	}
+	else
+	{
+		void* pixels;
+		uint32_t frameW, frameH;
 
-	handle->GetGraphicsData(&pixels, frame, &frameW, &frameH, nullptr, nullptr);
+		handle->GetGraphicsData(&pixels, frame, &frameW, &frameH, nullptr, nullptr);
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frameW, frameH, 0, GL_RED,
-			GL_UNSIGNED_BYTE, pixels);
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frameW, frameH, 0, GL_RED,
+				GL_UNSIGNED_BYTE, pixels);
+
+		handle->SetLoadedGraphicsData((void*)texture);
+	}
 }
 
 void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
@@ -242,28 +251,40 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 		endFrame = swap;
 	}
 
-	handle->GetGraphicsInfo(false, startFrame, endFrame, &width, &height);
-	screenCoord[2] = width;
-	screenCoord[3] = height;
+	if(startFrame == 0 && endFrame == -1 && handle->AreGraphicsLoaded())
+	{
+		texture = (unsigned int)handle->GetLoadedGraphicsData();
+	}
+	else
+	{
+		handle->GetGraphicsInfo(false, startFrame, endFrame, &width, &height);
+		screenCoord[2] = width;
+		screenCoord[3] = height;
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
-			GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
+				GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	handle->IterateFrames(false, startFrame, endFrame,
-		[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
-					GL_UNSIGNED_BYTE, pixels);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		handle->IterateFrames(false, startFrame, endFrame,
+			[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+						GL_UNSIGNED_BYTE, pixels);
+			}
+		);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+		if(startFrame == 0 && endFrame == -1)
+		{
+			handle->SetLoadedGraphicsData((void*)texture);
 		}
-	);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	}
 }
 
 void GLRenderObject::AttachPaletteResource(IGraphicsHandle* handle)
@@ -285,29 +306,38 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 	data.animationData.frameRate = 25;
 	data.animationData.attachedAnimationResource = handle;
 
-	// make texture atlas
-	uint32_t width, height;
-	handle->GetGraphicsInfo(true, 0, -1, &width, &height);
+	if(handle->AreGraphicsLoaded())
+	{
+		texture = (unsigned int)handle->GetLoadedGraphicsData();
+	}
+	else
+	{
+		// make texture atlas
+		uint32_t width, height;
+		handle->GetGraphicsInfo(true, 0, -1, &width, &height);
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
-		GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
+			GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	handle->IterateFrames(true, 0, -1, 
-		[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
-				GL_UNSIGNED_BYTE, pixels);
-			
-		}
-	);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		handle->IterateFrames(true, 0, -1, 
+			[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+					GL_UNSIGNED_BYTE, pixels);
+				
+			}
+		);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+		handle->SetLoadedGraphicsData((void*)texture);
+	}
 }
 
 void GLRenderObject::AttachTokenResource(IGraphicsHandle* handle)
@@ -325,29 +355,38 @@ void GLRenderObject::AttachFontResource(IGraphicsHandle* handle)
 	data.textData.attachedFontResource = handle;
 	data.textData.text[0] = '\0';
 
-	// make texture atlas
-	uint32_t width, height;
-	handle->GetGraphicsInfo(true, 0, -1, &width, &height);
-
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
-		GL_UNSIGNED_BYTE, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	handle->IterateFrames(true, 0, -1,
-		[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
-			GL_UNSIGNED_BYTE, pixels);
-
+	if(handle->AreGraphicsLoaded())
+	{
+		texture = (unsigned int)handle->GetLoadedGraphicsData();
 	}
-	);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	else
+	{
+		// make texture atlas
+		uint32_t width, height;
+		handle->GetGraphicsInfo(true, 0, -1, &width, &height);
+
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
+			GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		handle->IterateFrames(true, 0, -1,
+			[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+				GL_UNSIGNED_BYTE, pixels);
+
+		}
+		);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+		handle->SetLoadedGraphicsData((void*)texture);
+	}
 }
 
 void GLRenderObject::SetPalshift(BYTE palette)
