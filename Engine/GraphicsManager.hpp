@@ -9,7 +9,40 @@
  */
 class IGraphicsHandle
 {
+private:
+	void* loadedGraphicsData;
+	bool bAreGraphicsLoaded;
+
 public:
+	/**
+	 *	Returns true if the graphics have been fully loaded.
+	 */
+	virtual bool AreGraphicsLoaded()
+	{
+		return bAreGraphicsLoaded;
+	}
+
+	/**
+	 *	Returns the loaded graphics handle.
+	 */
+	virtual void* GetLoadedGraphicsData()
+	{
+		if(bAreGraphicsLoaded)
+		{
+			return loadedGraphicsData;
+		}
+		return nullptr;
+	}
+
+	/**
+	 *	Sets the loaded graphics handle.
+	 */
+	virtual void SetLoadedGraphicsData(void* data)
+	{
+		loadedGraphicsData = data;
+		bAreGraphicsLoaded = true;
+	}
+
 	/**
 	 *	Gets the total size in bytes of this graphics handle.
 	 *	@param frame     The frame to query, or -1 for all frames.
@@ -118,26 +151,6 @@ public:
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, 
 		 uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
-	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
-	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
-	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
-};
-
-/**
- *	PL2GraphicsHandle is the IGraphicsHandle implementation for PL2 files.
- */
-class PL2GraphicsHandle : public IGraphicsHandle
-{
-private:
-	fs_handle fileHandle;
-	PL2File file;
-public:
-	PL2GraphicsHandle(const char* fileName);
-	PL2GraphicsHandle() {}
-	virtual size_t GetTotalSizeInBytes(int32_t frame);
-	virtual size_t GetNumberOfFrames();
-	virtual void GetGraphicsData(void** pixels, int32_t frame,
-		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);

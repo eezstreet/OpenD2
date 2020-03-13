@@ -117,18 +117,17 @@ struct DCCCell
 
 #pragma pack(pop, enter_include)
 
+typedef void (*DCCDirectionFrameDecodeCallback)(BYTE* bitmap, uint32_t frameNum, int32_t frameX, int32_t frameY,
+		uint32_t frameW, uint32_t frameH);
+
 // DCC.cpp
 namespace DCC
 {
 	void GlobalInit();
 	void GlobalShutdown();
-	anim_handle Load(char* szPath, char* szName);
-	void IncrementUseCount(anim_handle dccHandle, int amount);
-	DCCFile* GetContents(anim_handle dccHandle);
-	void FreeHandle(anim_handle dcc);
-	void FreeIfInactive(anim_handle handle);
-	void FreeInactive();
-	void FreeByName(char* name);
-	void FreeAll();
-	DWORD GetCellCount(int pos, int& sz);
+	void LoadAnimation(const char* szPath, DCCFile* file);
+	void UnloadAnimation(DCCFile* animation);
+	void DecodeDirection(DCCFile* animation, uint32_t direction, DCCDirectionFrameDecodeCallback callback);
+
+	DWORD GetCellCount(int pos, int& sz); 
 };

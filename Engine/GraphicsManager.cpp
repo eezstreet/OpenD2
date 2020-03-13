@@ -14,6 +14,8 @@ GraphicsManager* graphicsManager;
 DCCGraphicsHandle::DCCGraphicsHandle(const char* fileName)
 {
 	FS::Open(fileName, &fileHandle, FS_READ);
+	bAreGraphicsLoaded = false;
+	loadedGraphicsData = nullptr;
 }
 
 size_t DCCGraphicsHandle::GetTotalSizeInBytes(int32_t frame)
@@ -54,6 +56,8 @@ void DCCGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 DC6GraphicsHandle::DC6GraphicsHandle(const char* fileName)
 {
 	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
+	bAreGraphicsLoaded = false;
+	loadedGraphicsData = nullptr;
 }
 
 DC6GraphicsHandle::~DC6GraphicsHandle()
@@ -262,6 +266,8 @@ void DC6GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 DT1GraphicsHandle::DT1GraphicsHandle(const char* fileName)
 {
 	FS::Open(fileName, &fileHandle, FS_READ);
+	bAreGraphicsLoaded = false;
+	loadedGraphicsData = nullptr;
 }
 
 size_t DT1GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
@@ -295,208 +301,6 @@ void DT1GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 
 }
 
-
-/**
- *	PL2GraphicsHandle is the IGraphicsHandle implementation for PL2 files.
- */
-
-PL2GraphicsHandle::PL2GraphicsHandle(const char* fileName)
-{
-	size_t size = FS::Open(fileName, &fileHandle, FS_READ);
-	Log_WarnAssert(size == sizeof(PL2File));
-	FS::Read(fileHandle, &file, sizeof(PL2File));
-	FS::CloseFile(fileHandle);
-}
-
-size_t PL2GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
-{
-	return sizeof(PL2File);
-}
-
-size_t PL2GraphicsHandle::GetNumberOfFrames()
-{
-	return PL2_NumEntries;
-}
-
-void PL2GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
-	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
-{
-	if (height)
-	{
-		*height = 1;
-	}
-
-	if (frame == PL2_RGBAPalette)
-	{
-		if (pixels)
-		{
-			*pixels = file.pRGBAPalette;
-		}
-		if (width)
-		{
-			*width = sizeof(file.pRGBAPalette);
-		}
-	}
-	else if (frame >= PL2_Shadows && frame < PL2_Light)
-	{
-		if (pixels)
-		{
-			*pixels = file.pShadows[frame - PL2_Shadows];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pShadows[0]);
-		}
-	}
-	else if (frame >= PL2_Light && frame < PL2_Gamma)
-	{
-		if (pixels)
-		{
-			*pixels = file.pLight[frame - PL2_Light];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pLight[0]);
-		}
-	}
-	else if (frame == PL2_Gamma)
-	{
-		if (pixels)
-		{
-			*pixels = file.pGamma;
-		}
-		if (width)
-		{
-			*width = sizeof(file.pGamma);
-		}
-	}
-	else if (frame >= PL2_Trans25 && frame < PL2_Trans50)
-	{
-		if (pixels)
-		{
-			*pixels = file.pTrans25[frame - PL2_Trans25];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pTrans25[0]);
-		}
-	}
-	else if (frame >= PL2_Trans50 && frame < PL2_Trans75)
-	{
-		if (pixels)
-		{
-			*pixels = file.pTrans50[frame - PL2_Trans50];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pTrans50[0]);
-		}
-	}
-	else if (frame >= PL2_Trans75 && frame < PL2_Screen)
-	{
-		if (pixels)
-		{
-			*pixels = file.pTrans75[frame - PL2_Trans75];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pTrans75[0]);
-		}
-	}
-	else if (frame >= PL2_Screen && frame < PL2_Luminance)
-	{
-		if (pixels)
-		{
-			*pixels = file.pScreen[frame - PL2_Screen];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pScreen[0]);
-		}
-	}
-	else if (frame >= PL2_Luminance && frame < PL2_States)
-	{
-		if (pixels)
-		{
-			*pixels = file.pLuminance[frame - PL2_Luminance];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pLuminance[0]);
-		}
-	}
-	else if (frame >= PL2_States && frame < PL2_DarkBlend)
-	{
-		if (pixels)
-		{
-			*pixels = file.pStates[frame - PL2_States];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pStates[0]);
-		}
-	}
-	else if (frame >= PL2_DarkBlend && frame < PL2_DarkenPalette)
-	{
-		if (pixels)
-		{
-			*pixels = file.pDarkBlend[frame - PL2_DarkBlend];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pDarkBlend[0]);
-		}
-	}
-	else if (frame == PL2_DarkenPalette)
-	{
-		if (pixels)
-		{
-			*pixels = file.pDarkenPalette;
-		}
-		if (width)
-		{
-			*width = sizeof(file.pDarkenPalette);
-		}
-	}
-	else if (frame >= PL2_StandardColors && frame < PL2_StandardShifts)
-	{
-		if (pixels)
-		{
-			*pixels = file.pStandardColors[frame - PL2_StandardColors];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pStandardColors[0]);
-		}
-	}
-	else if (frame >= PL2_StandardShifts && frame < PL2_NumEntries)
-	{
-		if (pixels)
-		{
-			*pixels = file.pStandardShifts[frame - PL2_StandardShifts];
-		}
-		if (width)
-		{
-			*width = sizeof(file.pStandardShifts[0]);
-		}
-	}
-}
-
-void PL2GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
-{
-	// should not be used?
-}
-
-void PL2GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
-{
-
-}
-
-void PL2GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
-{
-
-}
-
 /**
  *	Font handles are used to load fonts.
  */
@@ -504,6 +308,8 @@ FontGraphicsHandle::FontGraphicsHandle(const char* graphicsFile, const char* tbl
 {
 	tblHandle = TBLFont::RegisterFont(tbl);
 	DC6::LoadImage(graphicsFile, &image);
+	bAreGraphicsLoaded = false;
+	loadedGraphicsData = nullptr;
 }
 
 FontGraphicsHandle::~FontGraphicsHandle()

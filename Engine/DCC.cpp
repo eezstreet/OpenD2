@@ -7,16 +7,6 @@
 
 namespace DCC
 {
-	struct DCCHash
-	{
-		DCCFile*	pFile;
-		char		name[MAX_DCC_NAMELEN];
-		int			useCount;
-	};
-
-	static DCCHash DCCHashTable[MAX_DCC_HASH]{ 0 };
-	static int gnNumHashesUsed = 0;
-
 	static const BYTE gdwDCCBitTable[] = {
 		0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 26, 28, 30, 32
 	};
@@ -43,18 +33,18 @@ namespace DCC
 	*	Is responsible for reading the header of the DCC file.
 	*	@author	eezstreet
 	*/
-	static void ReadHeader(DCCHash& dcc, Bitstream* pBits)
+	static void ReadHeader(DCCFile* pFile, Bitstream* pBits)
 	{
-		pBits->ReadByte(dcc.pFile->header.nSignature);
-		pBits->ReadByte(dcc.pFile->header.nVersion);
-		pBits->ReadByte(dcc.pFile->header.nNumberDirections);
-		pBits->ReadDWord(dcc.pFile->header.dwFramesPerDirection);
-		pBits->ReadDWord(dcc.pFile->header.dwTag);
-		pBits->ReadDWord(dcc.pFile->header.dwFinalDC6Size);
+		pBits->ReadByte(pFile->header.nSignature);
+		pBits->ReadByte(pFile->header.nVersion);
+		pBits->ReadByte(pFile->header.nNumberDirections);
+		pBits->ReadDWord(pFile->header.dwFramesPerDirection);
+		pBits->ReadDWord(pFile->header.dwTag);
+		pBits->ReadDWord(pFile->header.dwFinalDC6Size);
 
-		for (int i = 0; i < dcc.pFile->header.nNumberDirections; i++)
+		for (int i = 0; i < pFile->header.nNumberDirections; i++)
 		{
-			pBits->ReadDWord(dcc.pFile->header.dwDirectionOffset[i]);
+			pBits->ReadDWord(pFile->header.dwDirectionOffset[i]);
 		}
 	}
 
@@ -179,299 +169,6 @@ namespace DCC
 	}
 
 	/*
-	*	Is responsible for the actual reading of the DCC, from an fs_handle and a hash entry pointer.
-	*	@author	eezstreet
-	*/
-	void Read(DCCHash& dcc, fs_handle fileHandle, DWORD fileSize)
-	{
-		Bitstream* pBits;
-		int i, j;
-
-		// Allocate memory for everything
-		dcc.pFile = (DCCFile*)malloc(sizeof(DCCFile));
-		Log_ErrorAssert(dcc.pFile);
-
-		dcc.pFile->dwFileSize = fileSize;
-		dcc.pFile->pFileBytes = (BYTE*)malloc(dcc.pFile->dwFileSize);
-		Log_ErrorAssert(dcc.pFile->pFileBytes);
-
-		// Read into filebytes.
-		FS::Read(fileHandle, dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
-
-		// Create the bitstream.
-		pBits = new Bitstream();
-		pBits->LoadStream(dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
-
-		// Read the header.
-		ReadHeader(dcc, pBits);
-
-		// Read the direction bitstream
-		for (i = 0; i < dcc.pFile->header.nNumberDirections; i++)
-		{
-			DCCDirection& dir = dcc.pFile->directions[i];
-			size_t optionalSize = 0;
-
-			pBits->SetCurrentPosition(dcc.pFile->header.dwDirectionOffset[i]);
-
-			dir.nMinX = INT_MAX;
-			dir.nMinY = INT_MAX;
-			dir.nMaxX = INT_MIN;
-			dir.nMaxY = INT_MIN;
-
-			// Direction header
-			ReadDirectionHeader(dcc.pFile->header, dir, i, pBits);
-
-			// Read frames
-			for (j = 0; j < dcc.pFile->header.dwFramesPerDirection; j++)
-			{
-				// Read header
-				ReadFrameHeader(dir.frames[j], dir, pBits);
-
-				// Recalculate box frame
-				dir.nMinX = D2Lib::min<long>(dir.nMinX, dir.frames[j].nMinX);
-				dir.nMaxX = D2Lib::max<long>(dir.nMaxX, dir.frames[j].nMaxX);
-				dir.nMinY = D2Lib::min<long>(dir.nMinY, dir.frames[j].nMinY);
-				dir.nMaxY = D2Lib::max<long>(dir.nMaxY, dir.frames[j].nMaxY);
-
-				// Add to the optional bytes size
-				optionalSize += dir.frames[j].dwOptionalBytes;
-			}
-
-			// Read direction optional data
-			if (optionalSize > 0)
-			{
-				for (j = 0; j < dcc.pFile->header.dwFramesPerDirection; j++)
-				{
-					// Allocate memory and read
-					dir.frames[j].pOptionalByteData = (BYTE*)malloc(dir.frames[j].dwOptionalBytes);
-					pBits->ReadData(dir.frames[j].pOptionalByteData, dir.frames[j].dwOptionalBytes);
-				}
-			}
-
-			// Read size for the pixel bitstreams
-			if (dir.nCompressionFlag & 0x02)
-			{
-				pBits->ReadBits(dir.dwEqualCellStreamSize, 20);
-			}
-			pBits->ReadBits(dir.dwPixelMaskStreamSize, 20);
-			if (dir.nCompressionFlag & 0x01)
-			{
-				pBits->ReadBits(dir.dwEncodingStreamSize, 20);
-				pBits->ReadBits(dir.dwRawPixelStreamSize, 20);
-			}
-
-			// Read pixel mapping
-			ReadDirectionPixelMapping(dir, pBits);
-
-			// Initiate the bitstreams
-			CreateDirectionBitstreams(dir, pBits);
-
-			// That's all we need to do for now. 
-			// The LRU on the renderer will be responsible for decoding the DCCs as we need them.
-		}
-
-		// Clear out the bitstream
-		delete pBits;
-	}
-
-	/*
-	*	Opens and reads a DCC file from an MPQ.
-	*	Returns an anim_handle to the DCC in question.
-	*	@author	eezstreet
-	*/
-	anim_handle Load(char* szPath, char* szName)
-	{
-		anim_handle outHandle;
-		fs_handle fileHandle;
-		DWORD dwNameHash;
-
-		if (!szPath || !szName)
-		{
-			return INVALID_HANDLE;
-		}
-
-		if (gnNumHashesUsed >= MAX_DCC_HASH)
-		{
-			return INVALID_HANDLE;
-		}
-
-		// Make sure that the file actually exists first before we start poking the hash table.
-		// That way, we can root out issues of not finding DCCs immediately
-		DWORD fileSize = FS::Open(szPath, &fileHandle, FS_READ, true);
-		if (fileHandle == INVALID_HANDLE)
-		{
-			Log::Print(PRIORITY_DEBUG, "Couldn't load DCC file: %s (%s)\n", szPath, szName);
-			return INVALID_HANDLE;
-		}
-		if (fileSize == 0)
-		{
-			Log::Print(PRIORITY_DEBUG, "Blank DCC file: %s (%s)\n", szPath, szName);
-			FS::CloseFile(fileHandle);
-			return INVALID_HANDLE;
-		}
-
-		// Find a free slot in the hash table
-		dwNameHash = D2Lib::strhash(szName, 0, MAX_DCC_HASH);
-		outHandle = (anim_handle)dwNameHash;
-		while (DCCHashTable[outHandle].pFile != nullptr)
-		{
-			if (!D2Lib::stricmp(szName, DCCHashTable[outHandle].name))
-			{
-				return outHandle;
-			}
-			outHandle++;
-			outHandle %= MAX_DCC_HASH;
-		}
-
-		// Now that we've got a free slot and a file handle, let's go ahead and load the DCC itself
-		Read(DCCHashTable[outHandle], fileHandle, fileSize);
-		D2Lib::strncpyz(DCCHashTable[outHandle].name, szName, MAX_DCC_NAMELEN);
-		DCCHashTable[outHandle].useCount = 0;
-		FS::CloseFile(fileHandle);
-
-		return outHandle;
-	}
-
-	/*
-	*	Increment the use count of a DCC. Parameter can be negative to decrement.
-	*	@author	eezstreet
-	*/
-	void IncrementUseCount(anim_handle dccHandle, int amount)
-	{
-		if (dccHandle == INVALID_HANDLE)
-		{
-			return;
-		}
-
-		DCCHashTable[dccHandle].useCount += amount;
-	}
-
-	/*
-	*	Gets the contents of the DCC file from a handle.
-	*	@author	eezstreet
-	*/
-	DCCFile* GetContents(anim_handle dccHandle)
-	{
-		if (dccHandle == INVALID_HANDLE)
-		{
-			return nullptr;
-		}
-
-		return DCCHashTable[dccHandle].pFile;
-	}
-
-	/*
-	*	Free any DCC misc data (optional bytes, etc) that got allocated
-	*	@author	eezstreet
-	*/
-	static void FreeMiscData(DCCFile* pFile)
-	{
-		for (int i = 0; i < pFile->header.nNumberDirections; i++)
-		{
-			for (int j = 0; j < pFile->header.dwFramesPerDirection; j++)
-			{
-				if (pFile->directions[i].frames[j].pOptionalByteData)
-				{
-					free(pFile->directions[i].frames[j].pOptionalByteData);
-				}
-			}
-		}
-	}
-
-	/*
-	*	Free DCC at handle
-	*	@author	eezstreet
-	*/
-	void FreeHandle(anim_handle dcc)
-	{
-		if (dcc == INVALID_HANDLE || dcc >= MAX_DCC_HASH)
-		{
-			return;
-		}
-
-		if (DCCHashTable[dcc].pFile != nullptr)
-		{
-			DCCHashTable[dcc].name[0] = '\0';
-			FreeMiscData(DCCHashTable[dcc].pFile);
-			free(DCCHashTable[dcc].pFile->pFileBytes);
-			free(DCCHashTable[dcc].pFile);
-			DCCHashTable[dcc].pFile = nullptr;
-		}
-	}
-
-	/*
-	*	Frees a DCC if it is inactive
-	*	@author	eezstreet
-	*/
-	void FreeIfInactive(anim_handle handle)
-	{
-		if (DCCHashTable[handle].useCount <= 0)
-		{
-			FreeHandle(handle);
-		}
-	}
-
-	/*
-	*	Free all DCCs that aren't in use
-	*	@author	eezstreet
-	*/
-	void FreeInactive()
-	{
-		for (anim_handle i = 0; i < MAX_DCC_HASH; i++)
-		{
-			FreeIfInactive(i);
-		}
-	}
-
-	/*
-	*	Free a specific DCC file by name
-	*	@author	eezstreet
-	*/
-	void FreeByName(char* name)
-	{
-		DWORD dwHash;
-		DWORD dwHashesTried = 0;
-
-		if (!name)
-		{
-			return;
-		}
-
-		dwHash = D2Lib::strhash(name, 0, MAX_DCC_HASH);
-		while (dwHashesTried < gnNumHashesUsed && D2Lib::stricmp(DCCHashTable[dwHash].name, name))
-		{
-			dwHash++;
-			dwHash %= MAX_DCC_HASH;
-			dwHashesTried++; // Increment number of hashes tried. If we go over the amount of hashes used, its wrong
-		}
-
-		if (dwHashesTried >= gnNumHashesUsed)
-		{
-			// Not found
-			Log::Print(PRIORITY_DEBUG, "DCC not freed: %s\n", name);
-			return;
-		}
-
-		FreeHandle((anim_handle)dwHash);
-	}
-
-	/*
-	*	Frees all DCC files
-	*	@author	eezstreet
-	*/
-	void FreeAll()
-	{
-		for (anim_handle i = 0; i < MAX_DCC_HASH; i++)
-		{
-			FreeHandle(i);
-		}
-	}
-
-	//////////////////////////////////////////////////
-	//
-	//	Helper functions for renderer decoding
-
-	/*
 	*	Get the number of cells in a direction
 	*	@author	SVR
 	*/
@@ -494,5 +191,445 @@ namespace DCC
 
 		nCells++;		// last cell width = sz
 		return nCells;
+	}
+
+	/**
+	 *	Loads an animation from a file path.
+	 *	@author eezstreet, SVR, Necrolis
+	 */
+	void LoadAnimation(const char* szPath, DCCFile* file)
+	{
+		Bitstream* pBits;
+		DWORD dwFileSize;
+		fs_handle f;
+		memset(file, 0, sizeof(DCCFile));
+
+		// Open the file
+		file->dwFileSize = FS::Open(szPath, &f, FS_READ, true);
+
+		Log_WarnAssert(f != INVALID_HANDLE);
+		
+		file->pFileBytes = (BYTE*)malloc(dwFileSize);
+		FS::Read(f, file->pFileBytes, file->dwFileSize);
+		FS::Close(f); // we don't actually need the file handle open any more
+
+		pBits = new Bitstream();
+		pBits->LoadStream(file->pFileBytes, file->dwFileSize);
+
+		// Read the header
+		ReadHeader(file, pBits);
+
+		// Read each direction
+		for(int i = 0; i < file->header.nNumberDirections; i++)
+		{
+			DCCDirection& dir = &file->directions[i];
+			size_t optionalSize = 0;
+
+			pBits->SetCurrentPosition(file->header.dwDirectionOffsets[i]);
+
+			dir.nMinX = INT_MAX;
+			dir.nMinY = INT_MAX;
+			dir.nMaxX = INT_MIN;
+			dir.nMaxY = INT_MIN;
+
+			// Direction header
+			ReadDirectionHeader(file->header, dir, i, pBits);
+
+			// Read frames
+			for(int j = 0; j < file->header.dwFramesPerDirection; j++)
+			{
+				// Read the header for this frame
+				ReadFrameHeader(dir.frames[j], dir, pBits);
+
+				// Recalculate box for this frame
+				dir.nMinX = D2Lib::min<long>(dir.nMinX, dir.frames[j].nMinX);
+				dir.nMinY = D2Lib::min<long>(dir.nMinY, dir.frames[j].nMinY);
+				dir.nMaxX = D2Lib::max<long>(dir.nMaxX, dir.frames[j].nMaxX);
+				dir.nMaxY = D2Lib::max<long>(dir.nMaxY, dir.frames[j].nMaxY);
+
+				// Add to optional bytes size
+				optionalSize += dir.frames[j].dwOptionalBytes;
+			}
+
+			// Read direction optional data
+			if(optionalSize > 0)
+			{
+				for(int j = 0; j < file->header.dwFramesPerDirection; j++)
+				{
+					dir.frames[j].pOptionalByteData = (BYTE*)malloc(dir.frames[j].dwOptionalBytes);
+					pBits->ReadData(dir.frames[j].pOptionalByteData, dir.frames[j].dwOptionalBytes);
+				}
+			}
+
+			// Read size for pixel bitstream
+			if(dir.nCompressionFlag & 0x02)
+			{
+				pBits->ReadBits(dir.dwEqualCellStreamSize, 20);
+			}
+			pBits->ReadBits(dir.dwPixelMaskStreamSize, 20);
+			if(dir.nCompressionFlag & 0x01)
+			{
+				pBits->ReadBits(dir.dwEncodingStreamSize, 20);
+				pBits->ReadBits(dir.dwRawPixelStreamSize, 20);
+			}
+			
+			// Read pixel mapping
+			ReadDirectionPixelMapping(dir, pBits);
+			
+			// Initiate the bitstreams.
+			CreateDirectionBitstreams(dir, pBits);
+
+			// We don't do any direction decoding for right now. These are gathered on-the-fly.
+		}
+
+		delete pBits;
+	}
+
+	/**
+	 *	Unloads an animation.
+	 *	@author eezstreet, SVR, Necrolis
+	 */
+	void UnloadAnimation(DCCFile* animation)
+	{
+		if(animation == nullptr)
+		{
+			return;
+		}
+
+		for(int i = 0; i < animation->header.nNumberDirections; i++)
+		{
+			for(int j = 0; j < animation->header.dwFramesPerDirection; j++)
+			{
+				if(animation->directions[i].frames[j].pOptionalByteData)
+				{
+					free(animation->directions[i].frames[j].pOptionalByteData);
+				}
+			}
+		}
+		free(animation->pFileBytes);
+	}
+
+	/**
+	 *	Decodes a direction.
+	 *	@author	eezstreet, SVR, Paul Siramy, Necrolis, Bilian Belchev
+	 */
+	void DecodeDirection(DCCFile* animation, uint32_t direction, DCCDirectionFrameDecodeCallback callback)
+	{
+		if(animation == nullptr)
+		{
+			return;
+		}
+
+		if(direction >= animation->header.nNumberDirections)
+		{
+			return;
+		}
+
+		DCCDirection* pDirection = &animation->directions[direction];
+
+		// Create a buffer containing the cells for this direction
+		int nDirectionW = pDirection->nMaxX - pDirection->nMinX + 1;
+		int nDirectionH = pDirection->nMaxY - pDirection->nMinY + 1;
+		int nDirCellW = (nDirectionW >> 2) + 10;
+		int nDirCellH = (nDirectionH >> 2) + 10;
+		DWORD dwNumCellsThisDir = nDirCellW * nDirCellH;
+
+		// Global cell buffer
+		DCCCell** ppCellBuffer = new DCCCell*[dwNumCellsThisDir];
+		memset(ppCellBuffer, 0, sizeof(ppCellBuffer));
+
+		// Cell buffer for all frames
+		DCCCell* pFrameCells[MAX_DCC_FRAMES];
+		memset(pFrameCells, 0, sizeof(pFrameCells));
+
+		// Rewind all of the associated streams
+		pDir->RewindAllStreams();
+
+		// First part: iterate through the frames and get the colors
+		for(int f = 0; f < animation->header.dwFramesPerDirection; f++)
+		{
+			DCCFrame* frame = &pDir->frames[f];
+
+			// Calculate the frame size, and number of cells this frame
+			int nFrameW = frame->dwWidth;
+			int nFrameH = frame->dwHeight;
+			int nFrameX = frame->nXOffset - pDirection->nMinX;
+			int nFrameY = frame->nYOffset - pDirection->nMinY + 1;
+
+			int nNumCellsW = DCC::GetCellCount(nFrameX, nFrameW);
+			int nNumCellsH = DCC::GetCellCount(nFrameY, nFrameH);
+
+			// Allocate cells
+			DCCCell* pCell = pFrameCells[f] = new DCCCell[nNumCellsW * nNumCellsH];
+
+			// Process cells left -> right / top -> bottom --SVR
+			int nStartX = nFrameX >> 2;
+			int nStartY = nFrameY >> 2;
+
+			// Grab the four pixels (clrcode) color for each cell
+			for(int y = nStartY; y < (nStartY + nNumCellsH); y++)
+			{
+				for(int x = nStartX; x < (nStartX + nNumCellsW); x++)
+				{
+					DCCCell* pCurCell = pCell++;
+					DCCCell* pPrevCell = ppCellBuffer[(y * nDirCellW) + x];
+					DWORD dwClrMask = 0xF;
+
+					*(DWORD*)(pCurCell->clrmap) = 0;
+
+					// If we have a previous cell, read the contents of EqualCellBitstream and ColorMask
+					if(pPrevCell)
+					{
+						if(pDir->EqualCellStream != nullptr)
+						{
+							BYTE bit = 0;
+							pDir->EqualCellStream->ReadBits(bit, 1);
+							if(bit)
+							{	// Skip if we had a '1' from EqualCells (indicates that the cell is to be copied)
+								continue;
+							}
+						}
+						if(pDir->PixelMaskStream != nullptr)
+						{	// read the color mask
+							pDir->PixelMaskStream->ReadBits(&dwClrMask, 4);
+						}
+					}
+				}
+
+				DWORD dwEncodingType = 0;
+				DWORD dwClrCode = 0;
+				DWORD dwUnencoded = 0;
+				DWORD dwLastColor = 0;
+				DWORD dwTemp = 0;
+
+				// Mask off the appropriate colors
+				if(dwClrMask != 0)
+				{
+					if(pDir->EncodingTypeStream != nullptr)
+					{
+						pDir->EncodingTypeStream->ReadBits(&dwEncodingType, 1);
+					}
+
+					for(int n = 0; n < 4; n++)
+					{
+						if(dwClrMask & (0x1 << n))
+						{
+							if(dwEncodingType != 0)
+							{	// if encoding is 1, read it from the raw pixel stream
+								pDir->RawPixelStream->ReadBits(&dwClrCode, 8);
+							}
+							else
+							{	// read difference from the pixel data and add it to the color
+								do
+								{
+									pDir->PixelCodeDisplacementStream->ReadBits(&dwUnencoded, 4);
+									dwClrCode += dwUnencoded;
+								}
+								while(dwUnencoded == 15);
+							}
+
+							// Check to see if the same color was fetched.
+							// If so, stop decoding (it's probably a transparent pixel)
+							if(dwLastColor == dwClrCode)
+							{
+								break;
+							}
+
+							dwTemp <<= 8;
+							dwTemp |= dwClrCode;
+							dwLastColor = dwClrCode;
+						}
+					}
+				}
+
+				// Merge previous colors
+				for(int n = 0; n < 4; n++)
+				{
+					if(dwClrMask & (0x1 << n))
+					{
+						pCurCell->clrmap[n] = (BYTE)(dwTemp & 0xFF);
+						dwTemp >>= 8;
+					}
+					else
+					{	// copy the previous color
+						pCurCell->clrmap[n] = pPrevCell->clrmap[n];
+					}
+				}
+			}
+		}
+
+		// Second part: build a bitmap based on the cells data
+		BYTE* bitmap = new BYTE[nDirectionW * nDirectionH];
+
+		dwDirectionW = nDirectionW;
+		dwDirectionH = nDirectionH;
+
+		// ? clear all cells in the frame buffer list
+		memset(ppCellBuffer, 0, sizeof(DCCCell*) * dwNumCellsThisDir);
+
+		// Rewind the equal cell stream
+		if(pDir->EqualCellStream != nullptr)
+		{
+			pDir->EqualCellStream->Rewind();
+		}
+
+		// Render each frame's cells
+		for(int f = 0; f < animation->header.dwNumFramesPerDirection; f++)
+		{
+			DCCFrame* frame = &pDir->frames[f];
+
+			// Clear out the bitmap
+			memset(bitmap, 0, nDirectionW * nDirectionH);
+
+			// Calculate the frame size and the number of cells in this frame
+			int nFrameW = pFrame->dwWidth;
+			int nFrameH = pFrame->dwHeight;
+			int nFrameX = pFrame->nXOffset - pDir->nMinX;
+			int nFrameY = pFrame->nYOffset - pDir->nMinY - nFrameH + 1;
+
+			int nNumCellsW = DCC::GetCellCount(nFrameX, nFrameW);
+			int nNumCellsH = DCC::GetCellCount(nFrameY, nFrameH);
+
+			int nStartX = nFrame >> 2;
+			int nStartY = nFrame >> 2;
+
+			int nFirstColumnW = 4 - (nFrameX & 3);
+			int nFirstRowH = 4 - (nFrameY & 3);
+
+			int nCountI = nFirstRowH; // height counter
+			int nCountJ;
+			int nYPos = 0;
+			int nXPos;
+
+			DCCCell* pCells = pFrameCells[f];
+			for(int y = nStartY; y < (nStartY + nNumCellsH); y++)
+			{
+				nXPos = 0;
+				nCountJ = nFirstColumnW;
+
+				if(y == ((nStartY + nNumCellsH) - 1))
+				{	// If it's the last row, use the last height
+					nCountI = nFrameH;
+				}
+
+				for(int x = nStartX; x < (nStartX + nNumCellsW); x++)
+				{
+					bool bTransparent = false;
+					DCCCell* pCurCell = pCells++;
+					DCCCell* pPrevCell = ppCellBuffer[(y * nNumDirCellW) + x];
+
+					if(x == ((nStartX + nNumCellsW) - 1))
+					{
+						nCountJ = nFrameW;
+					}
+
+					pCurCell->nH = nCountI;
+					pCurCell->nW = nCountJ;
+					pCurCell->nX = nFrameX + nXPos;
+					pCurCell->nY = nFrameY + nYPos;
+
+					// Check for equal cell
+					if(pPrevCell && pDir->EqualCellBitstream != nullptr)
+					{
+						DWORD dwEqualCell = 0;
+						pDir->EqualCellBitstream->ReadBits(&dwEqualCell, 1);
+
+						if(dwEqualCell)
+						{
+							if(pPrevCell->nH == pCurCell->nH && pPrevCell->nW == pCurCell->nW)
+							{	// same-sized cell = it is definitely the same one
+								// check x/y - if they are not the same then we copy it
+								if(pPrevCell->nX != pCurCell->nX || pPrevCell->nY != pCurCell->nY)
+								{
+									// source and destination rectangles
+									int dY = pCurCell->nY;
+
+									for(int i = pPrevCell->nY; i < pPrevCell->nY + pPrevCell->nH; i++)
+									{
+										int dX = pCurCell->nX;
+										for(int j = pPrevCell->nX; j < pPrevCell->nX + pPrevCell->nW; j++)
+										{
+											bitmap[(dY * nDirectionW) + dX] = bitmap[(i * nDirectionW) + j];
+											dX++;
+										}
+										dY++;
+									}
+
+								}
+								ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
+								nXPos += nCountJ;
+								nCountJ = 4;
+								continue;
+							}
+							else
+							{
+								bTransparent = true;
+							}
+						}
+					}
+
+					int n;
+					for(n = 0; n < 2; n++)
+					{
+						// try to find a zero
+						if(!pCurCell->clrmap[n])
+						{
+							break;
+						}
+					}
+
+					// fill the cell
+					if(bTransparent || !n)
+					{	// if all of them are transparent, fill with zeroes
+						for(int i = nFrameY + nYPos; i < nFrameY + nYPos + nCountI; i++)
+						{
+							for(int j = nFrameX + nXPos; j < nFrameX + nXPos + nCountJ; j++)
+							{
+								bitmap[(i * nDirectionW) + j] = 0;
+							}
+						}
+					}
+					else
+					{
+						// Write the color pixels one by one
+						for(int i = 0; i < nCountI; i++)
+						{
+							for(int j = 0; j < nCountJ; j++)
+							{
+								DWORD dwPixelData = 0;
+								DWORD dwPixelPos = ((nFrameY + nYPos + i) * (nDirectionW)) + (nFrameX + nXPos + j);
+								int nPalettePos;
+
+								pDir->PixelCodeDisplacementStream->ReadBits(&dwPixelData, n);
+								nPalettePos = pCurCell->clrmap[dwPixelData];
+								bitmap[dwPixelPos] = pDir->nPixelValues[nPalettePos];
+							}
+						}
+					}
+
+					ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
+					nXPos += nCountJ;
+					nCountJ = 4;
+				}
+
+				nYPos += nCountI;
+				nCountI = 4;
+			}
+
+			// Handle the individual frame
+			if(callback)
+			{
+				callback(bitmap, f, nFrameX, nFrameY, nFrameW, nFrameH);
+			}
+		}
+
+		// Delete all of the data that we don't need any more.
+		for(int f = 0; f < animation->header.dwFramesPerDirection; f++)
+		{
+			delete pFrameCells[f];
+		}
+
+		delete[] bitmap;
+		delete[] ppCellBuffer;
 	}
 }
