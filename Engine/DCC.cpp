@@ -26,7 +26,7 @@ namespace DCC
 	*/
 	void GlobalShutdown()
 	{
-		FreeAll();
+		// do nothing atm
 	}
 
 	/*
@@ -211,7 +211,7 @@ namespace DCC
 		
 		file->pFileBytes = (BYTE*)malloc(dwFileSize);
 		FS::Read(f, file->pFileBytes, file->dwFileSize);
-		FS::Close(f); // we don't actually need the file handle open any more
+		FS::CloseFile(f); // we don't actually need the file handle open any more
 
 		pBits = new Bitstream();
 		pBits->LoadStream(file->pFileBytes, file->dwFileSize);
@@ -222,10 +222,10 @@ namespace DCC
 		// Read each direction
 		for(int i = 0; i < file->header.nNumberDirections; i++)
 		{
-			DCCDirection& dir = &file->directions[i];
+			DCCDirection& dir = file->directions[i];
 			size_t optionalSize = 0;
 
-			pBits->SetCurrentPosition(file->header.dwDirectionOffsets[i]);
+			pBits->SetCurrentPosition(file->header.dwDirectionOffset[i]);
 
 			dir.nMinX = INT_MAX;
 			dir.nMinY = INT_MAX;
@@ -343,12 +343,12 @@ namespace DCC
 		memset(pFrameCells, 0, sizeof(pFrameCells));
 
 		// Rewind all of the associated streams
-		pDir->RewindAllStreams();
+		pDirection->RewindAllStreams();
 
 		// First part: iterate through the frames and get the colors
 		for(int f = 0; f < animation->header.dwFramesPerDirection; f++)
 		{
-			DCCFrame* frame = &pDir->frames[f];
+			DCCFrame* frame = &pDirection->frames[f];
 
 			// Calculate the frame size, and number of cells this frame
 			int nFrameW = frame->dwWidth;
@@ -380,79 +380,78 @@ namespace DCC
 					// If we have a previous cell, read the contents of EqualCellBitstream and ColorMask
 					if(pPrevCell)
 					{
-						if(pDir->EqualCellStream != nullptr)
+						if(pDirection->EqualCellStream != nullptr)
 						{
 							BYTE bit = 0;
-							pDir->EqualCellStream->ReadBits(bit, 1);
+							pDirection->EqualCellStream->ReadBits(bit, 1);
 							if(bit)
 							{	// Skip if we had a '1' from EqualCells (indicates that the cell is to be copied)
 								continue;
 							}
 						}
-						if(pDir->PixelMaskStream != nullptr)
+						if(pDirection->PixelMaskStream != nullptr)
 						{	// read the color mask
-							pDir->PixelMaskStream->ReadBits(&dwClrMask, 4);
+							pDirection->PixelMaskStream->ReadBits(&dwClrMask, 4);
 						}
 					}
-				}
 
-				DWORD dwEncodingType = 0;
-				DWORD dwClrCode = 0;
-				DWORD dwUnencoded = 0;
-				DWORD dwLastColor = 0;
-				DWORD dwTemp = 0;
+					DWORD dwEncodingType = 0;
+					DWORD dwClrCode = 0;
+					DWORD dwUnencoded = 0;
+					DWORD dwLastColor = 0;
+					DWORD dwTemp = 0;
 
-				// Mask off the appropriate colors
-				if(dwClrMask != 0)
-				{
-					if(pDir->EncodingTypeStream != nullptr)
+					// Mask off the appropriate colors
+					if (dwClrMask != 0)
 					{
-						pDir->EncodingTypeStream->ReadBits(&dwEncodingType, 1);
-					}
-
-					for(int n = 0; n < 4; n++)
-					{
-						if(dwClrMask & (0x1 << n))
+						if (pDirection->EncodingTypeStream != nullptr)
 						{
-							if(dwEncodingType != 0)
-							{	// if encoding is 1, read it from the raw pixel stream
-								pDir->RawPixelStream->ReadBits(&dwClrCode, 8);
-							}
-							else
-							{	// read difference from the pixel data and add it to the color
-								do
-								{
-									pDir->PixelCodeDisplacementStream->ReadBits(&dwUnencoded, 4);
-									dwClrCode += dwUnencoded;
-								}
-								while(dwUnencoded == 15);
-							}
+							pDirection->EncodingTypeStream->ReadBits(&dwEncodingType, 1);
+						}
 
-							// Check to see if the same color was fetched.
-							// If so, stop decoding (it's probably a transparent pixel)
-							if(dwLastColor == dwClrCode)
+						for (int n = 0; n < 4; n++)
+						{
+							if (dwClrMask & (0x1 << n))
 							{
-								break;
-							}
+								if (dwEncodingType != 0)
+								{	// if encoding is 1, read it from the raw pixel stream
+									pDirection->RawPixelStream->ReadBits(&dwClrCode, 8);
+								}
+								else
+								{	// read difference from the pixel data and add it to the color
+									do
+									{
+										pDirection->PixelCodeDisplacementStream->ReadBits(&dwUnencoded, 4);
+										dwClrCode += dwUnencoded;
+									} while (dwUnencoded == 15);
+								}
 
-							dwTemp <<= 8;
-							dwTemp |= dwClrCode;
-							dwLastColor = dwClrCode;
+								// Check to see if the same color was fetched.
+								// If so, stop decoding (it's probably a transparent pixel)
+								if (dwLastColor == dwClrCode)
+								{
+									break;
+								}
+
+								dwTemp <<= 8;
+								dwTemp |= dwClrCode;
+								dwLastColor = dwClrCode;
+							}
 						}
 					}
-				}
 
-				// Merge previous colors
-				for(int n = 0; n < 4; n++)
-				{
-					if(dwClrMask & (0x1 << n))
+					// Merge previous colors
+					for (int n = 0; n < 4; n++)
 					{
-						pCurCell->clrmap[n] = (BYTE)(dwTemp & 0xFF);
-						dwTemp >>= 8;
-					}
-					else
-					{	// copy the previous color
-						pCurCell->clrmap[n] = pPrevCell->clrmap[n];
+						if (dwClrMask & (0x1 << n))
+						{
+							pCurCell->clrmap[n] = (BYTE)(dwTemp & 0xFF);
+							dwTemp >>= 8;
+						}
+						else
+						{	// copy the previous color
+							pCurCell->clrmap[n] = pPrevCell->clrmap[n];
+						}
 					}
 				}
 			}
@@ -461,37 +460,34 @@ namespace DCC
 		// Second part: build a bitmap based on the cells data
 		BYTE* bitmap = new BYTE[nDirectionW * nDirectionH];
 
-		dwDirectionW = nDirectionW;
-		dwDirectionH = nDirectionH;
-
 		// ? clear all cells in the frame buffer list
 		memset(ppCellBuffer, 0, sizeof(DCCCell*) * dwNumCellsThisDir);
 
 		// Rewind the equal cell stream
-		if(pDir->EqualCellStream != nullptr)
+		if(pDirection->EqualCellStream != nullptr)
 		{
-			pDir->EqualCellStream->Rewind();
+			pDirection->EqualCellStream->Rewind();
 		}
 
 		// Render each frame's cells
-		for(int f = 0; f < animation->header.dwNumFramesPerDirection; f++)
+		for(int f = 0; f < animation->header.dwFramesPerDirection; f++)
 		{
-			DCCFrame* frame = &pDir->frames[f];
+			DCCFrame* frame = &pDirection->frames[f];
 
 			// Clear out the bitmap
 			memset(bitmap, 0, nDirectionW * nDirectionH);
 
 			// Calculate the frame size and the number of cells in this frame
-			int nFrameW = pFrame->dwWidth;
-			int nFrameH = pFrame->dwHeight;
-			int nFrameX = pFrame->nXOffset - pDir->nMinX;
-			int nFrameY = pFrame->nYOffset - pDir->nMinY - nFrameH + 1;
+			int nFrameW = frame->dwWidth;
+			int nFrameH = frame->dwHeight;
+			int nFrameX = frame->nXOffset - pDirection->nMinX;
+			int nFrameY = frame->nYOffset - pDirection->nMinY - nFrameH + 1;
 
 			int nNumCellsW = DCC::GetCellCount(nFrameX, nFrameW);
 			int nNumCellsH = DCC::GetCellCount(nFrameY, nFrameH);
 
-			int nStartX = nFrame >> 2;
-			int nStartY = nFrame >> 2;
+			int nStartX = nFrameX >> 2;
+			int nStartY = nFrameY >> 2;
 
 			int nFirstColumnW = 4 - (nFrameX & 3);
 			int nFirstRowH = 4 - (nFrameY & 3);
@@ -516,7 +512,7 @@ namespace DCC
 				{
 					bool bTransparent = false;
 					DCCCell* pCurCell = pCells++;
-					DCCCell* pPrevCell = ppCellBuffer[(y * nNumDirCellW) + x];
+					DCCCell* pPrevCell = ppCellBuffer[(y * nDirCellW) + x];
 
 					if(x == ((nStartX + nNumCellsW) - 1))
 					{
@@ -529,10 +525,10 @@ namespace DCC
 					pCurCell->nY = nFrameY + nYPos;
 
 					// Check for equal cell
-					if(pPrevCell && pDir->EqualCellBitstream != nullptr)
+					if(pPrevCell && pDirection->EqualCellStream != nullptr)
 					{
 						DWORD dwEqualCell = 0;
-						pDir->EqualCellBitstream->ReadBits(&dwEqualCell, 1);
+						pDirection->EqualCellStream->ReadBits(&dwEqualCell, 1);
 
 						if(dwEqualCell)
 						{
@@ -600,9 +596,9 @@ namespace DCC
 								DWORD dwPixelPos = ((nFrameY + nYPos + i) * (nDirectionW)) + (nFrameX + nXPos + j);
 								int nPalettePos;
 
-								pDir->PixelCodeDisplacementStream->ReadBits(&dwPixelData, n);
+								pDirection->PixelCodeDisplacementStream->ReadBits(&dwPixelData, n);
 								nPalettePos = pCurCell->clrmap[dwPixelData];
-								bitmap[dwPixelPos] = pDir->nPixelValues[nPalettePos];
+								bitmap[dwPixelPos] = pDirection->nPixelValues[nPalettePos];
 							}
 						}
 					}

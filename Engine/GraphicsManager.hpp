@@ -9,7 +9,7 @@
  */
 class IGraphicsHandle
 {
-private:
+protected:
 	void* loadedGraphicsData;
 	bool bAreGraphicsLoaded;
 
@@ -190,7 +190,6 @@ private:
 	HashMap<char, DCCGraphicsHandle*> DCCGraphics;
 	HashMap<char, DC6GraphicsHandle*> DC6Graphics;
 	HashMap<char, DT1GraphicsHandle*> DT1Graphics;
-	HashMap<char, PL2GraphicsHandle*> PL2Graphics;
 	HashMap<char, FontGraphicsHandle*> Fonts;
 
 public:

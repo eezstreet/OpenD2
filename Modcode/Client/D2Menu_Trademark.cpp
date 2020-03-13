@@ -80,7 +80,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	// 10 = dark green
 	// 11 = purple
 	// 12 = medium green?
-	if(engine->PAL_GetPL2ColorModulation(engine->renderer->GetGlobalPalette(), TextColor_Overwhite, r, g, b))
+	if(engine->PAL_GetPL2ColorModulation(engine->renderer->GetGlobalPalette(), TextColor_Gold, r, g, b))
 	{
 		trademark->SetColorModulate(r, g, b, 1.0f);
 		allRightsReserved->SetColorModulate(r, g, b, 1.0f);

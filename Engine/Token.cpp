@@ -496,6 +496,7 @@ namespace TokenInstance
 			// ...for every mode (WL, RN, NU, ...)
 			// Example: data/global/CHARS/AM/HD/AMHDCRNA21HS.dcc
 			// The COF file on the token acts like glue to hold everything together.
+#if 0
 			for (i = 0; i < max; i++)
 			{
 				for (j = 0; j < COMP_MAX; j++)
@@ -518,11 +519,13 @@ namespace TokenInstance
 					}
 				}
 			}
+#endif
 		}
 		else
 		{
 			// Decrement use count of each component's DCC
 			// Don't purge it if it goes totally unused though. We only do that in special circumstances.
+#if 0
 			for (i = 0; i < max; i++)
 			{
 				for (j = 0; j < COMP_MAX; j++)
@@ -533,6 +536,7 @@ namespace TokenInstance
 					}
 				}
 			}
+#endif
 		}
 
 		pInstance->bActive = bNewActive;

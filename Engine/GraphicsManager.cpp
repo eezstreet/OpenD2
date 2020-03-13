@@ -470,32 +470,6 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		}
 		
 	}
-	else if (!D2Lib::stricmp(ext, ".pl2"))
-	{
-		// PL2 loading
-		switch (policy)
-		{
-			case UsagePolicy_SingleUse:
-				return new PL2GraphicsHandle(graphicsFile);
-
-			case UsagePolicy_Permanent:
-				if (!PL2Graphics.Contains(graphicsFile, &theHandle, &bFull))
-				{
-					if (bFull)
-					{
-						return nullptr; // it's full
-					}
-
-					PL2Graphics.Insert(theHandle, graphicsFile, new PL2GraphicsHandle(graphicsFile));
-				}
-				return PL2Graphics[theHandle];
-
-			case UsagePolicy_Temporary:
-				// Not yet implemented
-				break;
-		}
-		
-	}
 	else if (!D2Lib::stricmp(ext, ".dcc"))
 	{
 		// DCC loading
