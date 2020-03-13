@@ -544,7 +544,7 @@ void Renderer_GL::SetGlobalPalette(const D2Palettes palette)
 	global_palette = palette;
 }
 
-D2Palettes Renderer_GL::GetGlobalPalette(const D2Palettes palette)
+D2Palettes Renderer_GL::GetGlobalPalette()
 {
 	return (D2Palettes)global_palette;
 }

@@ -95,7 +95,7 @@ namespace Pal
 		{	// bad PL2 file
 			return false;
 		}
-		if(dwPaletteSize != sizeof(PL2File))
+		if(dwPaletteSize == 0)
 		{
 			// bad file
 			FS::CloseFile(f);
@@ -114,7 +114,7 @@ namespace Pal
 	 */
 	bool Init()
 	{
-		for (int i = 0; i < PAL_MAX_PALETTES; i++)
+		for (int i = 0; i < PAL_STATIC; i++)
 		{
 			D2PaletteEntry* pEntry = &D2Palettes[i];
 			if (!RegisterPalette(pEntry->szPath, pEntry->szPL2Path, &pEntry->pal, &pEntry->pl2))
@@ -143,7 +143,7 @@ namespace Pal
 	 */
 	bool GetPL2ColorModulation(int palette, int color, float& R, float& G, float& B)
 	{
-		if(!gbPalettesInitialized || nIndex < 0 || nIndex >= PAL_MAX_PALETTES)
+		if(!gbPalettesInitialized || palette < 0 || palette >= PAL_MAX_PALETTES)
 		{
 			return false;
 		}
@@ -152,9 +152,9 @@ namespace Pal
 			return false;
 		}
 		
-		R = D2Palettes[nIndex].pl2.pStandardColors[color][0] / 255.0f;
-		G = D2Palettes[nIndex].pl2.pStandardColors[color][1] / 255.0f;
-		B = D2Palettes[nIndex].pl2.pStandardColors[color][2] / 255.0f;
+		R = D2Palettes[palette].pl2.pStandardColors[color][0] / 255.0f;
+		G = D2Palettes[palette].pl2.pStandardColors[color][1] / 255.0f;
+		B = D2Palettes[palette].pl2.pStandardColors[color][2] / 255.0f;
 		return true;
 	}
 }

@@ -592,6 +592,28 @@ struct OpenD2ConfigStrc
 };
 
 /**
+ *	Color for text.
+ *	@author	eezstreet
+ */
+enum TextColor
+{
+	TextColor_White,
+	TextColor_Red,
+	TextColor_BrightGreen,
+	TextColor_Blue,
+	TextColor_Gold,
+	TextColor_Grey,
+	TextColor_Black,
+	TextColor_Unknown7,
+	TextColor_Orange,
+	TextColor_Yellow,
+	TextColor_DarkGreen,
+	TextColor_Purple,
+	TextColor_MediumGreen,
+	TextColor_Overwhite,
+};
+
+/**
  *	Usage policy dictates how we store the graphics in memory
  */
 enum GraphicsUsagePolicy
