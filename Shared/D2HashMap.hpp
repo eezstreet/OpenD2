@@ -80,6 +80,29 @@ public:
 		Copy(keys[handle], key, L);
 	}
 
+	void Erase(const K* key)
+	{
+		DWORD hashVal = Hash(key);
+		DWORD attempts = 1;
+
+		while (!Equals(key, keys[hashVal]) && attempts < M)
+		{
+			if (keys[hashVal][0] == '\0')
+			{
+				return; // not found
+			}
+			hashVal++;
+			hashVal %= M;
+			attempts++;
+		}
+
+		if (attempts < M)
+		{
+			keys[hashVal][0] = '\0';
+			values[hashVal] = (V)0;
+		}
+	}
+
 	bool Contains(const K* key, handle* outHandle = nullptr, bool* bFull = nullptr)
 	{
 		DWORD hashVal = Hash(key);

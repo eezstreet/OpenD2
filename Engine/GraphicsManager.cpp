@@ -11,11 +11,10 @@ GraphicsManager* graphicsManager;
  *	DCCGraphicsHandle is the IGraphicsHandle implementation for DCC files.
  */
 
-DCCGraphicsHandle::DCCGraphicsHandle(const char* fileName)
+DCCGraphicsHandle::DCCGraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsHandle(usagePolicy)
 {
-	FS::Open(fileName, &fileHandle, FS_READ);
-	bAreGraphicsLoaded = false;
-	loadedGraphicsData = nullptr;
+	D2Lib::strncpyz(dccHandleName, fileName, sizeof(dccHandleName));
 }
 
 size_t DCCGraphicsHandle::GetTotalSizeInBytes(int32_t frame)
@@ -49,11 +48,25 @@ void DCCGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 
 }
 
+void DCCGraphicsHandle::Unload()
+{
+	switch (usagePolicy)
+	{
+		case UsagePolicy_Permanent:
+			graphicsManager->RemovePermanentDCCGraphic(dccHandleName);
+			break;
+		case UsagePolicy_Temporary:
+			// not yet implemented
+			break;
+	}
+}
+
 /**
  *	DC6GraphicsHandle is the IGraphicsHandle implementation for DC6 files.
  */
 
-DC6GraphicsHandle::DC6GraphicsHandle(const char* fileName)
+DC6GraphicsHandle::DC6GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsHandle(usagePolicy)
 {
 	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
 	bAreGraphicsLoaded = false;
@@ -259,15 +272,27 @@ void DC6GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 	*totalHeight = currentY + image.dwMaxFrameHeight;
 }
 
+void DC6GraphicsHandle::Unload()
+{
+	switch (usagePolicy)
+	{
+		case UsagePolicy_Permanent:
+			graphicsManager->RemovePermanentDC6Graphic(filePath);
+			break;
+		case UsagePolicy_Temporary:
+			// not implemented yet
+			break;
+	}
+}
+
 /**
  *	DT1GraphicsHandle is the IGraphicsHandle implementation for DT1 files.
  */
 
-DT1GraphicsHandle::DT1GraphicsHandle(const char* fileName)
+DT1GraphicsHandle::DT1GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsHandle(usagePolicy)
 {
-	FS::Open(fileName, &fileHandle, FS_READ);
-	bAreGraphicsLoaded = false;
-	loadedGraphicsData = nullptr;
+	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
 }
 
 size_t DT1GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
@@ -301,15 +326,28 @@ void DT1GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 
 }
 
+void DT1GraphicsHandle::Unload()
+{
+	switch (usagePolicy)
+	{
+		case UsagePolicy_Permanent:
+			graphicsManager->RemovePermanentDT1Graphic(filePath);
+			break;
+		case UsagePolicy_Temporary:
+			// not implemented
+			break;
+	}
+}
+
 /**
  *	Font handles are used to load fonts.
  */
-FontGraphicsHandle::FontGraphicsHandle(const char* graphicsFile, const char* tbl)
+FontGraphicsHandle::FontGraphicsHandle(const char* graphicsFile, const char* tbl, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsHandle(usagePolicy)
 {
 	tblHandle = TBLFont::RegisterFont(tbl);
 	DC6::LoadImage(graphicsFile, &image);
-	bAreGraphicsLoaded = false;
-	loadedGraphicsData = nullptr;
+	D2Lib::strncpyz(handleName, tbl, sizeof(handleName));
 }
 
 FontGraphicsHandle::~FontGraphicsHandle()
@@ -423,6 +461,11 @@ float FontGraphicsHandle::GetCapHeight()
 	return fontFile->nHeight;
 }
 
+void FontGraphicsHandle::Unload()
+{
+	graphicsManager->RemoveFont(handleName);
+}
+
 /**
  *	The graphics manager.
  */
@@ -434,7 +477,7 @@ GraphicsManager::GraphicsManager()
 
 GraphicsManager::~GraphicsManager()
 {
-
+	// TODO: delete all permanent entries, this will leak memory !!
 }
 
 IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, GraphicsUsagePolicy policy)
@@ -450,7 +493,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		switch (policy)
 		{
 			case UsagePolicy_SingleUse:
-				return new DC6GraphicsHandle(graphicsFile);
+				return new DC6GraphicsHandle(graphicsFile, policy);
 
 			case UsagePolicy_Permanent:
 				if (!DC6Graphics.Contains(graphicsFile, &theHandle, &bFull))
@@ -460,7 +503,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DC6Graphics.Insert(theHandle, graphicsFile, new DC6GraphicsHandle(graphicsFile));
+					DC6Graphics.Insert(theHandle, graphicsFile, new DC6GraphicsHandle(graphicsFile, policy));
 				}
 				return DC6Graphics[theHandle];
 
@@ -476,7 +519,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		switch (policy)
 		{
 			case UsagePolicy_SingleUse:
-				return new DCCGraphicsHandle(graphicsFile);
+				return new DCCGraphicsHandle(graphicsFile, policy);
 
 			case UsagePolicy_Permanent:
 				if (!DCCGraphics.Contains(graphicsFile, &theHandle, &bFull))
@@ -486,7 +529,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DCCGraphics.Insert(theHandle, graphicsFile, new DCCGraphicsHandle(graphicsFile));
+					DCCGraphics.Insert(theHandle, graphicsFile, new DCCGraphicsHandle(graphicsFile, policy));
 				}
 				return DCCGraphics[theHandle];
 
@@ -501,7 +544,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		switch (policy)
 		{
 			case UsagePolicy_SingleUse:
-				return new DT1GraphicsHandle(graphicsFile);
+				return new DT1GraphicsHandle(graphicsFile, policy);
 
 			case UsagePolicy_Permanent:
 				if (!DT1Graphics.Contains(graphicsFile, &theHandle, &bFull))
@@ -511,7 +554,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DT1Graphics.Insert(theHandle, graphicsFile, new DT1GraphicsHandle(graphicsFile));
+					DT1Graphics.Insert(theHandle, graphicsFile, new DT1GraphicsHandle(graphicsFile, policy));
 				}
 				return DT1Graphics[theHandle];
 
@@ -529,6 +572,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 
 void GraphicsManager::UnloadGraphic(IGraphicsHandle* graphic)
 {
+	graphic->Unload();
 	delete graphic;
 }
 
@@ -545,7 +589,27 @@ IGraphicsHandle* GraphicsManager::LoadFont(const char* fontGraphic,
 			return nullptr; // it's full
 		}
 
-		Fonts.Insert(theHandle, fontTBL, new FontGraphicsHandle(fontGraphic, fontTBL));
+		Fonts.Insert(theHandle, fontTBL, new FontGraphicsHandle(fontGraphic, fontTBL, UsagePolicy_Permanent));
 	}
 	return Fonts[theHandle];
+}
+
+void GraphicsManager::RemovePermanentDCCGraphic(const char* key)
+{
+	DCCGraphics.Erase(key);
+}
+
+void GraphicsManager::RemovePermanentDC6Graphic(const char* key)
+{
+	DC6Graphics.Erase(key);
+}
+
+void GraphicsManager::RemovePermanentDT1Graphic(const char* key)
+{
+	DT1Graphics.Erase(key);
+}
+
+void GraphicsManager::RemoveFont(const char* key)
+{
+	Fonts.Erase(key);
 }

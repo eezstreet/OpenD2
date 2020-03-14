@@ -12,8 +12,19 @@ class IGraphicsHandle
 protected:
 	void* loadedGraphicsData;
 	bool bAreGraphicsLoaded;
+	GraphicsUsagePolicy usagePolicy;
 
 public:
+	/**
+	 *	Default constructor, takes a usage policy.
+	 */
+	IGraphicsHandle(GraphicsUsagePolicy policy)
+	{
+		usagePolicy = policy;
+		bAreGraphicsLoaded = false;
+		loadedGraphicsData = nullptr;
+	}
+
 	/**
 	 *	Returns true if the graphics have been fully loaded.
 	 */
@@ -92,6 +103,11 @@ public:
 	 *	Get cap height (for font resource only)
 	 */
 	virtual float GetCapHeight() { return 0.0f; }
+
+	/**
+	 *	Unload this graphics handle.
+	 */
+	virtual void Unload() = 0;
 };
 
 /**
@@ -100,11 +116,10 @@ public:
 class DCCGraphicsHandle : public IGraphicsHandle
 {
 private:
-	fs_handle fileHandle;
+	char dccHandleName[MAX_D2PATH];
 
 public:
-	DCCGraphicsHandle(const char* fileName);
-	DCCGraphicsHandle() {}
+	DCCGraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy);
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
@@ -112,6 +127,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void Unload();
 };
 
 /**
@@ -124,9 +140,8 @@ private:
 	DC6Image image;
 	bool bLoaded = false;
 public:
-	DC6GraphicsHandle(const char* fileName);
+	DC6GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy);
 	~DC6GraphicsHandle();
-	DC6GraphicsHandle() {}
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
@@ -134,6 +149,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void Unload();
 };
 
 /**
@@ -142,11 +158,10 @@ public:
 class DT1GraphicsHandle : public IGraphicsHandle
 {
 private:
-	fs_handle fileHandle;
+	char filePath[MAX_D2PATH];
 
 public:
-	DT1GraphicsHandle(const char* fileName);
-	DT1GraphicsHandle() {}
+	DT1GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy);
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, 
@@ -154,6 +169,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void Unload();
 };
 
 /**
@@ -164,9 +180,10 @@ class FontGraphicsHandle : public IGraphicsHandle
 private:
 	DC6Image image;
 	tbl_handle tblHandle;
+	char handleName[MAX_D2PATH];
 
 public:
-	FontGraphicsHandle(const char* graphicsFile, const char* tbl);
+	FontGraphicsHandle(const char* graphicsFile, const char* tbl, GraphicsUsagePolicy usagePolicy);
 	~FontGraphicsHandle();
 
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
@@ -177,6 +194,7 @@ public:
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 	virtual float GetCapHeight() override;
+	virtual void Unload();
 };
 
 
@@ -203,6 +221,12 @@ public:
 
 	virtual IGraphicsHandle* LoadFont(const char* fontGraphic,
 		const char* fontTBL);
+
+	// Individual graphics handle functions
+	inline void RemovePermanentDCCGraphic(const char* key);
+	inline void RemovePermanentDC6Graphic(const char* key);
+	inline void RemovePermanentDT1Graphic(const char* key);
+	inline void RemoveFont(const char* key);
 };
 
 extern GraphicsManager* graphicsManager;
