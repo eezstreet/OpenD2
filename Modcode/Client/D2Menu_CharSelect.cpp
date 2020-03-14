@@ -9,14 +9,15 @@ static char* gszTokenNames[D2CLASS_MAX] = {
  */
 D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 {
-#if 0
 	bool bPreloadedSave = (pszSavePaths != nullptr);
 	D2SaveHeader header{ 0 };
 	fs_handle f;
 
-	// Should match the one in the main menu
-	backgroundTexture =
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", "charselect", 0, 11, PAL_UNITS);
+	// Create the background.
+	backgroundTexture = engine->graphics->LoadGraphic("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", UsagePolicy_SingleUse);
+	backgroundObject = engine->renderer->AllocateObject(0);
+	backgroundObject->AttachCompositeTextureResource(backgroundTexture, 0, -1);
+	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 
 	// Create the panels and add them to the menu panel list
 	m_charSelectPanel = new D2Panel_CharSelect();
@@ -55,7 +56,6 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 
 	// Select the first save in the list
 	m_charSelectPanel->SelectSave(0);
-#endif
 }
 
 /*
@@ -63,16 +63,13 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
  */
 D2Menu_CharSelect::~D2Menu_CharSelect()
 {
-#if 0
-	if (bJoiningGame)
-	{
-		// If we are creating/joining a game, we should free up the background texture.
-		engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
-	}
+	// Delete the background texture.
+	engine->graphics->UnloadGraphic(backgroundTexture);
+	engine->renderer->Remove(backgroundObject);
 
+	// Delete the panels.
 	delete m_charSelectPanel;
 	delete m_charDeletePanel;
-#endif
 }
 
 /*
@@ -80,13 +77,9 @@ D2Menu_CharSelect::~D2Menu_CharSelect()
  */
 void D2Menu_CharSelect::Draw()
 {
-#if 0
-	// Draw the background
-	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
-
-	// And draw all the panels too
+	backgroundObject->Draw();
+	
 	DrawAllPanels();
-#endif
 }
 
 /*

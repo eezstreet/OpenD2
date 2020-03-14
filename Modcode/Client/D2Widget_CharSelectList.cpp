@@ -90,7 +90,6 @@ static const CharacterTitle TitleStatus_ExpansionHardcore[] =
 D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h) 
 	: D2Widget(x, y, w, h)
 {
-#if 0
 	// Blank out our own data
 	pCharacterData = nullptr;
 	nNumberSaves = 0;
@@ -99,7 +98,7 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
-
+#if 0
 	frameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
 		"charselectbox", 0, 1, PAL_UNITS);
 	greyFrameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",

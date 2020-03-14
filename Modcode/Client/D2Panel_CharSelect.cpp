@@ -133,10 +133,9 @@ void D2Panel_CharSelect::Draw()
 	{
 		engine->renderer->DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
 	}
-
+#endif
 	// Draw the widgets
 	DrawAllWidgets();
-#endif
 }
 
 /*
