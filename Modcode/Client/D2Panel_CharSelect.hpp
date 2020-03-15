@@ -15,6 +15,8 @@ private:
 	D2Widget_Button*			okButton;
 	D2Widget_Button*			exitButton;
 	D2Widget_CharSelectList*	charSelectList;
+
+	IRenderObject*				characterDisplayName;
 public:
 	D2Panel_CharSelect();
 	virtual ~D2Panel_CharSelect();

@@ -50,7 +50,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_delete"))
 	{
 		// Delete character button pressed
-		pCharMenu->AskForDeletionConfirmation();
+		//pCharMenu->AskForDeletionConfirmation();
 		return;
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_convert"))
@@ -73,6 +73,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
  */
 D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 {
+	engine->renderer->SetGlobalPalette(PAL_SKY);
 	createCharButton = new D2Widget_Button(34, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallButton", 0, 0, 1, 1, 1, 1);
 	deleteCharButton = new D2Widget_Button(432, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
 	convertExpansionButton = new D2Widget_Button(232, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
@@ -105,6 +106,9 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 	convertExpansionButton->AttachIdentifier("cs_convert");
 	okButton->AttachIdentifier("cs_ok");
 	exitButton->AttachIdentifier("cs_exit");
+
+	characterDisplayName = engine->renderer->AllocateObject(1);
+	characterDisplayName->AttachFontResource(cl.font42);
 }
 
 /*
@@ -125,15 +129,8 @@ D2Panel_CharSelect::~D2Panel_CharSelect()
  */
 void D2Panel_CharSelect::Draw()
 {
-#if 0
-	// Draw the character name
-	char16_t* szCharName = charSelectList->GetSelectedCharacterName();
+	characterDisplayName->Draw();
 
-	if (szCharName && szCharName[0])
-	{
-		engine->renderer->DrawText(cl.font42, szCharName, 34, 16, 564, 51, ALIGN_CENTER, ALIGN_CENTER);
-	}
-#endif
 	// Draw the widgets
 	DrawAllWidgets();
 }
@@ -158,6 +155,12 @@ void D2Panel_CharSelect::SelectSave(int nSaveNumber)
 	if (charSelectList != nullptr)
 	{
 		charSelectList->Selected(nSaveNumber);
+
+		// Update the name displayed up top, and center it.
+		int32_t width, height;
+		characterDisplayName->SetText(charSelectList->GetSelectedCharacterName());
+		characterDisplayName->GetDrawCoords(nullptr, nullptr, &width, &height);
+		characterDisplayName->SetDrawCoords(316 - (width / 2), 41 - (height / 2), 0, 0);
 	}
 }
 

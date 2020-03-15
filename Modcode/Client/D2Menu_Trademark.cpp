@@ -41,10 +41,10 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	blackLeft = engine->renderer->AllocateObject(0);
 	blackRight = engine->renderer->AllocateObject(0);
 
-	flameLeft->AttachAnimationResource(flameTexLeft);
-	flameRight->AttachAnimationResource(flameTexRight);
-	blackLeft->AttachAnimationResource(blackTexLeft);
-	blackRight->AttachAnimationResource(blackTexRight);
+	flameLeft->AttachAnimationResource(flameTexLeft, true);
+	flameRight->AttachAnimationResource(flameTexRight, true);
+	blackLeft->AttachAnimationResource(blackTexLeft, true);
+	blackRight->AttachAnimationResource(blackTexRight, true);
 
 	flameLeft->SetDrawMode(3);
 	flameRight->SetDrawMode(3);
@@ -60,8 +60,6 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	szCopyrightText = engine->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
 	szAllRightsReservedText = engine->TBL_FindStringFromIndex(TBLINDEX_ALLRIGHTS);
 
-	int trademarkWidth, rightsWidth;
-
 	trademark = engine->renderer->AllocateObject(1);
 	allRightsReserved = engine->renderer->AllocateObject(1);
 
@@ -70,27 +68,15 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 
 	trademark->SetText(szCopyrightText);
 	allRightsReserved->SetText(szAllRightsReservedText);
+	trademark->SetTextAlignment(0, 500, 800, 0, ALIGN_CENTER, ALIGN_TOP);
+	allRightsReserved->SetTextAlignment(0, 525, 800, 0, ALIGN_CENTER, ALIGN_TOP);
 
 	float r, g, b;
-	// 4 = gold
-	// 6 = black
-	// 7 = also gold??
-	// 8 = orange
-	// 9 = yellow
-	// 10 = dark green
-	// 11 = purple
-	// 12 = medium green?
 	if(engine->PAL_GetPL2ColorModulation(engine->renderer->GetGlobalPalette(), TextColor_Gold, r, g, b))
 	{
 		trademark->SetColorModulate(r, g, b, 1.0f);
 		allRightsReserved->SetColorModulate(r, g, b, 1.0f);
 	}
-
-	trademark->GetDrawCoords(nullptr, nullptr, &trademarkWidth, nullptr);
-	trademark->SetDrawCoords(400 - (trademarkWidth / 2), 500, 0, 0);
-
-	allRightsReserved->GetDrawCoords(nullptr, nullptr, &rightsWidth, nullptr);
-	allRightsReserved->SetDrawCoords(400 - (rightsWidth / 2), 525, 0, 0);
 
 	dwStartTicks = engine->Milliseconds();
 }

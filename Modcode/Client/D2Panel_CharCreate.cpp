@@ -55,8 +55,8 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 
 D2Panel_CharCreate_Static::D2Panel_CharCreate_Static() : D2Panel()
 {
-	pCancelButton = new D2Widget_Button(35, 535, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
-	pOKButton = new D2Widget_Button(630, 535, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
+	pCancelButton = new D2Widget_Button(35, 535, SMALL_BUTTON_FETCHAR_DC6, "medium", 0, 0, 1, 1, 0, 0);
+	pOKButton = new D2Widget_Button(630, 535, SMALL_BUTTON_FETCHAR_DC6, "medium", 0, 0, 1, 1, 0, 0);
 
 	AddWidget(pCancelButton);
 	AddWidget(pOKButton);

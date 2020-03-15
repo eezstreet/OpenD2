@@ -4,8 +4,11 @@
 class D2Widget_Checkbox : public D2Widget
 {
 private:
-	tex_handle checkboxTex;
-	anim_handle checkboxAnim;
+	IRenderObject* checkboxRendered;
+	IRenderObject* label;
+
+	// FIXME: ...? this should be an atlas
+	IGraphicsHandle* checkboxTexture;
 
 	char16_t szLabel[32];
 	bool m_bHasLabel;

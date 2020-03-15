@@ -9,6 +9,8 @@ enum GLRenderPasses
 	RenderPass_NumRenderPasses,
 };
 
+#define MAX_ANIMATION_CALLBACKS 8
+
 /**
  *	Generic OpenGL render objects only contain an EBO and a VAO.
  *	VAOs hold our VBOs which have our vertices in them.
@@ -21,6 +23,8 @@ protected:
 	float textureCoord[4]; //x y w h (normalized)
 	float colorModulate[4]; //r g b a (normalized)
 	int drawMode;
+
+	float drawBounds[4]; // temporary hack
 
 	enum
 	{
@@ -38,6 +42,25 @@ protected:
 			uint16_t numFrames;
 			uint32_t frameRate;
 			class IGraphicsHandle* attachedAnimationResource;
+			bool bLoop;
+
+			// Animation finish callbacks
+			struct
+			{
+				bool bHaveRun;
+				AnimationFrameCallback callback;
+				void* extraData;
+				int frame;
+			} frameCallback[MAX_ANIMATION_CALLBACKS];
+			int numFrameCallbacks;
+
+			struct
+			{
+				bool bHaveRun;
+				AnimationFinishCallback callback;
+				void* extraData;
+			} finishCallback[MAX_ANIMATION_CALLBACKS];
+			int numFinishCallbacks;
 		} animationData;
 
 		struct
@@ -66,15 +89,22 @@ public:
 
 	virtual void AttachTextureResource(class IGraphicsHandle* handle, int32_t frame);
 	virtual void AttachCompositeTextureResource(class IGraphicsHandle* handle, int32_t startFrame, int32_t endFrame);
-	virtual void AttachPaletteResource(class IGraphicsHandle* handle);
-	virtual void AttachAnimationResource(class IGraphicsHandle* handle);
+	virtual void AttachAnimationResource(class IGraphicsHandle* handle, bool bResetFrame);
 	virtual void AttachTokenResource(class IGraphicsHandle* handle);
 	virtual void AttachFontResource(class IGraphicsHandle* handle);
 
 	virtual void SetFramerate(int framerate);
 	virtual void SetDrawMode(int drawMode);
 	virtual void SetText(const char16_t* text);
+	virtual void SetTextAlignment(int x, int y, int w, int h, int horzAlign, int vertAlign);
 	virtual void SetColorModulate(float r, float g, float b, float a);
+
+	virtual void SetAnimationLoop(bool bLoop);
+	virtual void AddAnimationFinishedCallback(void* extraData, AnimationFinishCallback callback);
+	virtual void AddAnimationFrameCallback(int32_t frame, void* extraData, AnimationFrameCallback callback);
+	virtual void RemoveAnimationFinishCallbacks();
+
+	virtual bool PixelPerfectDetection(int x, int y);
 };
 
 /**

@@ -101,43 +101,6 @@ void D2Widget_Button::Draw()
 	{
 		text->Draw();
 	}
-#if 0
-	if (bDisabled)
-	{
-		if (bAlphaModulateDisable)
-		{
-			engine->renderer->ColorModTexture(texture_disabled, 122, 122, 122);
-		}
-		engine->renderer->DrawTexture(texture_disabled, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
-		if (bAlphaModulateDisable)
-		{
-			engine->renderer->ColorModTexture(texture_disabled, 255, 255, 255);
-		}
-	}
-	else if (bDown)
-	{
-		engine->renderer->DrawTexture(texture_down, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
-	}
-	else
-	{
-		engine->renderer->DrawTexture(texture_up, m_pOwner->x + x, m_pOwner->y + y, w, h, 0, 0);
-	}
-
-	if (bHasText)
-	{
-		engine->renderer->ColorModFont(font, 0, 0, 0);	// buttons only have text in black exocet, font16
-		if (bDown)
-		{ // shift the x and y a little bit to make it look like we're pressing the button
-			engine->renderer->DrawText(font, buttonTextBuffer, m_pOwner->x + x - 2, m_pOwner->y + y + 2, 
-				w, h, ALIGN_CENTER, ALIGN_CENTER);
-		}
-		else
-		{
-			engine->renderer->DrawText(font, buttonTextBuffer, m_pOwner->x + x, m_pOwner->y + y, w, h, ALIGN_CENTER, ALIGN_CENTER);
-		}
-		
-	}
-#endif
 }
 
 /*

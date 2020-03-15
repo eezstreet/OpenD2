@@ -691,25 +691,39 @@ public:
  *	When we no longer want to display something, we remove it from the list of rendered objects.
  *	Each renderer has their own render object type.
  */
+typedef void(*AnimationFinishCallback)(class IRenderObject* caller, void* extraData);
+typedef void(*AnimationFrameCallback)(class IRenderObject* caller, int32_t frame, void* extraData);
 class IRenderObject
 {
 public:
+	// This should be called every frame by a client when they want to draw it
 	virtual void Draw() = 0;
 
+	// Attaching resources to this render object, such as a font, a token, etc
 	virtual void AttachTextureResource(class IGraphicsHandle* handle, int32_t frame) = 0;
 	virtual void AttachCompositeTextureResource(class IGraphicsHandle* handle, int32_t startFrame, int32_t endFrame) = 0;
-	virtual void AttachPaletteResource(class IGraphicsHandle* handle) = 0;
-	virtual void AttachAnimationResource(class IGraphicsHandle* handle) = 0;
+	virtual void AttachAnimationResource(class IGraphicsHandle* handle, bool bResetFrame) = 0;
 	virtual void AttachTokenResource(class IGraphicsHandle* handle) = 0;
 	virtual void AttachFontResource(class IGraphicsHandle* handle) = 0;
 
+	// Can be applied no matter what kind of render object this is
 	virtual void SetPalshift(BYTE palette) = 0;
 	virtual void SetDrawCoords(int x, int y, int w, int h) = 0;
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h) = 0;
-	virtual void SetFramerate(int framerate) = 0;
-	virtual void SetDrawMode(int drawMode) = 0;
-	virtual void SetText(const char16_t* text) = 0;
 	virtual void SetColorModulate(float r, float g, float b, float a) = 0;
+	virtual void SetDrawMode(int drawMode) = 0;
+	virtual bool PixelPerfectDetection(int x, int y) = 0;
+
+	// Text-specific calls
+	virtual void SetText(const char16_t* text) = 0;
+	virtual void SetTextAlignment(int x, int y, int w, int h, int horzAlignment, int vertAlignment) = 0;
+
+	// Animation-specific calls
+	virtual void SetFramerate(int framerate) = 0;
+	virtual void SetAnimationLoop(bool bLoop) = 0;
+	virtual void AddAnimationFinishedCallback(void* extraData, AnimationFinishCallback callback) = 0;
+	virtual void AddAnimationFrameCallback(int32_t frame, void* extraData, AnimationFrameCallback callback) = 0;
+	virtual void RemoveAnimationFinishCallbacks() = 0;
 };
 
 //////////////////////////////////////////////////

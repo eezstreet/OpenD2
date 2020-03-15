@@ -42,13 +42,20 @@ static const char* szAnimNameSpecial[CCA_MAX] = {
  */
 D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 {
-#if 0
-	tex_handle fireTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\fire.DC6", "ccfire", PAL_FECHAR);
+	engine->renderer->SetGlobalPalette(PAL_FECHAR);
+	backgroundTexture = engine->renderer->AllocateObject(0);
+	fireAnimation = engine->renderer->AllocateObject(0);
 
-	backgroundTex = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", 
-		"ccback", 0, 11, PAL_FECHAR);
-	fireAnim = engine->renderer->RegisterDC6Animation(fireTex, "ccfire", 0);
-	engine->renderer->SetTextureBlendMode(fireTex, BLEND_ADD);
+	IGraphicsHandle* backgroundGraphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", UsagePolicy_SingleUse);
+	fireGraphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\fire.DC6", UsagePolicy_SingleUse);
+
+	backgroundTexture->AttachCompositeTextureResource(backgroundGraphic, 0, -1);
+	backgroundTexture->SetDrawCoords(0, 0, 800, 600);
+	fireAnimation->AttachAnimationResource(fireGraphic, true);
+	fireAnimation->SetDrawCoords(375, -80, 0, 0);
+	fireAnimation->SetDrawMode(3);
+
+	engine->graphics->UnloadGraphic(backgroundGraphic);
 
 	// start gobbling text input events. any keystroke will be interpreted as text
 	engine->In_StartTextEditing();
@@ -56,11 +63,25 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 	pStaticPanel = new D2Panel_CharCreate_Static();
 	pDynamicPanel = new D2Panel_CharCreate_Dynamic();
 
-	AddPanel(pStaticPanel, true);
-	AddPanel(pDynamicPanel, false);
+	AddPanel(pStaticPanel);
+	AddPanel(pDynamicPanel);
 
 	// Load all of the information needed by the char create menu
 	szChooseClassStr = engine->TBL_FindStringFromIndex(5127);
+
+	chooseClassTitle = engine->renderer->AllocateObject(1);
+	chooseClassTitle->AttachFontResource(cl.font30);
+	chooseClassTitle->SetText(szChooseClassStr);
+
+	int w;
+	chooseClassTitle->GetDrawCoords(nullptr, nullptr, &w, nullptr);
+	chooseClassTitle->SetDrawCoords(400 - (w / 2), 25, 0, 0);
+
+	chosenClassName = engine->renderer->AllocateObject(1);
+	chosenClassName->AttachFontResource(cl.font30);
+
+	chosenClassDescription = engine->renderer->AllocateObject(1);
+	chosenClassDescription->AttachFontResource(cl.font16);
 
 	memset(CreateData, 0, sizeof(CharCreateData) * D2CLASS_MAX);
 	for (int i = 0; i < D2CLASS_MAX; i++)
@@ -70,18 +91,112 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 
 		// flag special animations that need to be done
 		switch (i) {
-			case D2CLASS_SORCERESS:
-			case D2CLASS_NECROMANCER:
-				CreateData[i].bSpecialAnimPresent[CCA_IdleFront] = true;
-				CreateData[i].bSpecialAnimPresent[CCA_BackToFront] = true;
-				CreateData[i].bSpecialAnimPresent[CCA_FrontToBack] = true;
-				break;
-			case D2CLASS_BARBARIAN:
-			case D2CLASS_PALADIN:
-				CreateData[i].bSpecialAnimPresent[CCA_BackToFront] = true;
-				break;
+		case D2CLASS_SORCERESS:
+		case D2CLASS_NECROMANCER:
+			CreateData[i].bSpecialAnimPresent[CCA_IdleFront] = true;
+			CreateData[i].bSpecialAnimPresent[CCA_BackToFront] = true;
+			CreateData[i].bSpecialAnimPresent[CCA_FrontToBack] = true;
+			break;
+		case D2CLASS_BARBARIAN:
+		case D2CLASS_PALADIN:
+			CreateData[i].bSpecialAnimPresent[CCA_BackToFront] = true;
+			break;
 		}
 
+		CreateData[i].displayObject = engine->renderer->AllocateObject(0);
+		CreateData[i].specialAnimationObject = engine->renderer->AllocateObject(0);
+
+		// iterate through all of the animations
+		for (int j = 0; j < CCA_MAX; j++)
+		{
+			snprintf(szPath, MAX_D2PATH,
+				"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
+				szCharacterClassFolders[i], szCharacterClassShort[i], szAnimName[j]);
+			CreateData[i].animationHandle[j] = engine->graphics->LoadGraphic(szPath, UsagePolicy_SingleUse);
+
+			if (CreateData[i].bSpecialAnimPresent[j])
+			{
+				// register special animations
+				snprintf(szPath, MAX_D2PATH,
+					"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
+					szCharacterClassFolders[i], szCharacterClassShort[i], szAnimNameSpecial[j]);
+				CreateData[i].specialAnimationHandle[j] = engine->graphics->LoadGraphic(szPath, UsagePolicy_SingleUse);
+			}
+			else
+			{
+				CreateData[i].specialAnimationHandle[j] = nullptr;
+			}
+		}
+
+		// get strings and positions
+		switch (i)
+		{
+		case D2CLASS_AMAZON:
+			CreateData[i].nDrawXPos = 100;
+			CreateData[i].nDrawYPos = -70;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4011);
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5128);
+			break;
+		case D2CLASS_SORCERESS:
+			CreateData[i].nDrawXPos = 626;
+			CreateData[i].nDrawYPos = -70;
+			CreateData[i].nSpecialYOffset = 85;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4010);
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5131);
+			break;
+		case D2CLASS_NECROMANCER:
+			CreateData[i].nDrawXPos = 301;
+			CreateData[i].nDrawYPos = -70;
+			CreateData[i].nSpecialYOffset = -60;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4009);
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5129);
+			break;
+		case D2CLASS_PALADIN:
+			CreateData[i].nDrawXPos = 520;
+			CreateData[i].nDrawYPos = -70;
+			CreateData[i].nSpecialYOffset = 54;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4008);
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5132);
+			break;
+		case D2CLASS_BARBARIAN:
+			CreateData[i].nDrawXPos = 400;
+			CreateData[i].nDrawYPos = -70;
+			CreateData[i].nSpecialYOffset = 30;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4007);
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5130);
+			break;
+		case D2CLASS_DRUID:
+			CreateData[i].nDrawXPos = 720;
+			CreateData[i].nDrawYPos = -50;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4012);	// in classic strings, wtf? :D
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(22518);
+			break;
+		case D2CLASS_ASSASSIN:
+			CreateData[i].nDrawXPos = 232;
+			CreateData[i].nDrawYPos = -50;
+			CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4013);	// in classic strings, wtf? :D
+			CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(22519);
+			break;
+		}
+
+		// set our state to be idle
+		CreateData[i].status = CCA_IdleBack;
+		CreateData[i].displayObject->AttachAnimationResource(CreateData[i].animationHandle[CCA_IdleBack], true);
+		CreateData[i].displayObject->SetDrawCoords(CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, 0, 0);
+
+		// set our initial baseline to be 0
+		CreateData[i].nDrawBaselineY[0] = 0;
+	}
+
+	// set us up to not have anything highlighted
+	m_nHighlightedClass = D2CLASS_MAX;
+	m_nSelectedClass = D2CLASS_MAX;
+
+	// other data
+	m_bFromCharSelect = bFromCharSelect;
+#if 0
+	for (int i = 0; i < D2CLASS_MAX; i++)
+	{
 		// iterate through all basic animations
 		for (int j = 0; j < CCA_MAX; j++)
 		{
@@ -126,62 +241,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 			}
 		}
 
-		// get strings and positions
-		switch (i)
-		{
-			case D2CLASS_AMAZON:
-				CreateData[i].nDrawXPos = 100;
-				CreateData[i].nDrawYPos = 140;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4011);
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5128);
-				break;
-			case D2CLASS_SORCERESS:
-				CreateData[i].nDrawXPos = 626;
-				CreateData[i].nDrawYPos = 191;
-				CreateData[i].nSpecialYOffset = 85;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4010);
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5131);
-				break;
-			case D2CLASS_NECROMANCER:
-				CreateData[i].nDrawXPos = 301;
-				CreateData[i].nDrawYPos = 151;
-				CreateData[i].nSpecialYOffset = -60;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4009);
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5129);
-				break;
-			case D2CLASS_PALADIN:
-				CreateData[i].nDrawXPos = 520;
-				CreateData[i].nDrawYPos = 164;
-				CreateData[i].nSpecialYOffset = 54;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4008);
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5132);
-				break;
-			case D2CLASS_BARBARIAN:
-				CreateData[i].nDrawXPos = 400;
-				CreateData[i].nDrawYPos = 150;
-				CreateData[i].nSpecialYOffset = 30;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4007);
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(5130);
-				break;
-			case D2CLASS_DRUID:
-				CreateData[i].nDrawXPos = 720;
-				CreateData[i].nDrawYPos = 170;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4012);	// in classic strings, wtf? :D
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(22518);
-				break;
-			case D2CLASS_ASSASSIN:
-				CreateData[i].nDrawXPos = 232;
-				CreateData[i].nDrawYPos = 178;
-				CreateData[i].szCharClassName = engine->TBL_FindStringFromIndex(4013);	// in classic strings, wtf? :D
-				CreateData[i].szCharClassDescription = engine->TBL_FindStringFromIndex(22519);
-				break;
-		}
-
-		// set our state to be idle
-		CreateData[i].status = CCA_IdleBack;
-
-		// set our initial baseline to be 0
-		CreateData[i].nDrawBaselineY[0] = 0;
+		
 	}
 
 	// set us up to not have anything highlighted
@@ -198,32 +258,32 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
  */
 D2Menu_CharCreate::~D2Menu_CharCreate()
 {
-#if 0
-	// we can reasonably unregister any textures here, we probably won't see them again for a long time
-	engine->renderer->DeregisterTexture(nullptr, backgroundTex);
-	engine->renderer->DeregisterTexture("ccfire", INVALID_HANDLE);
-	engine->renderer->DeregisterAnimation(fireAnim);
+	engine->renderer->Remove(backgroundTexture);
+	engine->renderer->Remove(fireAnimation);
+	engine->renderer->Remove(chooseClassTitle);
+	engine->renderer->Remove(chosenClassName);
+	engine->renderer->Remove(chosenClassDescription);
+	engine->graphics->UnloadGraphic(fireGraphic);
 
 	for (int i = 0; i < D2CLASS_MAX; i++)
 	{
+		engine->renderer->Remove(CreateData[i].displayObject);
+		engine->renderer->Remove(CreateData[i].specialAnimationObject);
+
 		for (int j = 0; j < CCA_MAX; j++)
 		{
-			engine->renderer->DeregisterAnimation(CreateData[i].animAnimHandle[j]);
-			engine->renderer->DeregisterTexture(nullptr, CreateData[i].animTextureHandle[j]);
+			engine->graphics->UnloadGraphic(CreateData[i].animationHandle[j]);
 			if (CreateData[i].bSpecialAnimPresent[j])
 			{
-				engine->renderer->DeregisterAnimation(CreateData[i].specialAnimAnimHandle[j]);
-				engine->renderer->DeregisterTexture(nullptr, CreateData[i].specialAnimTextureHandle[j]);
+				engine->graphics->UnloadGraphic(CreateData[i].specialAnimationHandle[j]);
 			}
 		}
 	}
 
-	// stop gobbling text events for now
 	engine->In_StopTextEditing();
 
 	delete pStaticPanel;
 	delete pDynamicPanel;
-#endif
 }
 
 /*
@@ -253,6 +313,90 @@ void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
  */
 void D2Menu_CharCreate::Draw()
 {
+	// Draw the background texture
+	backgroundTexture->Draw();
+
+	// Draw the characters
+	int i = D2CLASS_BARBARIAN;
+	while (i != D2CLASS_MAX)
+	{
+		if (CreateData[i].status == CCA_IdleBack || CreateData[i].status == CCA_IdleBackSel)
+		{
+			CreateData[i].displayObject->SetFramerate(8);
+
+			if (CreateData[i].status == CCA_IdleBack && CreateData[i].displayObject->PixelPerfectDetection(cl.dwMouseX, cl.dwMouseY))
+			{
+				// set status to selected
+				CreateData[i].displayObject->AttachAnimationResource(CreateData[i].animationHandle[CCA_IdleBackSel], false);
+				CreateData[i].status = CCA_IdleBackSel;
+				m_nHighlightedClass = i;
+				chosenClassName->SetText(CreateData[i].szCharClassName);
+				chosenClassDescription->SetText(CreateData[i].szCharClassDescription);
+
+				// engine->renderer->DrawText(cl.font30, 
+				//CreateData[m_nHighlightedClass].szCharClassName, 0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+				//engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
+				//engine->renderer->DrawText(cl.font16,
+				//	CreateData[m_nHighlightedClass].szCharClassDescription, 0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+				chosenClassName->SetTextAlignment(0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+				chosenClassDescription->SetTextAlignment(0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+			}
+			else if (CreateData[i].status == CCA_IdleBackSel && !CreateData[i].displayObject->PixelPerfectDetection(cl.dwMouseX, cl.dwMouseY))
+			{
+				// set status to be unhighlighted
+				CreateData[i].displayObject->AttachAnimationResource(CreateData[i].animationHandle[CCA_IdleBack], false);
+				CreateData[i].status = CCA_IdleBack;
+				m_nHighlightedClass = D2CLASS_MAX;
+			}
+		}
+		else
+		{
+			CreateData[i].displayObject->SetFramerate(25);
+		}
+
+		CreateData[i].displayObject->Draw();
+		// this is really horribly ugly but necessary in order to draw everything correctly
+		switch (i)
+		{
+		case D2CLASS_BARBARIAN:
+			i = D2CLASS_NECROMANCER;
+			break;
+		case D2CLASS_NECROMANCER:
+			i = D2CLASS_PALADIN;
+			break;
+		case D2CLASS_PALADIN:
+			i = D2CLASS_ASSASSIN;
+			break;
+		case D2CLASS_ASSASSIN:
+			i = D2CLASS_SORCERESS;
+			break;
+		case D2CLASS_SORCERESS:
+			i = D2CLASS_AMAZON;
+			break;
+		case D2CLASS_AMAZON:
+			i = D2CLASS_DRUID;
+			break;
+		case D2CLASS_DRUID:
+			i = D2CLASS_MAX;
+			break;
+		}
+	}
+
+	// Draw the "Select Hero Class" title
+	chooseClassTitle->Draw();
+	
+	// Draw the name and description of the highlighted class
+	if (m_nHighlightedClass != D2CLASS_MAX)
+	{
+		chosenClassName->Draw();
+		chosenClassDescription->Draw();
+	}
+
+	// Draw all of the sub panels
+	DrawAllPanels();
+
+	// Draw the fire over top of everything
+	fireAnimation->Draw();
 #if 0
 	int i = D2CLASS_BARBARIAN;
 
@@ -427,9 +571,8 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 			}
 		}
 	}
-	return D2Menu::HandleMouseClicked(dwX, dwY);
 #endif
-	return false;
+	return D2Menu::HandleMouseClicked(dwX, dwY);
 }
 
 /*

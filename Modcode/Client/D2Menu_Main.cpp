@@ -39,10 +39,10 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 	blackLeft = engine->renderer->AllocateObject(0);
 	blackRight = engine->renderer->AllocateObject(0);
 
-	flameLeft->AttachAnimationResource(flameTexLeft);
-	flameRight->AttachAnimationResource(flameTexRight);
-	blackLeft->AttachAnimationResource(blackTexLeft);
-	blackRight->AttachAnimationResource(blackTexRight);
+	flameLeft->AttachAnimationResource(flameTexLeft, true);
+	flameRight->AttachAnimationResource(flameTexRight, true);
+	blackLeft->AttachAnimationResource(blackTexLeft, true);
+	blackRight->AttachAnimationResource(blackTexRight, true);
 
 	flameLeft->SetDrawMode(3);
 	flameRight->SetDrawMode(3);

@@ -17,11 +17,13 @@ enum CharCreateAnims
 // Each class has a CharCreateData. As we mess around in the Character Create screen, this becomes filled up.
 struct CharCreateData
 {
-	tex_handle animTextureHandle[CCA_MAX];
-	anim_handle animAnimHandle[CCA_MAX];
+	IRenderObject* displayObject;
+	IRenderObject* specialAnimationObject;
+	IGraphicsHandle* animationHandle[CCA_MAX];
+	IGraphicsHandle* specialAnimationHandle[CCA_MAX];
+
 	bool bSpecialAnimPresent[CCA_MAX];
-	tex_handle specialAnimTextureHandle[CCA_MAX];
-	anim_handle specialAnimAnimHandle[CCA_MAX];
+
 	char16_t* szCharClassName;
 	char16_t* szCharClassDescription;
 	CharCreateAnims status;
@@ -34,8 +36,13 @@ struct CharCreateData
 class D2Menu_CharCreate : public D2Menu
 {
 private:
-	tex_handle backgroundTex;
-	anim_handle fireAnim;
+	IRenderObject* backgroundTexture;
+	IRenderObject* fireAnimation;
+	IRenderObject* chooseClassTitle;
+	IRenderObject* chosenClassName;
+	IRenderObject* chosenClassDescription;
+
+	IGraphicsHandle* fireGraphic;
 
 	int m_nHighlightedClass;
 	int m_nSelectedClass;

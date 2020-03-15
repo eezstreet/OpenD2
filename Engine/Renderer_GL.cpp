@@ -118,9 +118,53 @@ void GLRenderObject::Render()
 		uint16_t lastFrame = data.animationData.currentFrame;
 		
 		data.animationData.currentFrame += (ticks - data.animationData.lastFrameTime) / (1000 / data.animationData.frameRate);
-		data.animationData.currentFrame %= data.animationData.numFrames;
+		
+		if (data.animationData.bLoop)
+		{
+			data.animationData.currentFrame %= data.animationData.numFrames;
+		}
+		else if (data.animationData.currentFrame >= data.animationData.numFrames)
+		{
+			data.animationData.currentFrame = data.animationData.numFrames - 1;
+		}
+
 		if (lastFrame != data.animationData.currentFrame)
 		{
+			if (data.animationData.currentFrame < lastFrame || data.animationData.currentFrame == data.animationData.numFrames - 1)
+			{	// if the current frame is less than the last frame or we are on the last frame, run the finish callback
+				// run all of the callbacks for finishing
+				for (int i = 0; i < data.animationData.numFinishCallbacks; i++)
+				{
+					if (!data.animationData.finishCallback[i].bHaveRun)
+					{
+						data.animationData.finishCallback[i].callback(this, data.animationData.finishCallback[i].extraData);
+					}
+					
+					if (data.animationData.currentFrame < lastFrame)
+					{	// we run the callback every time we loop ... ?
+						data.animationData.finishCallback[i].bHaveRun = false;
+					}
+				}
+
+				if (data.animationData.currentFrame < lastFrame)
+				{	// animation has been reset, reset the frame callbacks
+					for (int i = 0; i < data.animationData.numFrameCallbacks; i++)
+					{
+						data.animationData.frameCallback[i].bHaveRun = false;
+					}
+				}
+			}
+
+			for (int i = 0; i < data.animationData.numFrameCallbacks; i++)
+			{
+				if (data.animationData.currentFrame >= data.animationData.frameCallback[i].frame &&
+					!data.animationData.frameCallback[i].bHaveRun)
+				{	// current frame is greater than (or equal to) this frame callback's frame and hasn't been run. run it now!
+					data.animationData.frameCallback[i].callback(this, data.animationData.frameCallback[i].frame, data.animationData.frameCallback[i].extraData);
+					data.animationData.frameCallback[i].bHaveRun = true;
+				}
+			}
+
 			// the animation changed frames, as such, we need to define new texture coordinates
 			data.animationData.lastFrameTime = ticks;
 		}
@@ -142,6 +186,10 @@ void GLRenderObject::Render()
 		textureCoord[1] = (y) / (float)h;
 		textureCoord[2] = frameWidth / (float)w;
 		textureCoord[3] = frameHeight / (float)h;
+		drawBounds[0] = drawCoords[0];
+		drawBounds[1] = drawCoords[1];
+		drawBounds[2] = frameWidth;
+		drawBounds[3] = frameHeight;
 
 		glUniform4fv(uniform_ui_drawPosition, 1, drawCoords);
 	}
@@ -287,11 +335,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 	}
 }
 
-void GLRenderObject::AttachPaletteResource(IGraphicsHandle* handle)
-{
-}
-
-void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
+void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle, bool bResetFrame)
 {
 	if (!handle)
 	{
@@ -301,10 +345,14 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle)
 	// turn on animation
 	objectType = RO_Animated;
 	data.animationData.numFrames = handle->GetNumberOfFrames();
-	data.animationData.currentFrame = 0;
-	data.animationData.lastFrameTime = SDL_GetTicks();
+	if (bResetFrame)
+	{
+		data.animationData.currentFrame = 0;
+		data.animationData.lastFrameTime = SDL_GetTicks();
+	}
 	data.animationData.frameRate = 25;
 	data.animationData.attachedAnimationResource = handle;
+	data.animationData.bLoop = true;
 
 	if(handle->AreGraphicsLoaded())
 	{
@@ -482,12 +530,101 @@ void GLRenderObject::SetText(const char16_t* text)
 	screenCoord[3] = height;
 }
 
+void GLRenderObject::SetTextAlignment(int x, int y, int w, int h, int horzAlignment, int vertAlignment)
+{
+	float textWidth = screenCoord[2];
+	float textHeight = screenCoord[3];
+
+	switch (horzAlignment)
+	{
+		case ALIGN_CENTER:
+			screenCoord[0] = x + (w / 2) - (textWidth / 2);
+			break;
+		default:
+		case ALIGN_LEFT:
+			screenCoord[0] = x;
+			break;
+		case ALIGN_RIGHT:
+			screenCoord[0] = x + w - textWidth;
+			break;
+	}
+
+	switch (vertAlignment)
+	{
+		case ALIGN_CENTER:
+			screenCoord[1] = y + (h / 2) - (textHeight / 2);
+			break;
+		default:
+		case ALIGN_TOP:
+			screenCoord[1] = y;
+			break;
+		case ALIGN_BOTTOM:
+			screenCoord[1] = y + h - textHeight;
+			break;
+	}
+}
+
 void GLRenderObject::SetColorModulate(float r, float g, float b, float a)
 {
 	colorModulate[0] = r;
 	colorModulate[1] = g;
 	colorModulate[2] = b;
 	colorModulate[3] = a;
+}
+
+void GLRenderObject::SetAnimationLoop(bool bLoop)
+{
+	data.animationData.bLoop = bLoop;
+}
+
+void GLRenderObject::AddAnimationFinishedCallback(void* extraData, AnimationFinishCallback callback)
+{
+	int& numCallbacks = data.animationData.numFinishCallbacks;
+	if (numCallbacks >= MAX_ANIMATION_CALLBACKS)
+	{
+		return; // too many
+	}
+
+	data.animationData.finishCallback[numCallbacks++] = {
+		false, callback, extraData
+	};
+}
+
+void GLRenderObject::AddAnimationFrameCallback(int32_t frame, void* extraData, AnimationFrameCallback callback)
+{
+	int& numCallbacks = data.animationData.numFrameCallbacks;
+	if (numCallbacks >= MAX_ANIMATION_CALLBACKS)
+	{
+		return; // too many
+	}
+
+	data.animationData.frameCallback[numCallbacks++] = {
+		false, callback, extraData, frame
+	};
+}
+
+void GLRenderObject::RemoveAnimationFinishCallbacks()
+{
+	data.animationData.numFinishCallbacks = 0;
+}
+
+bool GLRenderObject::PixelPerfectDetection(int x, int y)
+{
+	// most calls to this will fail and can be found by doing bounds checking
+	// we ONLY do bounds checking on unanimated stuff
+	if (x > drawBounds[0] + drawBounds[2] || x < drawBounds[0])
+	{
+		return false;
+	}
+
+	if (y > drawBounds[1] + drawBounds[3] || y < drawBounds[1])
+	{
+		return false;
+	}
+
+	// the actual disgusting part: we have to query the texture pixels
+	// just return true for right now because it's gross and involves PBOs
+	return true;
 }
 
 /**

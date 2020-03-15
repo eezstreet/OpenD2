@@ -33,6 +33,13 @@ namespace D2Lib
 						continue; // not actually different (case insensitivity)
 					}
 				}
+				else if (c1 >= 'A' && c1 <= 'Z')
+				{
+					if (c1 - 'A' == c2 - 'a')
+					{
+						continue; // not actually different (case insensitivity)
+					}
+				}
 				return c1 < c2 ? -1 : 1;
 			}
 		} while (c1);

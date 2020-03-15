@@ -14,8 +14,11 @@ private:
 	int m_nCursorPos;
 	bool m_bOverstrikeMode;
 
-	tex_handle backgroundTexture;
-	anim_handle backgroundAnim;
+	IRenderObject* background;
+	IRenderObject* text;
+	IRenderObject* label;
+
+	bool m_bSetCoords;
 	
 	bool m_bHasAttachedText;
 	char16_t szLabel[32];

@@ -572,6 +572,10 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 
 void GraphicsManager::UnloadGraphic(IGraphicsHandle* graphic)
 {
+	if (!graphic)
+	{
+		return;
+	}
 	graphic->Unload();
 	delete graphic;
 }

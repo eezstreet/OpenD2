@@ -6,7 +6,6 @@
  */
 D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Widget()
 {
-#if 0
 	x = _x;
 	y = _y;
 	w = 15;
@@ -14,10 +13,12 @@ D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Wid
 
 	m_bChecked = bStartChecked;
 	m_bHasLabel = false;
+	label = nullptr;
 
-	checkboxTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\clickbox.dc6", "clickbox", PAL_FECHAR);
-	checkboxAnim = engine->renderer->RegisterDC6Animation(checkboxTex, "clickbox", 0);
-#endif
+	checkboxRendered = engine->renderer->AllocateObject(0);
+	checkboxTexture = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\clickbox.dc6", UsagePolicy_Permanent);
+	checkboxRendered->AttachTextureResource(checkboxTexture, m_bChecked);
+	checkboxRendered->SetDrawCoords(x, y, 0, 0);
 }
 
 /*
@@ -26,7 +27,11 @@ D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Wid
  */
 D2Widget_Checkbox::~D2Widget_Checkbox()
 {
-	// nothing to destroy
+	engine->renderer->Remove(checkboxRendered);
+	if (label != nullptr)
+	{
+		engine->renderer->Remove(label);
+	}
 }
 
 /*
@@ -35,16 +40,12 @@ D2Widget_Checkbox::~D2Widget_Checkbox()
  */
 void D2Widget_Checkbox::Draw()
 {
-#if 0
-	engine->renderer->SetAnimFrame(checkboxAnim, m_bChecked);
-	engine->renderer->Animate(checkboxAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
-
-	if (m_bHasLabel)
+	checkboxRendered->Draw();
+	if (label != nullptr)
 	{
-		engine->renderer->ColorModFont(cl.font16, 150, 135, 100);
-		engine->renderer->DrawText(cl.font16, szLabel, m_pOwner->x + x + w + 6, m_pOwner->y + y + 3, 0, 0, ALIGN_LEFT, ALIGN_TOP);
+		label->SetDrawCoords(m_pOwner->x + x + w + 6, m_pOwner->y + y + 3, 0, 0);
+		label->Draw();
 	}
-#endif
 }
 
 /*
@@ -55,6 +56,13 @@ void D2Widget_Checkbox::AttachLabel(char16_t* szText)
 {
 	D2Lib::qstrncpyz(szLabel, szText, 32);
 	m_bHasLabel = true;
+	label = engine->renderer->AllocateObject(1);
+	label->AttachFontResource(cl.font16);
+	label->SetText(szText);
+
+	float r, g, b;
+	engine->PAL_GetPL2ColorModulation(engine->renderer->GetGlobalPalette(), TextColor_Gold, r, g, b);
+	label->SetColorModulate(r, g, b, 1.0f);
 }
 
 /*
@@ -64,6 +72,8 @@ void D2Widget_Checkbox::AttachLabel(char16_t* szText)
 void D2Widget_Checkbox::RemoveLabel()
 {
 	m_bHasLabel = false;
+	engine->renderer->Remove(label);
+	label = nullptr;
 }
 
 /*
@@ -88,6 +98,7 @@ bool D2Widget_Checkbox::HandleMouseClick(DWORD dwX, DWORD dwY)
 	if (dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
 	{
 		m_bChecked = !m_bChecked;
+		checkboxRendered->AttachTextureResource(checkboxTexture, m_bChecked);
 		return true;
 	}
 	return false;

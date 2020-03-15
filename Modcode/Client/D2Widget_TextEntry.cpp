@@ -6,7 +6,6 @@
  */
 D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bAlwaysFocus, bool bCharSelect, bool bIP) : D2Widget()
 {
-#if 0
 	x = _x;
 	y = _y;
 
@@ -17,27 +16,32 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 	m_bOverstrikeMode = false;
 	m_bHasAttachedText = false;
 	memset(szTextBuffer, 0, MAX_TEXTENTRY_LEN);
+	m_bSetCoords = false;
 
+	background = engine->renderer->AllocateObject(0);
+	text = engine->renderer->AllocateObject(1);
+
+	label = nullptr;
+
+	IGraphicsHandle* graphic;
 	if (bCharSelect)
 	{
-		backgroundTexture = 
-			engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
-		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "textbox", 0);
+		graphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\textbox.dc6", UsagePolicy_Permanent);
 	}
 	else if (bIP)
 	{
-		backgroundTexture = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
-		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "ipaddressbox", 0);
+		graphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", UsagePolicy_Permanent);
 	}
 	else
 	{
-		backgroundTexture = 
-			engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox2.dc6", "textbox2", PAL_UNITS);
-		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "textbox2", 0);
+		graphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\textbox2.dc6", UsagePolicy_Permanent);
 	}
 
-	engine->renderer->PollTexture(backgroundTexture, (DWORD*)&this->w, (DWORD*)&this->h);
-#endif
+	background->AttachTextureResource(graphic, 0);
+	text->AttachFontResource(cl.fontFormal12);
+
+	background->GetDrawCoords(nullptr, nullptr, &this->w, &this->h);
+	engine->graphics->UnloadGraphic(graphic);
 }
 
 /*
@@ -46,9 +50,7 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
  */
 D2Widget_TextEntry::~D2Widget_TextEntry()
 {
-#if 0
-	engine->renderer->DeregisterTexture(nullptr, backgroundTexture);
-#endif
+	engine->renderer->Remove(background);
 }
 
 /*
@@ -59,6 +61,18 @@ void D2Widget_TextEntry::AttachLabel(char16_t* szText)
 {
 	D2Lib::qstrncpyz(szLabel, szText, 32);
 	m_bHasAttachedText = true;
+
+	if (label == nullptr)
+	{
+		label = engine->renderer->AllocateObject(1);
+		label->AttachFontResource(cl.font16);
+		
+		float r, g, b;
+		engine->PAL_GetPL2ColorModulation(engine->renderer->GetGlobalPalette(), TextColor_Gold, r, g, b);
+		label->SetColorModulate(r, g, b, 1.0f);
+	}
+
+	label->SetText(szText);
 }
 
 /*
@@ -68,6 +82,7 @@ void D2Widget_TextEntry::AttachLabel(char16_t* szText)
 void D2Widget_TextEntry::DetachLabel()
 {
 	m_bHasAttachedText = false;
+	engine->renderer->Remove(label);
 }
 
 /*
@@ -76,24 +91,32 @@ void D2Widget_TextEntry::DetachLabel()
  */
 void D2Widget_TextEntry::Draw()
 {
-#if 0
-	// draw background
-	engine->renderer->Animate(backgroundAnim, 0, m_pOwner->x + x, m_pOwner->y + y);
-
-	// draw a label, if present
+	// on the first draw call we set the coordinates
 	if (m_bHasAttachedText)
 	{
-		engine->renderer->ColorModFont(cl.font16, 150, 135, 100);
-		engine->renderer->DrawText(cl.font16, szLabel, m_pOwner->x + x, m_pOwner->y + y - 15, w, 10, ALIGN_LEFT, ALIGN_BOTTOM);
+		if (!m_bSetCoords)
+		{
+			label->SetDrawCoords(m_pOwner->x + x, m_pOwner->y + y - 15, 0, 0);
+		}
+		label->Draw();
 	}
+
+	if (!m_bSetCoords)
+	{
+		background->SetDrawCoords(m_pOwner->x + x, m_pOwner->y + y, 0, 0);
+		text->SetDrawCoords(m_pOwner->x + x + 6, m_pOwner->y + y - 2, 0, 0);
+	}
+	background->Draw();
 
 	if (szTextBuffer[0] != '\0')
 	{
-		// draw text, if present
-		engine->renderer->ColorModFont(cl.fontFormal12, 255, 255, 255);
-		engine->renderer->DrawText(cl.fontFormal12, szTextBuffer, m_pOwner->x + x + 6, m_pOwner->y + y - 2, w, h, ALIGN_LEFT, ALIGN_CENTER);
+		text->Draw();
 	}
-#endif
+
+	if (!m_bSetCoords)
+	{
+		m_bSetCoords = true;
+	}
 }
 
 /*
