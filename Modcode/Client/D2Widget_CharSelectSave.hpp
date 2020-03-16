@@ -35,8 +35,8 @@ public:
 	bool CheckMouseDownInChain(DWORD dwX, DWORD dwY, int& counter);
 	bool CheckMouseClickInChain(DWORD dwX, DWORD dwY, int& counter);
 
-	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY) {}
-	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY) {}
+	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY) { return false; }
+	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY) { return false; }
 	
 	void SetNextInChain(D2Widget_CharSelectSave* next);
 	void DrawLink(int counter, bool bDrawLeft);

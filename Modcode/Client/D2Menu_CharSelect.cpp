@@ -14,7 +14,7 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 	fs_handle f;
 
 	// Create the background.
-	backgroundTexture = engine->graphics->LoadGraphic("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", UsagePolicy_SingleUse);
+	backgroundTexture = engine->graphics->CreateReference("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", UsagePolicy_SingleUse);
 	backgroundObject = engine->renderer->AllocateObject(0);
 	backgroundObject->AttachCompositeTextureResource(backgroundTexture, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
@@ -64,7 +64,7 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 D2Menu_CharSelect::~D2Menu_CharSelect()
 {
 	// Delete the background texture.
-	engine->graphics->UnloadGraphic(backgroundTexture);
+	engine->graphics->DeleteReference(backgroundTexture);
 	engine->renderer->Remove(backgroundObject);
 
 	// Delete the panels.

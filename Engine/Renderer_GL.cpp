@@ -206,7 +206,7 @@ void GLRenderObject::Render()
 	else if(objectType == RO_Text)
 	{
 		char16_t* p = data.textData.text;
-		IGraphicsHandle* fontResource = data.textData.attachedFontResource;
+		IGraphicsReference* fontResource = data.textData.attachedFontResource;
 		uint32_t glyphWidth, glyphHeight;
 		int32_t glyphOffsetX, glyphOffsetY;
 		uint32_t currentDrawX = screenCoord[0];
@@ -250,7 +250,7 @@ void GLRenderObject::Render()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t frame)
+void GLRenderObject::AttachTextureResource(IGraphicsReference* handle, int32_t frame)
 {
 	if(frame < 0)
 	{
@@ -292,7 +292,7 @@ void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t fram
 	}
 }
 
-void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
+void GLRenderObject::AttachCompositeTextureResource(IGraphicsReference* handle,
 		int32_t startFrame, int32_t endFrame)
 {
 	uint32_t width, height;
@@ -353,7 +353,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 	}
 }
 
-void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle, bool bResetFrame)
+void GLRenderObject::AttachAnimationResource(IGraphicsReference* handle, bool bResetFrame)
 {
 	if (!handle)
 	{
@@ -406,11 +406,11 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle, bool bRese
 	}
 }
 
-void GLRenderObject::AttachTokenResource(IGraphicsHandle* handle)
+void GLRenderObject::AttachTokenResource(IGraphicsReference* handle)
 {
 }
 
-void GLRenderObject::AttachFontResource(IGraphicsHandle* handle)
+void GLRenderObject::AttachFontResource(IGraphicsReference* handle)
 {
 	if (!handle)
 	{
@@ -521,7 +521,7 @@ void GLRenderObject::SetText(const char16_t* text)
 	uint32_t width = 0;
 	uint32_t glyphWidth, glyphHeight;
 	uint32_t height = 0;
-	IGraphicsHandle* fontHandle = data.textData.attachedFontResource;
+	IGraphicsReference* fontHandle = data.textData.attachedFontResource;
 
 	while (*p && s < 128)
 	{

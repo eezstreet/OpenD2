@@ -64,8 +64,8 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 	backgroundTexture = engine->renderer->AllocateObject(0);
 	fireAnimation = engine->renderer->AllocateObject(0);
 
-	IGraphicsHandle* backgroundGraphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", UsagePolicy_SingleUse);
-	fireGraphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\fire.DC6", UsagePolicy_SingleUse);
+	IGraphicsReference* backgroundGraphic = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", UsagePolicy_SingleUse);
+	fireGraphic = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\fire.DC6", UsagePolicy_SingleUse);
 
 	backgroundTexture->AttachCompositeTextureResource(backgroundGraphic, 0, -1);
 	backgroundTexture->SetDrawCoords(0, 0, 800, 600);
@@ -73,7 +73,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 	fireAnimation->SetDrawCoords(375, -80, 0, 0);
 	fireAnimation->SetDrawMode(3);
 
-	engine->graphics->UnloadGraphic(backgroundGraphic);
+	engine->graphics->DeleteReference(backgroundGraphic);
 
 	// start gobbling text input events. any keystroke will be interpreted as text
 	engine->In_StartTextEditing();
@@ -130,7 +130,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 			snprintf(szPath, MAX_D2PATH,
 				"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
 				szCharacterClassFolders[i], szCharacterClassShort[i], szAnimName[j]);
-			CreateData[i].animationHandle[j] = engine->graphics->LoadGraphic(szPath, UsagePolicy_SingleUse);
+			CreateData[i].animationHandle[j] = engine->graphics->CreateReference(szPath, UsagePolicy_SingleUse);
 
 			if (CreateData[i].bSpecialAnimPresent[j])
 			{
@@ -138,7 +138,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 				snprintf(szPath, MAX_D2PATH,
 					"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
 					szCharacterClassFolders[i], szCharacterClassShort[i], szAnimNameSpecial[j]);
-				CreateData[i].specialAnimationHandle[j] = engine->graphics->LoadGraphic(szPath, UsagePolicy_SingleUse);
+				CreateData[i].specialAnimationHandle[j] = engine->graphics->CreateReference(szPath, UsagePolicy_SingleUse);
 			}
 			else
 			{
@@ -229,7 +229,7 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
 	engine->renderer->Remove(chooseClassTitle);
 	engine->renderer->Remove(chosenClassName);
 	engine->renderer->Remove(chosenClassDescription);
-	engine->graphics->UnloadGraphic(fireGraphic);
+	engine->graphics->DeleteReference(fireGraphic);
 
 	for (int i = 0; i < D2CLASS_MAX; i++)
 	{
@@ -238,10 +238,10 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
 
 		for (int j = 0; j < CCA_MAX; j++)
 		{
-			engine->graphics->UnloadGraphic(CreateData[i].animationHandle[j]);
+			engine->graphics->DeleteReference(CreateData[i].animationHandle[j]);
 			if (CreateData[i].bSpecialAnimPresent[j])
 			{
-				engine->graphics->UnloadGraphic(CreateData[i].specialAnimationHandle[j]);
+				engine->graphics->DeleteReference(CreateData[i].specialAnimationHandle[j]);
 			}
 		}
 	}

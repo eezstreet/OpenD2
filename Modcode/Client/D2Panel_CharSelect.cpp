@@ -234,10 +234,10 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 
 	renderObject = engine->renderer->AllocateObject(0);
 
-	IGraphicsHandle* backgroundHandle = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", UsagePolicy_SingleUse);
+	IGraphicsReference* backgroundHandle = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", UsagePolicy_SingleUse);
 	renderObject->AttachCompositeTextureResource(backgroundHandle, 0, 1);
 	renderObject->SetDrawCoords(268, 212, 264, 176);
-	engine->graphics->UnloadGraphic(backgroundHandle);
+	engine->graphics->DeleteReference(backgroundHandle);
 
 	AddWidget(confirmYesButton);
 	AddWidget(confirmNoButton);

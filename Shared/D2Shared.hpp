@@ -632,16 +632,16 @@ enum GraphicsUsagePolicy
 /**
  *	Graphics managers are responsible for managing texture resources.
  */
-class IGraphicsHandle;
+class IGraphicsReference;
 class IGraphicsManager
 {
 public:
-	virtual IGraphicsHandle* LoadGraphic(const char* graphicsFile,
+	virtual IGraphicsReference* CreateReference(const char* graphicsFile,
 			GraphicsUsagePolicy policy) = 0;
 
-	virtual void UnloadGraphic(IGraphicsHandle* graphic) = 0;
+	virtual void DeleteReference(IGraphicsReference* graphic) = 0;
 
-	virtual IGraphicsHandle* LoadFont(const char* fontGraphic,
+	virtual IGraphicsReference* LoadFont(const char* fontGraphic,
 		const char* fontTBL) = 0;
 };
 
@@ -700,11 +700,11 @@ public:
 	virtual void Draw() = 0;
 
 	// Attaching resources to this render object, such as a font, a token, etc
-	virtual void AttachTextureResource(class IGraphicsHandle* handle, int32_t frame) = 0;
-	virtual void AttachCompositeTextureResource(class IGraphicsHandle* handle, int32_t startFrame, int32_t endFrame) = 0;
-	virtual void AttachAnimationResource(class IGraphicsHandle* handle, bool bResetFrame) = 0;
-	virtual void AttachTokenResource(class IGraphicsHandle* handle) = 0;
-	virtual void AttachFontResource(class IGraphicsHandle* handle) = 0;
+	virtual void AttachTextureResource(IGraphicsReference* ref, int32_t frame) = 0;
+	virtual void AttachCompositeTextureResource(IGraphicsReference* ref, int32_t startFrame, int32_t endFrame) = 0;
+	virtual void AttachAnimationResource(IGraphicsReference* ref, bool bResetFrame) = 0;
+	virtual void AttachTokenResource(IGraphicsReference* ref) = 0;
+	virtual void AttachFontResource(IGraphicsReference* ref) = 0;
 
 	// Can be applied no matter what kind of render object this is
 	virtual void SetPalshift(BYTE palette) = 0;

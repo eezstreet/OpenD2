@@ -155,9 +155,9 @@ D2Widget_CharSelectSave::D2Widget_CharSelectSave(const char* characterSave, D2Sa
 	}
 
 	// Attach the frame.
-	IGraphicsHandle* regularFrame = engine->graphics->LoadGraphic("data\\global\\ui\\CharSelect\\charselectbox.dc6",
+	IGraphicsReference* regularFrame = engine->graphics->CreateReference("data\\global\\ui\\CharSelect\\charselectbox.dc6",
 		UsagePolicy_Permanent);
-	IGraphicsHandle* grayFrame = engine->graphics->LoadGraphic("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
+	IGraphicsReference* grayFrame = engine->graphics->CreateReference("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
 		UsagePolicy_Permanent);
 
 	if (bIsDeadHardcore)

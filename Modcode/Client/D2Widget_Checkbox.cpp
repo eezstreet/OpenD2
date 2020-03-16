@@ -16,7 +16,7 @@ D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Wid
 	label = nullptr;
 
 	checkboxRendered = engine->renderer->AllocateObject(0);
-	checkboxTexture = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\clickbox.dc6", UsagePolicy_Permanent);
+	checkboxTexture = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\clickbox.dc6", UsagePolicy_Permanent);
 	checkboxRendered->AttachTextureResource(checkboxTexture, m_bChecked);
 }
 

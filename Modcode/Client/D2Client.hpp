@@ -52,12 +52,12 @@ struct D2Client
 	DWORD				dwStartMS;
 	int					nLoadState;
 
-	IGraphicsHandle*	fontExocet10;
-	IGraphicsHandle*	font16;
-	IGraphicsHandle*	font30;
-	IGraphicsHandle*	font42;
-	IGraphicsHandle*	fontFormal12;
-	IGraphicsHandle*	fontRidiculous;
+	IGraphicsReference*	fontExocet10;
+	IGraphicsReference*	font16;
+	IGraphicsReference*	font30;
+	IGraphicsReference*	font42;
+	IGraphicsReference*	fontFormal12;
+	IGraphicsReference*	fontRidiculous;
 
 	char				szCurrentSave[MAX_D2PATH_ABSOLUTE];	// current save path
 	char				szCurrentIPDestination[32];

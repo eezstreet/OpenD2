@@ -23,25 +23,25 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 
 	label = nullptr;
 
-	IGraphicsHandle* graphic;
+	IGraphicsReference* graphic;
 	if (bCharSelect)
 	{
-		graphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\textbox.dc6", UsagePolicy_Permanent);
+		graphic = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\textbox.dc6", UsagePolicy_Permanent);
 	}
 	else if (bIP)
 	{
-		graphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", UsagePolicy_Permanent);
+		graphic = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", UsagePolicy_Permanent);
 	}
 	else
 	{
-		graphic = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\textbox2.dc6", UsagePolicy_Permanent);
+		graphic = engine->graphics->CreateReference("data\\global\\ui\\FrontEnd\\textbox2.dc6", UsagePolicy_Permanent);
 	}
 
 	background->AttachTextureResource(graphic, 0);
 	text->AttachFontResource(cl.fontFormal12);
 
 	background->GetDrawCoords(nullptr, nullptr, &this->w, &this->h);
-	engine->graphics->UnloadGraphic(graphic);
+	engine->graphics->DeleteReference(graphic);
 }
 
 /*

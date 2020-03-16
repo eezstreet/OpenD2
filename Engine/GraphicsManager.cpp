@@ -11,44 +11,44 @@ GraphicsManager* graphicsManager;
  *	DCCGraphicsHandle is the IGraphicsHandle implementation for DCC files.
  */
 
-DCCGraphicsHandle::DCCGraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy)
-	: IGraphicsHandle(usagePolicy)
+DCCReference::DCCReference(const char* fileName, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsReference(usagePolicy)
 {
 	D2Lib::strncpyz(dccHandleName, fileName, sizeof(dccHandleName));
 }
 
-size_t DCCGraphicsHandle::GetTotalSizeInBytes(int32_t frame)
+size_t DCCReference::GetTotalSizeInBytes(int32_t frame)
 {
 	return 0;
 }
 
-size_t DCCGraphicsHandle::GetNumberOfFrames()
+size_t DCCReference::GetNumberOfFrames()
 {
 	return 0;
 }
 
-void DCCGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+void DCCReference::GetGraphicsData(void** pixels, int32_t frame,
 	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 
 }
 
-void DCCGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DCCReference::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 
 }
 
-void DCCGraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
+void DCCReference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
 {
 
 }
 
-void DCCGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+void DCCReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
 {
 
 }
 
-void DCCGraphicsHandle::Unload()
+void DCCReference::Unload()
 {
 	switch (usagePolicy)
 	{
@@ -65,20 +65,20 @@ void DCCGraphicsHandle::Unload()
  *	DC6GraphicsHandle is the IGraphicsHandle implementation for DC6 files.
  */
 
-DC6GraphicsHandle::DC6GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy)
-	: IGraphicsHandle(usagePolicy)
+DC6Reference::DC6Reference(const char* fileName, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsReference(usagePolicy)
 {
 	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
 	bAreGraphicsLoaded = false;
 	loadedGraphicsData = nullptr;
 }
 
-DC6GraphicsHandle::~DC6GraphicsHandle()
+DC6Reference::~DC6Reference()
 {
 	DC6::UnloadImage(&image);
 }
 
-size_t DC6GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
+size_t DC6Reference::GetTotalSizeInBytes(int32_t frame)
 {
 	if (!bLoaded)
 	{
@@ -93,7 +93,7 @@ size_t DC6GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
 	return image.pFrames[frame].fh.dwWidth * image.pFrames[frame].fh.dwHeight;
 }
 
-size_t DC6GraphicsHandle::GetNumberOfFrames()
+size_t DC6Reference::GetNumberOfFrames()
 {
 	if (!bLoaded)
 	{
@@ -104,7 +104,7 @@ size_t DC6GraphicsHandle::GetNumberOfFrames()
 	return image.header.dwFrames;
 }
 
-void DC6GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+void DC6Reference::GetGraphicsData(void** pixels, int32_t frame,
 	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 	if (!bLoaded)
@@ -144,7 +144,7 @@ void DC6GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
 	}
 }
 
-void DC6GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DC6Reference::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 	if (!bLoaded)
 	{
@@ -182,7 +182,7 @@ void DC6GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t 
 	}
 }
 
-void DC6GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
+void DC6Reference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
 {
 	if (!bLoaded)
 	{
@@ -238,7 +238,7 @@ void DC6GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t en
 	
 }
 
-void DC6GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+void DC6Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
 {
 	*totalWidth = 0;
 	*totalHeight = 0;
@@ -272,7 +272,7 @@ void DC6GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, ui
 	*totalHeight = currentY + image.dwMaxFrameHeight;
 }
 
-void DC6GraphicsHandle::Unload()
+void DC6Reference::Unload()
 {
 	switch (usagePolicy)
 	{
@@ -289,44 +289,44 @@ void DC6GraphicsHandle::Unload()
  *	DT1GraphicsHandle is the IGraphicsHandle implementation for DT1 files.
  */
 
-DT1GraphicsHandle::DT1GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy)
-	: IGraphicsHandle(usagePolicy)
+DT1Reference::DT1Reference(const char* fileName, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsReference(usagePolicy)
 {
 	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
 }
 
-size_t DT1GraphicsHandle::GetTotalSizeInBytes(int32_t frame)
+size_t DT1Reference::GetTotalSizeInBytes(int32_t frame)
 {
 	return 0;
 }
 
-size_t DT1GraphicsHandle::GetNumberOfFrames()
+size_t DT1Reference::GetNumberOfFrames()
 {
 	return 0;
 }
 
-void DT1GraphicsHandle::GetGraphicsData(void** pixels, int32_t frame,
+void DT1Reference::GetGraphicsData(void** pixels, int32_t frame,
 	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 
 }
 
-void DT1GraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
+void DT1Reference::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
 
 }
 
-void DT1GraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
+void DT1Reference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
 {
 
 }
 
-void DT1GraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+void DT1Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
 {
 
 }
 
-void DT1GraphicsHandle::Unload()
+void DT1Reference::Unload()
 {
 	switch (usagePolicy)
 	{
@@ -342,30 +342,30 @@ void DT1GraphicsHandle::Unload()
 /**
  *	Font handles are used to load fonts.
  */
-FontGraphicsHandle::FontGraphicsHandle(const char* graphicsFile, const char* tbl, GraphicsUsagePolicy usagePolicy)
-	: IGraphicsHandle(usagePolicy)
+FontReference::FontReference(const char* graphicsFile, const char* tbl, GraphicsUsagePolicy usagePolicy)
+	: IGraphicsReference(usagePolicy)
 {
 	tblHandle = TBLFont::RegisterFont(tbl);
 	DC6::LoadImage(graphicsFile, &image);
 	D2Lib::strncpyz(handleName, tbl, sizeof(handleName));
 }
 
-FontGraphicsHandle::~FontGraphicsHandle()
+FontReference::~FontReference()
 {
 	DC6::UnloadImage(&image);
 }
 
-size_t FontGraphicsHandle::GetTotalSizeInBytes(int32_t frame)
+size_t FontReference::GetTotalSizeInBytes(int32_t frame)
 {
 	return 0;
 }
 
-size_t FontGraphicsHandle::GetNumberOfFrames()
+size_t FontReference::GetNumberOfFrames()
 {
 	return 0;
 }
 
-void FontGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width,
+void FontReference::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width,
 	uint32_t* height, int32_t* offsetX, int32_t* offsetY)
 {
 	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
@@ -393,7 +393,7 @@ void FontGraphicsHandle::GetGraphicsData(void** pixels, int32_t frame, uint32_t*
 	}
 }
 
-void FontGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end,
+void FontReference::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end,
 	uint32_t* width, uint32_t* height)
 {
 	uint32_t maxWidth = 0;
@@ -430,7 +430,7 @@ void FontGraphicsHandle::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t
 	*height = totalHeight;
 }
 
-void FontGraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t end,
+void FontReference::IterateFrames(bool bAtlassing, int32_t start, int32_t end,
 	AtlassingCallback callback)
 {
 	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
@@ -448,20 +448,20 @@ void FontGraphicsHandle::IterateFrames(bool bAtlassing, int32_t start, int32_t e
 	}
 }
 
-void FontGraphicsHandle::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y,
+void FontReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y,
 	uint32_t* totalWidth, uint32_t* totalHeight)
 {
 	
 }
 
-float FontGraphicsHandle::GetCapHeight()
+float FontReference::GetCapHeight()
 {
 	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
 
 	return fontFile->nHeight;
 }
 
-void FontGraphicsHandle::Unload()
+void FontReference::Unload()
 {
 	graphicsManager->RemoveFont(handleName);
 }
@@ -480,7 +480,7 @@ GraphicsManager::~GraphicsManager()
 	// TODO: delete all permanent entries, this will leak memory !!
 }
 
-IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, GraphicsUsagePolicy policy)
+IGraphicsReference* GraphicsManager::CreateReference(const char* graphicsFile, GraphicsUsagePolicy policy)
 {
 	// Check the extension on the file
 	char* ext = D2Lib::fnext(graphicsFile);
@@ -493,7 +493,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		switch (policy)
 		{
 			case UsagePolicy_SingleUse:
-				return new DC6GraphicsHandle(graphicsFile, policy);
+				return new DC6Reference(graphicsFile, policy);
 
 			case UsagePolicy_Permanent:
 				if (!DC6Graphics.Contains(graphicsFile, &theHandle, &bFull))
@@ -503,7 +503,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DC6Graphics.Insert(theHandle, graphicsFile, new DC6GraphicsHandle(graphicsFile, policy));
+					DC6Graphics.Insert(theHandle, graphicsFile, new DC6Reference(graphicsFile, policy));
 				}
 				return DC6Graphics[theHandle];
 
@@ -519,7 +519,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		switch (policy)
 		{
 			case UsagePolicy_SingleUse:
-				return new DCCGraphicsHandle(graphicsFile, policy);
+				return new DCCReference(graphicsFile, policy);
 
 			case UsagePolicy_Permanent:
 				if (!DCCGraphics.Contains(graphicsFile, &theHandle, &bFull))
@@ -529,7 +529,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DCCGraphics.Insert(theHandle, graphicsFile, new DCCGraphicsHandle(graphicsFile, policy));
+					DCCGraphics.Insert(theHandle, graphicsFile, new DCCReference(graphicsFile, policy));
 				}
 				return DCCGraphics[theHandle];
 
@@ -544,7 +544,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 		switch (policy)
 		{
 			case UsagePolicy_SingleUse:
-				return new DT1GraphicsHandle(graphicsFile, policy);
+				return new DT1Reference(graphicsFile, policy);
 
 			case UsagePolicy_Permanent:
 				if (!DT1Graphics.Contains(graphicsFile, &theHandle, &bFull))
@@ -554,7 +554,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 						return nullptr; // it's full
 					}
 
-					DT1Graphics.Insert(theHandle, graphicsFile, new DT1GraphicsHandle(graphicsFile, policy));
+					DT1Graphics.Insert(theHandle, graphicsFile, new DT1Reference(graphicsFile, policy));
 				}
 				return DT1Graphics[theHandle];
 
@@ -570,7 +570,7 @@ IGraphicsHandle* GraphicsManager::LoadGraphic(const char* graphicsFile, Graphics
 	return nullptr;
 }
 
-void GraphicsManager::UnloadGraphic(IGraphicsHandle* graphic)
+void GraphicsManager::DeleteReference(IGraphicsReference* graphic)
 {
 	if (!graphic)
 	{
@@ -580,7 +580,7 @@ void GraphicsManager::UnloadGraphic(IGraphicsHandle* graphic)
 	delete graphic;
 }
 
-IGraphicsHandle* GraphicsManager::LoadFont(const char* fontGraphic,
+IGraphicsReference* GraphicsManager::LoadFont(const char* fontGraphic,
 	const char* fontTBL)
 {
 	handle theHandle;
@@ -593,7 +593,7 @@ IGraphicsHandle* GraphicsManager::LoadFont(const char* fontGraphic,
 			return nullptr; // it's full
 		}
 
-		Fonts.Insert(theHandle, fontTBL, new FontGraphicsHandle(fontGraphic, fontTBL, UsagePolicy_Permanent));
+		Fonts.Insert(theHandle, fontTBL, new FontReference(fontGraphic, fontTBL, UsagePolicy_Permanent));
 	}
 	return Fonts[theHandle];
 }

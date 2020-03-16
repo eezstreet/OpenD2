@@ -7,7 +7,7 @@
 /**
  *	IGraphicsHandle is just a generic interface for handling various graphic formats in D2.
  */
-class IGraphicsHandle
+class IGraphicsReference
 {
 protected:
 	void* loadedGraphicsData;
@@ -19,7 +19,7 @@ public:
 	/**
 	 *	Default constructor, takes a usage policy.
 	 */
-	IGraphicsHandle(GraphicsUsagePolicy policy)
+	IGraphicsReference(GraphicsUsagePolicy policy)
 	{
 		usagePolicy = policy;
 		bAreGraphicsLoaded = false;
@@ -123,13 +123,13 @@ public:
 /**
  *	DCCGraphicsHandle is the IGraphicsHandle implementation for DCC files.
  */
-class DCCGraphicsHandle : public IGraphicsHandle
+class DCCReference : public IGraphicsReference
 {
 private:
 	char dccHandleName[MAX_D2PATH];
 
 public:
-	DCCGraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy);
+	DCCReference(const char* fileName, GraphicsUsagePolicy usagePolicy);
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
@@ -143,15 +143,15 @@ public:
 /**
  *	DC6GraphicsHandle is the IGraphicsHandle implementation for DC6 files.
  */
-class DC6GraphicsHandle : public IGraphicsHandle
+class DC6Reference : public IGraphicsReference
 {
 private:
 	char filePath[MAX_D2PATH];
 	DC6Image image;
 	bool bLoaded = false;
 public:
-	DC6GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy);
-	~DC6GraphicsHandle();
+	DC6Reference(const char* fileName, GraphicsUsagePolicy usagePolicy);
+	~DC6Reference();
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
@@ -165,13 +165,13 @@ public:
 /**
  *	DT1GraphicsHandle is the IGraphicsHandle implementation for DT1 files.
  */
-class DT1GraphicsHandle : public IGraphicsHandle
+class DT1Reference : public IGraphicsReference
 {
 private:
 	char filePath[MAX_D2PATH];
 
 public:
-	DT1GraphicsHandle(const char* fileName, GraphicsUsagePolicy usagePolicy);
+	DT1Reference(const char* fileName, GraphicsUsagePolicy usagePolicy);
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, 
@@ -185,7 +185,7 @@ public:
 /**
  *	FontGraphicsHandle is the IGraphicsHandle implementation of fonts.
  */
-class FontGraphicsHandle : public IGraphicsHandle
+class FontReference : public IGraphicsReference
 {
 private:
 	DC6Image image;
@@ -193,8 +193,8 @@ private:
 	char handleName[MAX_D2PATH];
 
 public:
-	FontGraphicsHandle(const char* graphicsFile, const char* tbl, GraphicsUsagePolicy usagePolicy);
-	~FontGraphicsHandle();
+	FontReference(const char* graphicsFile, const char* tbl, GraphicsUsagePolicy usagePolicy);
+	~FontReference();
 
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
@@ -215,21 +215,21 @@ public:
 class GraphicsManager : public IGraphicsManager
 {
 private:
-	HashMap<char, DCCGraphicsHandle*> DCCGraphics;
-	HashMap<char, DC6GraphicsHandle*> DC6Graphics;
-	HashMap<char, DT1GraphicsHandle*> DT1Graphics;
-	HashMap<char, FontGraphicsHandle*> Fonts;
+	HashMap<char, DCCReference*> DCCGraphics;
+	HashMap<char, DC6Reference*> DC6Graphics;
+	HashMap<char, DT1Reference*> DT1Graphics;
+	HashMap<char, FontReference*> Fonts;
 
 public:
 	GraphicsManager();
 	~GraphicsManager();
 
-	virtual IGraphicsHandle* LoadGraphic(const char* graphicsFile, 
+	virtual IGraphicsReference* CreateReference(const char* graphicsFile,
 			GraphicsUsagePolicy policy);
 
-	virtual void UnloadGraphic(IGraphicsHandle* handle);
+	virtual void DeleteReference(IGraphicsReference* handle);
 
-	virtual IGraphicsHandle* LoadFont(const char* fontGraphic,
+	virtual IGraphicsReference* LoadFont(const char* fontGraphic,
 		const char* fontTBL);
 
 	// Individual graphics handle functions

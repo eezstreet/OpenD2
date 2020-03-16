@@ -19,7 +19,7 @@ private:
 	tex_handle texture_disabled;
 
 	IRenderObject* text;
-	IGraphicsHandle* font;
+	IGraphicsReference* font;
 	sfx_handle clickedSound;
 
 	IRenderObject* backgroundObjectUp;
@@ -41,7 +41,7 @@ public:
 	void AttachClickSignal(MenuSignal pClickSignal);
 	void RemoveClickSignal() { bHasClickSignal = false; }
 
-	void SetFont(IGraphicsHandle* newFont) { font = newFont; }
+	void SetFont(IGraphicsReference* newFont) { font = newFont; }
 
 	virtual void Draw();
 	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);

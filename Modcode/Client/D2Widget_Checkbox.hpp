@@ -8,8 +8,8 @@ private:
 	IRenderObject* label;
 
 	// FIXME: ...? this should be an atlas
-	IGraphicsHandle* checkboxTexture;
-	IGraphicsHandle* checkboxTextureChecked;
+	IGraphicsReference* checkboxTexture;
+	IGraphicsReference* checkboxTextureChecked;
 
 	char16_t szLabel[32];
 	bool m_bHasLabel;

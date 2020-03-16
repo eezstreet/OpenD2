@@ -19,8 +19,8 @@ struct CharCreateData
 {
 	IRenderObject* displayObject;
 	IRenderObject* specialAnimationObject;
-	IGraphicsHandle* animationHandle[CCA_MAX];
-	IGraphicsHandle* specialAnimationHandle[CCA_MAX];
+	IGraphicsReference* animationHandle[CCA_MAX];
+	IGraphicsReference* specialAnimationHandle[CCA_MAX];
 
 	bool bSpecialAnimPresent[CCA_MAX];
 
@@ -46,7 +46,7 @@ private:
 	IRenderObject* chosenClassName;
 	IRenderObject* chosenClassDescription;
 
-	IGraphicsHandle* fireGraphic;
+	IGraphicsReference* fireGraphic;
 
 	int m_nHighlightedClass;
 	int m_nSelectedClass;

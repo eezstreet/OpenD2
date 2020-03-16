@@ -6,23 +6,23 @@
  */
 D2Menu_Main::D2Menu_Main() : D2Menu()
 {
-	IGraphicsHandle* background = engine->graphics->LoadGraphic(
+	IGraphicsReference* background = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6",
-		UsagePolicy_Permanent // for now
+		UsagePolicy_SingleUse // for now
 	);
-	IGraphicsHandle* flameTexLeft = engine->graphics->LoadGraphic(
+	IGraphicsReference* flameTexLeft = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6",
 		UsagePolicy_Permanent
 	);
-	IGraphicsHandle* flameTexRight = engine->graphics->LoadGraphic(
+	IGraphicsReference* flameTexRight = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoFireRight.dc6",
 		UsagePolicy_Permanent
 	);
-	IGraphicsHandle* blackTexLeft = engine->graphics->LoadGraphic(
+	IGraphicsReference* blackTexLeft = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoBlackLeft.dc6",
 		UsagePolicy_Permanent
 	);
-	IGraphicsHandle* blackTexRight = engine->graphics->LoadGraphic(
+	IGraphicsReference* blackTexRight = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoBlackRight.dc6",
 		UsagePolicy_Permanent
 	);
@@ -32,7 +32,7 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);
 
-	engine->graphics->UnloadGraphic(background);
+	engine->graphics->DeleteReference(background);
 
 	flameLeft = engine->renderer->AllocateObject(0);
 	flameRight = engine->renderer->AllocateObject(0);

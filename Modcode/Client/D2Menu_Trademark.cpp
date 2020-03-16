@@ -10,22 +10,22 @@
  */
 D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 {
-	IGraphicsHandle* background = engine->graphics->LoadGraphic(
+	IGraphicsReference* background = engine->graphics->CreateReference(
 			"data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6",
 			UsagePolicy_SingleUse);
-	IGraphicsHandle* flameTexLeft = engine->graphics->LoadGraphic(
+	IGraphicsReference* flameTexLeft = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6",
 		UsagePolicy_Permanent
 	);
-	IGraphicsHandle* flameTexRight = engine->graphics->LoadGraphic(
+	IGraphicsReference* flameTexRight = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoFireRight.dc6",
 		UsagePolicy_Permanent
 	);
-	IGraphicsHandle* blackTexLeft = engine->graphics->LoadGraphic(
+	IGraphicsReference* blackTexLeft = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoBlackLeft.dc6",
 		UsagePolicy_Permanent
 	);
-	IGraphicsHandle* blackTexRight = engine->graphics->LoadGraphic(
+	IGraphicsReference* blackTexRight = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoBlackRight.dc6",
 		UsagePolicy_Permanent
 	);
@@ -55,7 +55,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	blackRight->SetDrawCoords(400, -285, -1, -1);
 
 	// Background isn't needed at this point, it should be in VRAM
-	engine->graphics->UnloadGraphic(background);
+	engine->graphics->DeleteReference(background);
 
 	szCopyrightText = engine->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
 	szAllRightsReservedText = engine->TBL_FindStringFromIndex(TBLINDEX_ALLRIGHTS);

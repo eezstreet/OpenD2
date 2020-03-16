@@ -41,7 +41,7 @@ protected:
 			uint16_t currentFrame;
 			uint16_t numFrames;
 			uint32_t frameRate;
-			class IGraphicsHandle* attachedAnimationResource;
+			class IGraphicsReference* attachedAnimationResource;
 			bool bLoop;
 
 			// Animation finish callbacks
@@ -65,7 +65,7 @@ protected:
 
 		struct
 		{
-			class IGraphicsHandle* attachedFontResource;
+			class IGraphicsReference* attachedFontResource;
 			char16_t text[128];
 		} textData;
 	} data;
@@ -87,11 +87,11 @@ public:
 	virtual void GetDrawCoords(int* x, int* y, int* w, int* h);
 	void SetWidthHeight(int w, int h);
 
-	virtual void AttachTextureResource(class IGraphicsHandle* handle, int32_t frame);
-	virtual void AttachCompositeTextureResource(class IGraphicsHandle* handle, int32_t startFrame, int32_t endFrame);
-	virtual void AttachAnimationResource(class IGraphicsHandle* handle, bool bResetFrame);
-	virtual void AttachTokenResource(class IGraphicsHandle* handle);
-	virtual void AttachFontResource(class IGraphicsHandle* handle);
+	virtual void AttachTextureResource(class IGraphicsReference* handle, int32_t frame);
+	virtual void AttachCompositeTextureResource(class IGraphicsReference* handle, int32_t startFrame, int32_t endFrame);
+	virtual void AttachAnimationResource(class IGraphicsReference* handle, bool bResetFrame);
+	virtual void AttachTokenResource(class IGraphicsReference* handle);
+	virtual void AttachFontResource(class IGraphicsReference* handle);
 
 	virtual void SetFramerate(int framerate);
 	virtual void SetDrawMode(int drawMode);

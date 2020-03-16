@@ -5,7 +5,7 @@ class D2Menu_Loading : public D2Menu
 {
 private:
 	IRenderObject* loadscreen;
-	IGraphicsHandle* loadscreenTexture;
+	IGraphicsReference* loadscreenTexture;
 
 public:
 	D2Menu_Loading();

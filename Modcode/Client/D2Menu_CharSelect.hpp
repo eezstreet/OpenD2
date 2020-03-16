@@ -5,7 +5,7 @@
 class D2Menu_CharSelect : public D2Menu
 {
 private:
-	IGraphicsHandle* backgroundTexture;
+	IGraphicsReference* backgroundTexture;
 	IRenderObject* backgroundObject;
 
 	// if bJoiningGame is true, then the background texture will be deregistered when this menu is destroyed.

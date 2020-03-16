@@ -10,7 +10,7 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 	DWORD dwStartDisabled, DWORD dwEndDisabled)
 	: D2Widget(x, y, 0, 0)
 {
-	IGraphicsHandle* graphic = engine->graphics->LoadGraphic(szDC6Path,
+	IGraphicsReference* graphic = engine->graphics->CreateReference(szDC6Path,
 			UsagePolicy_Permanent);
 
 	backgroundObjectUp = engine->renderer->AllocateObject(0);
