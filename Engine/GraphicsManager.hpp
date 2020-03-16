@@ -3,6 +3,17 @@
 #include "../Shared/D2HashMap.hpp"
 #include "DC6.hpp"
 #include "Palette.hpp"
+#include "Renderer.hpp"
+
+/**
+ *	GraphicsLRU is responsible for keeping track of temporary graphics.
+ */
+class GraphicsLRU
+{
+private:
+	
+public:
+};
 
 /**
  *	IGraphicsHandle is just a generic interface for handling various graphic formats in D2.
@@ -26,6 +37,7 @@ public:
 		loadedGraphicsData = nullptr;
 	}
 
+
 	/**
 	 *	Returns true if the graphics have been fully loaded.
 	 */
@@ -35,7 +47,7 @@ public:
 	}
 
 	/**
-	 *	Returns the loaded graphics handle.
+	 *	Returns the loaded graphics data.
 	 */
 	virtual void* GetLoadedGraphicsData()
 	{
@@ -44,6 +56,17 @@ public:
 			return loadedGraphicsData;
 		}
 		return nullptr;
+	}
+
+	/**
+	 *	Removes the unloaded graphics data
+	 */
+	virtual void UnloadGraphicsData()
+	{
+		if (bAreGraphicsLoaded)
+		{
+			RenderTarget->DeleteLoadedGraphicsData(loadedGraphicsData, this);
+		}
 	}
 
 	/**
@@ -115,9 +138,9 @@ public:
 	virtual float GetCapHeight() { return 0.0f; }
 
 	/**
-	 *	Unload this graphics handle.
+	 *	Specifies what to do when we have been deallocated.
 	 */
-	virtual void Unload() = 0;
+	virtual void Deallocate() = 0;
 };
 
 /**
@@ -137,7 +160,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
-	virtual void Unload();
+	virtual void Deallocate();
 };
 
 /**
@@ -159,7 +182,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
-	virtual void Unload();
+	virtual void Deallocate();
 };
 
 /**
@@ -179,7 +202,7 @@ public:
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
-	virtual void Unload();
+	virtual void Deallocate();
 };
 
 /**
@@ -204,7 +227,7 @@ public:
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
 	virtual float GetCapHeight() override;
-	virtual void Unload();
+	virtual void Deallocate();
 };
 
 

@@ -683,6 +683,11 @@ public:
 	 *	Remove a render object resource.
 	 */
 	virtual void Remove(class IRenderObject* Object) = 0;
+
+	/**
+	 *	Clears the loaded data of a graphics reference
+	 */
+	virtual void DeleteLoadedGraphicsData(void* loadedData, class IGraphicsReference* ref) = 0;
 };
 
 /**
@@ -719,12 +724,21 @@ public:
 	virtual void SetTextAlignment(int x, int y, int w, int h, int horzAlignment, int vertAlignment) = 0;
 	virtual void SetTextColor(int color) = 0;
 
-	// Animation-specific calls
+	// Animation-specific calls (cannot be applied to tokens)
 	virtual void SetFramerate(int framerate) = 0;
 	virtual void SetAnimationLoop(bool bLoop) = 0;
 	virtual void AddAnimationFinishedCallback(void* extraData, AnimationFinishCallback callback) = 0;
 	virtual void AddAnimationFrameCallback(int32_t frame, void* extraData, AnimationFrameCallback callback) = 0;
 	virtual void RemoveAnimationFinishCallbacks() = 0;
+
+	// Applies to both animations and tokens
+	virtual void SetAnimationDirection(int direction) = 0;
+
+	// Token-specific calls
+	virtual void SetTokenMode(int newMode) = 0;
+	virtual void SetTokenArmorLevel(int component, int armorLevel) = 0;
+	virtual void SetTokenHitClass(int hitclass) = 0;
+
 };
 
 //////////////////////////////////////////////////

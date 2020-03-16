@@ -652,6 +652,26 @@ bool GLRenderObject::PixelPerfectDetection(int x, int y)
 	return true;
 }
 
+void GLRenderObject::SetAnimationDirection(int newDirection)
+{
+
+}
+
+void GLRenderObject::SetTokenMode(int newMode)
+{
+
+}
+
+void GLRenderObject::SetTokenArmorLevel(int component, int armorLevel)
+{
+
+}
+
+void GLRenderObject::SetTokenHitClass(int hitclass)
+{
+
+}
+
 /**
  *	The GLRenderPool is responsible for managing the lifetime of the GLRenderObjects.
  */
@@ -1104,4 +1124,10 @@ void Renderer_GL::Clear()
 	{
 		NumberDrawnThisFrame[i] = 0;
 	}
+}
+
+void Renderer_GL::DeleteLoadedGraphicsData(void* loadedData, class IGraphicsReference* ref)
+{
+	unsigned int texture = (unsigned int)loadedData;
+	glDeleteTextures(1, &texture);
 }

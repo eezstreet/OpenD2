@@ -106,6 +106,11 @@ public:
 	virtual void RemoveAnimationFinishCallbacks();
 
 	virtual bool PixelPerfectDetection(int x, int y);
+
+	virtual void SetAnimationDirection(int direction);
+	virtual void SetTokenMode(int newMode);
+	virtual void SetTokenArmorLevel(int component, int armorLevel);
+	virtual void SetTokenHitClass(int hitclass);
 };
 
 /**
@@ -161,4 +166,5 @@ public:
 	~Renderer_GL();
 
 	void AddToRenderQueue(class GLRenderObject* Object);
+	virtual void DeleteLoadedGraphicsData(void* loadedData, class IGraphicsReference* ref);
 };

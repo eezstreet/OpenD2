@@ -48,7 +48,7 @@ void DCCReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_
 
 }
 
-void DCCReference::Unload()
+void DCCReference::Deallocate()
 {
 	switch (usagePolicy)
 	{
@@ -272,7 +272,7 @@ void DC6Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_
 	*totalHeight = currentY + image.dwMaxFrameHeight;
 }
 
-void DC6Reference::Unload()
+void DC6Reference::Deallocate()
 {
 	switch (usagePolicy)
 	{
@@ -326,7 +326,7 @@ void DT1Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_
 
 }
 
-void DT1Reference::Unload()
+void DT1Reference::Deallocate()
 {
 	switch (usagePolicy)
 	{
@@ -461,7 +461,7 @@ float FontReference::GetCapHeight()
 	return fontFile->nHeight;
 }
 
-void FontReference::Unload()
+void FontReference::Deallocate()
 {
 	graphicsManager->RemoveFont(handleName);
 }
@@ -576,7 +576,8 @@ void GraphicsManager::DeleteReference(IGraphicsReference* graphic)
 	{
 		return;
 	}
-	graphic->Unload();
+	graphic->Deallocate();
+	graphic->UnloadGraphicsData();
 	delete graphic;
 }
 
