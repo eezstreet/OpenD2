@@ -38,6 +38,7 @@ private:
 	D2Widget_Button*			confirmYesButton;
 	D2Widget_Button*			confirmNoButton;
 	
+	IRenderObject*				renderObject;
 	tex_handle					background;
 
 public:

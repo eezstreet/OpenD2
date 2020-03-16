@@ -50,7 +50,7 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_delete"))
 	{
 		// Delete character button pressed
-		//pCharMenu->AskForDeletionConfirmation();
+		pCharMenu->AskForDeletionConfirmation();
 		return;
 	}
 	else if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_convert"))
@@ -229,11 +229,15 @@ static void PanelSignal_DeleteConfirm(D2Panel* pCallerPanel, D2Widget* pCallerWi
  */
 D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 {
-#if 0
 	confirmYesButton = new D2Widget_Button(420, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 	confirmNoButton = new D2Widget_Button(280, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 
-	background = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
+	renderObject = engine->renderer->AllocateObject(0);
+
+	IGraphicsHandle* backgroundHandle = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", UsagePolicy_SingleUse);
+	renderObject->AttachCompositeTextureResource(backgroundHandle, 0, 1);
+	renderObject->SetDrawCoords(268, 212, 264, 176);
+	engine->graphics->UnloadGraphic(backgroundHandle);
 
 	AddWidget(confirmYesButton);
 	AddWidget(confirmNoButton);
@@ -246,7 +250,6 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 
 	confirmYesButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_YES));
 	confirmNoButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_NO));
-#endif
 }
 
 /*
@@ -254,13 +257,11 @@ D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
  */
 D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
 {
-#if 0
 	// Delete the widgets and deregister the popup texture (this is literally the only place it's used)
 	delete confirmYesButton;
 	delete confirmNoButton;
 
-	engine->renderer->DeregisterTexture("PopUpOkCancel2", INVALID_HANDLE);
-#endif
+	engine->renderer->Remove(renderObject);
 }
 
 /*
@@ -269,11 +270,9 @@ D2Panel_CharDeleteConfirm::~D2Panel_CharDeleteConfirm()
  */
 void D2Panel_CharDeleteConfirm::Draw()
 {
-#if 0
 	// Draw the background
-	engine->renderer->DrawTexture(background, 268, 212, 264, 176, 0, 0);
+	renderObject->Draw();
 
 	// And the widgets too
 	DrawAllWidgets();
-#endif
 }
