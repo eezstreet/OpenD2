@@ -4,8 +4,8 @@
 class D2Menu_Loading : public D2Menu
 {
 private:
-	tex_handle loadscreenTex;
-	anim_handle loadscreenAnim;
+	IRenderObject* loadscreen;
+	IGraphicsHandle* loadscreenTexture;
 
 public:
 	D2Menu_Loading();

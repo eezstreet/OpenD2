@@ -1088,6 +1088,7 @@ void Renderer_GL::Present()
 	}
 
 	SDL_GL_SwapWindow(targetWindow);
+	glFlush();
 }
 
 void Renderer_GL::Clear()
