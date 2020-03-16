@@ -18,7 +18,6 @@ D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Wid
 	checkboxRendered = engine->renderer->AllocateObject(0);
 	checkboxTexture = engine->graphics->LoadGraphic("data\\global\\ui\\FrontEnd\\clickbox.dc6", UsagePolicy_Permanent);
 	checkboxRendered->AttachTextureResource(checkboxTexture, m_bChecked);
-	checkboxRendered->SetDrawCoords(x, y, 0, 0);
 }
 
 /*
@@ -40,10 +39,11 @@ D2Widget_Checkbox::~D2Widget_Checkbox()
  */
 void D2Widget_Checkbox::Draw()
 {
+	checkboxRendered->SetDrawCoords(x, y, 15, 15);
 	checkboxRendered->Draw();
 	if (label != nullptr)
 	{
-		label->SetDrawCoords(m_pOwner->x + x + w + 6, m_pOwner->y + y + 3, 0, 0);
+		label->SetDrawCoords(x + w + 6, y, 0, 0);
 		label->Draw();
 	}
 }
@@ -82,7 +82,7 @@ void D2Widget_Checkbox::RemoveLabel()
  */
 bool D2Widget_Checkbox::HandleMouseDown(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
+	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
 	{
 		return true;
 	}
@@ -95,7 +95,7 @@ bool D2Widget_Checkbox::HandleMouseDown(DWORD dwX, DWORD dwY)
  */
 bool D2Widget_Checkbox::HandleMouseClick(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
+	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
 	{
 		m_bChecked = !m_bChecked;
 		checkboxRendered->AttachTextureResource(checkboxTexture, m_bChecked);

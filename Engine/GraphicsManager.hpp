@@ -13,6 +13,7 @@ protected:
 	void* loadedGraphicsData;
 	bool bAreGraphicsLoaded;
 	GraphicsUsagePolicy usagePolicy;
+	int loadedGraphicsFrame;
 
 public:
 	/**
@@ -46,11 +47,20 @@ public:
 	}
 
 	/**
+	 *	Returns the loaded graphics frame.
+	 */
+	virtual int GetLoadedGraphicsFrame()
+	{
+		return loadedGraphicsFrame;
+	}
+
+	/**
 	 *	Sets the loaded graphics handle.
 	 */
-	virtual void SetLoadedGraphicsData(void* data)
+	virtual void SetLoadedGraphicsData(void* data, int _loadedGraphicsFrame)
 	{
 		loadedGraphicsData = data;
+		loadedGraphicsFrame = _loadedGraphicsFrame;
 		bAreGraphicsLoaded = true;
 	}
 

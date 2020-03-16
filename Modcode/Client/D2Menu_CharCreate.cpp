@@ -37,6 +37,24 @@ static const char* szAnimNameSpecial[CCA_MAX] = {
 	"bws",
 };
 
+void CharCreateData::OnCharacterCameForward(class IRenderObject* caller, void* extraData)
+{
+	CharCreateData* data = (CharCreateData*)extraData;
+	data->displayObject->AttachAnimationResource(data->animationHandle[CCA_IdleFront], true);
+	data->status = CCA_IdleFront;
+	if (data->bSpecialAnimPresent[CCA_IdleFront])
+	{
+		data->specialAnimationObject->AttachAnimationResource(data->specialAnimationHandle[CCA_IdleFront], true);
+	}
+}
+
+void CharCreateData::OnCharacterSteppedBack(class IRenderObject* caller, void* extraData)
+{
+	CharCreateData* data = (CharCreateData*)extraData;
+	data->displayObject->AttachAnimationResource(data->animationHandle[CCA_IdleBack], true);
+	data->status = CCA_IdleBack;
+}
+
 /*
  *	Creates the character creation menu. Lots of creation.
  */
@@ -63,8 +81,8 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 	pStaticPanel = new D2Panel_CharCreate_Static();
 	pDynamicPanel = new D2Panel_CharCreate_Dynamic();
 
-	AddPanel(pStaticPanel);
-	AddPanel(pDynamicPanel);
+	AddPanel(pStaticPanel, true);
+	AddPanel(pDynamicPanel, false);
 
 	// Load all of the information needed by the char create menu
 	szChooseClassStr = engine->TBL_FindStringFromIndex(5127);
@@ -183,6 +201,11 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 		CreateData[i].status = CCA_IdleBack;
 		CreateData[i].displayObject->AttachAnimationResource(CreateData[i].animationHandle[CCA_IdleBack], true);
 		CreateData[i].displayObject->SetDrawCoords(CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, 0, 0);
+		CreateData[i].specialAnimationObject->SetDrawCoords(CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, 0, 0);
+		if (i == D2CLASS_NECROMANCER || i == D2CLASS_SORCERESS)
+		{
+			CreateData[i].specialAnimationObject->SetDrawMode(3);
+		}
 
 		// set our initial baseline to be 0
 		CreateData[i].nDrawBaselineY[0] = 0;
@@ -194,63 +217,6 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 
 	// other data
 	m_bFromCharSelect = bFromCharSelect;
-#if 0
-	for (int i = 0; i < D2CLASS_MAX; i++)
-	{
-		// iterate through all basic animations
-		for (int j = 0; j < CCA_MAX; j++)
-		{
-			// register regular animations
-			snprintf(szPath, MAX_D2PATH,
-				"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
-				szCharacterClassFolders[i], szCharacterClassShort[i], szAnimName[j]);
-			snprintf(szHandle, 32, "%s%s", szCharacterClassShort[i], szAnimName[j]);
-
-			CreateData[i].animTextureHandle[j] = engine->renderer->TextureFromAnimatedDC6(szPath, szHandle, PAL_FECHAR);
-			CreateData[i].animAnimHandle[j] = 
-				engine->renderer->RegisterDC6Animation(CreateData[i].animTextureHandle[j], szHandle, 0);
-
-			engine->renderer->PollTexture(CreateData[i].animTextureHandle[j], nullptr, (DWORD*)&CreateData[i].nDrawBaselineY[j]);
-			if (j != 0)
-			{
-				CreateData[i].nDrawBaselineY[j] -= CreateData[i].nDrawBaselineY[0];
-			}
-
-			if (CreateData[i].bSpecialAnimPresent[j])
-			{
-				// register special animations
-				snprintf(szPath, MAX_D2PATH,
-					"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
-					szCharacterClassFolders[i], szCharacterClassShort[i], szAnimNameSpecial[j]);
-				snprintf(szHandle, 32, "%s%s", szCharacterClassShort[i], szAnimNameSpecial[j]);
-
-				CreateData[i].specialAnimTextureHandle[j] = engine->renderer->TextureFromAnimatedDC6(szPath, szHandle, PAL_FECHAR);
-				CreateData[i].specialAnimAnimHandle[j] = 
-					engine->renderer->RegisterDC6Animation(CreateData[i].specialAnimTextureHandle[j], szHandle, 0);
-
-				// special animations are additively blended for the necro and sorc
-				if (i == D2CLASS_SORCERESS || i == D2CLASS_NECROMANCER)
-				{
-					engine->renderer->SetTextureBlendMode(CreateData[i].specialAnimTextureHandle[j], BLEND_ADD);
-				}
-			}
-			else
-			{
-				CreateData[i].specialAnimAnimHandle[j] = INVALID_HANDLE;
-				CreateData[i].specialAnimTextureHandle[j] = INVALID_HANDLE;
-			}
-		}
-
-		
-	}
-
-	// set us up to not have anything highlighted
-	m_nHighlightedClass = D2CLASS_MAX;
-	m_nSelectedClass = D2CLASS_MAX;
-
-	// other data
-	m_bFromCharSelect = bFromCharSelect;
-#endif
 }
 
 /*
@@ -287,28 +253,6 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
 }
 
 /*
- *	Gets called whenever an animation finishes
- *	NOTE: static function
- */
-void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
-{
-#if 0
-	D2Menu_CharCreate* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
-	
-	if (pMenu->CreateData[nExtraInt].status == CCA_FrontToBack)
-	{
-		engine->renderer->SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleBack], 0);
-		pMenu->CreateData[nExtraInt].status = CCA_IdleBack;
-	}
-	else if (pMenu->CreateData[nExtraInt].status == CCA_BackToFront)
-	{
-		engine->renderer->SetAnimFrame(pMenu->CreateData[nExtraInt].animAnimHandle[CCA_IdleFront], 0);
-		pMenu->CreateData[nExtraInt].status = CCA_IdleFront;
-	}
-#endif
-}
-
-/*
  *	Draws the character creation menu
  */
 void D2Menu_CharCreate::Draw()
@@ -330,16 +274,6 @@ void D2Menu_CharCreate::Draw()
 				CreateData[i].displayObject->AttachAnimationResource(CreateData[i].animationHandle[CCA_IdleBackSel], false);
 				CreateData[i].status = CCA_IdleBackSel;
 				m_nHighlightedClass = i;
-				chosenClassName->SetText(CreateData[i].szCharClassName);
-				chosenClassDescription->SetText(CreateData[i].szCharClassDescription);
-
-				// engine->renderer->DrawText(cl.font30, 
-				//CreateData[m_nHighlightedClass].szCharClassName, 0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-				//engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
-				//engine->renderer->DrawText(cl.font16,
-				//	CreateData[m_nHighlightedClass].szCharClassDescription, 0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-				chosenClassName->SetTextAlignment(0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-				chosenClassDescription->SetTextAlignment(0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
 			}
 			else if (CreateData[i].status == CCA_IdleBackSel && !CreateData[i].displayObject->PixelPerfectDetection(cl.dwMouseX, cl.dwMouseY))
 			{
@@ -348,13 +282,24 @@ void D2Menu_CharCreate::Draw()
 				CreateData[i].status = CCA_IdleBack;
 				m_nHighlightedClass = D2CLASS_MAX;
 			}
+			CreateData[i].displayObject->SetAnimationLoop(true);
+		}
+		else if (CreateData[i].status == CCA_IdleFront)
+		{
+			CreateData[i].displayObject->SetFramerate(25);
+			CreateData[i].displayObject->SetAnimationLoop(true);
 		}
 		else
 		{
 			CreateData[i].displayObject->SetFramerate(25);
+			CreateData[i].displayObject->SetAnimationLoop(false);
 		}
 
 		CreateData[i].displayObject->Draw();
+		if (CreateData[i].bSpecialAnimPresent[CreateData[i].status])
+		{
+			CreateData[i].specialAnimationObject->Draw();
+		}
 		// this is really horribly ugly but necessary in order to draw everything correctly
 		switch (i)
 		{
@@ -386,8 +331,18 @@ void D2Menu_CharCreate::Draw()
 	chooseClassTitle->Draw();
 	
 	// Draw the name and description of the highlighted class
+	if (m_nSelectedClass != D2CLASS_MAX && m_nHighlightedClass == D2CLASS_MAX)
+	{	// if we have selected a class and have none highlighted, use that one for its text
+		m_nHighlightedClass = m_nSelectedClass;
+	}
+
 	if (m_nHighlightedClass != D2CLASS_MAX)
 	{
+		chosenClassName->SetText(CreateData[m_nHighlightedClass].szCharClassName);
+		chosenClassDescription->SetText(CreateData[m_nHighlightedClass].szCharClassDescription);
+		chosenClassName->SetTextAlignment(0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+		chosenClassDescription->SetTextAlignment(0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
+
 		chosenClassName->Draw();
 		chosenClassDescription->Draw();
 	}
@@ -397,116 +352,34 @@ void D2Menu_CharCreate::Draw()
 
 	// Draw the fire over top of everything
 	fireAnimation->Draw();
-#if 0
-	int i = D2CLASS_BARBARIAN;
+}
 
-	// draw background
-	engine->renderer->DrawTexture(backgroundTex, 0, 0, 800, 600, 0, 0);
+void D2Menu_CharCreate::SelectCharacterClass(int classNum)
+{
+	CharCreateData* selData = &CreateData[classNum];
+	selData->displayObject->AttachAnimationResource(selData->animationHandle[CCA_BackToFront], true);
+	selData->displayObject->RemoveAnimationFinishCallbacks();
+	selData->displayObject->AddAnimationFinishedCallback(selData, CharCreateData::OnCharacterCameForward);
+	selData->status = CCA_BackToFront;
 
-	// draw choose class text
-	engine->renderer->DrawText(cl.font30, szChooseClassStr, 0, 25, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-
-	// draw the characters in each of their position
-	m_nHighlightedClass = D2CLASS_MAX;
-	while(i != D2CLASS_MAX)
+	if (selData->bSpecialAnimPresent[CCA_BackToFront])
 	{
-		if (CreateData[i].status == CCA_IdleBack || CreateData[i].status == CCA_IdleBackSel)
-		{
-			// Idle in the back - we need to handle whether our mouse cursor is over top of it or not
-			if (engine->renderer->PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
-				cl.dwMouseX, cl.dwMouseY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
-			{	// mouse is over this thing
-				m_nHighlightedClass = i;
-				if (CreateData[i].status == CCA_IdleBack)
-				{
-					// set new status frame to be the same as current
-					engine->renderer->SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel],
-						engine->renderer->GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack]));
-				}
-				CreateData[i].status = CCA_IdleBackSel;
-			}
-			else
-			{
-				if (CreateData[i].status == CCA_IdleBackSel)
-				{
-					// set new status frame to be the same as current
-					engine->renderer->SetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBack],
-						engine->renderer->GetAnimFrame(CreateData[i].animAnimHandle[CCA_IdleBackSel]));
-				}
-				CreateData[i].status = CCA_IdleBack;
-			}
-			engine->renderer->Animate(CreateData[i].animAnimHandle[CreateData[i].status],
-				8, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
-		}
-		else
-		{
-			engine->renderer->Animate(CreateData[i].animAnimHandle[CreateData[i].status],
-				25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos - CreateData[i].nDrawBaselineY[CreateData[i].status]);
-			if (CreateData[i].bSpecialAnimPresent[CreateData[i].status] && i != m_nSelectedClass)
-			{
-				engine->renderer->Animate(CreateData[i].specialAnimAnimHandle[CreateData[i].status],
-					25, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos + CreateData[i].nSpecialYOffset);
-			}
-		}
-
-		// this is really horribly ugly but necessary in order to draw everything correctly
-		switch (i)
-		{
-			case D2CLASS_BARBARIAN:
-				i = D2CLASS_NECROMANCER;
-				break;
-			case D2CLASS_NECROMANCER:
-				i = D2CLASS_PALADIN;
-				break;
-			case D2CLASS_PALADIN:
-				i = D2CLASS_ASSASSIN;
-				break;
-			case D2CLASS_ASSASSIN:
-				i = D2CLASS_SORCERESS;
-				break;
-			case D2CLASS_SORCERESS:
-				i = D2CLASS_AMAZON;
-				break;
-			case D2CLASS_AMAZON:
-				i = D2CLASS_DRUID;
-				break;
-			case D2CLASS_DRUID:
-				i = D2CLASS_MAX;
-				break;
-		}
+		selData->specialAnimationObject->AttachAnimationResource(selData->specialAnimationHandle[CCA_BackToFront], true);
 	}
+}
 
-	if (m_nSelectedClass != D2CLASS_MAX && m_nHighlightedClass == D2CLASS_MAX)
-	{	// if we have selected a class and have none highlighted, use that one for its text
-		m_nHighlightedClass = m_nSelectedClass;
-	}
+void D2Menu_CharCreate::DeselectCharacterClass(int classNum)
+{
+	CharCreateData* selData = &CreateData[classNum];
+	selData->displayObject->AttachAnimationResource(selData->animationHandle[CCA_FrontToBack], true);
+	selData->displayObject->RemoveAnimationFinishCallbacks();
+	selData->displayObject->AddAnimationFinishedCallback(selData, CharCreateData::OnCharacterSteppedBack);
+	selData->status = CCA_FrontToBack;
 
-	if (m_nSelectedClass != D2CLASS_MAX)
+	if (selData->bSpecialAnimPresent[CCA_FrontToBack])
 	{
-		// Always draw the special animation of the selected thing on top
-		if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CreateData[m_nSelectedClass].status])
-		{
-			engine->renderer->Animate(CreateData[m_nSelectedClass].specialAnimAnimHandle[CreateData[m_nSelectedClass].status],
-				25, CreateData[m_nSelectedClass].nDrawXPos,
-				CreateData[m_nSelectedClass].nDrawYPos + CreateData[m_nSelectedClass].nSpecialYOffset);
-		}
+		selData->specialAnimationObject->AttachAnimationResource(selData->specialAnimationHandle[CCA_FrontToBack], true);
 	}
-
-	// draw current class text
-	if (m_nHighlightedClass != D2CLASS_MAX)
-	{
-		engine->renderer->DrawText(cl.font30, 
-			CreateData[m_nHighlightedClass].szCharClassName, 0, 75, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-		engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
-		engine->renderer->DrawText(cl.font16,
-			CreateData[m_nHighlightedClass].szCharClassDescription, 0, 105, 800, 600, ALIGN_CENTER, ALIGN_TOP);
-	}
-
-	DrawAllPanels();
-
-	// draw fire
-	engine->renderer->Animate(fireAnim, 25, 380, 160);
-#endif
 }
 
 /*
@@ -514,64 +387,43 @@ void D2Menu_CharCreate::Draw()
  */
 bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
 {
-#if 0
-	anim_handle anim;
+	CharCreateData* selData = &CreateData[m_nSelectedClass];
 
-	// check to see if we clicked on any of the characters
+	// check to see if we clicked on a character
 	for (int i = 0; i < D2CLASS_MAX; i++)
 	{
-		if (m_nSelectedClass == i)
-		{	// selected class ALWAYS uses alpha in per pixel collision
-			if (engine->renderer->PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
-				dwX, dwY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, false))
-			{
-				// we clicked inside its bounds
-				CreateData[m_nSelectedClass].status = CCA_FrontToBack;
+		CharCreateData* charData = &CreateData[i];
 
-				anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_FrontToBack];
-				engine->renderer->SetAnimFrame(anim, 0);
-				engine->renderer->AddAnimKeyframe(anim, engine->renderer->GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
-				if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_FrontToBack])
-				{
-					engine->renderer->SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
-				}
-				m_nSelectedClass = D2CLASS_MAX;
-
-				HidePanel(pDynamicPanel);
-				return true;
-			}
+		if (m_nSelectedClass == i && charData->displayObject->PixelPerfectDetection(dwX, dwY))
+		{	// clicked on the currently selected character
+			DeselectCharacterClass(i);
+			HidePanel(pDynamicPanel);
+			m_nSelectedClass = D2CLASS_MAX;
+			pStaticPanel->DisableOKButton();
+			return true;
 		}
-		else
+
+		if (charData->displayObject->PixelPerfectDetection(dwX, dwY))
 		{
-			if (engine->renderer->PixelPerfectDetect(CreateData[i].animAnimHandle[CreateData[i].status],
-				dwX, dwY, CreateData[i].nDrawXPos, CreateData[i].nDrawYPos, true))
-			{	// we selected a class
-				if (m_nSelectedClass != D2CLASS_MAX)
-				{	// tell the other class to go to transition
-					anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_FrontToBack];
-					CreateData[m_nSelectedClass].status = CCA_FrontToBack;
-					engine->renderer->SetAnimFrame(anim, 0);
-					engine->renderer->AddAnimKeyframe(anim, engine->renderer->GetAnimFrameCount(anim) - 1, AnimationKeyframe, m_nSelectedClass);
-					if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_FrontToBack])
-					{
-						engine->renderer->SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_FrontToBack], 0);
-					}
-				}
-				CreateData[i].status = CCA_BackToFront;
-				m_nSelectedClass = i;
-				anim = CreateData[m_nSelectedClass].animAnimHandle[CCA_BackToFront];
-				engine->renderer->SetAnimFrame(anim, 0);
-				engine->renderer->AddAnimKeyframe(anim, engine->renderer->GetAnimFrameCount(anim) - 1, AnimationKeyframe, i);
-				if (CreateData[m_nSelectedClass].bSpecialAnimPresent[CCA_BackToFront])
-				{
-					engine->renderer->SetAnimFrame(CreateData[m_nSelectedClass].specialAnimAnimHandle[CCA_BackToFront], 0);
-				}
-				ShowPanel(pDynamicPanel);
-				return true;
+			SelectCharacterClass(i);
+
+			if (m_nSelectedClass != D2CLASS_MAX)
+			{
+				DeselectCharacterClass(m_nSelectedClass);
 			}
+			else
+			{
+				ShowPanel(pDynamicPanel);
+			}
+
+			if (pDynamicPanel->GetNameLength() > 1)
+			{
+				pStaticPanel->EnableOKButton();
+			}
+			m_nSelectedClass = i;
+			return true;
 		}
 	}
-#endif
 	return D2Menu::HandleMouseClicked(dwX, dwY);
 }
 
@@ -580,6 +432,11 @@ bool D2Menu_CharCreate::HandleMouseClicked(DWORD dwX, DWORD dwY)
  */
 void D2Menu_CharCreate::HandleTextInput(char* szText)
 {
+	if (m_nSelectedClass == D2CLASS_MAX)
+	{
+		return;
+	}
+
 	D2Menu::HandleTextInput(szText);
 
 	// check the length of the text entry field

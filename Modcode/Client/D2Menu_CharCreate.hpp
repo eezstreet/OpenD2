@@ -31,6 +31,10 @@ struct CharCreateData
 	int nDrawYPos;
 	int nDrawBaselineY[CCA_MAX];
 	int nSpecialYOffset;
+
+	// These are all callbacks
+	static void OnCharacterSteppedBack(class IRenderObject* caller, void* extraData);
+	static void OnCharacterCameForward(class IRenderObject* caller, void* extraData);
 };
 
 class D2Menu_CharCreate : public D2Menu
@@ -53,8 +57,6 @@ private:
 	CharCreateData CreateData[D2CLASS_MAX];
 	char16_t *szChooseClassStr;
 
-	static void AnimationKeyframe(anim_handle anim, int nExtraInt);
-
 public:
 	bool	m_bFromCharSelect;
 
@@ -65,5 +67,10 @@ public:
 	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
 	virtual void HandleTextInput(char* szText);
 	virtual bool HandleKeyDown(DWORD dwKey);
+
+	// Character class needs to walk away from the fire
+	void DeselectCharacterClass(int classNum);
+	void SelectCharacterClass(int classNum);
+
 	bool TrySaveCharacter();
 };

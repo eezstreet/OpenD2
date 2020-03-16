@@ -169,6 +169,16 @@ void GLRenderObject::Render()
 			data.animationData.lastFrameTime = ticks;
 		}
 
+		// Texture may have changed. Rebind just to be sure.
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, global_palette_texture);
+		glUniform1i(uniform_ui_texture, 0);
+		glUniform1i(uniform_ui_globalpal, 1);
+		glUniform1i(uniform_ui_globalPaletteNum, global_palette);
+		glUniform4fv(uniform_ui_colorModulate, 1, colorModulate);
+
 		uint32_t frameWidth, frameHeight;
 		int32_t offsetX, offsetY;
 		data.animationData.attachedAnimationResource->GetGraphicsData(nullptr, data.animationData.currentFrame,
@@ -254,7 +264,7 @@ void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t fram
 
 	objectType = RO_Static;
 
-	if(handle->AreGraphicsLoaded())
+	if(handle->AreGraphicsLoaded() && handle->GetLoadedGraphicsFrame() == frame)
 	{
 		texture = (unsigned int)handle->GetLoadedGraphicsData();
 	}
@@ -269,8 +279,16 @@ void GLRenderObject::AttachTextureResource(IGraphicsHandle* handle, int32_t fram
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frameW, frameH, 0, GL_RED,
 				GL_UNSIGNED_BYTE, pixels);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-		handle->SetLoadedGraphicsData((void*)texture);
+		screenCoord[2] = frameW;
+		screenCoord[3] = frameH;
+
+		handle->SetLoadedGraphicsData((void*)texture, frame);
 	}
 }
 
@@ -330,7 +348,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsHandle* handle,
 
 		if(startFrame == 0 && endFrame == -1)
 		{
-			handle->SetLoadedGraphicsData((void*)texture);
+			handle->SetLoadedGraphicsData((void*)texture, -1);
 		}
 	}
 }
@@ -384,7 +402,7 @@ void GLRenderObject::AttachAnimationResource(IGraphicsHandle* handle, bool bRese
 		);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-		handle->SetLoadedGraphicsData((void*)texture);
+		handle->SetLoadedGraphicsData((void*)texture, -1);
 	}
 }
 
@@ -433,7 +451,7 @@ void GLRenderObject::AttachFontResource(IGraphicsHandle* handle)
 		);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-		handle->SetLoadedGraphicsData((void*)texture);
+		handle->SetLoadedGraphicsData((void*)texture, -1);
 	}
 }
 

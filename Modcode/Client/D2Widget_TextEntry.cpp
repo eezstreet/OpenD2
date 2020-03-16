@@ -96,26 +96,23 @@ void D2Widget_TextEntry::Draw()
 	{
 		if (!m_bSetCoords)
 		{
-			label->SetDrawCoords(m_pOwner->x + x, m_pOwner->y + y - 15, 0, 0);
+			label->SetDrawCoords(x, y - 15, 0, 0);
 		}
 		label->Draw();
 	}
 
 	if (!m_bSetCoords)
 	{
-		background->SetDrawCoords(m_pOwner->x + x, m_pOwner->y + y, 0, 0);
-		text->SetDrawCoords(m_pOwner->x + x + 6, m_pOwner->y + y - 2, 0, 0);
+		background->SetDrawCoords(x, y + 4, -1, -1);
+		text->SetDrawCoords(x + 6, y - 2, 0, 0);
+		m_bSetCoords = true;
 	}
 	background->Draw();
 
 	if (szTextBuffer[0] != '\0')
 	{
+		text->SetText(szTextBuffer);
 		text->Draw();
-	}
-
-	if (!m_bSetCoords)
-	{
-		m_bSetCoords = true;
 	}
 }
 
