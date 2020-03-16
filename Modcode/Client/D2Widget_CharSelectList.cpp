@@ -1,86 +1,10 @@
 #include "D2Widget_CharSelectList.hpp"
 #include "D2Panel_CharSelect.hpp"
+#include "D2Widget_CharSelectSave.hpp"
 
 #define D2_NUM_VISIBLE_SAVES	8
 
-// So, funny story. The devs didn't actually tie these to .tbl entries, so they are not translated at all !
-// If you look in patchstring.tbl, expansionstring.tbl, and string.tbl, they are not listed at all!
-struct CharacterTitle {
-	const char16_t* maleTitle;
-	const char16_t* femaleTitle;
-};
 
-// NOTE: Expansion saves don't actually use every 4th slot. Because it skips over Diablo and increments 2 for Baal.
-// Idk. Blizzard coding. (shrug)
-#define TITLE_BIGENDER(x, y)	{x, y}, {x, y}, {x, y}, {x, y}
-#define TITLE_NOGENDER(x)		{x, x}, {x, x}, {x, x}, {x, x}
-#define TITLE_BIGENDER_EXP(x,y)	{x, y}, {x, y}, {x, y}, {x, y}, {x, y}
-#define TITLE_NOGENDER_EXP(x)	{x, x}, {x, x}, {x, x}, {x, x}, {x, x}
-
-// Mappings for the class token
-static char* gszClassTokens[D2CLASS_MAX] = {
-	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
-};
-
-static const CharacterTitle TitleStatus_Classic[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER(0),
-
-	// Normal completed = "Sir" or "Dame"
-	TITLE_BIGENDER(u"Sir", u"Dame"),
-
-	// Nightmare completed = "Lord" or "Lady"
-	TITLE_BIGENDER(u"Lord", u"Lady"),
-
-	// Hell completed = "Baron" or "Baronness"
-	TITLE_BIGENDER(u"Baron", u"Baronness")
-};
-
-static const CharacterTitle TitleStatus_ClassicHardcore[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER(0),
-
-	// Normal completed = "Count" or "Countess"
-	TITLE_BIGENDER(u"Count", u"Countess"),
-
-	// Nightmare completed = "Duke" or "Duchess"
-	TITLE_BIGENDER(u"Duke", u"Duchess"),
-
-	// Hell completed = "King" or "Queen"
-	TITLE_BIGENDER(u"King", u"Queen")
-};
-
-static const CharacterTitle TitleStatus_Expansion[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER_EXP(0),
-
-	// Normal completed = "Slayer"
-	TITLE_NOGENDER_EXP(u"Slayer"),
-
-	// Nightmare completed = "Champion"
-	TITLE_NOGENDER_EXP(u"Champion"),
-
-	// Hell completed = "Patriarch" or "Matriarch"
-	TITLE_BIGENDER_EXP(u"Patriarch", u"Matriarch")
-};
-
-static const CharacterTitle TitleStatus_ExpansionHardcore[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER_EXP(0),
-
-	// Normal completed = "Destroyer"
-	TITLE_NOGENDER_EXP(u"Destroyer"),
-
-	// Nightmare completed = "Conqueror"
-	TITLE_NOGENDER_EXP(u"Conqueror"),
-
-	// Hell completed = "Guardian"
-	TITLE_NOGENDER_EXP(u"Guardian")
-};
 
 /*
  *	Creates a Character Select list widget.
@@ -91,21 +15,13 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 	: D2Widget(x, y, w, h)
 {
 	// Blank out our own data
-	pCharacterData = nullptr;
 	nNumberSaves = 0;
 	nCurrentScroll = 0;
 	nCurrentSelection = -1;
+	saves = nullptr;
 
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
-#if 0
-	frameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
-		"charselectbox", 0, 1, PAL_UNITS);
-	greyFrameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
-		"charselectboxgrey", 0, 1, PAL_UNITS);
-	engine->renderer->SetTextureBlendMode(frameHandle, BLEND_ALPHA);
-	engine->renderer->SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
-#endif
 }
 
 /*
@@ -114,16 +30,9 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 D2Widget_CharSelectList::~D2Widget_CharSelectList()
 {
 	// Free out the entire linked list
-	CharacterSaveData* pCurrent = pCharacterData;
-	while (pCurrent != nullptr)
+	if (saves)
 	{
-		CharacterSaveData* pNext = pCurrent->pNext;
-		if (pCurrent->tokenInstance != INVALID_HANDLE)
-		{
-			engine->TOK_DestroyTokenInstance(pCurrent->tokenInstance);
-		}
-		free(pCurrent);
-		pCurrent = pNext;
+		delete saves;
 	}
 }
 
@@ -133,6 +42,11 @@ D2Widget_CharSelectList::~D2Widget_CharSelectList()
 void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 {
 	// Allocate a character save entry
+	D2Widget_CharSelectSave* newSave = new D2Widget_CharSelectSave(path, header);
+	
+	newSave->SetNextInChain(saves);
+	saves = newSave;
+#if 0	// we need to keep this available for later
 	CharacterSaveData* pSaveData = (CharacterSaveData*)malloc(sizeof(CharacterSaveData));
 
 	// Copy the path, name, and header data
@@ -159,6 +73,7 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	// Add it to the linked list
 	pSaveData->pNext = pCharacterData;
 	pCharacterData = pSaveData;
+#endif 
 
 	// Increment the save count.
 	nNumberSaves++;
@@ -178,6 +93,7 @@ void D2Widget_CharSelectList::OnWidgetAdded()
  */
 void D2Widget_CharSelectList::Draw()
 {
+#if 0
 	// Draw the savegames
 	// This is pretty horrendously inefficient.
 	// But it doesn't need to be super efficient, considering it's only rendering 8 savegames at a time!
@@ -195,14 +111,19 @@ void D2Widget_CharSelectList::Draw()
 	}
 
 	// Draw the scrollbar
+#endif
+	if (saves)
+	{
+		saves->DrawLink(8, true);
+	}
 }
 
 /*
  *	Draws a CharacterSaveData on a slot in the display.
  */
+#if 0
 void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSaveData* pSaveData, int nSlot)
 {
-#if 0
 	// It draws a visual representation of the character on the left side of each slot, based on what the savegame says.
 	bool bRightSlot = (nSlot % 2) > 0;
 	int nSlotY = nSlot / 2;
@@ -314,8 +235,8 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 
 	// Draw the token instance
 	engine->renderer->DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
-#endif
 }
+#endif
 
 /*
  *	Returns the name of the currently selected character.
@@ -323,23 +244,9 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
  */
 char16_t* D2Widget_CharSelectList::GetSelectedCharacterName()
 {
-	int i = 0;
-	CharacterSaveData* pCharacterSave = pCharacterData;
-
-	if (nCurrentSelection == -1)
+	if (saves)
 	{
-		return u"";
-	}
-
-	while (i != nCurrentSelection && pCharacterSave != nullptr)
-	{
-		pCharacterSave = pCharacterSave->pNext;
-		i++;
-	}
-
-	if (i == nCurrentSelection)
-	{
-		return pCharacterSave->name;
+		return saves->GetSelectedCharacterName();
 	}
 
 	return u"";
@@ -419,6 +326,7 @@ void D2Widget_CharSelectList::Selected(int nNewSelection)
  */
 void D2Widget_CharSelectList::LoadSave()
 {
+#if 0
 	CharacterSaveData* pCurrent;
 
 	if (nCurrentSelection == -1)
@@ -437,4 +345,5 @@ void D2Widget_CharSelectList::LoadSave()
 
 	memcpy(&cl.currentSave.header, &pCurrent->header, sizeof(pCurrent->header));
 	D2Lib::strncpyz(cl.szCurrentSave, pCurrent->path, MAX_D2PATH_ABSOLUTE);
+#endif
 }

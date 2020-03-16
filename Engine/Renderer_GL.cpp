@@ -582,6 +582,13 @@ void GLRenderObject::SetTextAlignment(int x, int y, int w, int h, int horzAlignm
 	}
 }
 
+void GLRenderObject::SetTextColor(int color)
+{
+	float R, G, B;
+	Pal::GetPL2ColorModulation(global_palette, color, R, G, B);
+	SetColorModulate(R, G, B, 1.0f);
+}
+
 void GLRenderObject::SetColorModulate(float r, float g, float b, float a)
 {
 	colorModulate[0] = r;

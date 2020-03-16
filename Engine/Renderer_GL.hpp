@@ -97,6 +97,7 @@ public:
 	virtual void SetDrawMode(int drawMode);
 	virtual void SetText(const char16_t* text);
 	virtual void SetTextAlignment(int x, int y, int w, int h, int horzAlign, int vertAlign);
+	virtual void SetTextColor(int color);
 	virtual void SetColorModulate(float r, float g, float b, float a);
 
 	virtual void SetAnimationLoop(bool bLoop);

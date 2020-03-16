@@ -5,26 +5,12 @@
 class D2Widget_CharSelectList : public D2Widget
 {
 private:
-	struct CharacterSaveData
-	{
-		D2SaveHeader header;
-		char16_t name[16];	// The name gets converted into UTF-16 when we load it
-		char path[MAX_D2PATH_ABSOLUTE];
-		token_handle token; // The token
-		anim_handle tokenInstance;	// The token anim instance for this save so we can draw it
-		CharacterSaveData* pNext;
-	};
-	CharacterSaveData* pCharacterData;
 	D2Widget_Scrollbar*		pScrollBar;
+	class D2Widget_CharSelectSave* saves;
 	int nCurrentScroll;
 	int nCurrentSelection;
 	int nNumberSaves;
-	tex_handle	frameHandle;
-	tex_handle	greyFrameHandle;
-	const int nSlotWidth = 272;
-	const int nSlotHeight = 93;
 
-	void DrawSaveSlot(CharacterSaveData* pCharacterData, int nSlot);
 	void Clicked(DWORD dwX, DWORD dwY);
 public:
 	D2Widget_CharSelectList(int x, int y, int w, int h);

@@ -717,6 +717,7 @@ public:
 	// Text-specific calls
 	virtual void SetText(const char16_t* text) = 0;
 	virtual void SetTextAlignment(int x, int y, int w, int h, int horzAlignment, int vertAlignment) = 0;
+	virtual void SetTextColor(int color) = 0;
 
 	// Animation-specific calls
 	virtual void SetFramerate(int framerate) = 0;
