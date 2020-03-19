@@ -1,4 +1,6 @@
 #include "Diablo2.hpp"
+#include "FileSystem.hpp"
+#include "Logging.hpp"
 #include <stdlib.h>
 #include <cstdio>
 #include <unistd.h>
