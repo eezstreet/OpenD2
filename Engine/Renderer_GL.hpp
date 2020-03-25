@@ -31,6 +31,7 @@ protected:
 		RO_Static,
 		RO_Animated,
 		RO_Text,
+		RO_Token,
 	} objectType;
 
 	union
@@ -68,6 +69,15 @@ protected:
 			class IGraphicsReference* attachedFontResource;
 			char16_t text[128];
 		} textData;
+
+		struct
+		{
+			class ITokenReference* attachedTokenResource;
+			int currentMode;
+			int hitClass;
+			int direction;
+			int armorType[COMP_MAX];
+		} tokenData;
 	} data;
 
 public:
@@ -90,7 +100,7 @@ public:
 	virtual void AttachTextureResource(class IGraphicsReference* handle, int32_t frame);
 	virtual void AttachCompositeTextureResource(class IGraphicsReference* handle, int32_t startFrame, int32_t endFrame);
 	virtual void AttachAnimationResource(class IGraphicsReference* handle, bool bResetFrame);
-	virtual void AttachTokenResource(class IGraphicsReference* handle);
+	virtual void AttachTokenResource(class ITokenReference* handle);
 	virtual void AttachFontResource(class IGraphicsReference* handle);
 
 	virtual void SetFramerate(int framerate);

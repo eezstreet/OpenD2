@@ -633,6 +633,8 @@ enum GraphicsUsagePolicy
  *	Graphics managers are responsible for managing texture resources.
  */
 class IGraphicsReference;
+class ITokenReference;
+
 class IGraphicsManager
 {
 public:
@@ -643,6 +645,11 @@ public:
 
 	virtual IGraphicsReference* LoadFont(const char* fontGraphic,
 		const char* fontTBL) = 0;
+
+	virtual ITokenReference* CreateReference(const D2TokenType& tokenType,
+		const char* tokenName) = 0;
+
+	virtual void DeleteReference(ITokenReference* token) = 0;
 };
 
 /**
@@ -708,7 +715,7 @@ public:
 	virtual void AttachTextureResource(IGraphicsReference* ref, int32_t frame) = 0;
 	virtual void AttachCompositeTextureResource(IGraphicsReference* ref, int32_t startFrame, int32_t endFrame) = 0;
 	virtual void AttachAnimationResource(IGraphicsReference* ref, bool bResetFrame) = 0;
-	virtual void AttachTokenResource(IGraphicsReference* ref) = 0;
+	virtual void AttachTokenResource(ITokenReference* ref) = 0;
 	virtual void AttachFontResource(IGraphicsReference* ref) = 0;
 
 	// Can be applied no matter what kind of render object this is

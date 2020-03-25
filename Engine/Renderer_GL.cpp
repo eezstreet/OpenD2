@@ -406,8 +406,11 @@ void GLRenderObject::AttachAnimationResource(IGraphicsReference* handle, bool bR
 	}
 }
 
-void GLRenderObject::AttachTokenResource(IGraphicsReference* handle)
+void GLRenderObject::AttachTokenResource(ITokenReference* handle)
 {
+	memset(&data, 0, sizeof(data));
+	objectType = RO_Token;
+	data.tokenData.attachedTokenResource = handle;
 }
 
 void GLRenderObject::AttachFontResource(IGraphicsReference* handle)
@@ -654,22 +657,34 @@ bool GLRenderObject::PixelPerfectDetection(int x, int y)
 
 void GLRenderObject::SetAnimationDirection(int newDirection)
 {
-
+	if (objectType == RO_Token)
+	{
+		data.tokenData.direction = newDirection;
+	}
 }
 
 void GLRenderObject::SetTokenMode(int newMode)
 {
-
+	if (objectType == RO_Token)
+	{
+		data.tokenData.currentMode = newMode;
+	}
 }
 
 void GLRenderObject::SetTokenArmorLevel(int component, int armorLevel)
 {
-
+	if (objectType == RO_Token)
+	{
+		data.tokenData.armorType[component] = armorLevel;
+	}
 }
 
 void GLRenderObject::SetTokenHitClass(int hitclass)
 {
-
+	if (objectType == RO_Token)
+	{
+		data.tokenData.hitClass = hitclass;
+	}
 }
 
 /**

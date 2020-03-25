@@ -467,6 +467,50 @@ void FontReference::Deallocate()
 }
 
 /**
+ *	Base class for all token types.
+ */
+ITokenReference::ITokenReference(const char* _tokenName)
+{
+	int i;
+	for (i = 0; i < 4 && _tokenName[i]; i++)
+	{
+		tokenName[i] = _tokenName[i];
+	}
+
+	if (i < 4)
+	{
+		tokenName[i] = '\0';
+	}
+}
+
+/**
+ *	Monster token type
+ */
+MonsterTokenReference::MonsterTokenReference(const char* tokenName)
+	: ITokenReference(tokenName)
+{
+
+}
+
+/**
+ *	Object token type
+ */
+ObjectTokenReference::ObjectTokenReference(const char* tokenName)
+	: ITokenReference(tokenName)
+{
+
+}
+
+/**
+ *	Player token type
+ */
+PlayerTokenReference::PlayerTokenReference(const char* tokenName)
+	: ITokenReference(tokenName)
+{
+
+}
+
+/**
  *	The graphics manager.
  */
 
@@ -570,6 +614,53 @@ IGraphicsReference* GraphicsManager::CreateReference(const char* graphicsFile, G
 	return nullptr;
 }
 
+ITokenReference* GraphicsManager::CreateReference(const D2TokenType& tokenType, 
+	const char* tokenName)
+{
+	handle theHandle;
+	bool bFull;
+
+	switch (tokenType)
+	{
+		case TOKEN_MONSTER:
+			if (!MonsterTokens.Contains(tokenName, &theHandle, &bFull))
+			{
+				if (bFull)
+				{
+					return nullptr; // no room available
+				}
+
+				MonsterTokens.Insert(theHandle, tokenName, new MonsterTokenReference(tokenName));
+			}
+			return MonsterTokens[theHandle];
+
+		case TOKEN_OBJECT:
+			if (!ObjectTokens.Contains(tokenName, &theHandle, &bFull))
+			{
+				if (bFull)
+				{
+					return nullptr; // no room available
+				}
+
+				ObjectTokens.Insert(theHandle, tokenName, new ObjectTokenReference(tokenName));
+			}
+			return ObjectTokens[theHandle];
+
+		case TOKEN_CHAR:
+			if (!PlayerTokens.Contains(tokenName, &theHandle, &bFull))
+			{
+				if (bFull)
+				{
+					return nullptr; // no room available
+				}
+
+				PlayerTokens.Insert(theHandle, tokenName, new PlayerTokenReference(tokenName));
+			}
+			return PlayerTokens[theHandle];
+	}
+	return nullptr; // invalid type ?
+}
+
 void GraphicsManager::DeleteReference(IGraphicsReference* graphic)
 {
 	if (!graphic)
@@ -579,6 +670,29 @@ void GraphicsManager::DeleteReference(IGraphicsReference* graphic)
 	graphic->Deallocate();
 	graphic->UnloadGraphicsData();
 	delete graphic;
+}
+
+void GraphicsManager::DeleteReference(ITokenReference* token)
+{
+	if (!token)
+	{
+		return;
+	}
+
+	switch (token->GetTokenType())
+	{
+		case TOKEN_MONSTER:
+			MonsterTokens.Erase(token->GetTokenName());
+			break;
+		case TOKEN_OBJECT:
+			ObjectTokens.Erase(token->GetTokenName());
+			break;
+		case TOKEN_CHAR:
+			PlayerTokens.Erase(token->GetTokenName());
+			break;
+	}
+
+	delete token;
 }
 
 IGraphicsReference* GraphicsManager::LoadFont(const char* fontGraphic,

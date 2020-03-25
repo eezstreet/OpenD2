@@ -230,6 +230,56 @@ public:
 	virtual void Deallocate();
 };
 
+/**
+ *	ITokenReference is the base class of all token references.
+ */
+class ITokenReference
+{
+protected:
+	char tokenName[4];
+public:
+	virtual D2TokenType GetTokenType() = 0;
+	virtual const char* GetTokenFolder() = 0;
+	const char* GetTokenName() { return tokenName; }
+
+	ITokenReference(const char* tokenName);
+};
+
+/**
+ *	Monster token reference
+ */
+class MonsterTokenReference : public ITokenReference
+{
+public:
+	virtual D2TokenType GetTokenType() { return TOKEN_MONSTER; }
+	virtual const char* GetTokenFolder() { return "MONSTERS"; }
+
+	MonsterTokenReference(const char* tokenName);
+};
+
+/**
+ *	Object token reference
+ */
+class ObjectTokenReference : public ITokenReference
+{
+public:
+	virtual D2TokenType GetTokenType() { return TOKEN_OBJECT; }
+	virtual const char* GetTokenFolder() { return "OBJECTS"; }
+
+	ObjectTokenReference(const char* tokenName);
+};
+
+/**
+ *	Player token reference
+ */
+class PlayerTokenReference : public ITokenReference
+{
+public:
+	virtual D2TokenType GetTokenType() { return TOKEN_CHAR; }
+	virtual const char* GetTokenFolder() { return "CHARS"; }
+
+	PlayerTokenReference(const char* tokenName);
+};
 
 /**
  *	GraphicsManager provides a format-agnostic interface for handling graphics files.
@@ -242,6 +292,9 @@ private:
 	HashMap<char, DC6Reference*> DC6Graphics;
 	HashMap<char, DT1Reference*> DT1Graphics;
 	HashMap<char, FontReference*> Fonts;
+	HashMap<char, MonsterTokenReference*> MonsterTokens;
+	HashMap<char, ObjectTokenReference*> ObjectTokens;
+	HashMap<char, PlayerTokenReference*> PlayerTokens;
 
 public:
 	GraphicsManager();
@@ -250,7 +303,11 @@ public:
 	virtual IGraphicsReference* CreateReference(const char* graphicsFile,
 			GraphicsUsagePolicy policy);
 
+	virtual ITokenReference* CreateReference(const D2TokenType& tokenType,
+		const char* tokenName);
+
 	virtual void DeleteReference(IGraphicsReference* handle);
+	virtual void DeleteReference(ITokenReference* handle);
 
 	virtual IGraphicsReference* LoadFont(const char* fontGraphic,
 		const char* fontTBL);

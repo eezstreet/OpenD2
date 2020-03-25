@@ -206,6 +206,7 @@ namespace DCC
 
 		// Open the file
 		file->dwFileSize = FS::Open(szPath, &f, FS_READ, true);
+		dwFileSize = file->dwFileSize;
 
 		Log_WarnAssert(f != INVALID_HANDLE);
 		
