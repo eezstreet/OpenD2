@@ -74,7 +74,6 @@ void D2Client_SetupServerConnection()
 		engine->NET_Listen(GAME_PORT);
 		cl.bLocalServer = true;
 	}
-	
 }
 
 /*
@@ -90,6 +89,8 @@ static void D2Client_HandleWindowEvent(WindowEvent windowEvent)
 		case D2WindowEventType::WINDOWEVENT_FOCUS_LOST:
 			engine->S_PauseAudio();
 			break;
+        default:
+            break;
 	}
 }
 
@@ -258,7 +259,7 @@ static void D2Client_LoadData()
 static void D2Client_PingServer()
 {
 	DWORD dwTicks;
-	D2Packet packet;
+	D2Packet packet{};
 
 	if (cl.bLocalServer || !cl.bValidatedSave)
 	{	// We don't need to do this in a local server, or if we haven't started the handshake yet.
@@ -359,10 +360,7 @@ static OpenD2Modules D2Client_RunModuleFrame(D2GameConfigStrc* pConfig, OpenD2Co
  */
 static void D2Client_Shutdown()
 {
-	if (cl.pActiveMenu != nullptr)
-	{
-		delete cl.pActiveMenu;
-	}
+	delete cl.pActiveMenu;
 }
 
 /*

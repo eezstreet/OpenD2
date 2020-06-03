@@ -1,5 +1,5 @@
 #include "D2Menu_CharCreate.hpp"
-#include <time.h>
+#include <ctime>
 
 static const char* szCharacterClassFolders[D2CLASS_MAX] = {
 	"Amazon",
@@ -42,9 +42,9 @@ static const char* szAnimNameSpecial[CCA_MAX] = {
  */
 D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 {
-	tex_handle fireTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\fire.DC6", "ccfire", PAL_FECHAR);
+	tex_handle fireTex = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/fire.DC6", "ccfire", PAL_FECHAR);
 
-	backgroundTex = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\characterCreationScreenEXP.dc6", 
+	backgroundTex = engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/characterCreationScreenEXP.dc6",
 		"ccback", 0, 11, PAL_FECHAR);
 	fireAnim = engine->renderer->RegisterDC6Animation(fireTex, "ccfire", 0);
 	engine->renderer->SetTextureBlendMode(fireTex, BLEND_ADD);
@@ -85,8 +85,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 		for (int j = 0; j < CCA_MAX; j++)
 		{
 			// register regular animations
-			snprintf(szPath, MAX_D2PATH,
-				"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
+			snprintf(szPath, MAX_D2PATH, "data/global/ui/FrontEnd/%s/%s%s.dc6",
 				szCharacterClassFolders[i], szCharacterClassShort[i], szAnimName[j]);
 			snprintf(szHandle, 32, "%s%s", szCharacterClassShort[i], szAnimName[j]);
 
@@ -103,8 +102,7 @@ D2Menu_CharCreate::D2Menu_CharCreate(bool bFromCharSelect)
 			if (CreateData[i].bSpecialAnimPresent[j])
 			{
 				// register special animations
-				snprintf(szPath, MAX_D2PATH,
-					"data\\global\\ui\\FrontEnd\\%s\\%s%s.dc6",
+				snprintf(szPath, MAX_D2PATH, "data/global/ui/FrontEnd/%s/%s%s.dc6",
 					szCharacterClassFolders[i], szCharacterClassShort[i], szAnimNameSpecial[j]);
 				snprintf(szHandle, 32, "%s%s", szCharacterClassShort[i], szAnimNameSpecial[j]);
 
@@ -228,7 +226,7 @@ D2Menu_CharCreate::~D2Menu_CharCreate()
  */
 void D2Menu_CharCreate::AnimationKeyframe(anim_handle anim, int nExtraInt)
 {
-	D2Menu_CharCreate* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
+	auto* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
 	
 	if (pMenu->CreateData[nExtraInt].status == CCA_FrontToBack)
 	{
@@ -509,16 +507,16 @@ bool D2Menu_CharCreate::TrySaveCharacter()
 	cl.currentSave.header.dwCreationTime = time(nullptr);
 	cl.currentSave.header.dwModificationTime = cl.currentSave.header.dwCreationTime;
 
-	cl.currentSave.header.nCharStatus |= (1 << D2STATUS_NEWBIE);
+	cl.currentSave.header.nCharStatus |= (1u << D2STATUS_NEWBIE);
 	if (pDynamicPanel->HardcoreChecked())
 	{
-		cl.currentSave.header.nCharStatus |= (1 << D2STATUS_HARDCORE);
+		cl.currentSave.header.nCharStatus |= (1u << D2STATUS_HARDCORE);
 	}
 
 	cl.currentSave.header.nCharClass = m_nSelectedClass;
 	if (m_nSelectedClass == D2CLASS_ASSASSIN || m_nSelectedClass == D2CLASS_DRUID || pDynamicPanel->ExpansionChecked())
 	{	// FIXME: assassin and druid should probably have the expansion checkbox greyed out
-		cl.currentSave.header.nCharStatus |= (1 << D2STATUS_EXPANSION);
+		cl.currentSave.header.nCharStatus |= (1u << D2STATUS_EXPANSION);
 	}
 
 	// write the save header!

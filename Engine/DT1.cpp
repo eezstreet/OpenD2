@@ -29,7 +29,7 @@ namespace DT1
 		}
 
 		fs_handle f;
-		DWORD fileSize = FS::Open(fileName, &f, FS_READ, true);
+		size_t fileSize = FS::Open(fileName, &f, FS_READ, true);
 		file->fileBytes = (BYTE*)malloc(fileSize);
 
 		FS::Read(f, file->fileBytes, fileSize);
@@ -77,7 +77,6 @@ namespace DT1
 			startTile = swap;
 		}
 
-		BYTE* allocatedPixels;
 		uint32_t largestWidth = 0, largestHeight = 0;
 		for (int32_t i = startTile; i <= endTile; i++)
 		{

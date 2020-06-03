@@ -1,6 +1,6 @@
 #include "D2Menu_CharSelect.hpp"
 
-static char* gszTokenNames[D2CLASS_MAX] = {
+static const char* gszTokenNames[D2CLASS_MAX] = {
 	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
 };
 
@@ -15,7 +15,7 @@ D2Menu_CharSelect::D2Menu_CharSelect(char** pszSavePaths, int nNumFiles)
 
 	// Should match the one in the main menu
 	backgroundTexture =
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\characterselectscreenEXP.dc6", "charselect", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data/global/ui/CharSelect/characterselectscreenEXP.dc6", "charselect", 0, 11, PAL_UNITS);
 
 	// Create the panels and add them to the menu panel list
 	m_charSelectPanel = new D2Panel_CharSelect();

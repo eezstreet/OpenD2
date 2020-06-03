@@ -13,7 +13,7 @@
 /* 10.01.13  3.00  Lad  Refactored, beautified, documented :-)               */
 /*****************************************************************************/
 
-#include <stddef.h>
+#include <cstddef>
 
 #include "adpcm.h"
 

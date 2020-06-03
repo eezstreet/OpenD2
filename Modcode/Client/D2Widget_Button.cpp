@@ -3,7 +3,7 @@
 /*
  *	Creates a new button widget item
  */
-D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonType,
+D2Widget_Button::D2Widget_Button(int x, int y, const char *szDC6Path, const char *szButtonType,
 	DWORD dwStartEnabled, DWORD dwEndEnabled,
 	DWORD dwStartDown, DWORD dwEndDown,
 	DWORD dwStartDisabled, DWORD dwEndDisabled)
@@ -25,29 +25,19 @@ D2Widget_Button::D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonTy
 
 	engine->renderer->PollTexture(texture_up, (DWORD*)&this->w, (DWORD*)&this->h);
 
-	clickedSound = engine->S_RegisterSound("data\\global\\sfx\\cursor\\button.wav");
+	clickedSound = engine->S_RegisterSound("data/global/sfx/cursor/button.wav");
 
 	bDisabled = false;
 	bDown = false;
 	bHasClickSignal = false;
 
-	if (dwStartDisabled == dwStartEnabled)
-	{
-		bAlphaModulateDisable = true;
-	}
-	else
-	{
-		bAlphaModulateDisable = false;
-	}
+        bAlphaModulateDisable = dwStartDisabled == dwStartEnabled;
 }
 
 /*
  *	Deconstructs a button widget
  */
-D2Widget_Button::~D2Widget_Button()
-{
-
-}
+D2Widget_Button::~D2Widget_Button() = default;
 
 /*
  *	Draws the button widget

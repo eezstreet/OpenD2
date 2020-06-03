@@ -13,8 +13,8 @@ private:
 
 public:
 	D2Panel_TCPIPMain();
-	virtual ~D2Panel_TCPIPMain();
-	virtual void Draw();
+	~D2Panel_TCPIPMain() override;
+	void Draw() override;
 
 	void EnableButtons(bool bEnable);
 };

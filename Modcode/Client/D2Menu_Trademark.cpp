@@ -10,14 +10,10 @@
  */
 D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 {
-	tex_handle flameLeftTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
-	tex_handle flameRightTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireRight.dc6", "flameright", PAL_UNITS);
-	tex_handle blackLeftTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoBlackLeft.dc6", "blackleft", PAL_UNITS);
-	tex_handle blackRightTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoBlackRight.dc6", "blackright", PAL_UNITS);
+	tex_handle flameLeftTex = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
+	tex_handle flameRightTex = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoFireRight.dc6", "flameright", PAL_UNITS);
+	tex_handle blackLeftTex = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoBlackLeft.dc6", "blackleft", PAL_UNITS);
+	tex_handle blackRightTex = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoBlackRight.dc6", "blackright", PAL_UNITS);
 
 	engine->renderer->SetTextureBlendMode(flameLeftTex, BLEND_ADD);
 	engine->renderer->SetTextureBlendMode(flameRightTex, BLEND_ADD);
@@ -30,11 +26,10 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	blackRightAnim = engine->renderer->RegisterDC6Animation(blackRightTex, "blackright", 0);
 
 #ifdef EXPANSION
-	backgroundTexture = 
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6", "trademark", 0, 11, PAL_UNITS);
+	backgroundTexture = engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/trademarkscreenEXP.dc6", "trademark", 0, 11, PAL_UNITS);
 #else
 	backgroundTexture = 
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\trademark.dc6", "trademark", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/trademark.dc6", "trademark", 0, 11, PAL_UNITS);
 #endif
 
 	szCopyrightText = engine->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
@@ -77,8 +72,9 @@ void D2Menu_Trademark::Draw()
 	engine->renderer->DrawTexture(backgroundTexture, 0, 0, 800, 600, 0, 0);
 
 	// Draw the flaming logo
-	engine->renderer->Animate(blackLeftAnim, 25, 400, -7);
-	engine->renderer->Animate(blackRightAnim, 25, 400, -7);
+	// TODO: If these are enabled, black backgound is displayed under the flames
+	// engine->renderer->Animate(blackLeftAnim, 25, 400, -7);
+	// engine->renderer->Animate(blackRightAnim, 25, 400, -7);
 	engine->renderer->Animate(flameLeftAnim, 25, 400, -50);
 	engine->renderer->Animate(flameRightAnim, 25, 400, -57);
 

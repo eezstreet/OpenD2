@@ -439,9 +439,9 @@ struct D2Packet
 	} packetData;
 
 	// Methods to read and write
-	size_t ReadServer(char* buffer, size_t bufferSize);
-	size_t WriteServer(char* buffer, size_t bufferSize);
+	size_t ReadServer(unsigned char *buffer, size_t bufferSize);
+	size_t WriteServer(unsigned char *buffer, size_t bufferSize);
 
-	size_t ReadClient(char* buffer, size_t bufferSize);
-	size_t WriteClient(char* buffer, size_t bufferSize);
+	size_t ReadClient(unsigned char *buffer, size_t bufferSize);
+	size_t WriteClient(unsigned char *buffer, size_t bufferSize);
 };

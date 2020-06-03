@@ -1,8 +1,8 @@
 #include "D2Common.hpp"
 
-D2COMMONAPI D2DataTablesStrc* sgptDataTables;
 
-static D2DataTablesStrc gDataTables{ 0 };
+static D2DataTablesStrc gDataTables{ nullptr };
+D2COMMONAPI D2DataTablesStrc* sgptDataTables;
 
 ////////////////////////////////////////
 //
@@ -34,7 +34,7 @@ bool BIN_Read(char* szBinName, void** pDestinationData, size_t* pFileSize)
 		return false;	// couldn't find it...this is probably a bad thing
 	}
 
-	Log_ErrorAssertReturn(*pFileSize != 0, false);
+	Log_ErrorAssertReturn(*pFileSize != 0, false)
 
 	*pDestinationData = malloc(*pFileSize);
 	engine->FS_Read(f, *pDestinationData, *pFileSize, 1);

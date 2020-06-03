@@ -63,4 +63,4 @@ namespace DC6
 	void StitchStats(DC6Image* pImage,
 		DWORD dwStart, DWORD dwEnd, DWORD* pWidth, DWORD* pHeight, DWORD* pTotalWidth, DWORD* pTotalHeight);
 	void FreePixels(DC6Image* pImage);
-};
+}

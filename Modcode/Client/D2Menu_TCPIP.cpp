@@ -9,7 +9,7 @@
 D2Menu_TCPIP::D2Menu_TCPIP() : D2Menu()
 {
 	backgroundTexture =
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\TCPIPscreen.dc6", "tcpip", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/TCPIPscreen.dc6", "tcpip", 0, 11, PAL_UNITS);
 
 	m_joinMenu = new D2Panel_TCPIPJoin();
 	m_mainMenu = new D2Panel_TCPIPMain();

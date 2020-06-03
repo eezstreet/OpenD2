@@ -1,5 +1,4 @@
 language: cpp
-script: cmake
 sudo: required
 dist: trusty
 
@@ -10,7 +9,7 @@ before_install:
     - tar -xzvf SDL2_net-2.0.1.tar.gz
     - wget https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.4.tar.gz
     - tar -xzvf SDL2_mixer-2.0.4.tar.gz
-    
+
 
 install:
     - (cd SDL2-2.0.7 && ./configure && make && sudo make install && cd ..)
@@ -34,5 +33,5 @@ matrix:
 
 
 script:
-    - cmake -G "Unix Makefiles" -DCMAKE_SOURCE_DIR="./"
-    - make
+    - cmake -DCMAKE_BUILD_TYPE=Debug . -Bcmake-build-debug
+    - cmake --build cmake-build-debug --target all

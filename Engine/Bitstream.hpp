@@ -33,7 +33,7 @@ public:
 	void ReadData(void* data, size_t outSize);
 
 	// Helper function - convert from unsigned to 2C
-	void ConvertFormat(long* dwOutBits, int bitCount);
+	static void ConvertFormat(unsigned long *dwOutBits, unsigned int bitCount);
 
 	void Rewind();
 
@@ -42,7 +42,7 @@ public:
 	BYTE* GetHeldData(size_t& outSize);
 
 private:
-	int ReadBits(int bitsCount);
+	unsigned int ReadBits(int bitsCount);
 	void FreeInternalStreamSource();
 
 	bool bExternalStorage;
@@ -51,6 +51,6 @@ private:
 	size_t dwStreamStartBit;
 	size_t dwTotalStreamSizeBytes;
 	size_t dwTotalStreamSizeBits;
-	size_t dwCurrentByte;
-	size_t dwReadBit;
+	size_t dwCurrentByte{};
+	size_t dwReadBit{};
 };

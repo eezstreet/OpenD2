@@ -17,7 +17,7 @@ namespace Threadpool
 		D2ThreadTask* pBehind;	// the element that is "behind" this one in line
 	};
 
-	static SDL_Thread* gpaThreadPool[THREADPOOL_SIZE]{ 0 };
+	static SDL_Thread* gpaThreadPool[THREADPOOL_SIZE]{ nullptr };
 	static bool gbKillThreads = false;
 
 	static D2ThreadTask* gpJobQueueHead = nullptr;
@@ -40,7 +40,7 @@ namespace Threadpool
 	/*
 	 *	Wait until a single job on the queue has been completed
 
-	/*
+	 *
 	 *	Pop a job off of the job queue.
 	 *	@author	eezstreet
 	 */
@@ -80,7 +80,7 @@ namespace Threadpool
 	void SpawnJob(D2AsyncTask job, void* pData)
 	{
 		// Allocate a thread task
-		D2ThreadTask* pCurrent = (D2ThreadTask*)malloc(sizeof(D2ThreadTask));
+		auto* pCurrent = (D2ThreadTask*)malloc(sizeof(D2ThreadTask));
 		pCurrent->task = job;
 		pCurrent->pData = pData;
 		pCurrent->pBehind = nullptr;
@@ -163,10 +163,10 @@ namespace Threadpool
 		gbKillThreads = true;
 
 		// Detach them and watch the magic happen
-		for (int i = 0; i < THREADPOOL_SIZE; i++)
+		for (auto & i : gpaThreadPool)
 		{
-			SpawnJob(WorkerDie, 0);
-			SDL_DetachThread(gpaThreadPool[i]);
+			SpawnJob(WorkerDie, nullptr);
+			SDL_DetachThread(i);
 		}
 
 		// Delete the mutexes and the semaphore

@@ -1,8 +1,8 @@
 #include "D2Panel_TCPIPJoin.hpp"
 #include "D2Menu_TCPIP.hpp"
 
-#define DC6_PANEL_BACKGROUND	"data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6"
-#define DC6_PANEL_BUTTON		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
+#define DC6_PANEL_BACKGROUND	"data/global/ui/FrontEnd/PopUpOkCancel2.dc6"
+#define DC6_PANEL_BUTTON		"data/global/ui/FrontEnd/MediumButtonBlank.dc6"
 
 #define TBLTEXT_OK				5102
 #define TBLTEXT_CANCEL			5103
@@ -15,8 +15,8 @@
 extern void D2Client_AdvanceToCharSelect();
 static void JoinGamePanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget)
 {
-	D2Menu_TCPIP* pTCPIPMenu = (D2Menu_TCPIP*)cl.pActiveMenu;
-	D2Panel_TCPIPJoin* pTCPPanel = (D2Panel_TCPIPJoin*)pCallingPanel;
+	auto* pTCPIPMenu = (D2Menu_TCPIP*)cl.pActiveMenu;
+	auto* pTCPPanel = (D2Panel_TCPIPJoin*)pCallingPanel;
 
 	if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))
 	{	// copy the IP

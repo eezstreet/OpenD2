@@ -28,16 +28,16 @@ namespace TBL
 	 *	Registers a TBL file
 	 *	@author	eezstreet
 	 */
-	tbl_handle Register(char* szTblFile)
+	tbl_handle Register(const char *szTblFile)
 	{
 		char szPathStr[MAX_D2PATH]{ 0 };
 		TBLFile* pTBL = &TBLFiles[gnLastUsedTBL];
 		BYTE* pFileBuffer;
 		BYTE* pReadHead;
-		DWORD dwTableSize = 0;
+		size_t dwTableSize = 0;
 		size_t strTableRead = 0;
 
-		Log_ErrorAssertReturn(gnLastUsedTBL < MAX_TBL_FILES, INVALID_HANDLE);
+		Log_ErrorAssertReturn(gnLastUsedTBL < MAX_TBL_FILES, INVALID_HANDLE)
 
 		// Search the existing TBL file records to see if one already exists
 		for (int i = 0; i < gnLastUsedTBL; i++)
@@ -51,7 +51,7 @@ namespace TBL
 		D2Lib::strncpyz(pTBL->szHandle, szTblFile, 16);
 
 		// TODO: make this use something other than english
-		snprintf(szPathStr, MAX_D2PATH, "data\\local\\LNG\\%s\\%s.tbl", GAME_LANGUAGE, szTblFile);
+		snprintf(szPathStr, MAX_D2PATH, "data/local/LNG/%s/%s.tbl", GAME_LANGUAGE, szTblFile);
 
 		pTBL->dwFileSize = FS::Open(szPathStr, &pTBL->archiveHandle, FS_READ, true);
 		if (pTBL->archiveHandle == INVALID_HANDLE)
@@ -66,7 +66,7 @@ namespace TBL
 
 		// Allocate file buffer and read
 		pFileBuffer = (BYTE*)malloc(pTBL->dwFileSize);
-		Log_ErrorAssertReturn(pFileBuffer, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pFileBuffer, INVALID_HANDLE)
 		pReadHead = pFileBuffer;
 		FS::Read(pTBL->archiveHandle, pFileBuffer, pTBL->dwFileSize);
 		FS::CloseFile(pTBL->archiveHandle);
@@ -86,25 +86,25 @@ namespace TBL
 
 		// Allocate and read indices
 		pTBL->pIndices = (WORD*)malloc(sizeof(WORD) * pTBL->header.NodesNumber);
-		Log_ErrorAssertReturn(pTBL->pIndices, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->pIndices, INVALID_HANDLE)
 		memcpy(pTBL->pIndices, pReadHead, sizeof(WORD) * pTBL->header.NodesNumber);
 		pReadHead += sizeof(WORD) * pTBL->header.NodesNumber;
 
 		// Allocate and read hash tables
 		pTBL->pHashNodes = (TBLHashNode*)malloc(sizeof(TBLHashNode) * pTBL->header.HashTableSize);
-		Log_ErrorAssertReturn(pTBL->pHashNodes, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->pHashNodes, INVALID_HANDLE)
 		memcpy(pTBL->pHashNodes, pReadHead, sizeof(TBLHashNode) * pTBL->header.HashTableSize);
 		pReadHead += sizeof(TBLHashNode) * pTBL->header.HashTableSize;
 
 		// Allocate data tables
 		pTBL->pDataNodes = (TBLDataNode*)malloc(sizeof(TBLDataNode) * pTBL->header.HashTableSize);
-		Log_ErrorAssertReturn(pTBL->pDataNodes, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->pDataNodes, INVALID_HANDLE)
 		memset(pTBL->pDataNodes, 0, sizeof(TBLDataNode) * pTBL->header.HashTableSize);
 
 		// Allocate strings
 		dwTableSize = sizeof(char16_t) * (pTBL->dwFileSize - (pReadHead - pFileBuffer));
 		pTBL->szStringTable = (char16_t*)malloc(dwTableSize);
-		Log_ErrorAssertReturn(pTBL->szStringTable, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pTBL->szStringTable, INVALID_HANDLE)
 		memset(pTBL->szStringTable, 0, dwTableSize);
 
 		// Compute data tables
@@ -289,7 +289,6 @@ namespace TBL
 	 */
 	char16_t* FindStringText(char16_t* szReference)
 	{
-		char16_t* pStr = nullptr;
 		for (int i = gnLastUsedTBL - 1; i >= 0; i--)
 		{
 			tbl_handle x = FindStringIndexFromKey(i, szReference);

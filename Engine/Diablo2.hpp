@@ -1,7 +1,7 @@
 #pragma once
 #include "../Shared/D2Shared.hpp"
 #include "../Shared/D2Packets.hpp"
-#include "../Libraries/sdl/SDL.h"
+#include <SDL2/SDL.h>
 
 enum D2CommandType
 {

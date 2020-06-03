@@ -16,11 +16,11 @@ private:
 
 public:
 	D2Menu_Trademark();
-	virtual ~D2Menu_Trademark();
+	~D2Menu_Trademark() override;
 
-	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
-	virtual bool WaitingSignal();
+	bool HandleMouseClicked(DWORD dwX, DWORD dwY) override;
+	bool WaitingSignal() override;
 	static void TrademarkSignal(D2Panel* pCallingPanel, D2Widget* pCallingWidget);
 
-	virtual void Draw();
+	void Draw() override;
 };

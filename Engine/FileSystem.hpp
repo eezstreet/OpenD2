@@ -14,8 +14,8 @@ namespace FS
 	void CloseFile(fs_handle f);
 	void Seek(fs_handle f, size_t offset, int nSeekType);
 	size_t Tell(fs_handle f);
-	bool Find(char* szFileName, char* szBuffer, size_t dwBufferLen);
-	char** ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles);
+	bool Find(const char *szFileName, char* szBuffer, size_t dwBufferLen);
+	char** ListFilesInDirectory(const char *szDirectory, const char *szExtensionFilter, int *nFiles);
 	void FreeFileList(char** pszFileList, int nNumFiles);
-	void CreateSubdirectory(char* szSubdirectory);
-};
+	void CreateSubdirectory(const char *szSubdirectory);
+}

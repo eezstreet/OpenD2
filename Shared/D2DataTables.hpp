@@ -2255,5 +2255,3 @@ struct D2DataTablesStrc
 	D2PlrModeTypeTxt* pPlayerMode;					//0x10E0
 };
 #pragma pack()
-
-extern D2COMMONAPI D2DataTablesStrc* sgptDataTables;

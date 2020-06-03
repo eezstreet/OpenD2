@@ -16,12 +16,12 @@ private:
 	D2Widget_Button* pCancelButton;
 	D2Widget_Button* pOKButton;
 public:
-	virtual void Draw();
+	void Draw() override;
 	void EnableOKButton() { pOKButton->Enable(); }
 	void DisableOKButton() { pOKButton->Disable(); }
 
 	D2Panel_CharCreate_Static();
-	virtual ~D2Panel_CharCreate_Static();
+	~D2Panel_CharCreate_Static() override;
 };
 
 class D2Panel_CharCreate_Dynamic : public D2Panel
@@ -32,7 +32,7 @@ private:
 	D2Widget_Checkbox* pHardcoreCheckbox;
 
 public:
-	virtual void Draw();
+	void Draw() override;
 	size_t GetNameLength() { return pNameEntry->GetTextLength(); }
 	char16_t* GetName() { return pNameEntry->GetText(); }
 
@@ -40,5 +40,5 @@ public:
 	bool ExpansionChecked() { return pExpansionCheckbox->IsChecked(); }
 
 	D2Panel_CharCreate_Dynamic();
-	~D2Panel_CharCreate_Dynamic();
+	~D2Panel_CharCreate_Dynamic() override;
 };

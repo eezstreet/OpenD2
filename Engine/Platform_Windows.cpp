@@ -1,10 +1,9 @@
-#define WIN32_LEAN_AND_MEAN
 #include "Diablo2.hpp"
 #include "Platform.hpp"
 #include "FileSystem.hpp"
 #include "Logging.hpp"
 #include <Windows.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstdio>
 #include <shlobj.h>
 #include <crtdbg.h>
@@ -33,7 +32,7 @@ struct D2ModuleInternal
 //
 //	Global variables
 
-static D2ModuleInternal gModules[MODULE_MAX]{ 0 };
+static D2ModuleInternal gModules[MODULE_MAX]{};
 
 //////////////////////////////////////////////////////////////
 //
@@ -90,7 +89,7 @@ namespace Sys
 #define ADAPTER_LIST_SIZE	15000
 	char16_t* GetAdapterIP()
 	{
-		IP_ADAPTER_ADDRESSES* addresses = (IP_ADAPTER_ADDRESSES*)malloc(ADAPTER_LIST_SIZE);
+		auto* addresses = (IP_ADAPTER_ADDRESSES*)malloc(ADAPTER_LIST_SIZE);
 		PIP_ADAPTER_ADDRESSES currAddress;
 		DWORD dwSize = ADAPTER_LIST_SIZE;
 		static char16_t szAddress[32];
@@ -103,7 +102,7 @@ namespace Sys
 				if (currAddress->OperStatus == IfOperStatusUp && currAddress->Ipv4Enabled &&
 					currAddress->FirstUnicastAddress)
 				{	// current adapter is operational, is IPv4 enabled and has TCP (unicast) capabilities
-					DWORD dwOffset = 0;
+					size_t dwOffset = 0;
 					for (int i = 2; i < 6; i++)
 					{
 						size_t dwWritten = 0;
@@ -137,7 +136,7 @@ namespace Sys
 	{
 		TCHAR homeDirectory[MAX_PATH];
 
-		if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, homeDirectory)))
+		if (!SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PERSONAL, nullptr, 0, homeDirectory)))
 		{	// Couldn't find it, I guess?
 			return;
 		}
@@ -260,7 +259,7 @@ namespace Sys
 	*	If the extension filter is *.*, there is essentially no filter.
 	*	@author	eezstreet
 	*/
-	void ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE])
+	void ListFilesInDirectory(const char* szPath, const char* szExtensionFilter, const char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE])
 	{
 		char szFullPath[MAX_D2PATH_ABSOLUTE]{ 0 };
 		HANDLE hFile;

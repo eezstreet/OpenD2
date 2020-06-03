@@ -39,7 +39,7 @@ D2COMMONAPI void D2Common_Init(D2ModuleImportStrc* pTrap, D2GameConfigStrc* pCon
  *	Frees shared data in D2Common
  *	@author	eezstreet
  */
-D2COMMONAPI void D2Common_Shutdown()
+D2COMMONAPI void inline D2Common_Shutdown()
 {
 	if (!gbCommonInitialized)
 	{	// don't shut down unless we've initialized the library first

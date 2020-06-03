@@ -7,7 +7,7 @@
 D2Menu_Loading::D2Menu_Loading()
 {
 	loadscreenTex = 
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\Loading\\loadingscreen.dc6", "loadingscreen", PAL_LOADING);
+		engine->renderer->TextureFromAnimatedDC6("data/global/ui/Loading/loadingscreen.dc6", "loadingscreen", PAL_LOADING);
 	loadscreenAnim = engine->renderer->RegisterDC6Animation(loadscreenTex, "loadingscreen", 0);
 }
 

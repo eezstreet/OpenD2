@@ -23,8 +23,8 @@
  */
 static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
-	D2Menu_CharSelect* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
-	D2Panel_CharSelect* pCharPanel = dynamic_cast<D2Panel_CharSelect*>(pCallerPanel);
+	auto* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
+	auto* pCharPanel = dynamic_cast<D2Panel_CharSelect*>(pCallerPanel);
 
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cs_exit"))
 	{
@@ -73,9 +73,9 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
  */
 D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 {
-	createCharButton = new D2Widget_Button(34, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallButton", 0, 0, 1, 1, 1, 1);
-	deleteCharButton = new D2Widget_Button(432, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
-	convertExpansionButton = new D2Widget_Button(232, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
+	createCharButton = new D2Widget_Button(34, 467, "data/global/ui/CharSelect/TallButtonBlank.dc6", "tallButton", 0, 0, 1, 1, 1, 1);
+	deleteCharButton = new D2Widget_Button(432, 467, "data/global/ui/CharSelect/TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
+	convertExpansionButton = new D2Widget_Button(232, 467, "data/global/ui/CharSelect/TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
 
 	okButton = new D2Widget_Button(628, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	exitButton = new D2Widget_Button(34, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
@@ -204,7 +204,7 @@ void D2Panel_CharSelect::ValidateSelection()
  */
 static void PanelSignal_DeleteConfirm(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
-	D2Menu_CharSelect* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
+	auto* pCharMenu = dynamic_cast<D2Menu_CharSelect*>(cl.pActiveMenu);
 
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "csc_ok"))
 	{
@@ -225,10 +225,10 @@ static void PanelSignal_DeleteConfirm(D2Panel* pCallerPanel, D2Widget* pCallerWi
  */
 D2Panel_CharDeleteConfirm::D2Panel_CharDeleteConfirm() : D2Panel()
 {
-	confirmYesButton = new D2Widget_Button(420, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
-	confirmNoButton = new D2Widget_Button(280, 340, "data\\global\\ui\\FrontEnd\\CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
+	confirmYesButton = new D2Widget_Button(420, 340, "data/global/ui/FrontEnd/CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
+	confirmNoButton = new D2Widget_Button(280, 340, "data/global/ui/FrontEnd/CancelButtonBlank.dc6", "tiny", 0, 0, 1, 1, 0, 0);
 
-	background = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
+	background = engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/PopUpOkCancel2.dc6", "PopUpOkCancel2", 0, 1, PAL_UNITS);
 
 	AddWidget(confirmYesButton);
 	AddWidget(confirmNoButton);

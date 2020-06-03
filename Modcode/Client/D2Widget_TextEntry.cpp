@@ -20,18 +20,18 @@ D2Widget_TextEntry::D2Widget_TextEntry(int _x, int _y, bool bStartFocus, bool bA
 	if (bCharSelect)
 	{
 		backgroundTexture = 
-			engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox.dc6", "textbox", PAL_FECHAR);
+			engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/textbox.dc6", "textbox", PAL_FECHAR);
 		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "textbox", 0);
 	}
 	else if (bIP)
 	{
-		backgroundTexture = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
+		backgroundTexture = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/IPAddressBox.dc6", "ipaddressbox", PAL_UNITS);
 		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "ipaddressbox", 0);
 	}
 	else
 	{
 		backgroundTexture = 
-			engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\textbox2.dc6", "textbox2", PAL_UNITS);
+			engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/textbox2.dc6", "textbox2", PAL_UNITS);
 		backgroundAnim = engine->renderer->RegisterDC6Animation(backgroundTexture, "textbox2", 0);
 	}
 
@@ -96,11 +96,7 @@ void D2Widget_TextEntry::Draw()
  */
 bool D2Widget_TextEntry::HandleMouseDown(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= x && dwY >= y && dwX <= x + w && dwY <= y + h)
-	{
-		return true;
-	}
-	return false;
+        return dwX >= x && dwY >= y && dwX <= x + w && dwY <= y + h;
 }
 
 /*
@@ -130,7 +126,7 @@ bool D2Widget_TextEntry::HandleMouseClick(DWORD dwX, DWORD dwY)
  */
 bool D2Widget_TextEntry::HandleTextInput(char* szText)
 {
-	int i, j;
+	size_t i, j;
 	size_t maxLen = m_bCharSelect ? MAX_TEXTENTRY_LEN_CHARSELECT : MAX_TEXTENTRY_LEN;
 	size_t textLen;
 	size_t originalLen;
@@ -214,11 +210,7 @@ bool D2Widget_TextEntry::HandleTextInput(char* szText)
  */
 bool D2Widget_TextEntry::HandleTextEditing(char* szText, int nStart, int nLength)
 {
-	if (!m_bHasFocus)
-	{
-		return false;
-	}
-	return true;
+        return m_bHasFocus;
 }
 
 /*
@@ -227,7 +219,7 @@ bool D2Widget_TextEntry::HandleTextEditing(char* szText, int nStart, int nLength
 */
 bool D2Widget_TextEntry::HandleKeyDown(DWORD dwKey)
 {
-	int i;
+	size_t i;
 	bool bBackspace = false;
 
 	if (!m_bHasFocus)
@@ -301,9 +293,5 @@ bool D2Widget_TextEntry::HandleKeyDown(DWORD dwKey)
 */
 bool D2Widget_TextEntry::HandleKeyUp(DWORD dwKey)
 {
-	if (!m_bHasFocus)
-	{
-		return false;
-	}
-	return true;
+        return m_bHasFocus;
 }

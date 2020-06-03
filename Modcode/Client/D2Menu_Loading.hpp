@@ -9,7 +9,7 @@ private:
 
 public:
 	D2Menu_Loading();
-	virtual ~D2Menu_Loading();
+	~D2Menu_Loading() override;
 
-	virtual void Draw();
+	void Draw() override;
 };

@@ -1,12 +1,6 @@
 #include "D2Widget.hpp"
 
-D2Widget::D2Widget()
-{
-	m_pNextVisibleWidget = nullptr;
-	m_pNextWidget = nullptr;
-	m_bVisible = false;
-	bHasIdentifier = false;
-}
+D2Widget::D2Widget() = default;
 
 D2Widget::D2Widget(int _x, int _y, int _w, int _h)
 {
@@ -20,15 +14,12 @@ D2Widget::D2Widget(int _x, int _y, int _w, int _h)
 	bHasIdentifier = false;
 }
 
-D2Widget::~D2Widget()
-{
-
-}
+D2Widget::~D2Widget() = default;
 
 /*
  *	Attaches an identifier to this object which we can use to reference later
  */
-void D2Widget::AttachIdentifier(char* szIdentifier)
+void D2Widget::AttachIdentifier(const char *szIdentifier)
 {
 	bHasIdentifier = true;
 	D2Lib::strncpyz(identifier, szIdentifier, 64);
@@ -59,10 +50,7 @@ char* D2Widget::GetIdentifier()
  *	Until this happens, m_pOwner is invalid and we can't perform operations on it.
  *	@author	eezstreet
  */
-void D2Widget::OnWidgetAdded()
-{
-	return;
-}
+void D2Widget::OnWidgetAdded() {}
 
 /*
  *	Handles a text input event

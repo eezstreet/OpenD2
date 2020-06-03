@@ -15,7 +15,6 @@
 
 #ifdef WIN32
 #ifndef D2COMMON
-#pragma comment(lib, "D2Common.lib")
 #endif
 #endif
 
@@ -23,7 +22,7 @@
 #define D2COMMONAPI	D2EXPORT
 #define D2GAMEAPI	D2IMPORT
 #else
-#define D2COMMONAPI D2IMPORT
+#define D2COMMONAPI	D2EXPORT
 #define D2GAMEAPI	D2EXPORT
 #endif
 
@@ -289,12 +288,12 @@ D2COMMONAPI void D2Common_Shutdown();
 //
 //	Preprocessor Macros
 
-#define Log_WarnAssert(x)	if(!x) { engine->Warning(__FILE__, __LINE__, #x); }
-#define Log_ErrorAssert(x)	if(!x) { engine->Error(__FILE__, __LINE__, #x); }
+#define Log_WarnAssert(x)	if(!(x)) { engine->Warning(__FILE__, __LINE__, #x); }
+#define Log_ErrorAssert(x)	if(!(x)) { engine->Error(__FILE__, __LINE__, #x); }
 #define WarnWithDescription(x, y)	if(!x) { engine->Warning(__FILE__, __LINE__, y); }
 #define AssertWithDescription(x, y)	if(!x) { engine->Error(__FILE__, __LINE__, y); }
 
-#define Log_WarnAssertReturn(x, y)	if(!x) { engine->Warning(__FILE__, __LINE__, #x); return y; }
-#define Log_ErrorAssertReturn(x, y)	if(!x) { engine->Error(__FILE__, __LINE__, #x); return y; }
+#define Log_WarnAssertReturn(x, y)	if(!(x)) { engine->Warning(__FILE__, __LINE__, #x); return y; }
+#define Log_ErrorAssertReturn(x, y)	if(!(x)) { engine->Error(__FILE__, __LINE__, #x); return y; }
 #define WarnWithDescriptionReturn(x, y, z)	if(!x) { engine->Warning(__FILE__, __LINE__, y); return z; }
 #define AssertWithDescriptionReturn(x, y, z)	if(!x) { engine->Error(__FILE__, __LINE__, y); return z; }

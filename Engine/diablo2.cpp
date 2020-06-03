@@ -8,7 +8,6 @@
 #include "Network.hpp"
 #include "Platform.hpp"
 #include "Renderer.hpp"
-#include "TBL_Font.hpp"
 #include "TBL_Text.hpp"
 #include "Token.hpp"
 #include "Window.hpp"
@@ -160,7 +159,7 @@ static D2ModuleImportStrc exports = {
 	Audio::SetSoundVolume
 };
 
-static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };
+static D2ModuleExportStrc* imports[MODULE_MAX]{ nullptr };
 
 /*
  *	Get the current number of milliseconds.
@@ -229,7 +228,7 @@ void ProcessDiablo2Argument(char* arg, D2GameConfigStrc* config)
 void ProcessOpenD2Argument(char* arg, OpenD2ConfigStrc* config)
 {
 	D2CmdArgStrc* pArg;
-	DWORD dwArgLen = 0;
+	size_t dwArgLen = 0;
 
 	if (arg[0] == '\0')
 	{	// some smart-alec decided to put just a regular old + here
@@ -384,7 +383,7 @@ static void WriteGameConfig(D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOp
 	fs_handle f;
 
 	FS::Open(GAME_CONFIG_PATH, &f, FS_WRITE);
-	Log_ErrorAssert(f != INVALID_HANDLE);
+	Log_ErrorAssert(f != INVALID_HANDLE)
 
 	INI::WriteConfig(&f, pGameConfig, pOpenConfig);
 

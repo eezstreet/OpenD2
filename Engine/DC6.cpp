@@ -15,7 +15,7 @@ namespace DC6
 	*	@author	Necrolis/eezstreet
 	*	TODO: optimize this a lot
 	*/
-	static void DecodeFrame(BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
+	static void DecodeFrame(const BYTE* pPixels, BYTE* pOutPixels, DC6Frame* pFrame)
 	{
 		DWORD x = 0, y;
 
@@ -43,9 +43,9 @@ namespace DC6
 					y--;
 				}
 			}
-			else if (pixel & 0x80)
+			else if (pixel & 0x80u)
 			{	// Write PIXEL & 0x7F transparent pixels
-				x += pixel & 0x7F;
+				x += pixel & 0x7Fu;
 			}
 			else
 			{
@@ -74,9 +74,9 @@ namespace DC6
 		memset(gpDecodeBuffer, 0, sizeof(BYTE) * DECODE_BUFFER_SIZE);
 
 		dwFileSize = FS::Open(szPath, &pImage->f, FS_READ, true);
-		
-		Log_WarnAssert(pImage->f != INVALID_HANDLE);
-		Log_WarnAssert(dwFileSize < DECODE_BUFFER_SIZE);
+
+		Log_WarnAssert(pImage->f != INVALID_HANDLE)
+		Log_WarnAssert(dwFileSize < DECODE_BUFFER_SIZE)
 
 		// Now comes the fun part: reading and decoding the actual thing
 		FS::Read(pImage->f, gpReadBuffer, DECODE_BUFFER_SIZE);
@@ -87,7 +87,7 @@ namespace DC6
 		pByteReadHead += sizeof(pImage->header);
 
 		// Validate the header
-		Log_WarnAssert(pImage->header.dwVersion == DC6_HEADER_VERSION);
+		Log_WarnAssert(pImage->header.dwVersion == DC6_HEADER_VERSION)
 
 		// Table of pointers
 		pFramePointers = (DWORD*)pByteReadHead;
@@ -95,7 +95,7 @@ namespace DC6
 		pByteReadHead += sizeof(DWORD) * dwNumFrames;
 
 		pImage->pFrames = (DC6Frame*)malloc(sizeof(DC6Frame) * dwNumFrames);
-		Log_ErrorAssert(pImage->pFrames != nullptr);
+		Log_ErrorAssert(pImage->pFrames != nullptr)
 
 		// Read each frame's header, and then decode the blocks
 		for (i = 0; i < pImage->header.dwDirections; i++)
@@ -150,7 +150,7 @@ namespace DC6
 
 		// Allocate the pixels that we need
 		pImage->pPixels = (BYTE*)malloc(dwTotalPixels);
-		Log_ErrorAssert(pImage->pPixels != nullptr);
+		Log_ErrorAssert(pImage->pPixels != nullptr)
 
 		memcpy(pImage->pPixels, gpDecodeBuffer, dwTotalPixels);
 		pImage->bPixelsFreed = false;
@@ -265,10 +265,10 @@ namespace DC6
 	{
 		DC6Frame* pFrame;
 
-		Log_WarnAssert(dwStart >= 0 && dwStart <= dwEnd && dwStart < pImage->header.dwFrames);
-		Log_WarnAssert(dwEnd >= 0 && dwEnd < pImage->header.dwFrames);
-		Log_WarnAssert(pWidth && pHeight);
-		Log_WarnAssert(pTotalWidth && pTotalHeight);
+		Log_WarnAssert(dwStart >= 0 && dwStart <= dwEnd && dwStart < pImage->header.dwFrames)
+		Log_WarnAssert(dwEnd >= 0 && dwEnd < pImage->header.dwFrames)
+		Log_WarnAssert(pWidth && pHeight)
+		Log_WarnAssert(pTotalWidth && pTotalHeight)
 
 		*pWidth = 0;
 		*pHeight = 0;

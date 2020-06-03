@@ -62,8 +62,8 @@ void Bitstream::LoadStream(BYTE* pNewStream, size_t dwNewSizeBytes)
  */
 void Bitstream::SplitFrom(Bitstream* pSplitStream, size_t dwSplitStreamSizeBits)
 {
-	DWORD dwBitsHanging = (dwSplitStreamSizeBits % 8);
-	DWORD dwBytes = (dwSplitStreamSizeBits - dwBitsHanging) / 8;
+	size_t dwBitsHanging = (dwSplitStreamSizeBits % 8);
+	size_t dwBytes = (dwSplitStreamSizeBits - dwBitsHanging) / 8;
 	FreeInternalStreamSource();
 	
 	// Copy from the other bitstream
@@ -254,6 +254,8 @@ void Bitstream::ReadBits(void* outBits, size_t outBitsSize, int bitCount)
 				*(QWORD*)outBits = qwBits;
 			}
 			break;
+        default:
+            break;
 	}
 }
 
@@ -261,18 +263,18 @@ void Bitstream::ReadBits(void* outBits, size_t outBitsSize, int bitCount)
  *	Helper function: converts from an unsigned number to a twos complement number.
  *	@author	eezstreet/SVR
  */
-void Bitstream::ConvertFormat(long* dwOutBits, int bitCount)
+void Bitstream::ConvertFormat(unsigned long *dwOutBits, unsigned int bitCount)
 {
-	long dwValue;
+	unsigned long dwValue;
 	if (dwOutBits == nullptr)
 	{
 		return;
 	}
 	dwValue = *dwOutBits;
 
-	if (bitCount < 32 && (dwValue & (1 << (bitCount - 1))))
+	if (bitCount < 32 && (dwValue & (1u << (bitCount - 1u))))
 	{
-		dwValue |= ~((1 << bitCount) - 1);
+		dwValue |= ~((1u << bitCount) - 1u);
 	}
 
 	*dwOutBits = dwValue;
@@ -291,13 +293,12 @@ size_t Bitstream::GetRemainingReadBits()
  *	Read bits from the stream (private). If a negative number is used it will read a signed number.
  *	@author	id Software / eezstreet
  */
-int Bitstream::ReadBits(int numBits) 
+unsigned int Bitstream::ReadBits(int numBits)
 {
-	int		value;
-	int		valueBits;
-	int		get;
-	int		fraction;
-	bool	sgn;
+	unsigned int		value;
+	size_t      		valueBits;
+	size_t      		get;
+	unsigned int		fraction;
 
 	if (numBits == 0)
 	{
@@ -309,14 +310,6 @@ int Bitstream::ReadBits(int numBits)
 
 	value = 0;
 	valueBits = 0;
-
-	if (numBits < 0) {
-		numBits = -numBits;
-		sgn = true;
-	}
-	else {
-		sgn = false;
-	}
 
 	// check for overflow
 	if (numBits > GetRemainingReadBits()) {
@@ -333,17 +326,11 @@ int Bitstream::ReadBits(int numBits)
 		}
 		fraction = pStream[dwCurrentByte - 1];
 		fraction >>= dwReadBit;
-		fraction &= (1 << get) - 1;
+		fraction &= (1u << get) - 1;
 		value |= fraction << valueBits;
 
 		valueBits += get;
-		dwReadBit = (dwReadBit + get) & 7;
-	}
-
-	if (sgn) {
-		if (value & (1 << (numBits - 1))) {
-			value |= -1 ^ ((1 << numBits) - 1);
-		}
+		dwReadBit = (dwReadBit + get) & 7u;
 	}
 
 	Log_ErrorAssertReturn(dwCurrentByte <= dwTotalStreamSizeBytes, 0);

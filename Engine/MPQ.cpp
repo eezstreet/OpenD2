@@ -2,10 +2,10 @@
 #include "Logging.hpp"
 #include "FileSystem.hpp"
 #include <memory>
-#include <assert.h>
-#include "../Libraries/adpcm/adpcm.h"
-#include "../Libraries/huffman/huff.h"
-#include "../Libraries/pkware/pklib.h"
+#include <cassert>
+#include <adpcm/adpcm.h>
+#include <huffman/huff.h>
+#include <pkware/pklib.h>
 
 #define MPQ_HASH_TABLE_INDEX    0x000
 #define MPQ_HASH_NAME_A         0x100
@@ -16,9 +16,9 @@
 namespace MPQ
 {
 
-	static char* gszListfile = "(listfile)";
-	static char* gszHashTable = "(hash table)";
-	static char* gszBlockTable = "(block table)";
+	static const char* gszListfile = "(listfile)";
+	static const char* gszHashTable = "(hash table)";
+	static const char* gszBlockTable = "(block table)";
 
 	// Converts ASCII characters to uppercase. Converts slashes into backslashes.
 	static unsigned char AsciiToUpperTable[256] =
@@ -88,14 +88,14 @@ namespace MPQ
 		FS::Read(pMPQ->f, &dwFirstByte);
 		FS::Read(pMPQ->f, &dwSecondByte);
 
-		Log_ErrorAssertReturn(dwFirstByte == gdwFirstHeader && dwSecondByte == gdwSecondHeader, false);
+		Log_ErrorAssertReturn(dwFirstByte == gdwFirstHeader && dwSecondByte == gdwSecondHeader, false)
 
 		// Read length of file data
 		FS::Read(pMPQ->f, &pMPQ->dwArchiveSize);
 
 		// Read the version number. This HAS to be 0.
 		FS::Read(pMPQ->f, &wVersion, sizeof(WORD));
-		Log_ErrorAssertReturn(wVersion == 0, false);
+		Log_ErrorAssertReturn(wVersion == 0, false)
 
 		// Read sector size
 		FS::Read(pMPQ->f, &pMPQ->wSectorSize, sizeof(WORD));
@@ -136,7 +136,7 @@ namespace MPQ
 			ch = AsciiToUpperTable[*szFileName++];
 
 			dwSeed1 = pMPQ->dwSlackSpace[dwHashType + ch] ^ (dwSeed1 + dwSeed2);
-			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5) + 3;
+			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5u) + 3;
 		}
 
 		return dwSeed1;
@@ -157,10 +157,10 @@ namespace MPQ
 		{
 			// Convert the input character to uppercase
 			// DON'T convert slash (0x2F) to backslash (0x5C)
-			ch = AsciiToUpperTable_Slash[*szFileName++];
+			ch = AsciiToUpperTable[*szFileName++];
 
 			dwSeed1 = pMPQ->dwSlackSpace[dwHashType + ch] ^ (dwSeed1 + dwSeed2);
-			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5) + 3;
+			dwSeed2 = ch + dwSeed1 + dwSeed2 + (dwSeed2 << 5u) + 3;
 		}
 
 		return dwSeed1;
@@ -173,7 +173,7 @@ namespace MPQ
 	DWORD DecryptFileKey(D2MPQArchive* pMPQ, char * szFileName, unsigned long long MpqPos, DWORD dwFileSize, DWORD dwFlags)
 	{
 		DWORD dwFileKey;
-		DWORD dwMpqPos = (DWORD)MpqPos;
+		auto dwMpqPos = (DWORD)MpqPos;
 
 		// File key is calculated from plain name
 		szFileName = D2Lib::fnbld(szFileName);
@@ -191,9 +191,9 @@ namespace MPQ
 	 *	Attempt to determine a file's encryption key based on expected file content.
 	 *	@author	Zezula
 	 */
-	DWORD DetectFileKeyByKnownContent(void *pvEncryptedData, DWORD* pdwSlackSpace, DWORD dwDecrypted0, DWORD dwDecrypted1)
+	DWORD DetectFileKeyByKnownContent(void *pvEncryptedData, const DWORD* pdwSlackSpace, DWORD dwDecrypted0, DWORD dwDecrypted1)
 	{
-		DWORD* EncryptedData = (DWORD*)pvEncryptedData;
+		auto* EncryptedData = (DWORD*)pvEncryptedData;
 		DWORD dwKey1PlusKey2;
 		DWORD DataBlock[2];
 
@@ -208,7 +208,7 @@ namespace MPQ
 			DWORD dwKey2 = 0xEEEEEEEE;
 
 			// Modify the second key and decrypt the first DWORD
-			dwKey2 += pdwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFF)];
+			dwKey2 += pdwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFFu)];
 			DataBlock[0] = EncryptedData[0] ^ (dwKey1 + dwKey2);
 
 			// Did we obtain the same value like dwDecrypted0?
@@ -218,11 +218,11 @@ namespace MPQ
 				dwSaveKey1 = dwKey1;
 
 				// Rotate both keys
-				dwKey1 = ((~dwKey1 << 0x15) + 0x11111111) | (dwKey1 >> 0x0B);
-				dwKey2 = DataBlock[0] + dwKey2 + (dwKey2 << 5) + 3;
+				dwKey1 = ((~dwKey1 << 0x15u) + 0x11111111) | (dwKey1 >> 0x0Bu);
+				dwKey2 = DataBlock[0] + dwKey2 + (dwKey2 << 5u) + 3;
 
 				// Modify the second key again and decrypt the second DWORD
-				dwKey2 += pdwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFF)];
+				dwKey2 += pdwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFFu)];
 				DataBlock[1] = EncryptedData[1] ^ (dwKey1 + dwKey2);
 
 				// Now compare the results
@@ -283,26 +283,26 @@ namespace MPQ
 	 *	Decrypt an MPQ block
 	 *	@author	Zezula
 	 */
-	static void DecryptMPQBlock(D2MPQArchive* pArchive, void * pvDataBlock, DWORD dwLength, DWORD dwKey1)
+	static void DecryptMPQBlock(D2MPQArchive* pArchive, void * pvDataBlock, size_t dwLength, DWORD dwKey1)
 	{
-		DWORD* DataBlock = (DWORD*)pvDataBlock;
+		auto* DataBlock = (DWORD*)pvDataBlock;
 		DWORD dwValue32;
 		DWORD dwKey2 = 0xEEEEEEEE;
 
 		// Round to DWORDs
-		dwLength >>= 2;
+		dwLength >>= 2u;
 
 		// Decrypt the data block at array of DWORDs
 		for (DWORD i = 0; i < dwLength; i++)
 		{
 			// Modify the second key
-			dwKey2 += pArchive->dwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFF)];
+			dwKey2 += pArchive->dwSlackSpace[MPQ_HASH_KEY2_MIX + (dwKey1 & 0xFFu)];
 
 			DataBlock[i] = DataBlock[i] ^ (dwKey1 + dwKey2);
 			dwValue32 = DataBlock[i];
 
-			dwKey1 = ((~dwKey1 << 0x15) + 0x11111111) | (dwKey1 >> 0x0B);
-			dwKey2 = dwValue32 + dwKey2 + (dwKey2 << 5) + 3;
+			dwKey1 = ((~dwKey1 << 0x15u) + 0x11111111) | (dwKey1 >> 0x0Bu);
+			dwKey2 = dwValue32 + dwKey2 + (dwKey2 << 5u) + 3;
 		}
 	}
 
@@ -325,10 +325,10 @@ namespace MPQ
 				DWORD temp1, temp2;
 
 				dwSeed = (dwSeed * 125 + 3) % 0x2AAAAB;
-				temp1 = (dwSeed & 0xFFFF) << 0x10;
+				temp1 = (dwSeed & 0xFFFFu) << 0x10u;
 
 				dwSeed = (dwSeed * 125 + 3) % 0x2AAAAB;
-				temp2 = (dwSeed & 0xFFFF);
+				temp2 = (dwSeed & 0xFFFFu);
 
 				pMPQ->dwSlackSpace[index2] = (temp1 | temp2);
 			}
@@ -340,7 +340,7 @@ namespace MPQ
 	 */
 	static inline DWORD GetHashBlockIndex(MPQHash* pHash)
 	{
-		return pHash->dwBlockEntry & 0x0FFFFFFF;
+		return pHash->dwBlockEntry & 0x0FFFFFFFu;
 	}
 
 	/*
@@ -362,13 +362,10 @@ namespace MPQ
 		}
 
 		DWORD dwOffset = pBlock->dwFilePos;
-		if (dwOffset > pMPQ->dwArchiveSize)
-		{	// This block has an offset that's outside the file
-			return false;
-		}
 
-		return true;
-	}
+        // This block has an offset that's outside the file
+        return dwOffset <= pMPQ->dwArchiveSize;
+    }
 
 	/*
 	 *	Allocate memory for (and then read) the MPQ's block and hash tables.
@@ -408,7 +405,7 @@ namespace MPQ
 	/*
 	 *	Opens an MPQ at szMPQPath with name szMPQName.
 	 */
-	void OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ)
+	void OpenMPQ(const char *szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ)
 	{
 		if (!pMPQ)
 		{	// should never happen
@@ -417,7 +414,7 @@ namespace MPQ
 
 		memset(pMPQ, 0, sizeof(D2MPQArchive));
 
-		DWORD dwMPQSize = FS::Open(szMPQPath, &pMPQ->f, FS_READ, true);
+		size_t dwMPQSize = FS::Open(szMPQPath, &pMPQ->f, FS_READ, true);
 		if (!dwMPQSize || pMPQ->f == INVALID_HANDLE)
 		{	// couldn't load MPQ - throw error?
 			return;
@@ -545,8 +542,8 @@ namespace MPQ
 
 	static unsigned int ReadPKWare(char* buf, unsigned int* size, void* param)
 	{
-		TDataInfo * pInfo = (TDataInfo *)param;
-		unsigned int nMaxAvail = (unsigned int)(pInfo->pbInBuffEnd - pInfo->pbInBuff);
+		auto * pInfo = (TDataInfo *)param;
+		auto nMaxAvail = (unsigned int)(pInfo->pbInBuffEnd - pInfo->pbInBuff);
 		unsigned int nToRead = *size;
 
 		// Check the case when not enough data available
@@ -562,8 +559,8 @@ namespace MPQ
 
 	static void WritePKWare(char* buf, unsigned int* size, void* param)
 	{
-		TDataInfo * pInfo = (TDataInfo *)param;
-		unsigned int nMaxWrite = (unsigned int)(pInfo->pbOutBuffEnd - pInfo->pbOutBuff);
+		auto * pInfo = (TDataInfo *)param;
+		auto nMaxWrite = (unsigned int)(pInfo->pbOutBuffEnd - pInfo->pbOutBuff);
 		unsigned int nToWrite = *size;
 
 		// Check the case when not enough space in the output buffer
@@ -576,13 +573,13 @@ namespace MPQ
 		assert(pInfo->pbOutBuff <= pInfo->pbOutBuffEnd);
 	}
 
-	static void MPQDecompress_PKWare(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+	static void MPQDecompress_PKWare(void* pInBuffer, const size_t* dwInRead, void* pOutBuffer, size_t* dwOutRead)
 	{
 		TDataInfo Info;                             // Data information
 		char * work_buf = (char*)malloc(EXP_BUFFER_SIZE);// Pklib's work buffer
 
 														 // Handle no-memory condition
-		if (work_buf == NULL)
+		if (work_buf == nullptr)
 			return;
 
 		// Fill data information structure
@@ -607,7 +604,7 @@ namespace MPQ
 		free(work_buf);
 	}
 
-	static void MPQDecompress_Huffmann(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+	static void MPQDecompress_Huffmann(void* pInBuffer, const size_t* dwInRead, void* pOutBuffer, size_t* dwOutRead)
 	{
 		THuffmannTree ht(false);
 		TInputStream is(pInBuffer, *dwInRead);
@@ -615,12 +612,12 @@ namespace MPQ
 		*dwOutRead = ht.Decompress(pOutBuffer, *dwOutRead, &is);
 	}
 
-	static void MPQDecompress_PCMMono(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+	static void MPQDecompress_PCMMono(void* pInBuffer, const size_t* dwInRead, void* pOutBuffer, size_t* dwOutRead)
 	{
 		*dwOutRead = ::DecompressADPCM(pOutBuffer, *dwOutRead, pInBuffer, *dwInRead, 1);
 	}
 
-	static void MPQDecompress_PCMStereo(void* pInBuffer, DWORD* dwInRead, void* pOutBuffer, DWORD* dwOutRead)
+	static void MPQDecompress_PCMStereo(void* pInBuffer, const size_t* dwInRead, void* pOutBuffer, size_t* dwOutRead)
 	{
 		*dwOutRead = ::DecompressADPCM(pOutBuffer, *dwOutRead, pInBuffer, *dwInRead, 2);
 	}
@@ -630,7 +627,7 @@ namespace MPQ
 	 */
 	struct D2MPQCompression {
 		BYTE nCompressionType;
-		void(*pFunc)(void* pInBuffer, DWORD* dwInPos, void* pOutBuffer, DWORD* dwOutPos);
+		void(*pFunc)(void* pInBuffer, const size_t* dwInPos, void* pOutBuffer, size_t* dwOutPos);
 	};
 
 	static D2MPQCompression CompressionModels[] = {
@@ -648,11 +645,11 @@ namespace MPQ
 	static char* gpTempBuffer = nullptr;
 	size_t gpTempBufferSize = 0;
 
-	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen)
+	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, size_t dwBufferLen)
 	{
 		DWORD dwNumBlocks;
 		size_t dwTotalAmountRead = 0;
-		DWORD dwBufferFilled = 0;
+		size_t dwBufferFilled = 0;
 		DWORD dwEncryptionKey = 0;
 
 		char* pTempBuffer;
@@ -725,13 +722,13 @@ namespace MPQ
 			{
 				// For this one, we use the encryption key - 1.
 				// Don't know why, just roll with it. Probably a bug on Blizzard's part.
-				DecryptMPQBlock(pMPQ, gdwFileHeaderBuffer, dwNumBlocks << 2, dwEncryptionKey - 1);
+				DecryptMPQBlock(pMPQ, gdwFileHeaderBuffer, dwNumBlocks << 2u, dwEncryptionKey - 1);
 			}
 
 			for (int i = 0; i < dwNumBlocks - 1; i++)
 			{
 				DWORD dwBlockLengthRead = gdwFileHeaderBuffer[i + 1] - gdwFileHeaderBuffer[i];
-				DWORD dwInputLength;
+				size_t dwInputLength;
 				BYTE nMethod;
 				size_t dwAmountRead = FS::Read(pMPQ->f, pTempBuffer, sizeof(BYTE), dwBlockLengthRead);
 
@@ -742,7 +739,7 @@ namespace MPQ
 				}
 
 				if (dwAmountRead == pMPQ->wSectorSize
-					|| (i == dwNumBlocks - 2 && dwAmountRead == (pBlock->dwFSize & (pMPQ->wSectorSize - 1))))
+					|| (i == dwNumBlocks - 2 && dwAmountRead == (pBlock->dwFSize & (pMPQ->wSectorSize - 1u))))
 				{
 					memcpy(buffer + dwTotalAmountRead, pTempBuffer, dwAmountRead);
 					pTempBuffer += dwBlockLengthRead;

@@ -2,7 +2,6 @@
 #include "DCC.hpp"
 #include "Logging.hpp"
 #include "Renderer.hpp"
-#include <assert.h>
 
 ///////////////////////////////////////////////////////
 //
@@ -67,7 +66,7 @@ namespace Window
 	/*
 	 *	Wrapper for SDL_ShowSimpleMessageBox
 	 */
-	void ShowMessageBox(int nMessageBoxType, char* szTitle, char* szMessage)
+	void ShowMessageBox(int nMessageBoxType, const char *szTitle, const char *szMessage)
 	{
 		SDL_ShowSimpleMessageBox(nMessageBoxType, szTitle, szMessage, gpWindow);
 	}

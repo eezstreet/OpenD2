@@ -2,7 +2,7 @@
 #include "D2Client.hpp"
 #include "D2Widget.hpp"
 
-#define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
+#define SMALL_BUTTON_DC6		"data/global/ui/FrontEnd/MediumButtonBlank.dc6"
 
 /*
  *	Panels are a subsection of UI.
@@ -26,7 +26,7 @@ protected:
 	void DrawWidgets();
 
 public:
-	bool IsVisible() { return m_bVisible; }
+	bool IsVisible() const { return m_bVisible; }
 	void Show() { m_bVisible = true; }
 	void Hide() { m_bVisible = false; }
 

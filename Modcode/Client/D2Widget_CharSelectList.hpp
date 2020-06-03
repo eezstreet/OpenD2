@@ -28,16 +28,16 @@ private:
 	void Clicked(DWORD dwX, DWORD dwY);
 public:
 	D2Widget_CharSelectList(int x, int y, int w, int h);
-	virtual ~D2Widget_CharSelectList();
+	~D2Widget_CharSelectList() override;
 
 	void AddSave(D2SaveHeader& header, char* path);
 	char16_t* GetSelectedCharacterName();
 	void LoadSave();
 
-	virtual void OnWidgetAdded();
-	virtual void Draw();
-	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
-	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY);
+	void OnWidgetAdded() override;
+	void Draw() override;
+	bool HandleMouseDown(DWORD dwX, DWORD dwY) override;
+	bool HandleMouseClick(DWORD dwX, DWORD dwY) override;
 
 	void Selected(int nNewSelection);
 };

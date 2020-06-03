@@ -51,7 +51,7 @@ namespace Renderer
 			case OD2RT_SDL:
 				RenderTarget = new Renderer_SDL(pConfig, pOpenConfig, pWindow);
 				break;
-		}
+        }
 	}
 
 	/*

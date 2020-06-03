@@ -62,7 +62,7 @@ struct TBLFile
 // TBL_Text.cpp
 namespace TBL
 {
-	tbl_handle Register(char* szTblFile);
+	tbl_handle Register(const char *szTblFile);
 	char16_t* FindStringFromIndex(DWORD dwIndex);
 	tbl_handle FindStringIndexFromKey(tbl_handle tbl, char16_t* szReference);
 	char16_t* FindStringText(char16_t* szReference);

@@ -10,10 +10,10 @@
 #define TBLTEXT_CREDITS			5110
 #define TBLTEXT_CINEMATICS		5111
 
-#define MAIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\3WideButtonBlank.dc6"
-#define BATTLE_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\WideButtonBlank02.dc6"
-#define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
-#define THIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\NarrowButtonBlank.dc6"
+#define MAIN_BUTTON_DC6			"data/global/ui/FrontEnd/3WideButtonBlank.dc6"
+#define BATTLE_BUTTON_DC6		"data/global/ui/FrontEnd/WideButtonBlank02.dc6"
+#define SMALL_BUTTON_DC6		"data/global/ui/FrontEnd/MediumButtonBlank.dc6"
+#define THIN_BUTTON_DC6			"data/global/ui/FrontEnd/NarrowButtonBlank.dc6"
 
 /*
  *	Creates the main menu panel

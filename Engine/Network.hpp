@@ -15,4 +15,4 @@ namespace Network
 	void StopListening();
 	void Init();
 	void Shutdown();
-};
+}

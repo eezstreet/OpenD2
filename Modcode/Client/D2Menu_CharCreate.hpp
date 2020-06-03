@@ -51,12 +51,12 @@ private:
 public:
 	bool	m_bFromCharSelect;
 
-	D2Menu_CharCreate(bool bFromCharSelect = false);
-	virtual ~D2Menu_CharCreate();
+	explicit D2Menu_CharCreate(bool bFromCharSelect = false);
+	~D2Menu_CharCreate() override;
 
-	virtual void Draw();
-	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
-	virtual void HandleTextInput(char* szText);
-	virtual bool HandleKeyDown(DWORD dwKey);
+	void Draw() override;
+	bool HandleMouseClicked(DWORD dwX, DWORD dwY) override;
+	void HandleTextInput(char* szText) override;
+	bool HandleKeyDown(DWORD dwKey) override;
 	bool TrySaveCharacter();
 };

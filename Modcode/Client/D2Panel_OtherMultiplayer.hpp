@@ -13,7 +13,7 @@ private:
 
 public:
 	D2Panel_OtherMultiplayer();
-	virtual ~D2Panel_OtherMultiplayer();
+	~D2Panel_OtherMultiplayer() override;
 
-	virtual void Draw();
+	void Draw() override;
 };

@@ -1,8 +1,9 @@
 #include "Diablo2.hpp"
-#include <stdlib.h>
+#include "FileSystem.hpp"
+#include "Logging.hpp"
 #include <cstdio>
-#include <unistd.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 #define D2REGISTRY_BETA_KEY	"SOFTWARE\\Blizzard Entertainment\\Diablo II Beta"
 #define D2REGISTRY_KEY		"SOFTWARE\\Blizzard Entertainment\\Diablo II"
@@ -23,7 +24,7 @@ struct D2ModuleInternal
 //
 //	Global variables
 
-static D2ModuleInternal gModules[MODULE_MAX]{ 0 };
+static D2ModuleInternal gModules[MODULE_MAX]{ nullptr };
 
 //////////////////////////////////////////////////////////////
 //
@@ -85,7 +86,7 @@ namespace Sys
 		free(addresses);
 		D2Lib::qsnprintf(szAddress, 32, u"0.0.0.0");
 		return szAddress;*/
-		return u"192.168.1.1";
+		return (char16_t *)"192.168.1.1";
 	}
 
 	/*
@@ -101,7 +102,6 @@ namespace Sys
 		}
 
 		snprintf(szBuffer, dwBufferLen, "%s/My Games/" GAME_HOMEPATH, homeDirectory);*/
-		return;
 	}
 
 	/*
@@ -174,7 +174,7 @@ namespace Sys
 	*	If the extension filter is *.*, there is essentially no filter.
 	*	@author	eezstreet
 	*/
-	void ListFilesInDirectory(char* szPath, char* szExtensionFilter, char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE])
+	void ListFilesInDirectory(const char* szPath, const char* szExtensionFilter, const char* szOriginalPath, int* nFiles, char(*szList)[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE])
 	{
 		/*char szFullPath[MAX_D2PATH_ABSOLUTE]{ 0 };
 		HANDLE hFile;
@@ -195,7 +195,6 @@ namespace Sys
 		snprintf((*szList)[*nFiles], MAX_D2PATH_ABSOLUTE, "%s/%s", szOriginalPath, findData.cFileName);
 		*nFiles = *nFiles + 1;
 		} while (FindNextFile(hFile, &findData) == TRUE);*/
-		return;
 	}
 
 	/*
@@ -207,28 +206,28 @@ namespace Sys
 		char szModulePath[MAX_D2PATH_ABSOLUTE]{ 0 };
 		bool bModuleFound = false;
 
-		if (gModules[nModule].dwModule != 0)
+		if (gModules[nModule].dwModule != nullptr)
 		{
 			return gModules[nModule].pExports;
 		}
 
 		if (nModule == MODULE_CLIENT)
 		{
-			bModuleFound = FS::Find("libD2Client.so", szModulePath, MAX_D2PATH_ABSOLUTE);
+			bModuleFound = FS::Find("libD2Client.dylib", szModulePath, MAX_D2PATH_ABSOLUTE);
 		}
 		else if (nModule == MODULE_SERVER)
 		{
-			bModuleFound = FS::Find("libD2Server.so", szModulePath, MAX_D2PATH_ABSOLUTE);
+			bModuleFound = FS::Find("libD2Server.dylib", szModulePath, MAX_D2PATH_ABSOLUTE);
 		}
-		Log_ErrorAssertReturn(bModuleFound, nullptr);
+		Log_ErrorAssertReturn(bModuleFound, nullptr)
 
 		gModules[nModule].dwModule = dlopen(szModulePath, RTLD_LAZY);
-		Log_ErrorAssertReturn(gModules[nModule].dwModule != 0, nullptr);
+		Log_ErrorAssertReturn(gModules[nModule].dwModule != nullptr, nullptr)
 
 		D2ModuleExportStrc* (*ModuleAPI)(D2ModuleImportStrc* strc);
 
 		ModuleAPI = (D2ModuleExportStrc*(*)(D2ModuleImportStrc*))dlsym(gModules[nModule].dwModule, "GetModuleAPI");
-		Log_ErrorAssertReturn(ModuleAPI != nullptr, nullptr);
+		Log_ErrorAssertReturn(ModuleAPI != nullptr, nullptr)
 
 		return ModuleAPI(pImports);
 	}
@@ -238,7 +237,7 @@ namespace Sys
 	*/
 	void CloseModule(OpenD2Modules nModule)
 	{
-		if (gModules[nModule].dwModule == 0)
+		if (gModules[nModule].dwModule == nullptr)
 		{
 			return;
 		}

@@ -66,7 +66,7 @@ struct COFFile
 // COF.cpp
 namespace COF
 {
-	cof_handle Register(char* type, char* token, char* animation, char* hitclass);
+	cof_handle Register(const char *type, const char *token, const char *animation, const char *hitclass);
 	void Deregister(cof_handle cof);
 	void DeregisterType(char* type);
 	void DeregisterAll();

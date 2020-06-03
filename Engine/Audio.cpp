@@ -18,13 +18,13 @@ namespace Audio
 		Audio_SDL::Shutdown();
 	}
 
-	sfx_handle RegisterSound(char* szAudioFile)
+	sfx_handle RegisterSound(const char *szAudioFile)
 	{
 		// For now, just use SDL audio
 		return Audio_SDL::RegisterSound(szAudioFile);
 	}
 
-	mus_handle RegisterMusic(char* szAudioFile)
+	mus_handle RegisterMusic(const char *szAudioFile)
 	{
 		// For now, just use SDL audio
 		return Audio_SDL::RegisterMusic(szAudioFile);

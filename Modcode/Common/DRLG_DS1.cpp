@@ -15,7 +15,7 @@ DS1File* DS1_Load(char* szFilePath)
 
 	// Find the file itself
 	fs_handle fileHandle;
-	DWORD dwFileSize = engine->FS_Open(szFilePath, &fileHandle, FS_READ, true);
+	size_t dwFileSize = engine->FS_Open(szFilePath, &fileHandle, FS_READ, true);
 
 	if (fileHandle == INVALID_HANDLE)
 	{
@@ -38,4 +38,5 @@ DS1File* DS1_Load(char* szFilePath)
 	engine->FS_CloseFile(fileHandle);
 
 	free(fileData); // FIXME
+        return nullptr;
 }

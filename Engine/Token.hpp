@@ -43,7 +43,7 @@ struct AnimTokenInstance
 // Token.cpp - Should maybe move this to gamecode?
 namespace Token
 {
-	token_handle RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass);
+	token_handle RegisterToken(D2TokenType type, const char *tokenName, const char *szWeaponClass);
 	void DeregisterToken(token_handle token);
 	AnimToken* GetAnimData(token_handle token);
 	cof_handle GetCOFData(token_handle token, int mode);
@@ -54,7 +54,7 @@ namespace TokenInstance
 	anim_handle CreateTokenAnimInstance(token_handle token);
 	void SwapTokenAnimToken(anim_handle handle, token_handle newhandle);
 	void DestroyTokenInstance(anim_handle handle);
-	void SetTokenInstanceComponent(anim_handle handle, int componentNum, char* componentName);
+	void SetTokenInstanceComponent(anim_handle handle, int componentNum, const char *componentName);
 	char* GetTokenInstanceComponent(anim_handle handle, int component);
 	void SetTokenInstanceFrame(anim_handle handle, int frameNum);
 	int GetTokenInstanceFrame(anim_handle handle);

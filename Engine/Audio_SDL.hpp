@@ -1,6 +1,6 @@
 #pragma once
 #include "Diablo2.hpp"
-#include "../Libraries/sdl/SDL_mixer.h"
+#include <SDL2_mixer/SDL_mixer.h>
 
 #define MAX_SDL_SOUNDFILES	4096
 
@@ -9,8 +9,8 @@ namespace Audio_SDL
 	void Init(OpenD2ConfigStrc* pConfig);
 	void Shutdown();
 
-	sfx_handle RegisterSound(char* szSoundPath);
-	mus_handle RegisterMusic(char* szMusicPath);
+	sfx_handle RegisterSound(const char *szSoundPath);
+	mus_handle RegisterMusic(const char *szMusicPath);
 	void FlushAudioData();
 
 	void PlaySound(sfx_handle handle, int loops);
@@ -43,11 +43,6 @@ namespace Audio_SDL
 			}
 		}
 
-		AudioChunk()
-		{
-			data.pChunk = nullptr;
-			data.pMusic = nullptr;
-			bIsMusic = false;
-		}
+		AudioChunk(): data{} {};
 	};
 }

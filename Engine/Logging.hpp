@@ -16,8 +16,8 @@ namespace Log
 	void InitSystem(const char* szLogHeader, const char* szGameName, OpenD2ConfigStrc* pOpenConfig);
 	void Shutdown();
 	void Print(OpenD2LogFlags nPriority, const char* szFormat, ...);
-	void Warning(const char* szFile, const int nLine, const char* szCondition);
-	void Error(const char* szFile, const int nLine, const char* szCondition);
+	void Warning(const char* szFile, int nLine, const char* szCondition);
+	void Error(const char* szFile, int nLine, const char* szCondition);
 	void Warning(const char* warningFormat, ...);
 	void Error(const char* errorFormat, ...);
 }

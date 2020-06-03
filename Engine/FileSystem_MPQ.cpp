@@ -74,20 +74,20 @@ namespace FSMPQ
 	 *	Adds a single MPQ to the search path.
 	 *	@return	A pointer to the D2MPQArchive that got loaded
 	 */
-	D2MPQArchive* AddSearchPath(char* szMPQName, char* szMPQPath)
+	D2MPQArchive* AddSearchPath(const char *szMPQName, const char *szMPQPath)
 	{
 		if (szMPQName == nullptr || szMPQPath == nullptr)
 		{
 			return nullptr;
 		}
 
-		MPQSearchPath* pNew = (MPQSearchPath*)malloc(sizeof(MPQSearchPath));
-		Log_ErrorAssertReturn(pNew != nullptr, nullptr);
+		auto* pNew = (MPQSearchPath*)malloc(sizeof(MPQSearchPath));
+		Log_ErrorAssertReturn(pNew != nullptr, nullptr)
 
 		pNew->pArchive = (D2MPQArchive*)malloc(sizeof(D2MPQArchive));
 		if (pNew->pArchive == nullptr)
 		{	// couldn't allocate memory
-			Log_ErrorAssertReturn(!"Ran out of memory when adding MPQ search path.", nullptr);
+			Log_ErrorAssertReturn(!"Ran out of memory when adding MPQ search path.", nullptr)
 		}
 
 		D2Lib::strncpyz(pNew->szName, szMPQName, MAX_D2PATH);

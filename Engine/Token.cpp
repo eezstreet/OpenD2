@@ -8,7 +8,7 @@
 //	Token Loading
 
 // Maps a token type to a string
-static char* gszTokenType[TOKEN_MAX] =
+static const char* gszTokenType[TOKEN_MAX] =
 {
 	"chars", "monsters", "objects"
 };
@@ -17,7 +17,7 @@ static char* gszTokenType[TOKEN_MAX] =
 extern const char* COFLayerNames[COMP_MAX];
 
 // Maps a plrmode to a string
-static char* gszPlrMode[PLRMODE_MAX] =
+static const char* gszPlrMode[PLRMODE_MAX] =
 {
 	"dt", "nu", "wl", "rn", 
 	"gh", "tn", "tw", "a1", 
@@ -27,7 +27,7 @@ static char* gszPlrMode[PLRMODE_MAX] =
 };
 
 // Maps a monmode to a string
-static char* gszMonMode[MONMODE_MAX] =
+static const char* gszMonMode[MONMODE_MAX] =
 {
 	"dt", "nu", "wl", "gh",
 	"a1", "a2", "bl", "sc",
@@ -36,7 +36,7 @@ static char* gszMonMode[MONMODE_MAX] =
 };
 
 // Maps a objmode to a string
-static char* gszObjMode[OBJMODE_MAX] =
+static const char* gszObjMode[OBJMODE_MAX] =
 {
 	"nu", "op", "on", "s1",
 	"s2", "s3", "s4", "s5",
@@ -53,7 +53,7 @@ struct TokenHash
 	AnimToken token;
 };
 
-static TokenHash gTokenTable[MAX_TOKEN_HASH]{ 0 };
+static TokenHash gTokenTable[MAX_TOKEN_HASH]{ false };
 static int gnNumTokensRegistered = 0;
 
 namespace Token
@@ -63,13 +63,14 @@ namespace Token
 	 *	Registers a token.
 	 *	@author	eezstreet
 	 */
-	token_handle RegisterToken(D2TokenType type, char* tokenName, char* szWeaponClass)
+	token_handle RegisterToken(D2TokenType type, const char *tokenName,
+                           const char *szWeaponClass)
 	{
 		char registerName[8]{ 0 };
 		token_handle out;
-		int i;
+		unsigned int i;
 
-		Log_ErrorAssertReturn(gnNumTokensRegistered < MAX_TOKEN_HASH, INVALID_HANDLE);
+		Log_ErrorAssertReturn(gnNumTokensRegistered < MAX_TOKEN_HASH, INVALID_HANDLE)
 
 		snprintf(registerName, 8, "%s%s", tokenName, szWeaponClass);
 		out = D2Lib::strhash(registerName, 0, MAX_TOKEN_HASH);
@@ -92,19 +93,17 @@ namespace Token
 		case TOKEN_CHAR:
 			for (i = 0; i < PLRMODE_MAX; i++)
 			{
-				gTokenTable[out].token.plrCof[i] =
-					COF::Register(gszTokenType[type], tokenName, gszPlrMode[i], szWeaponClass);
+				gTokenTable[out].token.plrCof[i] = COF::Register(gszTokenType[type], tokenName, gszPlrMode[i], szWeaponClass);
 				if (gTokenTable[out].token.plrCof[i] != INVALID_HANDLE)
 				{
-					gTokenTable[out].token.dwCOFsPresent |= (1 << i);
+					gTokenTable[out].token.dwCOFsPresent |= (1u << i);
 				}
 			}
 			break;
 		case TOKEN_MONSTER:
 			for (i = 0; i < MONMODE_MAX; i++)
 			{
-				gTokenTable[out].token.monCof[i] =
-					COF::Register(gszTokenType[type], tokenName, gszMonMode[i], szWeaponClass);
+				gTokenTable[out].token.monCof[i] = COF::Register(gszTokenType[type], tokenName, gszMonMode[i], szWeaponClass);
 				if (gTokenTable[out].token.monCof[i] != INVALID_HANDLE)
 				{
 					gTokenTable[out].token.dwCOFsPresent |= (1 << i);
@@ -114,8 +113,7 @@ namespace Token
 		case TOKEN_OBJECT:
 			for (i = 0; i < OBJMODE_MAX; i++)
 			{
-				gTokenTable[out].token.objCof[i] =
-					COF::Register(gszTokenType[type], tokenName, gszObjMode[i], szWeaponClass);
+				gTokenTable[out].token.objCof[i] = COF::Register(gszTokenType[type], tokenName, gszObjMode[i], szWeaponClass);
 				if (gTokenTable[out].token.objCof[i] != INVALID_HANDLE)
 				{
 					gTokenTable[out].token.dwCOFsPresent |= (1 << i);
@@ -144,9 +142,9 @@ namespace Token
 		}
 
 		// Deregister all of the COFs
-		for (int i = 0; i < 32; i++)
+		for (unsigned int i = 0; i < 32; i++)
 		{
-			if (gTokenTable[token].token.dwCOFsPresent & (1 << i))
+			if (gTokenTable[token].token.dwCOFsPresent & (1u << i))
 			{
 				switch (gTokenTable[token].token.tokenType)
 				{
@@ -254,9 +252,9 @@ namespace TokenInstance
 
 		for (int i = 0; i < COMP_MAX; i++)
 		{
-			for (int j = 0; j < XXXMODE_MAX; j++)
+			for (auto & componentAnim : gTokenInstances[handle].componentAnims)
 			{
-				gTokenInstances[handle].componentAnims[j][i] = INVALID_HANDLE;
+				componentAnim[i] = INVALID_HANDLE;
 			}
 			D2Lib::strncpyz(gTokenInstances[handle].components[i], "xxx", 4);
 		}
@@ -303,7 +301,7 @@ namespace TokenInstance
 	 *	Set a token instance's component
 	 *	@author	eezstreet
 	 */
-	void SetTokenInstanceComponent(anim_handle handle, int componentNum, char* componentName)
+	void SetTokenInstanceComponent(anim_handle handle, int componentNum, const char *componentName)
 	{
 		if (handle == INVALID_HANDLE || handle >= MAX_TOKEN_INSTANCES)
 		{
@@ -438,7 +436,7 @@ namespace TokenInstance
 		char name[MAX_D2PATH];
 		char* tokenName;
 		char* tokenClass;
-		char** modeNames;
+		const char** modeNames;
 		cof_handle* pCOFs;
 		int max = 0;
 
@@ -508,7 +506,7 @@ namespace TokenInstance
 
 					snprintf(name, MAX_D2PATH, "%s%s%s%s%s",
 						tokenName, COFLayerNames[j], pInstance->components[j], modeNames[i], tokenClass);
-					snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s.dcc",
+					snprintf(path, MAX_D2PATH, "data/global/%s/%s/%s/%s.dcc",
 						gszTokenType[tokenType], tokenName, COFLayerNames[j], name);
 					pInstance->componentAnims[i][j] = DCC::Load(path, name);
 

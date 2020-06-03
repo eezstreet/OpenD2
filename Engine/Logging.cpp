@@ -3,7 +3,7 @@
 #include "Logging.hpp"
 #include "Platform.hpp"
 #include "Window.hpp"
-#include <time.h>
+#include <ctime>
 #include <cstdio>
 
 ///////////////////////////////////////////////////////////

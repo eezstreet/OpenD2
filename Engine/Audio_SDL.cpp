@@ -33,7 +33,7 @@ namespace Audio_SDL
 			pConfig->dwAudioDevice = 0;
 		}
 
-		Log_WarnAssertVoidReturn(SDL_GetNumAudioDevices(false) >= pConfig->dwAudioDevice);
+		Log_WarnAssertVoidReturn(SDL_GetNumAudioDevices(false) >= pConfig->dwAudioDevice)
 		Log::Print(OpenD2LogFlags::PRIORITY_MESSAGE, "Output Device: %s\n", SDL_GetAudioDeviceName(pConfig->dwAudioDevice, false));
 
 		int result = Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
@@ -58,7 +58,7 @@ namespace Audio_SDL
 	}
 
 	// Load a WAV into memory
-	bool LoadWAV(char* szAudioPath, BYTE** ppWavOutput, DWORD& dwSizeBytes)
+	bool LoadWAV(const char *szAudioPath, BYTE** ppWavOutput, size_t& dwSizeBytes)
 	{
 		// Find the file and determine how big it should be
 		fs_handle f;
@@ -87,7 +87,7 @@ namespace Audio_SDL
 	}
 
 	// Register a sound effect for playing
-	sfx_handle RegisterSound(char* szAudioPath)
+	sfx_handle RegisterSound(const char *szAudioPath)
 	{
 		bool bAlreadyAvailable = false;
 		sfx_handle ourHandle = gpSoundCache.NextFree(szAudioPath, bAlreadyAvailable);
@@ -103,7 +103,7 @@ namespace Audio_SDL
 		}
 
 		BYTE* pWavData = nullptr;
-		DWORD dwWavSize = 0;
+		size_t dwWavSize = 0;
 		if (!LoadWAV(szAudioPath, &pWavData, dwWavSize))
 		{
 			Log::Print(OpenD2LogFlags::PRIORITY_MESSAGE, "Failed to load %s", szAudioPath);
@@ -111,14 +111,14 @@ namespace Audio_SDL
 		}
 
 		SDL_RWops* sdlFile = SDL_RWFromMem(pWavData, dwWavSize);
-		Log_WarnAssert(sdlFile);
+		Log_WarnAssert(sdlFile)
 		gpSoundCache[ourHandle].bIsMusic = false;
 		gpSoundCache[ourHandle].data.pChunk = Mix_LoadWAV_RW(sdlFile, true);
 		return ourHandle;
 	}
 
 	// Register a music effect for playing
-	mus_handle RegisterMusic(char* szAudioPath)
+	mus_handle RegisterMusic(const char *szAudioPath)
 	{
 		bool bAlreadyPresent = false;
 		mus_handle ourHandle = gpSoundCache.NextFree(szAudioPath, bAlreadyPresent);
@@ -135,7 +135,7 @@ namespace Audio_SDL
 		}
 
 		BYTE* pWavData = nullptr;
-		DWORD dwWavSize = 0;
+		size_t dwWavSize = 0;
 		if (!LoadWAV(szAudioPath, &pWavData, dwWavSize))
 		{
 			Log::Print(OpenD2LogFlags::PRIORITY_MESSAGE, "Failed to load %s", szAudioPath);
@@ -143,7 +143,7 @@ namespace Audio_SDL
 		}
 
 		SDL_RWops* sdlFile = SDL_RWFromMem(pWavData, dwWavSize);
-		Log_WarnAssert(sdlFile);
+		Log_WarnAssert(sdlFile)
 		gpSoundCache[ourHandle].bIsMusic = true;
 		gpSoundCache[ourHandle].data.pMusic = Mix_LoadMUS_RW(sdlFile, true);
 		return ourHandle;

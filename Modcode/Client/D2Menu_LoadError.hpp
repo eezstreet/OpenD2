@@ -9,8 +9,8 @@ class D2Menu_LoadError : public D2Menu
 private:
 	char16_t* szErrorText;
 public:
-	D2Menu_LoadError(WORD wStringIndex);
+	explicit D2Menu_LoadError(WORD wStringIndex);
 
-	virtual void Draw();
-	virtual bool HandleMouseClicked(DWORD dwX, DWORD dwY);
+	void Draw() override;
+	bool HandleMouseClicked(DWORD dwX, DWORD dwY) override;
 };

@@ -66,7 +66,7 @@ namespace INI
 	/*
 	 *	Writes an INI file
 	 */
-	static void WriteINIInternal(INIFile* pFile, fs_handle* f)
+	static void WriteINIInternal(INIFile* pFile, const fs_handle* f)
 	{
 		INIFile ini = *pFile;
 		INISection* pSection;
@@ -89,9 +89,9 @@ namespace INI
 			snprintf(writeBuffer, 2048, "[%s]" NL, pSection->szSectionName);
 			FS::WritePlaintext(*f, writeBuffer);
 
-			for (int j = 0; j < INI_MAX_FIELDS_PER_SECTION; j++)
+			for (auto & field : pSection->fields)
 			{
-				pField = &pSection->fields[j];
+				pField = &field;
 				if (pField->szKeyName[0] == '\0')
 				{	// ran out of fields for this section
 					FS::WritePlaintext(*f, NL);
@@ -136,7 +136,7 @@ namespace INI
 		while (pCurrent->szKeyName[0])
 		{
 			handle section = FindSection(pFile, pCurrent->szSection);
-			Log_ErrorAssert(section != INVALID_HANDLE);
+			Log_ErrorAssert(section != INVALID_HANDLE)
 			INIField* pField = &file[section].fields[file[section].nNumberFields];
 
 			if (file[section].szSectionName[0] == '\0')
@@ -152,11 +152,11 @@ namespace INI
 			{
 			case CMD_BOOLEAN:
 #ifdef _WIN32
-				pField->fieldValues.bValue = *(bool*)((DWORD)pData + pCurrent->nOffset);
+				pField->fieldValues.bValue = *(bool*)((DWORD *)pData + pCurrent->nOffset);
 #else
-				pField->fieldValues.bValue = *(bool*)(pData + pCurrent->nOffset);
+				pField->fieldValues.bValue = *(bool*)((char *)pData + pCurrent->nOffset);
 #endif
-				
+
 				pField->fieldType = INI_BOOL;
 				if (pField->fieldValues.bValue == (bool)pCurrent->dwDefault)
 				{
@@ -168,9 +168,9 @@ namespace INI
 			case CMD_WORD:
 			case CMD_DWORD:
 #ifdef _WIN32
-				pField->fieldValues.nValue = *(int*)((DWORD)pData + pCurrent->nOffset);
+				pField->fieldValues.nValue = *(int*)((DWORD *)pData + pCurrent->nOffset);
 #else
-				pField->fieldValues.nValue = *(int*)(pData + pCurrent->nOffset);
+				pField->fieldValues.nValue = *(int*)((char *)pData + pCurrent->nOffset);
 #endif
 				pField->fieldType = INI_INTEGER;
 				if (pField->fieldValues.nValue == pCurrent->dwDefault)
@@ -181,9 +181,9 @@ namespace INI
 
 			case CMD_STRING:
 #ifdef _WIN32
-				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)((DWORD)pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
+				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)((DWORD *)pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
 #else
-				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)(pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
+				D2Lib::strncpyz(pField->fieldValues.szValue, (char*)((char *)pData + pCurrent->nOffset), INI_MAX_STRINGLEN);
 #endif
 				pField->fieldType = INI_STRING;
 				if (pField->fieldValues.szValue[0] == '\0')
@@ -218,8 +218,8 @@ namespace INI
 	void WriteConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig)
 	{
 		// allocate INI file
-		INIFile ini = (INIFile)malloc(sizeof(INISection) * INI_MAX_SECTIONS);
-		Log_ErrorAssert(ini != nullptr);
+		auto ini = (INIFile)malloc(sizeof(INISection) * INI_MAX_SECTIONS);
+		Log_ErrorAssert(ini != nullptr)
 		memset(ini, 0, sizeof(INISection) * INI_MAX_SECTIONS);
 
 		GenerateSections(&ini, pGameConfig, pOpenConfig);
@@ -238,16 +238,9 @@ namespace INI
 
 		int nIntegerValue = atoi(szValueName);
 		bool bBooleanValue;
-		if (!D2Lib::stricmp(szValueName, "true"))
-		{
-			bBooleanValue = true;
-		}
-		else
-		{
-			bBooleanValue = false;
-		}
+                bBooleanValue = !D2Lib::stricmp(szValueName, "true");
 
-		// read from vanilla commandline arguments
+                // read from vanilla commandline arguments
 		pCurrent = CommandArguments;
 		while (pCurrent->szKeyName[0])
 		{
@@ -313,7 +306,7 @@ namespace INI
 	/*
 	 *	Reads a config file
 	 */
-	void ReadConfig(fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig)
+	void ReadConfig(const fs_handle* f, D2GameConfigStrc* pGameConfig, OpenD2ConfigStrc* pOpenConfig)
 	{
 		size_t fileSize;
 		char* fileBuffer;
@@ -330,7 +323,7 @@ namespace INI
 
 		// read the whole file in
 		fileBuffer = (char*)malloc(fileSize);
-		Log_ErrorAssert(fileBuffer != nullptr);
+		Log_ErrorAssert(fileBuffer != nullptr)
 		FS::Read(*f, fileBuffer, fileSize);
 
 		// parse each file, symbol by symbol

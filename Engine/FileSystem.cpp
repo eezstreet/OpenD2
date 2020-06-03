@@ -1,10 +1,9 @@
+#include <cassert>
 #include "FileSystem.hpp"
 #include "Logging.hpp"
 #include "FileSystem_MPQ.hpp"
 #include "MPQ.hpp"
 #include "Platform.hpp"
-#include "../Libraries/sdl/SDL_thread.h"
-#include <assert.h>
 
 /*
  *	The OpenD2 filesystem varies greatly from the one in retail Diablo 2.
@@ -53,7 +52,7 @@ namespace FS
 		D2MPQArchive* mpq;
 		fs_handle mpqFileHandle;
 
-		bool Invalid()
+		bool Invalid() const
 		{
 			return !bActive || (handle == nullptr && mpq == nullptr);
 		}
@@ -97,7 +96,7 @@ namespace FS
 			strcat(szCWD, path + 1);
 			D2Lib::strncpyz(path, szCWD, MAX_D2PATH_ABSOLUTE);
 		}
-		else if (path[0] == '.' && path[1] == '..')
+		else if (path[0] == '.' && path[1] == '.')
 		{
 			// FIXME: not currently supported
 			// Replace all of the data up to the first slash with the working directory, up one level.
@@ -157,9 +156,9 @@ namespace FS
 		D2Lib::strncpyz(gszModPath, pOpenConfig->szModPath, MAX_D2PATH_ABSOLUTE);
 
 		// Create mutexes for each openable file
-		for (int i = 0; i < MAX_CONCURRENT_FILES_OPEN; i++)
+		for (auto & glFileHandle : glFileHandles)
 		{
-			glFileHandles[i].mut = SDL_CreateMutex();
+			glFileHandle.mut = SDL_CreateMutex();
 		}
 
 		// Make sure there's no garbage in the strings
@@ -183,9 +182,9 @@ namespace FS
 		// Shut down any extensions that need closing
 		FSMPQ::Shutdown();
 
-		for (int i = 0; i < MAX_CONCURRENT_FILES_OPEN; i++)
+		for (auto & glFileHandle : glFileHandles)
 		{
-			FSHandleStore* pRecord = &glFileHandles[i];
+			FSHandleStore* pRecord = &glFileHandle;
 			if (pRecord->bActive)
 			{
 				if (!pRecord->bLoadedFromMPQ)
@@ -201,20 +200,21 @@ namespace FS
 	 *	Cleanses a file's path.
 	 *	Any filename passed into the function is assumed to have MAX_D2PATH characters in its buffer, or otherwise be valid.
 	 */
-	static void SanitizeFilePath(char* path)
+	static void SanitizeFilePath(const char *path)
 	{
+		char *p = (char *)(path);
 		// Remove leading slashes
-		if (*path == '/')
+		if (*p == '/')
 		{
-			(*path)++;
+			(*p)++;
 		}
 
 		// Remove double slashes (//)
-		for (int i = 0; i < strlen(path); i++)
+		for (int i = 0; i < strlen(p); i++)
 		{
-			if (path[i] == '/' && path[i + 1] == '/')
+			if (p[i] == '/' && p[i + 1] == '/')
 			{	// found em
-				D2Lib::strncpyz(path + i, path + i + 1, MAX_D2PATH_ABSOLUTE);
+				D2Lib::strncpyz(p + i, p + i + 1, MAX_D2PATH_ABSOLUTE);
 			}
 		}
 	}
@@ -289,7 +289,7 @@ namespace FS
 		FILE* fileHandle = nullptr;
 		bool bUsedMPQ = false;
 		D2MPQArchive* mpq = nullptr;
-		fs_handle mpqFileHandle = INVALID_HANDLE;
+		auto mpqFileHandle = INVALID_HANDLE;
 
 		// FIXME: warn if the handle is already open?
 
@@ -318,7 +318,8 @@ namespace FS
 				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
 				strcat(path, filepathBuffer);
 
-				if (fileHandle = fopen(path, szModeStr))
+                fileHandle = fopen(path, szModeStr);
+                if (fileHandle)
 				{
 					break;
 				}
@@ -341,7 +342,8 @@ namespace FS
 				D2Lib::strncpyz(path, pszPaths[i], MAX_D2PATH_ABSOLUTE);
 				strcat(path, filepathBuffer);
 
-				if (fileHandle = fopen(path, szModeStr))
+                fileHandle = fopen(path, szModeStr);
+                if (fileHandle)
 				{
 					break;
 				}
@@ -496,7 +498,7 @@ namespace FS
 		{
 			fclose(pRecord->handle);
 		}
-		pRecord->handle = 0;
+		pRecord->handle = nullptr;
 		pRecord->mpq = nullptr;
 		pRecord->bActive = false;
 		gnNumFilesOpened--;
@@ -518,7 +520,7 @@ namespace FS
 		}
 
 		// Not allowed to Seek() on files from MPQs.
-		Log_WarnAssertReturn(!pRecord->bLoadedFromMPQ);
+		Log_WarnAssert(!pRecord->bLoadedFromMPQ)
 
 		SDL_LockMutex(pRecord->mut);
 		fseek(pRecord->handle, offset, nSeekType);
@@ -539,7 +541,7 @@ namespace FS
 		}
 
 		// Not allowed to Tell() on files from MPQs
-		Log_WarnAssertReturn(!pFile->bLoadedFromMPQ, 0);
+		Log_WarnAssertReturn(!pFile->bLoadedFromMPQ, 0)
 
 		SDL_LockMutex(pFile->mut);
 		result = ftell(pFile->handle);
@@ -550,7 +552,7 @@ namespace FS
 	/*
 	 *	Finds the (absolute) path of a file, anywhere in our search paths.
 	 */
-	bool Find(char* szFileName, char* szBuffer, size_t dwBufferLen)
+	bool Find(const char *szFileName, char* szBuffer, size_t dwBufferLen)
 	{
 		FILE* f;
 
@@ -581,7 +583,7 @@ namespace FS
 	 *	The extension filter may use an asterisk (*) as a wild card (this is handled by the OS-specific code)
 	 *	@author	eezstreet
 	 */
-	char** ListFilesInDirectory(char* szDirectory, char* szExtensionFilter, int *nFiles)
+	char** ListFilesInDirectory(const char *szDirectory, const char *szExtensionFilter, int *nFiles)
 	{
 		char szFiles[MAX_FILE_LIST_SIZE][MAX_D2PATH_ABSOLUTE]{ 0 };
 		char** szOutFiles;
@@ -630,13 +632,13 @@ namespace FS
 	 *	Creates a subdirectory at the first available searchpath
 	 *	@author	eezstreet
 	 */
-	void CreateSubdirectory(char* szSubdirectory)
+	void CreateSubdirectory(const char *szSubdirectory)
 	{
 		char szPath[MAX_D2PATH_ABSOLUTE]{ 0 };
 
-		for (int i = 0; i < FS_MAXPATH; i++)
+		for (auto & pszPath : pszPaths)
 		{
-			D2Lib::strncpyz(szPath, pszPaths[i], MAX_D2PATH_ABSOLUTE);
+			D2Lib::strncpyz(szPath, pszPath, MAX_D2PATH_ABSOLUTE);
 			strcat(szPath, szSubdirectory);
 			if (Sys::CreateDirectory(szPath))
 			{

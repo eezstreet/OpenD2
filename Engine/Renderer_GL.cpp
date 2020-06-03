@@ -1,6 +1,5 @@
 #include "Renderer_GL.hpp"
 #include <GL/glew.h>
-#include <GL/freeglut.h>
 #include "DC6.hpp"
 #include "Logging.hpp"
 

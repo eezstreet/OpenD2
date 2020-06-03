@@ -19,11 +19,11 @@ private:
 	font_handle font;
 	sfx_handle clickedSound;
 public:
-	D2Widget_Button(int x, int y, char* szDC6Path, char* szButtonType,
+	D2Widget_Button(int x, int y, const char *szDC6Path, const char *szButtonType,
 		DWORD dwStartEnabled, DWORD dwEndEnabled,
 		DWORD dwStartDown, DWORD dwEndDown, 
 		DWORD dwStartDisabled, DWORD dwEndDisabled);
-	virtual ~D2Widget_Button();
+	~D2Widget_Button() override;
 
 	void AttachText(char16_t* text);
 	void DetachText();
@@ -36,9 +36,9 @@ public:
 
 	void SetFont(font_handle newFont) { font = newFont; }
 
-	virtual void Draw();
-	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
-	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY);
+	void Draw() override;
+	bool HandleMouseDown(DWORD dwX, DWORD dwY) override;
+	bool HandleMouseClick(DWORD dwX, DWORD dwY) override;
 
 	tex_handle texture;
 };

@@ -1,7 +1,7 @@
 #include "../Shared/D2Packets.hpp"
 #include "Diablo2.hpp"
 #include "Logging.hpp"
-#include "../Libraries/sdl/SDL_net.h"
+#include <SDL2_net/SDL_net.h>
 
 #define MAX_PACKET_SIZE	512
 
@@ -21,13 +21,13 @@ namespace Network
 	static SDLNet_SocketSet gServerSocketSet;
 	static SDLNet_SocketSet gClientSocketSet;
 	static TCPsocket gServerSocket;
-	static TCPsocket gServerPlayerSockets[MAX_PLAYERS_REAL]{ 0 };
-	static bool gbServerSocketsInUse[MAX_PLAYERS_REAL]{ 0 };
+	static TCPsocket gServerPlayerSockets[MAX_PLAYERS_REAL]{};
+	static bool gbServerSocketsInUse[MAX_PLAYERS_REAL]{};
 	static bool gbClientConnected = false;	// whether or not the client is connected to a server
 	static bool gbServerRunning = false;	// whether or not the server is listening
 	static TCPsocket gClientSocket;
-	static char gszPacketReadBuffer[MAX_PACKET_SIZE]{ 0 };
-	static char gszPacketWriteBuffer[MAX_PACKET_SIZE]{ 0 };
+	static unsigned char gszPacketReadBuffer[MAX_PACKET_SIZE]{};
+	static unsigned char gszPacketWriteBuffer[MAX_PACKET_SIZE]{};
 	static DWORD gdwMaxAllowedPlayers = 0;
 
 	/*
@@ -206,7 +206,7 @@ namespace Network
 	 */
 	void SetMaxPlayerCount(DWORD dwNewPlayerCount)
 	{
-		D2Packet termConnection;
+		D2Packet termConnection{};
 		termConnection.nPacketType = D2SPACKET_CONNECTIONTERM;
 
 		// Cap the values to be things which aren't extreme
@@ -242,7 +242,7 @@ namespace Network
 	 *	@author Mewgood
 	 *	@note	This does not include the size of the compression header.
 	 */
-	size_t GetCompressedPacketSize(char* pPacket, size_t& rtHeaderSize)
+	size_t GetCompressedPacketSize(unsigned char* pPacket, size_t& rtHeaderSize)
 	{
 		if (pPacket[0] < 0xF0)
 		{	// Upper 4 bits unoccupied = 1 byte header
@@ -251,16 +251,16 @@ namespace Network
 		}
 		// Upper 4 bits occupied = mask the amount
 		rtHeaderSize = 2;
-		return ((pPacket[0] & 0xF0) << 8) + pPacket[1] - 2;
+		return ((pPacket[0] & 0xF0u) << 8u) + pPacket[1] - 2;
 	}
 
 	/*
 	 *	Decompresses a single packet.
 	 *	@author	Mewgood/eezstreet
 	 */
-	char* DecompressPacket(unsigned char* pPacket, size_t dwPacketCompressedSize, size_t& rtPacketDecompressedSize)
+	unsigned char* DecompressPacket(unsigned char* pPacket, size_t dwPacketCompressedSize, size_t& rtPacketDecompressedSize)
 	{
-		static char gszDecompressedPacket[MAX_PACKET_SIZE]{ 0 };
+		static unsigned char gszDecompressedPacket[MAX_PACKET_SIZE]{ 0 };
 		unsigned int count = 0x20;
 		unsigned int a, b, c, d;
 		unsigned int index;
@@ -280,7 +280,7 @@ namespace Network
 				b |= a;
 			}
 
-			index = gpnIndexTable[b >> 0x18];
+			index = gpnIndexTable[b >> 0x18u];
 			a = gpnCharacterTable[index];
 			d = (b >> (0x18 - a)) & gpnBitMasks[a];
 			c = gpnCharacterTable[index + 2 * d + 2];
@@ -288,13 +288,13 @@ namespace Network
 			count += c;
 			if (count > 0x20)
 			{
-				return gszDecompressedPacket;
+				break;
 			}
 
 			a = gpnCharacterTable[index + 2 * d + 1];
 			gszDecompressedPacket[rtPacketDecompressedSize++] = (char)a;
 
-			b <<= (c & 0xFF);
+			b <<= (c & 0xFFu);
 		}
 
 		return gszDecompressedPacket;
@@ -309,7 +309,7 @@ namespace Network
 	{
 		DWORD dwInitialTime = SDL_GetTicks();
 		DWORD dwEndTime;
-		DWORD dwOffset = 0;
+		size_t dwOffset = 0;
 		int nNumActiveSockets;
 
 		if (!gbClientConnected)
@@ -334,15 +334,15 @@ namespace Network
 				{
 					// Peek at the current byte
 					BYTE nPacketType = gszPacketReadBuffer[dwOffset];
-					char* packet;
+					unsigned char* packet;
 					size_t packetLen, realPacketLen;
-					D2Packet inPacket;
+					D2Packet inPacket{};
 
 					// Decompress the packet, if necessary.
 					if (gnServerCompression & NETFLAG_COMPRESSION)
 					{
 						size_t headerLen;
-						
+
 						// Get the number of bytes that we need to fetch. We need the header, as well as the trailing data.
 						packetLen = GetCompressedPacketSize(&gszPacketReadBuffer[dwOffset], headerLen);
 						if (nThisCycle < packetLen + headerLen)
@@ -392,6 +392,8 @@ namespace Network
 							case D2SPACKET_UNCOMPRESSED:
 								gnServerCompression = 0;
 								break;
+                            default:
+                                break;
 						}
 
 						ClientProcessPacket(&inPacket);
@@ -459,7 +461,7 @@ namespace Network
 					// ... and then promptly tell them to go away
 					if (temp)
 					{
-						D2Packet termPacket;
+						D2Packet termPacket{};
 						termPacket.nPacketType = D2SPACKET_CONNECTIONTERM;
 						SendAnonymousServerPacket(temp, &termPacket);
 						SDLNet_TCP_Close(temp);
@@ -470,7 +472,7 @@ namespace Network
 			// Loop through each client socket now to see if there's been any activity
 			for (int i = 0; i < gdwMaxAllowedPlayers; i++)
 			{
-				DWORD dwOffset = 0;
+				size_t dwOffset = 0;
 				while (SDLNet_SocketReady(gServerPlayerSockets[i]))
 				{
 					// Read up to the max packet size
@@ -481,7 +483,7 @@ namespace Network
 					{
 						// Peek at the current byte
 						BYTE nPacketType = gszPacketReadBuffer[dwOffset];
-						D2Packet packet;
+						D2Packet packet{};
 						size_t packetLen = packet.ReadServer(gszPacketReadBuffer + dwOffset, nThisCycle - dwOffset);
 
 						if (packetLen == 0)
@@ -646,14 +648,14 @@ namespace Network
 		}
 
 		// Remove the client sockets, one by one
-		for (int i = 0; i < MAX_PLAYERS_REAL; i++)
+		for (auto & gServerPlayerSocket : gServerPlayerSockets)
 		{
-			if (gServerPlayerSockets[i] != nullptr)
+			if (gServerPlayerSocket != nullptr)
 			{
-				SDLNet_DelSocket(gServerSocketSet, (SDLNet_GenericSocket)gServerPlayerSockets[i]);
+				SDLNet_DelSocket(gServerSocketSet, (SDLNet_GenericSocket)gServerPlayerSocket);
 				// FIXME: tell clients that the server has been disconnected?
-				SDLNet_TCP_Close(gServerPlayerSockets[i]);
-				gServerPlayerSockets[i] = nullptr;
+				SDLNet_TCP_Close(gServerPlayerSocket);
+				gServerPlayerSocket = nullptr;
 			}
 		}
 
@@ -670,10 +672,10 @@ namespace Network
 		SDLNet_Init();
 
 		gServerSocketSet = SDLNet_AllocSocketSet(MAX_PLAYERS_REAL + 1);
-		Log_ErrorAssert(gServerSocketSet != nullptr);
+		Log_ErrorAssert(gServerSocketSet != nullptr)
 
 		gClientSocketSet = SDLNet_AllocSocketSet(1);
-		Log_ErrorAssert(gClientSocketSet != nullptr);
+		Log_ErrorAssert(gClientSocketSet != nullptr)
 	}
 
 	/*

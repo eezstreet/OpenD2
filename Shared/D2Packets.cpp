@@ -14,7 +14,7 @@
  *	Read a packet from the client, on the server.
  *	@author	eezstreet
  */
-size_t D2Packet::ReadServer(char* buffer, size_t bufferSize)
+size_t D2Packet::ReadServer(unsigned char *buffer, size_t bufferSize)
 {
 	size_t dwAmount = 1;
 	if (!bufferSize)
@@ -43,7 +43,7 @@ size_t D2Packet::ReadServer(char* buffer, size_t bufferSize)
  *	Read a packet from the server, on the client.
  *	@author	eezstreet
  */
-size_t D2Packet::ReadClient(char* buffer, size_t bufferSize)
+size_t D2Packet::ReadClient(unsigned char *buffer, size_t bufferSize)
 {
 	size_t dwAmount = 1;
 	if (!bufferSize)
@@ -91,7 +91,7 @@ size_t D2Packet::ReadClient(char* buffer, size_t bufferSize)
  *	Write a packet to the client.
  *	@author	eezstreet
  */
-size_t D2Packet::WriteServer(char* buffer, size_t bufferSize)
+size_t D2Packet::WriteServer(unsigned char *buffer, size_t bufferSize)
 {
 	size_t dwAmount = 1;
 	if (!bufferSize)
@@ -132,7 +132,7 @@ size_t D2Packet::WriteServer(char* buffer, size_t bufferSize)
  *	@author	eezstreet
  */
 
-size_t D2Packet::WriteClient(char* buffer, size_t bufferSize)
+size_t D2Packet::WriteClient(unsigned char *buffer, size_t bufferSize)
 {
 	size_t dwPacketDataSize = 0;
 	size_t dwAmount = 1;
@@ -179,7 +179,7 @@ size_t D2Packet::WriteClient(char* buffer, size_t bufferSize)
 		*(DWORD*)(buffer + dwAmount) = packetData.ClientRemoteJoinRequest.dwVersion;
 		dwAmount += 4;
 		buffer[dwAmount++] = packetData.ClientRemoteJoinRequest.nLocale;
-		D2Lib::strncpyz(buffer + dwAmount, packetData.ClientRemoteJoinRequest.szCharName, 16);
+		D2Lib::strncpyz((char *)buffer + dwAmount, packetData.ClientRemoteJoinRequest.szCharName, 16);
 		dwAmount += 16;
 		break;
 	case D2CPACKET_PING:

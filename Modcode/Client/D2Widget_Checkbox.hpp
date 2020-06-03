@@ -13,14 +13,14 @@ private:
 	bool m_bChecked;
 public:
 	D2Widget_Checkbox(int x, int y, bool bStartChecked);
-	virtual ~D2Widget_Checkbox();
+	~D2Widget_Checkbox() override;
 
-	bool IsChecked() { return m_bChecked; }
+	bool IsChecked() const { return m_bChecked; }
 
 	void AttachLabel(char16_t* szText);
 	void RemoveLabel();
 
-	virtual bool HandleMouseDown(DWORD dwX, DWORD dwY);
-	virtual bool HandleMouseClick(DWORD dwX, DWORD dwY);
-	virtual void Draw();
+	bool HandleMouseDown(DWORD dwX, DWORD dwY) override;
+	bool HandleMouseClick(DWORD dwX, DWORD dwY) override;
+	void Draw() override;
 };

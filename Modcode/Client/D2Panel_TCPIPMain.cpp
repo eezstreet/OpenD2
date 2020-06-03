@@ -2,8 +2,8 @@
 #include "D2Menu_OtherMultiplayer.hpp"
 #include "D2Menu_TCPIP.hpp"
 
-#define MAIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\3WideButtonBlank.dc6"
-#define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
+#define MAIN_BUTTON_DC6			"data/global/ui/FrontEnd/3WideButtonBlank.dc6"
+#define SMALL_BUTTON_DC6		"data/global/ui/FrontEnd/MediumButtonBlank.dc6"
 
 #define TBLTEXT_HOSTGAME		5118
 #define TBLTEXT_JOINGAME		5119
@@ -94,7 +94,7 @@ void D2Panel_TCPIPMain::PanelSignal(D2Panel* pCallingPanel, D2Widget* pCallingWi
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_join"))
 	{
-		D2Menu_TCPIP* pMenu = (D2Menu_TCPIP*)cl.pActiveMenu;
+		auto* pMenu = (D2Menu_TCPIP*)cl.pActiveMenu;
 		pMenu->ShowJoinSubmenu(true);
 	}
 	else if (!D2Lib::stricmp(pCallingWidget->GetIdentifier(), "b_cancel"))

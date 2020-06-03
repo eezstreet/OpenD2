@@ -17,7 +17,7 @@ private:
 	D2Widget_CharSelectList*	charSelectList;
 public:
 	D2Panel_CharSelect();
-	virtual ~D2Panel_CharSelect();
+	~D2Panel_CharSelect() override;
 
 	void LoadSave(D2SaveHeader& pSaveHeader, char* path);
 	void InvalidateSelection();
@@ -26,7 +26,7 @@ public:
 
 	void AssignSelectedSave();
 
-	virtual void Draw();
+	void Draw() override;
 };
 
 // This panel pops up to verify if we want to delete the character
@@ -40,7 +40,7 @@ private:
 
 public:
 	D2Panel_CharDeleteConfirm();
-	~D2Panel_CharDeleteConfirm();
+	~D2Panel_CharDeleteConfirm() override;
 
-	virtual void Draw();
+	void Draw() override;
 };

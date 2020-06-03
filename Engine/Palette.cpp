@@ -40,23 +40,23 @@ namespace Pal
 	};
 
 	static D2PaletteEntry D2Palettes[PAL_MAX_PALETTES] = {
-		{ "data\\global\\palette\\ACT1\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT2\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT3\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT4\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ACT5\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\ENDGAME\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\FECHAR\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\LOADING\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU0\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU1\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU2\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU3\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\MENU4\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\SKY\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\STATIC\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\TRADEMARK\\pal.dat",{ 0 } },
-		{ "data\\global\\palette\\UNITS\\pal.dat",{ 0 } },
+		{ "data/global/palette/ACT1/pal.dat",{ 0 } },
+		{ "data/global/palette/ACT2/pal.dat",{ 0 } },
+		{ "data/global/palette/ACT3/pal.dat",{ 0 } },
+		{ "data/global/palette/ACT4/pal.dat",{ 0 } },
+		{ "data/global/palette/ACT5/pal.dat",{ 0 } },
+		{ "data/global/palette/ENDGAME/pal.dat",{ 0 } },
+		{ "data/global/palette/FECHAR/pal.dat",{ 0 } },
+		{ "data/global/palette/LOADING/pal.dat",{ 0 } },
+		{ "data/global/palette/MENU0/pal.dat",{ 0 } },
+		{ "data/global/palette/MENU1/pal.dat",{ 0 } },
+		{ "data/global/palette/MENU2/pal.dat",{ 0 } },
+		{ "data/global/palette/MENU3/pal.dat",{ 0 } },
+		{ "data/global/palette/MENU4/pal.dat",{ 0 } },
+		{ "data/global/palette/SKY/pal.dat",{ 0 } },
+		{ "data/global/palette/STATIC/pal.dat",{ 0 } },
+		{ "data/global/palette/TRADEMARK/pal.dat",{ 0 } },
+		{ "data/global/palette/UNITS/pal.dat",{ 0 } },
 	};
 
 	/*
@@ -70,7 +70,7 @@ namespace Pal
 		}
 
 		fs_handle f;
-		DWORD dwPaletteSize = FS::Open(szPalettePath, &f, FS_READ, true);
+		size_t dwPaletteSize = FS::Open(szPalettePath, &f, FS_READ, true);
 		if (f == INVALID_HANDLE)
 		{	// Couldn't register palette
 			return false;
@@ -94,9 +94,9 @@ namespace Pal
 	 */
 	bool Init()
 	{
-		for (int i = 0; i < PAL_MAX_PALETTES; i++)
+		for (auto & D2Palette : D2Palettes)
 		{
-			D2PaletteEntry* pEntry = &D2Palettes[i];
+			D2PaletteEntry* pEntry = &D2Palette;
 			if (!RegisterPalette(pEntry->szPath, &pEntry->pal))
 			{
 				return false;

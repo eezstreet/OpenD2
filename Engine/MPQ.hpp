@@ -10,28 +10,28 @@
  */
 
  // Compression types for multiple compressions
-#define MPQ_COMPRESSION_HUFFMANN          0x01  // Huffmann compression (used on WAVE files only)
-#define MPQ_COMPRESSION_PKWARE            0x08  // PKWARE DCL compression
-#define MPQ_COMPRESSION_ADPCM_MONO        0x40  // IMA ADPCM compression (mono)
-#define MPQ_COMPRESSION_ADPCM_STEREO      0x80  // IMA ADPCM compression (stereo)
-#define MPQ_COMPRESSION_NEXT_SAME   0xFFFFFFFF  // Same compression
+#define MPQ_COMPRESSION_HUFFMANN          0x01u  // Huffmann compression (used on WAVE files only)
+#define MPQ_COMPRESSION_PKWARE            0x08u  // PKWARE DCL compression
+#define MPQ_COMPRESSION_ADPCM_MONO        0x40u  // IMA ADPCM compression (mono)
+#define MPQ_COMPRESSION_ADPCM_STEREO      0x80u  // IMA ADPCM compression (stereo)
+#define MPQ_COMPRESSION_NEXT_SAME   0xFFFFFFFFu  // Same compression
 
-#define MPQ_FILE_IMPLODE            0x00000100  // Implode method (By PKWARE Data Compression Library)
-#define MPQ_FILE_COMPRESS           0x00000200  // Compress methods (By multiple methods)
-#define MPQ_FILE_ENCRYPTED          0x00010000  // Indicates whether file is encrypted 
-#define MPQ_FILE_FIX_KEY            0x00020000  // File decryption key has to be fixed
-#define MPQ_FILE_PATCH_FILE         0x00100000  // The file is a patch file. Raw file data begin with TPatchInfo structure
-#define MPQ_FILE_SINGLE_UNIT        0x01000000  // File is stored as a single unit, not sectors
-#define MPQ_FILE_DELETE_MARKER      0x02000000  // File is a deletion marker.
-#define MPQ_FILE_SECTOR_CRC         0x04000000  // File has checksums for each sector.
+#define MPQ_FILE_IMPLODE            0x00000100u  // Implode method (By PKWARE Data Compression Library)
+#define MPQ_FILE_COMPRESS           0x00000200u  // Compress methods (By multiple methods)
+#define MPQ_FILE_ENCRYPTED          0x00010000u  // Indicates whether file is encrypted
+#define MPQ_FILE_FIX_KEY            0x00020000u  // File decryption key has to be fixed
+#define MPQ_FILE_PATCH_FILE         0x00100000u  // The file is a patch file. Raw file data begin with TPatchInfo structure
+#define MPQ_FILE_SINGLE_UNIT        0x01000000u  // File is stored as a single unit, not sectors
+#define MPQ_FILE_DELETE_MARKER      0x02000000u  // File is a deletion marker.
+#define MPQ_FILE_SECTOR_CRC         0x04000000u  // File has checksums for each sector.
  // Ignored if file is not compressed or imploded.
-#define MPQ_FILE_SIGNATURE          0x10000000  // Present on STANDARD.SNP\(signature). The only occurence ever observed
-#define MPQ_FILE_EXISTS             0x80000000  // Set if file exists, reset when the file was deleted
-#define MPQ_FILE_REPLACEEXISTING    0x80000000  // Replace when the file exist (SFileAddFile)
+#define MPQ_FILE_SIGNATURE          0x10000000u  // Present on STANDARD.SNP\(signature). The only occurence ever observed
+#define MPQ_FILE_EXISTS             0x80000000u  // Set if file exists, reset when the file was deleted
+#define MPQ_FILE_REPLACEEXISTING    0x80000000u  // Replace when the file exist (SFileAddFile)
 
-#define MPQ_FILE_COMPRESS_MASK      0x0000FF00  // Mask for a file being compressed
+#define MPQ_FILE_COMPRESS_MASK      0x0000FF00u  // Mask for a file being compressed
 
-#define MPQ_FILE_DEFAULT_INTERNAL   0xFFFFFFFF  // Use default flags for internal files
+#define MPQ_FILE_DEFAULT_INTERNAL   0xFFFFFFFFu  // Use default flags for internal files
 
 #define MPQ_FILE_VALID_FLAGS     (MPQ_FILE_IMPLODE       |  \
                                   MPQ_FILE_COMPRESS      |  \
@@ -44,9 +44,9 @@
                                   MPQ_FILE_SIGNATURE     |  \
                                   MPQ_FILE_EXISTS)
 
- // Decryption keys for MPQ tables - thanks Zezula
-#define MPQ_KEY_HASH_TABLE          0xC3AF3770  // Obtained by HashString("(hash table)", MPQ_HASH_FILE_KEY)
-#define MPQ_KEY_BLOCK_TABLE         0xEC83B3A3  // Obtained by HashString("(block table)", MPQ_HASH_FILE_KEY)
+// Decryption keys for MPQ tables - thanks Zezula
+#define MPQ_KEY_HASH_TABLE          0xC3AF3770u  // Obtained by HashString("(hash table)", MPQ_HASH_FILE_KEY)
+#define MPQ_KEY_BLOCK_TABLE         0xEC83B3A3u  // Obtained by HashString("(block table)", MPQ_HASH_FILE_KEY)
 
 #pragma pack(push,enter_include)
 #pragma pack(1)
@@ -105,10 +105,10 @@ struct D2MPQArchive
 // MPQ.cpp
 namespace MPQ
 {
-	void OpenMPQ(char* szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
+	void OpenMPQ(const char *szMPQPath, const char* szMPQName, D2MPQArchive* pMPQ);
 	void CloseMPQ(D2MPQArchive* pMPQ);
 	fs_handle FetchHandle(D2MPQArchive* pMPQ, const char* szFileName);
 	size_t FileSize(D2MPQArchive* pMPQ, fs_handle fFile);
-	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, DWORD dwBufferLen);
+	size_t ReadFile(D2MPQArchive* pMPQ, fs_handle fFile, BYTE* buffer, size_t dwBufferLen);
 	void Cleanup();
 }

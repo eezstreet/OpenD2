@@ -18,14 +18,14 @@ struct CharacterTitle {
 #define TITLE_NOGENDER_EXP(x)	{x, x}, {x, x}, {x, x}, {x, x}, {x, x}
 
 // Mappings for the class token
-static char* gszClassTokens[D2CLASS_MAX] = {
+static const char* gszClassTokens[D2CLASS_MAX] = {
 	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
 };
 
 static const CharacterTitle TitleStatus_Classic[] =
 {
 	// Normal uncompleted = Nothing
-	TITLE_NOGENDER(0),
+	TITLE_NOGENDER(nullptr),
 
 	// Normal completed = "Sir" or "Dame"
 	TITLE_BIGENDER(u"Sir", u"Dame"),
@@ -40,7 +40,7 @@ static const CharacterTitle TitleStatus_Classic[] =
 static const CharacterTitle TitleStatus_ClassicHardcore[] =
 {
 	// Normal uncompleted = Nothing
-	TITLE_NOGENDER(0),
+	TITLE_NOGENDER(nullptr),
 
 	// Normal completed = "Count" or "Countess"
 	TITLE_BIGENDER(u"Count", u"Countess"),
@@ -55,7 +55,7 @@ static const CharacterTitle TitleStatus_ClassicHardcore[] =
 static const CharacterTitle TitleStatus_Expansion[] =
 {
 	// Normal uncompleted = Nothing
-	TITLE_NOGENDER_EXP(0),
+	TITLE_NOGENDER_EXP(nullptr),
 
 	// Normal completed = "Slayer"
 	TITLE_NOGENDER_EXP(u"Slayer"),
@@ -70,7 +70,7 @@ static const CharacterTitle TitleStatus_Expansion[] =
 static const CharacterTitle TitleStatus_ExpansionHardcore[] =
 {
 	// Normal uncompleted = Nothing
-	TITLE_NOGENDER_EXP(0),
+	TITLE_NOGENDER_EXP(nullptr),
 
 	// Normal completed = "Destroyer"
 	TITLE_NOGENDER_EXP(u"Destroyer"),
@@ -99,9 +99,9 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
 
-	frameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectbox.dc6", 
+	frameHandle = engine->renderer->TextureFromStitchedDC6("data/global/ui/CharSelect/charselectbox.dc6",
 		"charselectbox", 0, 1, PAL_UNITS);
-	greyFrameHandle = engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6",
+	greyFrameHandle = engine->renderer->TextureFromStitchedDC6("data/global/ui/CharSelect/charselectboxgrey.dc6",
 		"charselectboxgrey", 0, 1, PAL_UNITS);
 	engine->renderer->SetTextureBlendMode(frameHandle, BLEND_ALPHA);
 	engine->renderer->SetTextureBlendMode(greyFrameHandle, BLEND_ALPHA);
@@ -132,7 +132,7 @@ D2Widget_CharSelectList::~D2Widget_CharSelectList()
 void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 {
 	// Allocate a character save entry
-	CharacterSaveData* pSaveData = (CharacterSaveData*)malloc(sizeof(CharacterSaveData));
+	auto* pSaveData = (CharacterSaveData*)malloc(sizeof(CharacterSaveData));
 
 	// Copy the path, name, and header data
 	D2Lib::strncpyz(pSaveData->path, path, MAX_D2PATH_ABSOLUTE);
@@ -213,8 +213,8 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// If this save slot is the selected one, draw the frame
 	if (nCurrentSelection == nSlot)
 	{
-		if ((pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE)) &&
-			(pSaveData->header.nCharStatus & (1 << D2STATUS_DEAD)))
+		if ((pSaveData->header.nCharStatus & (1u << D2STATUS_HARDCORE)) &&
+			(pSaveData->header.nCharStatus & (1u << D2STATUS_DEAD)))
 		{
 			// Dead hardcore player gets a grey frame
 			engine->renderer->DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
@@ -238,7 +238,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 
 	// Draw character title. The title corresponds to the number of acts completed. EXCEPT IN THE EXPANSION
 	// Set font color to be gold. Or red if this is a hardcore character.
-	if (pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE))
+	if (pSaveData->header.nCharStatus & (1u << D2STATUS_HARDCORE))
 	{
 		engine->renderer->ColorModFont(cl.font16, 186, 102, 100);
 	}
@@ -246,10 +246,10 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	{
 		engine->renderer->ColorModFont(cl.font16, 171, 156, 135);
 	}
-	
-	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
+
+	if (pSaveData->header.nCharStatus & (1u << D2STATUS_EXPANSION))
 	{
-		if (pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE))
+		if (pSaveData->header.nCharStatus & (1u << D2STATUS_HARDCORE))
 		{
 			// Pull from the Expansion-Hardcore table
 			szCharacterTitle = bClassMale ?
@@ -264,7 +264,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 				TitleStatus_Expansion[pSaveData->header.nCharTitle].femaleTitle;
 		}
 	}
-	else if (pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE))
+	else if (pSaveData->header.nCharStatus & (1u << D2STATUS_HARDCORE))
 	{
 		// Pull from the Classic-Hardcore table
 		szCharacterTitle = bClassMale ?
@@ -303,7 +303,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	nY += 15;
 
 	// Draw whether this is an expansion character
-	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
+	if (pSaveData->header.nCharStatus & (1u << D2STATUS_EXPANSION))
 	{
 		engine->renderer->ColorModFont(cl.font16, 65, 200, 50);
 		engine->renderer->DrawText(cl.font16, engine->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
@@ -325,7 +325,7 @@ char16_t* D2Widget_CharSelectList::GetSelectedCharacterName()
 
 	if (nCurrentSelection == -1)
 	{
-		return u"";
+		return (char16_t *)"";
 	}
 
 	while (i != nCurrentSelection && pCharacterSave != nullptr)
@@ -339,7 +339,7 @@ char16_t* D2Widget_CharSelectList::GetSelectedCharacterName()
 		return pCharacterSave->name;
 	}
 
-	return u"";
+        return (char16_t *)"";
 }
 
 /*
@@ -347,11 +347,7 @@ char16_t* D2Widget_CharSelectList::GetSelectedCharacterName()
  */
 bool D2Widget_CharSelectList::HandleMouseDown(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h)
-	{
-		return true;
-	}
-	return false;
+        return dwX >= x && dwX <= x + w && dwY >= y && dwY <= y + h;
 }
 
 /*

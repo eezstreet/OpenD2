@@ -6,6 +6,6 @@ namespace FSMPQ
 {
 	void Init();
 	void Shutdown();
-	D2MPQArchive* AddSearchPath(char* szMPQName, char* szMPQPath);
+	D2MPQArchive* AddSearchPath(const char *szMPQName, const char *szMPQPath);
 	fs_handle FindFile(const char* szFileName, const char* szMPQName, D2MPQArchive** pArchiveOut);
 }

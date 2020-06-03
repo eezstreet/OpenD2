@@ -13,13 +13,13 @@ private:
 	D2Panel_CharSelect* m_charSelectPanel;
 	D2Panel_CharDeleteConfirm* m_charDeletePanel;
 public:
-	D2Menu_CharSelect(char** pszSavePaths = nullptr, int nNumFiles = 0);
-	virtual ~D2Menu_CharSelect();
+	explicit D2Menu_CharSelect(char** pszSavePaths = nullptr, int nNumFiles = 0);
+	~D2Menu_CharSelect() override;
 
 	void AskForDeletionConfirmation();
 	void DeleteConfirmed();
 	void DeleteCanceled();
 
-	bool CharacterChosen();
-	virtual void Draw();
+        bool CharacterChosen();
+	void Draw() override;
 };

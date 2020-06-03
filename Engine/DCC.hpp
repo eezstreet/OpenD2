@@ -24,8 +24,8 @@ struct DCCFrame
 	DWORD			dwVariable0;
 	DWORD			dwWidth;
 	DWORD			dwHeight;
-	long			nXOffset;
-	long			nYOffset;
+	unsigned long	nXOffset;
+	unsigned long	nYOffset;
 	DWORD			dwOptionalBytes;
 	DWORD			dwCodedBytes;
 	DWORD			dwFlipped;
@@ -85,7 +85,7 @@ struct DCCDirection
 
 	//////////////////////////////////
 	//	Functions to make our lives a bit easier
-	void RewindAllStreams()
+	void RewindAllStreams() const
 	{
 		if (EqualCellStream) { EqualCellStream->Rewind(); }
 		if (PixelMaskStream) { PixelMaskStream->Rewind(); }
@@ -102,7 +102,7 @@ struct DCCFile
 	DCCDirection	directions[MAX_DIRECTIONS];
 
 	// Other stuff used by OpenD2
-	DWORD			dwFileSize;
+	size_t 			dwFileSize;
 	BYTE*			pFileBytes;
 };
 
@@ -130,5 +130,5 @@ namespace DCC
 	void FreeInactive();
 	void FreeByName(char* name);
 	void FreeAll();
-	DWORD GetCellCount(int pos, int& sz);
+	DWORD GetCellCount(unsigned int pos, int& sz);
 };

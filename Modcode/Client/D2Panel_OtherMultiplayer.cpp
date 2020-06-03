@@ -2,7 +2,7 @@
 #include "D2Menu_Main.hpp"
 #include "D2Menu_TCPIP.hpp"
 
-#define MAIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\3WideButtonBlank.dc6"
+#define MAIN_BUTTON_DC6			"data/global/ui/FrontEnd/3WideButtonBlank.dc6"
 
 #define TBLTEXT_OPENBNET		5115
 #define TBLTEXT_TCPIP			5116

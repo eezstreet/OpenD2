@@ -11,8 +11,8 @@ class LRUQueueItem
 public:
 	LRUQueueItem(handle i, int d) { itemHandle = i; nDirection = d; pNext = pPrev = nullptr; }
 
-	handle GetHandle() { return itemHandle; }
-	int GetDirection() { return nDirection; }
+	handle GetHandle() const { return itemHandle; }
+	int GetDirection() const { return nDirection; }
 
 	LRUQueueItem* pNext;
 	LRUQueueItem* pPrev;
@@ -87,7 +87,7 @@ private:
 	}
 
 public:
-	LRUQueue(DWORD dwInitialQueueSize)
+	explicit LRUQueue(DWORD dwInitialQueueSize)
 	{
 		dwHitCount = dwMissCount = dwQueryCount = dwInUseCount = 0;
 		dwLRUSize = dwInitialQueueSize;

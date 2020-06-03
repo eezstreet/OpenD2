@@ -14,7 +14,7 @@ namespace DCC
 		int			useCount;
 	};
 
-	static DCCHash DCCHashTable[MAX_DCC_HASH]{ 0 };
+	static DCCHash DCCHashTable[MAX_DCC_HASH]{ nullptr };
 	static int gnNumHashesUsed = 0;
 
 	static const BYTE gdwDCCBitTable[] = {
@@ -92,14 +92,14 @@ namespace DCC
 		memset(&frame, 0, sizeof(DCCFrame));
 
 #define ReadHeaderBits(x, y)	if(y != 0) pBits->ReadBits((DWORD*)&x, y);
-		ReadHeaderBits(frame.dwVariable0, direction.nVar0Bits);
-		ReadHeaderBits(frame.dwWidth, direction.nWidthBits);
-		ReadHeaderBits(frame.dwHeight, direction.nHeightBits);
-		ReadHeaderBits(frame.nXOffset, direction.nXOffsetBits);
-		ReadHeaderBits(frame.nYOffset, direction.nYOffsetBits);
-		ReadHeaderBits(*frame.pOptionalByteData, frame.dwOptionalBytes);
-		ReadHeaderBits(frame.dwCodedBytes, direction.nCodedBytesBits);
-		ReadHeaderBits(frame.dwFlipped, 1);
+		ReadHeaderBits(frame.dwVariable0, direction.nVar0Bits)
+		ReadHeaderBits(frame.dwWidth, direction.nWidthBits)
+		ReadHeaderBits(frame.dwHeight, direction.nHeightBits)
+		ReadHeaderBits(frame.nXOffset, direction.nXOffsetBits)
+		ReadHeaderBits(frame.nYOffset, direction.nYOffsetBits)
+		ReadHeaderBits(*frame.pOptionalByteData, frame.dwOptionalBytes)
+		ReadHeaderBits(frame.dwCodedBytes, direction.nCodedBytesBits)
+		ReadHeaderBits(frame.dwFlipped, 1)
 #undef ReadHeaderBits
 
 		pBits->ConvertFormat(&frame.nXOffset, direction.nXOffsetBits);
@@ -154,7 +154,7 @@ namespace DCC
 		dir.RawPixelStream = nullptr;
 		dir.PixelCodeDisplacementStream = nullptr;
 
-		if (dir.nCompressionFlag & 0x02)
+		if (dir.nCompressionFlag & 0x02u)
 		{
 			dir.EqualCellStream = new Bitstream();
 			dir.EqualCellStream->SplitFrom(pBits, dir.dwEqualCellStreamSize);
@@ -164,7 +164,7 @@ namespace DCC
 		dir.PixelMaskStream = new Bitstream();
 		dir.PixelMaskStream->SplitFrom(pBits, dir.dwPixelMaskStreamSize);
 
-		if (dir.nCompressionFlag & 0x01)
+		if (dir.nCompressionFlag & 0x01u)
 		{
 			dir.EncodingTypeStream = new Bitstream();
 			dir.RawPixelStream = new Bitstream();	// Corresponds to `RawColors` in SVR's code
@@ -182,18 +182,18 @@ namespace DCC
 	*	Is responsible for the actual reading of the DCC, from an fs_handle and a hash entry pointer.
 	*	@author	eezstreet
 	*/
-	void Read(DCCHash& dcc, fs_handle fileHandle, DWORD fileSize)
+	void Read(DCCHash& dcc, fs_handle fileHandle, size_t fileSize)
 	{
 		Bitstream* pBits;
 		int i, j;
 
 		// Allocate memory for everything
 		dcc.pFile = (DCCFile*)malloc(sizeof(DCCFile));
-		Log_ErrorAssert(dcc.pFile);
+		Log_ErrorAssert(dcc.pFile)
 
 		dcc.pFile->dwFileSize = fileSize;
 		dcc.pFile->pFileBytes = (BYTE*)malloc(dcc.pFile->dwFileSize);
-		Log_ErrorAssert(dcc.pFile->pFileBytes);
+		Log_ErrorAssert(dcc.pFile->pFileBytes)
 
 		// Read into filebytes.
 		FS::Read(fileHandle, dcc.pFile->pFileBytes, dcc.pFile->dwFileSize);
@@ -249,12 +249,12 @@ namespace DCC
 			}
 
 			// Read size for the pixel bitstreams
-			if (dir.nCompressionFlag & 0x02)
+			if (dir.nCompressionFlag & 0x02u)
 			{
 				pBits->ReadBits(dir.dwEqualCellStreamSize, 20);
 			}
 			pBits->ReadBits(dir.dwPixelMaskStreamSize, 20);
-			if (dir.nCompressionFlag & 0x01)
+			if (dir.nCompressionFlag & 0x01u)
 			{
 				pBits->ReadBits(dir.dwEncodingStreamSize, 20);
 				pBits->ReadBits(dir.dwRawPixelStreamSize, 20);
@@ -297,7 +297,7 @@ namespace DCC
 
 		// Make sure that the file actually exists first before we start poking the hash table.
 		// That way, we can root out issues of not finding DCCs immediately
-		DWORD fileSize = FS::Open(szPath, &fileHandle, FS_READ, true);
+		size_t fileSize = FS::Open(szPath, &fileHandle, FS_READ, true);
 		if (fileHandle == INVALID_HANDLE)
 		{
 			Log::Print(PRIORITY_DEBUG, "Couldn't load DCC file: %s (%s)\n", szPath, szName);
@@ -475,10 +475,10 @@ namespace DCC
 	*	Get the number of cells in a direction
 	*	@author	SVR
 	*/
-	DWORD GetCellCount(int pos, int& sz)
+	DWORD GetCellCount(unsigned int pos, int& sz)
 	{
 		int nCells = 0;
-		int first = (4 - (pos & 3));	// calc size of first cell
+		unsigned int first = (4u - (pos & 3u));	// calc size of first cell
 
 		if (sz <= (first + 1))	// not crossing boundry (by 2 or more)
 			return 1;	// only one cell with size 5 or less

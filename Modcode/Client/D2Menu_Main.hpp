@@ -15,7 +15,7 @@ private:
 
 public:
 	D2Menu_Main();
-	virtual ~D2Menu_Main();
+	~D2Menu_Main() override;
 
-	virtual void Draw();
+	void Draw() override;
 };

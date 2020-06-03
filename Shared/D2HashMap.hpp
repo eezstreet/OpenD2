@@ -35,7 +35,7 @@ private:
 
 	const void Copy(char16_t* dest, const char16_t* src, const int destLen)
 	{
-		return D2Lib::qstrncpyz(dest, src, destLen);
+                D2Lib::qstrncpyz(dest, src, destLen);
 	}
 public:
 	HashMap()

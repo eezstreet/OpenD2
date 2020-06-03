@@ -8,13 +8,13 @@ D2Menu_OtherMultiplayer::D2Menu_OtherMultiplayer() : D2Menu()
 {
 	// Copied from the Main Menu
 	tex_handle flameLeftTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
+		engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoFireLeft.dc6", "flameleft", PAL_UNITS);
 	tex_handle flameRightTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoFireRight.dc6", "flameright", PAL_UNITS);
+		engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoFireRight.dc6", "flameright", PAL_UNITS);
 	tex_handle blackLeftTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoBlackLeft.dc6", "blackleft", PAL_UNITS);
+		engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoBlackLeft.dc6", "blackleft", PAL_UNITS);
 	tex_handle blackRightTex =
-		engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\D2LogoBlackRight.dc6", "blackright", PAL_UNITS);
+		engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/D2LogoBlackRight.dc6", "blackright", PAL_UNITS);
 
 	engine->renderer->SetTextureBlendMode(flameLeftTex, BLEND_ADD);
 	engine->renderer->SetTextureBlendMode(flameRightTex, BLEND_ADD);
@@ -28,10 +28,10 @@ D2Menu_OtherMultiplayer::D2Menu_OtherMultiplayer() : D2Menu()
 
 #ifdef EXPANSION
 	backgroundTexture =
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6", "mainbg", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/gameselectscreenEXP.dc6", "mainbg", 0, 11, PAL_UNITS);
 #else
 	backgroundTexture =
-		engine->renderer->TextureFromStitchedDC6("data\\global\\ui\\FrontEnd\\gameselectscreen.dc6", "mainbg", 0, 11, PAL_UNITS);
+		engine->renderer->TextureFromStitchedDC6("data/global/ui/FrontEnd/gameselectscreen.dc6", "mainbg", 0, 11, PAL_UNITS);
 #endif
 
 	m_panel = new D2Panel_OtherMultiplayer();

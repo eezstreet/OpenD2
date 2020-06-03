@@ -189,7 +189,7 @@ namespace ClientPacket
 		// FIXME: ?
 		fs_handle f;
 		size_t fileSize, remainder, chunks;
-		D2Packet packet;
+		D2Packet packet{};
 
 		cl.bValidatedSave = true;
 

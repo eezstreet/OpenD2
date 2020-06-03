@@ -609,7 +609,7 @@ static void RB_DrawText(SDLCommand* pCmd)
 	DWORD dwTextWidth = 0;
 	DWORD dwTextHeight = 0;
 	SDLFontCacheItem* pCache;
-	char c;
+	char16_t c;
 	size_t len;
 	DWORD dwOffsetX = 0, dwOffsetY = 0;
 
@@ -629,7 +629,7 @@ static void RB_DrawText(SDLCommand* pCmd)
 		{
 			TBLFontGlyph* pGlyph;
 
-			c = (char)pCmd->DrawText.text[i];
+			c = pCmd->DrawText.text[i];
 			if (c >= 256 || c < 0)
 			{
 				continue;
@@ -1117,9 +1117,9 @@ Renderer_SDL::Renderer_SDL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenC
 Renderer_SDL::~Renderer_SDL()
 {
 	// Free palettes
-	for (int i = 0; i < PAL_MAX_PALETTES; i++)
+	for (auto & i : PaletteCache)
 	{
-		SDL_FreePalette(PaletteCache[i].pPal);
+		SDL_FreePalette(i.pPal);
 	}
 
 	SDL_DestroyTexture(gpRenderTexture);
@@ -1669,7 +1669,7 @@ font_handle Renderer_SDL::RegisterFont(const char * fontName)
 	D2Lib::strncpyz(pCache->szHandleName, fontName, 32);
 
 	// Load the DC6 file
-	snprintf(filename, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.dc6", GAME_CHARSET, fontName);
+	snprintf(filename, MAX_D2PATH, "data/local/FONT/%s/%s.dc6", GAME_CHARSET, fontName);
 	DC6::LoadImage(filename, &pCache->dc6[0]);
 
 	// Create the big surface that we need to blit into

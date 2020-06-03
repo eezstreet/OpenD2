@@ -29,7 +29,7 @@ namespace COF
 	*	Type can either be: "chars", "monsters", or "objects"
 	*	@author	eezstreet
 	*/
-	cof_handle Register(char* type, char* token, char* animation, char* hitclass)
+	cof_handle Register(const char *type, const char *token, const char *animation, const char *hitclass)
 	{
 		char path[MAX_D2PATH]{ 0 };
 		char cof[MAX_COFFILE_NAMELEN]{ 0 };
@@ -40,10 +40,10 @@ namespace COF
 		int i;
 
 		// Make sure we aren't hitting the maximum size of the hash table
-		Log_ErrorAssertReturn(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE);
+		Log_ErrorAssertReturn(nCOFHashUsed < MAX_COF_HASHLEN, INVALID_HANDLE)
 
 		snprintf(cof, MAX_COFFILE_NAMELEN, "%s%s%s.cof", token, animation, hitclass);
-		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\COF\\%s", type, token, cof);
+		snprintf(path, MAX_D2PATH, "data/global/%s/%s/COF/%s", type, token, cof);
 
 		// Try and load the COF first because it's possible we could be wasting time with the below code
 		dwFileSize = FS::Open(path, &file, FS_READ, true);
@@ -77,7 +77,7 @@ namespace COF
 		D2Lib::strncpyz(pHash->szCOFType, type, MAX_COF_TYPELEN);
 
 		pHash->pCOFContents = (BYTE*)malloc(dwFileSize);
-		Log_ErrorAssertReturn(pHash->pCOFContents != nullptr, INVALID_HANDLE);
+		Log_ErrorAssertReturn(pHash->pCOFContents != nullptr, INVALID_HANDLE)
 
 		FS::Read(file, pHash->pCOFContents, dwFileSize);
 		FS::CloseFile(file);
@@ -94,7 +94,7 @@ namespace COF
 		pHash->pFile->dwLayersPresent = 0;
 		for (i = 0; i < pHash->pFile->header.nLayers; i++)
 		{
-			pHash->pFile->dwLayersPresent |= (1 << pHash->pFile->layers[i].nComponent);
+			pHash->pFile->dwLayersPresent |= (1u << pHash->pFile->layers[i].nComponent);
 		}
 
 		return outHandle;

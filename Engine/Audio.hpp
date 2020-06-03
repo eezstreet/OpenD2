@@ -1,14 +1,12 @@
 #pragma once
 
-#include "../Shared/D2Shared.hpp"
-
 // Audio.cpp
 namespace Audio
 {
 	void Init(OpenD2ConfigStrc* openconfig);
 	void Shutdown();
-	sfx_handle RegisterSound(char* szAudioFile);
-	mus_handle RegisterMusic(char* szAudioFile);
+	sfx_handle RegisterSound(const char *szAudioFile);
+	mus_handle RegisterMusic(const char *szAudioFile);
 	void PlaySound(sfx_handle handle, int loops);
 	void PlayMusic(mus_handle handle, int loops);
 	void PauseAudio();

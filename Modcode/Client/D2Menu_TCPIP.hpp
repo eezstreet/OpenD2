@@ -15,8 +15,8 @@ private:
 	D2Panel_TCPIPMain* m_mainMenu;
 public:
 	D2Menu_TCPIP();
-	virtual ~D2Menu_TCPIP();
-	virtual void Draw();
+	~D2Menu_TCPIP() override;
+	void Draw() override;
 
 	void ShowJoinSubmenu(bool bShow);
 };

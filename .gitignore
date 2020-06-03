@@ -1,52 +1,9 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-
-# Executables
-*.exe
-*.out
-*.app
-
 # Projects
-Build/*
-Win32/*
-game.dir/*
-D2Client.dir/*
-D2Common.dir/*
-D2Game.dir/*
-D2[0-9][0-9][0-9][0-9][0-9][0-9].txt
+.idea
+.vs
+
+# Game files
 D2.ini
-game
 
 # CMake
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
+cmake-*

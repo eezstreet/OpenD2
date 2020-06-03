@@ -14,7 +14,7 @@ D2Widget_Checkbox::D2Widget_Checkbox(int _x, int _y, bool bStartChecked) : D2Wid
 	m_bChecked = bStartChecked;
 	m_bHasLabel = false;
 
-	checkboxTex = engine->renderer->TextureFromAnimatedDC6("data\\global\\ui\\FrontEnd\\clickbox.dc6", "clickbox", PAL_FECHAR);
+	checkboxTex = engine->renderer->TextureFromAnimatedDC6("data/global/ui/FrontEnd/clickbox.dc6", "clickbox", PAL_FECHAR);
 	checkboxAnim = engine->renderer->RegisterDC6Animation(checkboxTex, "clickbox", 0);
 }
 
@@ -68,11 +68,8 @@ void D2Widget_Checkbox::RemoveLabel()
  */
 bool D2Widget_Checkbox::HandleMouseDown(DWORD dwX, DWORD dwY)
 {
-	if (dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w && dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h)
-	{
-		return true;
-	}
-	return false;
+         return dwX >= m_pOwner->x + x && dwX <= m_pOwner->x + x + w &&
+             dwY >= m_pOwner->y + y && dwY <= m_pOwner->y + y + h;
 }
 
 /*

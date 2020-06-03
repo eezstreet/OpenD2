@@ -24,7 +24,7 @@ namespace TBLFont
 		fs_handle file;
 		tbl_handle current = gLastUsedIndex;
 
-		snprintf(szFilePath, MAX_D2PATH, "data\\local\\FONT\\%s\\%s.tbl", GAME_CHARSET, szFontName);
+		snprintf(szFilePath, MAX_D2PATH, "data/local/FONT/%s/%s.tbl", GAME_CHARSET, szFontName);
 
 		FS::Open(szFilePath, &file, FS_READ, true);
 		FS::Read(file, (BYTE*)&FontTable[gLastUsedIndex], sizeof(TBLFontFile));

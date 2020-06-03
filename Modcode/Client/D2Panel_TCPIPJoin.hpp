@@ -14,7 +14,7 @@ private:
 	D2Widget_TextEntry* m_ipEntry;
 public:
 	D2Panel_TCPIPJoin();
-	virtual ~D2Panel_TCPIPJoin();
-	virtual void Draw();
+	~D2Panel_TCPIPJoin() override;
+	void Draw() override;
 	char16_t* GetEnteredIP();
 };

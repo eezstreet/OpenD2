@@ -1,5 +1,4 @@
 #include "D2Panel_CharCreate.hpp"
-#include "D2Menu_Main.hpp"
 #include "D2Menu_Loading.hpp"
 #include "D2Menu_CharCreate.hpp"
 #include "D2Menu_CharSelect.hpp"
@@ -14,7 +13,7 @@
  */
 static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
 {
-	D2Menu_CharCreate* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
+	auto* pMenu = dynamic_cast<D2Menu_CharCreate*>(cl.pActiveMenu);
 
 	if (!D2Lib::stricmp(pCallerWidget->GetIdentifier(), "cc_cancel"))
 	{

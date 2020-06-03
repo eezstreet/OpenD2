@@ -1,8 +1,7 @@
 #include "D2Shared.hpp"
-#include <cstdio>
 #include <cstdarg>
-#include <string>
-#include <time.h>
+#include <random>
+#include <ctime>
 
 namespace D2Lib
 {
@@ -13,7 +12,7 @@ namespace D2Lib
 	/*
 	*	Compares two strings for case-insensitive equality, with a limited length.
 	*/
-	int stricmpn(const char* s1, const char* s2, int n)
+	int stricmpn(const char* s1, const char* s2, size_t n)
 	{
 		int		c1, c2;
 
@@ -55,19 +54,9 @@ namespace D2Lib
 	/*
 	*	Safe strncpy that assures a null terminator has been placed
 	*/
-	void strncpyz(char *dest, const char *src, int destsize)
+	void strncpyz(char *dest, const char *src, size_t destsize)
 	{
-		if (!dest)
-		{
-			return;
-		}
-
-		if (!src)
-		{
-			return;
-		}
-
-		if (destsize < 1)
+		if (!dest || !src || destsize < 1)
 		{
 			return;
 		}
@@ -98,7 +87,7 @@ namespace D2Lib
 		for (int i = 0; i < dwLen; i++)
 		{
 			c = szString[i];
-			hash = c + (hash << 6) + (hash << 16) - hash;
+			hash = c + (hash << 6u) + (hash << 16u) - hash;
 		}
 
 		return hash % dwMaxHashSize;
@@ -144,7 +133,7 @@ namespace D2Lib
 	char* fnext(char* szFileName)
 	{
 		char* szCurrent = szFileName;
-		while (szCurrent != '\0' && strchr(szCurrent + 1, '.') != nullptr)
+		while (*szCurrent != '\0' && strchr(szCurrent + 1, '.') != nullptr)
 		{
 			szCurrent++;
 		}
@@ -286,7 +275,7 @@ namespace D2Lib
 	size_t qstrlen(const char16_t* s1)
 	{
 		size_t len = 0;
-		char16_t* s2 = (char16_t*)s1;
+		auto* s2 = (char16_t*)s1;
 		while (*s2++) len++;
 		return len;
 	}
@@ -390,9 +379,9 @@ namespace D2Lib
 	*	Pared-down format string handling. Only supports %%, %d and %s, but it uses char16_t to handle those.
 	*	@author	eezstreet
 	*/
-	int qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args)
+    size_t qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args)
 	{
-		char16_t* p = (char16_t*)format;
+		auto* p = (char16_t*)format;
 		char16_t* next = qstrchr(p, '%');
 		char16_t* o = buffer;
 		size_t rem = bufferCount;
@@ -446,10 +435,10 @@ namespace D2Lib
 	*	Pared-down format string handling. Only supports %%, %d and %s, but uses char16_t to handle those.
 	*	@author	eezstreet
 	*/
-	int qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...)
+	size_t qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...)
 	{
 		va_list args;
-		int out;
+		size_t out;
 
 		va_start(args, format);
 		out = qvsnprintf(buffer, bufferCount, format, args);
@@ -500,21 +489,21 @@ namespace D2Lib
 	*	Hashes a char16_t. Based on SVR's code. Compatible with TBL files for lookup.
 	*	Note that this uses a different algorithm than D2Lib::strhash.
 	*/
-	DWORD qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize)
+	DWORD qstrhash(const char16_t *str, size_t dwLen, DWORD dwMaxHashSize)
 	{
 		DWORD hash = 0;
-		char16_t curChar;
+		auto *curChar = (char16_t *)(str);
 		DWORD carry;
 
-		while (curChar = *str++)
+		while (curChar++)
 		{
 			hash *= 0x10;
-			hash += curChar;
-			carry = hash & 0xF0000000;
+			hash += *curChar;
+			carry = hash & 0xF0000000u;
 			if (carry != 0)
 			{
-				carry /= 0x01000000;
-				hash &= 0x0FFFFFFF;
+				carry /= 0x01000000u;
+				hash &= 0x0FFFFFFFu;
 				hash ^= carry;
 			}
 		}
@@ -548,8 +537,11 @@ namespace D2Lib
 	*/
 	DWORD rand()
 	{
-		::srand(time(nullptr));
-		return ::rand();
+        std::random_device rd;  // Will be used to obtain a seed for the random number engine
+        std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+        std::uniform_int_distribution<DWORD> distribution;
+
+		return distribution(gen);
 	}
 
 	/*

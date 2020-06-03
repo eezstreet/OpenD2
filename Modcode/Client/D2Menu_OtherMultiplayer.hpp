@@ -14,7 +14,7 @@ private:
 	D2Panel_OtherMultiplayer* m_panel;
 public:
 	D2Menu_OtherMultiplayer();
-	virtual ~D2Menu_OtherMultiplayer();
+	~D2Menu_OtherMultiplayer() override;
 
-	virtual void Draw();
+	void Draw() override;
 };

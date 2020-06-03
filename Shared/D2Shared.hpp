@@ -3,7 +3,6 @@
 #include <memory>
 #include <inttypes.h>
 #include <stdlib.h>
-#include <uchar.h>
 #include <stdarg.h>
 #include <string.h>
 #include <limits.h>
@@ -70,7 +69,7 @@
 #define D2IMPORT	__declspec(dllimport)
 #else
 #define NL "\n"
-#define D2EXPORT	__attribute__((visibility("default")))
+#define D2EXPORT
 #define D2IMPORT
 #define __cdecl
 #endif
@@ -91,10 +90,10 @@ typedef unsigned short		WORD;
 typedef unsigned char		BYTE;
 #endif
 
-#define LOWORD(_dw)     ((WORD)(((DWORD*)(_dw)) & 0xffff))
-#define HIWORD(_dw)     ((WORD)((((DWORD*)(_dw)) >> 16) & 0xffff))
+#define LOWORD(_dw)     ((WORD)(((DWORD*)(_dw)) & 0xffffu))
+#define HIWORD(_dw)     ((WORD)((((DWORD*)(_dw)) >> 16u) & 0xffffu))
 #define LODWORD(_qw)    ((DWORD)(_qw))
-#define HIDWORD(_qw)    ((DWORD)(((_qw) >> 32) & 0xffffffff))
+#define HIDWORD(_qw)    ((DWORD)(((_qw) >> 32u) & 0xffffffffu))
 
 #define INVALID_HANDLE (handle)-1
 #define SEED_MAGIC		666	// Little known fact...Diablo II encodes the top 4 bytes of a seed with 666. Clearly an evil game.
@@ -262,10 +261,10 @@ enum D2InputModifiers
 
 enum D2CharacterStatus
 {
-	D2STATUS_NEWBIE = 0,
-	D2STATUS_HARDCORE = 2,
-	D2STATUS_DEAD = 3,
-	D2STATUS_EXPANSION = 5,
+	D2STATUS_NEWBIE = 0u,
+	D2STATUS_HARDCORE = 2u,
+	D2STATUS_DEAD = 3u,
+	D2STATUS_EXPANSION = 5u,
 };
 
 enum D2CharacterClass
@@ -594,6 +593,7 @@ class IRenderer
 {
 public:
 	//
+    virtual ~IRenderer() {};
 	virtual void Present() = 0;
 
 	//
@@ -621,7 +621,7 @@ public:
 	virtual font_handle RegisterFont(const char* fontName) = 0;
 	virtual void DeregisterFont(font_handle font) = 0;
 	virtual void DrawText(font_handle font, const char16_t* text, int x, int y, int w, int h,
-		D2TextAlignment alignHorz, D2TextAlignment alignVert) = 0;
+	D2TextAlignment alignHorz, D2TextAlignment alignVert) = 0;
 
 	//
 	virtual void AlphaModTexture(tex_handle texture, int alpha) = 0;
@@ -672,9 +672,9 @@ struct D2ModuleImportStrc
 	void			(*FS_CloseFile)(fs_handle f);
 	void			(*FS_Seek)(fs_handle f, size_t dwOffset, int nSeekType);
 	size_t			(*FS_Tell)(fs_handle f);
-	char**			(*FS_ListFilesInDirectory)(char* szDirectory, char* szExtensionFilter, int *nFiles);
+	char**			(*FS_ListFilesInDirectory)(const char* szDirectory, const char* szExtensionFilter, int *nFiles);
 	void			(*FS_FreeFileList)(char** pszFileList, int nNumFiles);
-	void			(*FS_CreateSubdirectory)(char* szSubdirectory);
+	void			(*FS_CreateSubdirectory)(const char* szSubdirectory);
 
 	// Network subsystem calls
 	void			(*NET_SendServerPacket)(int nClientMask, D2Packet* pPacket);
@@ -692,20 +692,20 @@ struct D2ModuleImportStrc
 	void			(*In_StopTextEditing)();
 
 	// TBL calls
-	tbl_handle		(*TBL_Register)(char* szTBLFile);
+	tbl_handle		(*TBL_Register)(const char* szTBLFile);
 	char16_t*		(*TBL_FindStringFromIndex)(tbl_handle dwIndex);
 	tbl_handle		(*TBL_FindStringIndexFromKey)(tbl_handle tbl, char16_t* szReference);
 	char16_t*		(*TBL_FindStringFromText)(char16_t* szReference);
 
 	// Token calls (TODO: Make part of the modcode, not part of the engine)
-	token_handle	(*TOK_Register)(D2TokenType type, char* tokenName, char* szWeaponClass);
+	token_handle	(*TOK_Register)(D2TokenType type, const char* tokenName, const char* szWeaponClass);
 	void			(*TOK_Deregister)(token_handle token);
 
 	// Token instance calls (TODO: Make part of the modcode, not part of the engine)
 	anim_handle		(*TOK_CreateTokenAnimInstance)(token_handle token);
 	void			(*TOK_SwapTokenAnimToken)(anim_handle handle, token_handle newhandle);
 	void			(*TOK_DestroyTokenInstance)(anim_handle handle);
-	void			(*TOK_SetTokenInstanceComponent)(anim_handle handle, int componentNum, char* componentName);
+	void			(*TOK_SetTokenInstanceComponent)(anim_handle handle, int componentNum, const char* componentName);
 	char*			(*TOK_GetTokenInstanceComponent)(anim_handle handle, int component);
 	void			(*TOK_SetTokenInstanceFrame)(anim_handle handle, int frameNum);
 	int				(*TOK_GetTokenInstanceFrame)(anim_handle handle);
@@ -715,8 +715,8 @@ struct D2ModuleImportStrc
 	void			(*TOK_SetTokenInstanceDirection)(anim_handle handle, int dirNum);
 
 	// Audio calls
-	sfx_handle		(*S_RegisterSound)(char* szAudioFile);
-	mus_handle		(*S_RegisterMusic)(char* szAudioFile);
+	sfx_handle		(*S_RegisterSound)(const char* szAudioFile);
+	mus_handle		(*S_RegisterMusic)(const char* szAudioFile);
 	void			(*S_PlaySound)(sfx_handle handle, int loops);
 	void			(*S_PlayMusic)(mus_handle handle, int loops);
 	void			(*S_PauseAudio)();
@@ -744,9 +744,9 @@ typedef D2EXPORT D2ModuleExportStrc* (*GetAPIType)(D2ModuleImportStrc* pImports)
 namespace D2Lib
 {
 	// String Management - ASCII
-	int stricmpn(const char* s1, const char* s2, int n);
+	int stricmpn(const char* s1, const char* s2, size_t n);
 	int stricmp(const char* s1, const char* s2);
-	void strncpyz(char *dest, const char *src, int destsize);
+	void strncpyz(char *dest, const char *src, size_t destsize);
 	DWORD strhash(const char* szString, size_t dwLen, size_t dwMaxHashSize);
 
 	// File name management
@@ -768,9 +768,9 @@ namespace D2Lib
 	void qstrverse(char16_t* s, int start, size_t len);
 	char16_t* qnitoa(int number, char16_t* buffer, size_t bufferLen, int base, size_t& written);
 	char16_t* qstrchr(char16_t* str, char16_t chr);
-	int qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);
-	int qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...);
-	DWORD qstrhash(char16_t* str, size_t dwLen, DWORD dwMaxHashSize);
+	size_t qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args);
+	size_t qsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, ...);
+	DWORD qstrhash(const char16_t *str, size_t dwLen, DWORD dwMaxHashSize);
 
 	// Random Numbers
 	DWORD rand();
@@ -786,20 +786,12 @@ namespace D2Lib
 	template <typename T>
 	T min(T a, T b)
 	{
-		if (a < b)
-		{
-			return a;
-		}
-		return b;
+		return (a < b) ? a : b;
 	}
 
 	template <typename T>
 	T max(T a, T b)
 	{
-		if (a > b)
-		{
-			return a;
-		}
-		return b;
+		return (a > b) ? a : b;
 	}
 };
