@@ -99,8 +99,9 @@ typedef unsigned char		BYTE;
 #define INVALID_HANDLE (handle)-1
 #define SEED_MAGIC		666	// Little known fact...Diablo II encodes the top 4 bytes of a seed with 666. Clearly an evil game.
 
-#define MAX_DIRECTIONS	32	// 32 directions per DCC
-#define MAX_FRAMES		256	// 256 frames per direction
+#define MAX_DIRECTIONS	32		// 32 directions per DCC (FIXME, rename this!!)
+#define ALL_DIRECTIONS  0xFF	// Sentinel value, this represents all directions
+#define MAX_FRAMES		256		// 256 frames per direction
 
 #define INVALID_COMPONENT	"xxx"
 
@@ -638,18 +639,20 @@ class ITokenReference;
 class IGraphicsManager
 {
 public:
+	// Create a reference to a graphics file.
 	virtual IGraphicsReference* CreateReference(const char* graphicsFile,
 			GraphicsUsagePolicy policy) = 0;
 
-	virtual void DeleteReference(IGraphicsReference* graphic) = 0;
-
-	virtual IGraphicsReference* LoadFont(const char* fontGraphic,
-		const char* fontTBL) = 0;
-
+	// Create a reference to a token.
 	virtual ITokenReference* CreateReference(const D2TokenType& tokenType,
 		const char* tokenName) = 0;
 
+	// Delete references.
+	virtual void DeleteReference(IGraphicsReference* graphic) = 0;
 	virtual void DeleteReference(ITokenReference* token) = 0;
+
+	virtual IGraphicsReference* LoadFont(const char* fontGraphic,
+		const char* fontTBL) = 0;
 };
 
 /**
@@ -743,7 +746,7 @@ public:
 
 	// Token-specific calls
 	virtual void SetTokenMode(int newMode) = 0;
-	virtual void SetTokenArmorLevel(int component, int armorLevel) = 0;
+	virtual void SetTokenArmorLevel(int component, const char* armorLevel) = 0;
 	virtual void SetTokenHitClass(int hitclass) = 0;
 
 };
@@ -811,23 +814,6 @@ struct D2ModuleImportStrc
 
 	// Palette calls
 	bool			(*PAL_GetPL2ColorModulation)(int palette, int color, float& R, float& G, float& B);
-
-	// Token calls (TODO: Make part of the modcode, not part of the engine)
-	token_handle	(*TOK_Register)(D2TokenType type, char* tokenName, char* szWeaponClass);
-	void			(*TOK_Deregister)(token_handle token);
-
-	// Token instance calls (TODO: Make part of the modcode, not part of the engine)
-	anim_handle		(*TOK_CreateTokenAnimInstance)(token_handle token);
-	void			(*TOK_SwapTokenAnimToken)(anim_handle handle, token_handle newhandle);
-	void			(*TOK_DestroyTokenInstance)(anim_handle handle);
-	void			(*TOK_SetTokenInstanceComponent)(anim_handle handle, int componentNum, char* componentName);
-	char*			(*TOK_GetTokenInstanceComponent)(anim_handle handle, int component);
-	void			(*TOK_SetTokenInstanceFrame)(anim_handle handle, int frameNum);
-	int				(*TOK_GetTokenInstanceFrame)(anim_handle handle);
-	char*			(*TOK_GetTokenInstanceWeaponClass)(anim_handle handle);
-	void			(*TOK_SetInstanceActive)(anim_handle handle, bool bNewActive);
-	void			(*TOK_SetTokenInstanceMode)(anim_handle handle, int modeNum);
-	void			(*TOK_SetTokenInstanceDirection)(anim_handle handle, int dirNum);
 
 	// Audio calls
 	sfx_handle		(*S_RegisterSound)(char* szAudioFile);

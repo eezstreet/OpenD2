@@ -71,8 +71,151 @@ void GLRenderObject::Draw()
 	glRenderer->AddToRenderQueue(this);
 }
 
+void GLRenderObject::PrerenderDrawMode(int mode)
+{
+	switch (mode)
+	{
+	case 0:
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		break;
+	case 1:
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		break;
+	case 2:
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		break;
+	case 3:
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
+		break;
+	case 4:
+		glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+		break;
+	default:
+	case 5:
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		break;
+	case 6:
+		glBlendFunc(GL_SRC_COLOR, GL_ONE);
+		break;
+	case 7:
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		break;
+	}
+}
+
 void GLRenderObject::Render()
 {
+	if (objectType == RO_Token)
+	{
+		// Tokens are rendered differently from most other objects because they use multiple components
+		ITokenReference* token = data.tokenData.attachedTokenResource;
+		if (!token)
+		{
+			return;
+		}
+
+		// Set uniforms ahead of time
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, global_palette_texture);
+		glUniform1i(uniform_ui_texture, 0);
+		glUniform1i(uniform_ui_globalpal, 1);
+		glUniform1i(uniform_ui_globalPaletteNum, global_palette);
+		glUniform4fv(uniform_ui_colorModulate, 1, colorModulate);
+
+		PrerenderDrawMode(drawMode);
+
+		int mode = data.tokenData.currentMode;
+		int direction = data.tokenData.direction;
+		int hitclass = data.tokenData.hitClass;
+		uint16_t frame = data.tokenData.currentFrame;
+
+		for (int i = 0; i < COMP_MAX; i++)
+		{
+			const char* armorType = data.tokenData.armorType[i];
+
+			if (!token->HasComponentForMode(i, hitclass, mode))
+			{	// If this token lacks this component, don't draw it
+				continue;
+			}
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+			// What we really need is to get the animation resource for the component,
+			// and stream in its texture...
+			IGraphicsReference* component = token->GetTokenGraphic(i, hitclass, mode, armorType);
+			GLuint texture;
+
+			if (component->AreGraphicsLoaded(direction))
+			{
+				// they're loaded, just get them
+				texture = (GLuint)component->GetLoadedGraphicsData(direction);
+			}
+			else
+			{
+				// not loaded, get it!
+				component->SetDirectionCount(token->GetNumberOfDirections(mode, hitclass));
+				texture = (GLuint)component->LoadSingleDirection(direction,
+					/*                  animation allocate callback               */
+					[](unsigned int directionWidth, unsigned int directionHeight) -> void* {
+						GLuint returnResult;
+
+						glActiveTexture(GL_TEXTURE0);
+						glGenTextures(1, &returnResult);
+						glBindTexture(GL_TEXTURE_2D, returnResult);
+						glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, directionWidth, directionHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+						return (void*)returnResult;
+					},
+					/*                  frame decode callback               */
+						[](void* pixels, void* extraData, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+						GLuint texture = (GLuint)extraData;
+
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, texture);
+						glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+							GL_UNSIGNED_BYTE, pixels);
+				});
+				component->SetLoadedGraphicsData((void*)texture, -1, direction);
+			}
+			
+			// Bind the texture for the component
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture);
+
+			// Determine where to draw the texture
+			uint32_t x, y, w, h, frameWidth, frameHeight;
+			int32_t offsetX, offsetY;
+			component->GetGraphicsData(nullptr, frame, &frameWidth, &frameHeight, &offsetX, &offsetY);
+			component->GetAtlasInfo(frame, &x, &y, &w, &h, direction);
+			textureCoord[0] = (x) / (float)w;
+			textureCoord[1] = (y) / (float)h;
+			textureCoord[2] = frameWidth / (float)w;
+			textureCoord[3] = frameHeight / (float)h;
+
+			GLfloat drawCoords[] = {
+				screenCoord[0] + offsetX,
+				screenCoord[1] + 400 - frameHeight + offsetY,
+				frameWidth,
+				frameHeight - 1
+			};
+
+			// Set GPU variables and draw it!
+			glUniform4fv(uniform_ui_drawPosition, 1, drawCoords);
+			glUniform4fv(uniform_ui_textureCoords, 1, textureCoord);
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+
+		// FIXME: set draw bounds
+		return;
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glActiveTexture(GL_TEXTURE1);
@@ -82,34 +225,7 @@ void GLRenderObject::Render()
 	glUniform1i(uniform_ui_globalPaletteNum, global_palette);
 	glUniform4fv(uniform_ui_colorModulate, 1, colorModulate);
 
-	switch (drawMode)
-	{
-		case 0:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 1:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 2:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 3:
-			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_COLOR);
-			break;
-		case 4:
-			glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		default:
-		case 5:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-		case 6:
-			glBlendFunc(GL_SRC_COLOR, GL_ONE);
-			break;
-		case 7:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			break;
-	}
+	PrerenderDrawMode(drawMode);
 
 	if (objectType == RO_Animated)
 	{
@@ -348,7 +464,7 @@ void GLRenderObject::AttachCompositeTextureResource(IGraphicsReference* handle,
 
 		if(startFrame == 0 && endFrame == -1)
 		{
-			handle->SetLoadedGraphicsData((void*)texture, -1);
+			handle->SetLoadedGraphicsData((void*)texture);
 		}
 	}
 }
@@ -402,7 +518,7 @@ void GLRenderObject::AttachAnimationResource(IGraphicsReference* handle, bool bR
 		);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-		handle->SetLoadedGraphicsData((void*)texture, -1);
+		handle->SetLoadedGraphicsData((void*)texture);
 	}
 }
 
@@ -449,12 +565,10 @@ void GLRenderObject::AttachFontResource(IGraphicsReference* handle)
 			[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
 			glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
 				GL_UNSIGNED_BYTE, pixels);
-
-		}
-		);
+		});
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-		handle->SetLoadedGraphicsData((void*)texture, -1);
+		handle->SetLoadedGraphicsData((void*)texture);
 	}
 }
 
@@ -671,11 +785,11 @@ void GLRenderObject::SetTokenMode(int newMode)
 	}
 }
 
-void GLRenderObject::SetTokenArmorLevel(int component, int armorLevel)
+void GLRenderObject::SetTokenArmorLevel(int component, const char* armorLevel)
 {
 	if (objectType == RO_Token)
 	{
-		data.tokenData.armorType[component] = armorLevel;
+		D2Lib::strncpyz(data.tokenData.armorType[component], armorLevel, 4);
 	}
 }
 

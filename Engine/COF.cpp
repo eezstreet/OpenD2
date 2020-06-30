@@ -29,7 +29,7 @@ namespace COF
 	*	Type can either be: "chars", "monsters", or "objects"
 	*	@author	eezstreet
 	*/
-	cof_handle Register(char* type, char* token, char* animation, char* hitclass)
+	cof_handle Register(const char* type, const char* token, const char* animation, const char* hitclass)
 	{
 		char path[MAX_D2PATH]{ 0 };
 		char cof[MAX_COFFILE_NAMELEN]{ 0 };

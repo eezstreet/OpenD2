@@ -5,6 +5,10 @@
 #include "Palette.hpp"
 #include "Renderer.hpp"
 
+typedef void (*AtlassingCallback)(void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH);
+typedef void* (*AnimTextureAllocCallback)(unsigned int directionWidth, unsigned int directionHeight);
+typedef void (*AnimTextureDecodeCallback)(void* pixels, void* extraData, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH);
+
 /**
  *	GraphicsLRU is responsible for keeping track of temporary graphics.
  */
@@ -16,13 +20,23 @@ public:
 };
 
 /**
- *	IGraphicsHandle is just a generic interface for handling various graphic formats in D2.
+ *	IGraphicsReference is just a generic interface for handling various graphic formats in D2.
  */
 class IGraphicsReference
 {
 protected:
-	void* loadedGraphicsData;
-	bool bAreGraphicsLoaded;
+	union
+	{
+		void* loadedGraphicsData;
+		void* loadedGraphicsForDirection[MAX_DIRECTIONS * 2]; // FIXME
+	};
+	union
+	{
+		bool bAreGraphicsLoaded;
+		bool bAreGraphicsLoadedForDirection[MAX_DIRECTIONS * 2];
+	};
+
+	int directionCount;
 	GraphicsUsagePolicy usagePolicy;
 	int loadedGraphicsFrame;
 
@@ -35,25 +49,36 @@ public:
 		usagePolicy = policy;
 		bAreGraphicsLoaded = false;
 		loadedGraphicsData = nullptr;
+		directionCount = -1;
 	}
-
 
 	/**
 	 *	Returns true if the graphics have been fully loaded.
 	 */
-	virtual bool AreGraphicsLoaded()
+	virtual bool AreGraphicsLoaded(int direction = -1)
 	{
-		return bAreGraphicsLoaded;
+		if (direction == -1)
+		{
+			return bAreGraphicsLoaded;
+		}
+		return bAreGraphicsLoadedForDirection[direction];
 	}
 
 	/**
 	 *	Returns the loaded graphics data.
 	 */
-	virtual void* GetLoadedGraphicsData()
+	virtual void* GetLoadedGraphicsData(int direction = -1)
 	{
-		if(bAreGraphicsLoaded)
+		if (direction == -1)
 		{
-			return loadedGraphicsData;
+			if (bAreGraphicsLoaded)
+			{
+				return loadedGraphicsData;
+			}
+		}
+		else
+		{
+			return loadedGraphicsForDirection[direction];
 		}
 		return nullptr;
 	}
@@ -61,11 +86,28 @@ public:
 	/**
 	 *	Removes the unloaded graphics data
 	 */
-	virtual void UnloadGraphicsData()
+	virtual void UnloadGraphicsData(int direction = ALL_DIRECTIONS)
 	{
-		if (bAreGraphicsLoaded)
+		if (direction == -1 || directionCount == -1)
 		{
-			RenderTarget->DeleteLoadedGraphicsData(loadedGraphicsData, this);
+			if (bAreGraphicsLoaded)
+			{
+				RenderTarget->DeleteLoadedGraphicsData(loadedGraphicsData, this);
+			}
+		}
+		else if (direction == ALL_DIRECTIONS)
+		{
+			for (int i = 0; i < directionCount; i++)
+			{
+				if (bAreGraphicsLoadedForDirection[i])
+				{
+					RenderTarget->DeleteLoadedGraphicsData(loadedGraphicsForDirection[i], this);
+				}
+			}
+		}
+		else if(bAreGraphicsLoadedForDirection[direction])
+		{
+			RenderTarget->DeleteLoadedGraphicsData(loadedGraphicsForDirection[direction], this);
 		}
 	}
 
@@ -80,11 +122,20 @@ public:
 	/**
 	 *	Sets the loaded graphics handle.
 	 */
-	virtual void SetLoadedGraphicsData(void* data, int _loadedGraphicsFrame)
+	virtual void SetLoadedGraphicsData(void* data, int _loadedGraphicsFrame = -1, int direction = -1)
 	{
-		loadedGraphicsData = data;
 		loadedGraphicsFrame = _loadedGraphicsFrame;
-		bAreGraphicsLoaded = true;
+
+		if (direction != -1 && directionCount != -1 && direction < directionCount)
+		{
+			loadedGraphicsForDirection[direction] = data;
+			bAreGraphicsLoadedForDirection[direction] = true;
+		}
+		else
+		{
+			loadedGraphicsData = data;
+			bAreGraphicsLoaded = true;
+		}
 	}
 
 	/**
@@ -106,9 +157,9 @@ public:
 	 *	@param height     Optional output: height of the frame. 
 	 */
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
-		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY) = 0;
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY,
+		int directionNumber = -1) = 0;
 
-	typedef void(*AtlassingCallback)(void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH);
 	/**
 	 *	Iterates over all frames in the graphic, running an AtlassingCallback for every frame.
 	 *	@param callback   The callback for the atlassing function.
@@ -130,7 +181,7 @@ public:
 	/**
 	 *	Gets the atlassed information for a resource and a frame.
 	 */
-	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight) = 0;
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int direction = -1) = 0;
 
 	/**
 	 *	Get cap height (for font resource only)
@@ -141,10 +192,23 @@ public:
 	 *	Specifies what to do when we have been deallocated.
 	 */
 	virtual void Deallocate() = 0;
+
+	/**
+	 *	Set direction count.
+	 */
+	virtual void SetDirectionCount(int _directionCount) { directionCount = _directionCount; };
+
+	/**
+	 *	Load data for a single direction.
+	 *	NOTE: This does not need to be defined for all subclasses.
+	 */
+	virtual void* LoadSingleDirection(unsigned int direction,
+		AnimTextureAllocCallback allocCallback,
+		AnimTextureDecodeCallback decodeCallback) { return nullptr; };
 };
 
 /**
- *	DCCGraphicsHandle is the IGraphicsHandle implementation for DCC files.
+ *	DCCReference is the IGraphicsReference implementation for DCC files.
  */
 class DCCReference : public IGraphicsReference
 {
@@ -156,15 +220,16 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
-		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY,
+		int directionNumber = -1);
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
-	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int directionNumber = -1);
 	virtual void Deallocate();
 };
 
 /**
- *	DC6GraphicsHandle is the IGraphicsHandle implementation for DC6 files.
+ *	DC6Reference is the IGraphicsReference implementation for DC6 files.
  */
 class DC6Reference : public IGraphicsReference
 {
@@ -178,15 +243,16 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
-		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY,
+		int directionNumber = -1);
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
-	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int directionNumber = -1);
 	virtual void Deallocate();
 };
 
 /**
- *	DT1GraphicsHandle is the IGraphicsHandle implementation for DT1 files.
+ *	DT1Reference is the IGraphicsReference implementation for DT1 files.
  */
 class DT1Reference : public IGraphicsReference
 {
@@ -198,15 +264,16 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame, 
-		 uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+		 uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY,
+		int directionNumber = -1);
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
-	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int directionNumber = -1);
 	virtual void Deallocate();
 };
 
 /**
- *	FontGraphicsHandle is the IGraphicsHandle implementation of fonts.
+ *	FontReference is the IGraphicsReference implementation of fonts.
  */
 class FontReference : public IGraphicsReference
 {
@@ -222,10 +289,11 @@ public:
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
 	virtual size_t GetNumberOfFrames();
 	virtual void GetGraphicsData(void** pixels, int32_t frame,
-		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY);
+		uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY,
+		int directionNumber = -1);
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
-	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight);
+	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int directionNumber = -1);
 	virtual float GetCapHeight() override;
 	virtual void Deallocate();
 };
@@ -237,12 +305,37 @@ class ITokenReference
 {
 protected:
 	char tokenName[4];
+	cof_handle cofFiles[XXXMODE_MAX][WC_MAX];
+	void LoadCOF(unsigned int mode, unsigned int hitclass);
+
+	// The key is an encoded string, containing the following:
+	// First 5 bits: the mode
+	// 5 bits: weapon class
+	// 5 bits: component
+	// If you've been counting, this is 15 bits, or one bit short of a byte.
+	// The first bit is therefore used to mark an "invalid" key.
+	HashMap<char, IGraphicsReference*> m_cachedGraphicsReferences;
+
+	void SetTokenName(const char* newTokenName);
+
 public:
 	virtual D2TokenType GetTokenType() = 0;
 	virtual const char* GetTokenFolder() = 0;
 	const char* GetTokenName() { return tokenName; }
 
-	ITokenReference(const char* tokenName);
+	virtual bool HasComponentForMode(unsigned int component, unsigned int hitclass, unsigned int mode);
+	inline const char* GetHitclassName(unsigned int hitclass);
+	inline const char* GetModeName(unsigned int mode);
+	inline const char* GetComponentName(unsigned int component);
+	inline const char* GetTokenDataFolder();
+
+	// Gotten from COF data..
+	virtual inline const BYTE GetNumberOfFrames(int mode, int weaponClass);
+	virtual inline const BYTE GetNumberOfDirections(int mode, int weaponClass);
+	// End COF info
+
+	virtual IGraphicsReference* GetTokenGraphic(unsigned int component, unsigned int hitclass,
+		unsigned int mode, const char* armorClass);
 };
 
 /**

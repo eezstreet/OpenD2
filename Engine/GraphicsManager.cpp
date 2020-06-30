@@ -1,4 +1,5 @@
 #include "GraphicsManager.hpp"
+#include "COF.hpp"
 #include "DC6.hpp"
 #include "Logging.hpp"
 #include "FileSystem.hpp"
@@ -28,7 +29,7 @@ size_t DCCReference::GetNumberOfFrames()
 }
 
 void DCCReference::GetGraphicsData(void** pixels, int32_t frame,
-	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY, int direction)
 {
 
 }
@@ -43,7 +44,7 @@ void DCCReference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, At
 
 }
 
-void DCCReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+void DCCReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int direction)
 {
 
 }
@@ -105,7 +106,7 @@ size_t DC6Reference::GetNumberOfFrames()
 }
 
 void DC6Reference::GetGraphicsData(void** pixels, int32_t frame,
-	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY, int direction)
 {
 	if (!bLoaded)
 	{
@@ -238,7 +239,7 @@ void DC6Reference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, At
 	
 }
 
-void DC6Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+void DC6Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int direction)
 {
 	*totalWidth = 0;
 	*totalHeight = 0;
@@ -306,7 +307,7 @@ size_t DT1Reference::GetNumberOfFrames()
 }
 
 void DT1Reference::GetGraphicsData(void** pixels, int32_t frame,
-	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY)
+	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY, int direction)
 {
 
 }
@@ -321,7 +322,7 @@ void DT1Reference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, At
 
 }
 
-void DT1Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight)
+void DT1Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int direction)
 {
 
 }
@@ -366,7 +367,7 @@ size_t FontReference::GetNumberOfFrames()
 }
 
 void FontReference::GetGraphicsData(void** pixels, int32_t frame, uint32_t* width,
-	uint32_t* height, int32_t* offsetX, int32_t* offsetY)
+	uint32_t* height, int32_t* offsetX, int32_t* offsetY, int direction)
 {
 	TBLFontFile* fontFile = TBLFont::GetPointerFromHandle(tblHandle);
 	if(!fontFile || frame >= 256)
@@ -449,7 +450,7 @@ void FontReference::IterateFrames(bool bAtlassing, int32_t start, int32_t end,
 }
 
 void FontReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y,
-	uint32_t* totalWidth, uint32_t* totalHeight)
+	uint32_t* totalWidth, uint32_t* totalHeight, int direction)
 {
 	
 }
@@ -469,7 +470,7 @@ void FontReference::Deallocate()
 /**
  *	Base class for all token types.
  */
-ITokenReference::ITokenReference(const char* _tokenName)
+void ITokenReference::SetTokenName(const char* _tokenName)
 {
 	int i;
 	for (i = 0; i < 4 && _tokenName[i]; i++)
@@ -481,33 +482,182 @@ ITokenReference::ITokenReference(const char* _tokenName)
 	{
 		tokenName[i] = '\0';
 	}
+
+	memset(cofFiles, INVALID_HANDLE, sizeof(cofFiles));
+}
+
+void ITokenReference::LoadCOF(unsigned int mode, unsigned int hitclass)
+{
+	cofFiles[mode][hitclass] = COF::Register(GetTokenDataFolder(), GetTokenName(), GetModeName(mode), GetHitclassName(hitclass));
+	Log_ErrorAssertVoidReturn(cofFiles[mode][hitclass] != INVALID_HANDLE);
+}
+
+IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, unsigned int hitclass,
+	unsigned int mode, const char* armorClass)
+{
+	IGraphicsReference* reference;
+	char ref[8];
+	unsigned short packed;
+
+	// See explanation in ITokenReference for how this is used.
+	packed = ((unsigned short)mode << 10) | ((unsigned short)hitclass << 5) | (unsigned short)component;
+	ref[0] = (char)((packed & 0xFF) >> 8);
+	ref[1] = (char)(packed & 0x00FF);
+	strncpy(&ref[2], armorClass, sizeof(ref) - 2);
+
+	handle graphicHandle;
+	if (m_cachedGraphicsReferences.Contains(ref, &graphicHandle))
+	{
+		return m_cachedGraphicsReferences[graphicHandle];
+	}
+
+	char path[MAX_D2PATH];
+
+	snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%s%s.dcc",
+		GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+		GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode), GetHitclassName(hitclass));
+
+	reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now
+	if (reference == nullptr)
+	{
+		// File not found
+		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%s%s.dc6",
+			GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+			GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode), GetHitclassName(hitclass));
+		reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent);
+	}
+
+	Log_ErrorAssertReturn(reference != nullptr, reference);
+
+	m_cachedGraphicsReferences[ref] = reference;
+	return reference;
+}
+
+bool ITokenReference::HasComponentForMode(unsigned int component, unsigned int hitclass, unsigned int mode)
+{
+	// Load COF if it isn't already loaded
+	if (cofFiles[mode][hitclass] == INVALID_HANDLE)
+	{
+		LoadCOF(mode, hitclass);
+	}
+
+	return COF::LayerPresent(cofFiles[mode][hitclass], component);
+}
+
+const char* ITokenReference::GetHitclassName(unsigned int hitclass)
+{
+	static const char* HitclassNames[WC_MAX] = {
+		"HTH", "BOW", "1HS", "1HT", "STF", "2HS", "2HT", "XBW",
+		"1JS", "1JT", "1SS", "1ST", "HT1", "HT2"
+	};
+
+	return HitclassNames[hitclass];
+}
+
+const char* ITokenReference::GetModeName(unsigned int mode)
+{
+	static const char* MonsterModes[MONMODE_MAX] = {
+		"DT", "NU", "WL", "GH", "A1", "A2", "BL", "SC",
+		"S1", "S2", "S3", "S4", "DD", "KB", "XX", "RN"
+	};
+
+	static const char* PlayerModes[PLRMODE_MAX] = {
+		"DT", "NU", "WL", "RN", "GH", "TN", "TW", "A1",
+		"A2", "BL", "SC", "TH", "KK", "S1", "S2", "S3",
+		"S4", "DD", "SQ", "KB"
+	};
+
+	static const char* ObjectModes[OBJMODE_MAX] = {
+		"NU", "OP", "ON", "S1", "S2", "S3", "S4", "S5"
+	};
+
+	switch (GetTokenType())
+	{
+		default:
+		case TOKEN_MONSTER:
+			return MonsterModes[mode];
+		case TOKEN_CHAR:
+			return PlayerModes[mode];
+		case TOKEN_OBJECT:
+			return ObjectModes[mode];
+	}
+}
+
+const char* ITokenReference::GetComponentName(unsigned int component)
+{
+	static const char* ComponentNames[COMP_MAX] = {
+		"HD", "TR", "LG", "RA", "LA", "RH", "LH", "SH",
+		"S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"
+	};
+
+	return ComponentNames[component];
+}
+
+const char* ITokenReference::GetTokenDataFolder()
+{
+	switch (GetTokenType())
+	{
+		default:
+		case TOKEN_MONSTER:
+			return "monsters";
+		case TOKEN_CHAR:
+			return "chars";
+		case TOKEN_OBJECT:
+			return "objects";
+	}
+}
+
+inline const BYTE ITokenReference::GetNumberOfFrames(int mode, int weaponClass)
+{
+	// Load COF if it isn't already loaded
+	if (cofFiles[mode][weaponClass] == INVALID_HANDLE)
+	{
+		LoadCOF(mode, weaponClass);
+	}
+
+	return COF::GetFileData(cofFiles[mode][weaponClass])->header.nFrames;
+}
+
+inline const BYTE ITokenReference::GetNumberOfDirections(int mode, int weaponClass)
+{
+	// Load COF if it isn't already loaded
+	if (cofFiles[mode][weaponClass] == INVALID_HANDLE)
+	{
+		LoadCOF(mode, weaponClass);
+	}
+
+	return COF::GetFileData(cofFiles[mode][weaponClass])->header.nDirs;
+}
+
+IGraphicsReference* GetTokenGraphic(unsigned int component, unsigned int hitclass,
+	unsigned int mode, const char* armorClass)
+{
+	// FIXME
+	return nullptr;
 }
 
 /**
  *	Monster token type
  */
 MonsterTokenReference::MonsterTokenReference(const char* tokenName)
-	: ITokenReference(tokenName)
 {
-
+	SetTokenName(tokenName);
 }
 
 /**
  *	Object token type
  */
 ObjectTokenReference::ObjectTokenReference(const char* tokenName)
-	: ITokenReference(tokenName)
 {
-
+	SetTokenName(tokenName);
 }
 
 /**
  *	Player token type
  */
 PlayerTokenReference::PlayerTokenReference(const char* tokenName)
-	: ITokenReference(tokenName)
 {
-
+	SetTokenName(tokenName);
 }
 
 /**
@@ -530,6 +680,16 @@ IGraphicsReference* GraphicsManager::CreateReference(const char* graphicsFile, G
 	char* ext = D2Lib::fnext(graphicsFile);
 	handle theHandle;
 	bool bFull;
+
+	// Try and load the file first
+	fs_handle f;
+	FS::Open(graphicsFile, &f, FS_READ);
+	if (f == INVALID_HANDLE)
+	{
+		return nullptr;
+	}
+	FS::CloseFile(f);
+	//
 
 	if (!D2Lib::stricmp(ext, ".dc6"))
 	{
@@ -614,6 +774,17 @@ IGraphicsReference* GraphicsManager::CreateReference(const char* graphicsFile, G
 	return nullptr;
 }
 
+/**
+ *	The vast, overwhelming majority of tokens are in DCC format.
+ *	However, there are a few outliers that aren't. They are:
+ *		- Mephisto
+ *		- Tyrael1, Tyrael2, Tyrael3
+ *		- Diablo (death animations only)
+ *		- Maggot Queen (death animations only)
+ *		- Baal (death animations only, all variations)
+ *		- Hell Gate on Act 3
+ *		- Worldstone Portal on Act 5
+ */
 ITokenReference* GraphicsManager::CreateReference(const D2TokenType& tokenType, 
 	const char* tokenName)
 {

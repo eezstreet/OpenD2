@@ -139,21 +139,6 @@ static D2ModuleImportStrc exports = {
 
 	Pal::GetPL2ColorModulation,
 
-	Token::RegisterToken,
-	Token::DeregisterToken,
-
-	TokenInstance::CreateTokenAnimInstance,
-	TokenInstance::SwapTokenAnimToken,
-	TokenInstance::DestroyTokenInstance,
-	TokenInstance::SetTokenInstanceComponent,
-	TokenInstance::GetTokenInstanceComponent,
-	TokenInstance::SetTokenInstanceFrame,
-	TokenInstance::GetTokenInstanceFrame,
-	TokenInstance::GetTokenInstanceWeaponClass,
-	TokenInstance::SetInstanceActive,
-	TokenInstance::SetTokenInstanceMode,
-	TokenInstance::SetTokenInstanceDirection,
-
 	Audio::RegisterSound,
 	Audio::RegisterMusic,
 	Audio::PlaySound,

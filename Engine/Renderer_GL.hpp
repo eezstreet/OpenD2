@@ -76,7 +76,8 @@ protected:
 			int currentMode;
 			int hitClass;
 			int direction;
-			int armorType[COMP_MAX];
+			uint16_t currentFrame;
+			char armorType[COMP_MAX][4];
 		} tokenData;
 	} data;
 
@@ -91,6 +92,7 @@ public:
 	bool bInUse;
 
 	virtual void Draw();
+	virtual void PrerenderDrawMode(int drawMode);
 	virtual void Render();	// Internal rendering function, used by the renderer itself.
 	virtual void SetPalshift(BYTE palette);
 	virtual void SetDrawCoords(int x, int y, int w, int h);
@@ -119,7 +121,7 @@ public:
 
 	virtual void SetAnimationDirection(int direction);
 	virtual void SetTokenMode(int newMode);
-	virtual void SetTokenArmorLevel(int component, int armorLevel);
+	virtual void SetTokenArmorLevel(int component, const char* armorLevel);
 	virtual void SetTokenHitClass(int hitclass);
 };
 
