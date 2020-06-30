@@ -2,6 +2,7 @@
 #include "../Shared/D2Shared.hpp"
 #include "../Shared/D2HashMap.hpp"
 #include "DC6.hpp"
+#include "DCC.hpp"
 #include "Palette.hpp"
 #include "Renderer.hpp"
 
@@ -213,8 +214,17 @@ public:
 class DCCReference : public IGraphicsReference
 {
 private:
-	char dccHandleName[MAX_D2PATH];
+	union
+	{
+		bool bLoadedAnimation;
+		bool bLoadedDirection[MAX_DIRECTIONS * 2]; // FIXME
+	};
 
+	char dccHandleName[MAX_D2PATH];
+	DCCFile dccFile;
+	bool bLoaded;
+
+	void LoadDCCFile();
 public:
 	DCCReference(const char* fileName, GraphicsUsagePolicy usagePolicy);
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
@@ -226,6 +236,10 @@ public:
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int directionNumber = -1);
 	virtual void Deallocate();
+	virtual void* LoadSingleDirection(unsigned int direction,
+		AnimTextureAllocCallback allocCallback,
+		AnimTextureDecodeCallback decodeCallback) override;
+
 };
 
 /**

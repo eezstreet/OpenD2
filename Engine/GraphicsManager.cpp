@@ -16,6 +16,7 @@ DCCReference::DCCReference(const char* fileName, GraphicsUsagePolicy usagePolicy
 	: IGraphicsReference(usagePolicy)
 {
 	D2Lib::strncpyz(dccHandleName, fileName, sizeof(dccHandleName));
+	bLoaded = false;
 }
 
 size_t DCCReference::GetTotalSizeInBytes(int32_t frame)
@@ -60,6 +61,54 @@ void DCCReference::Deallocate()
 			// not yet implemented
 			break;
 	}
+}
+
+void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAllocCallback allocCallback, AnimTextureDecodeCallback decodeCallback)
+{
+	static AnimTextureDecodeCallback g_decoder;
+	static void* g_newData;
+	uint32_t directionWidth, directionHeight;
+
+	if (!bLoaded)
+	{
+		LoadDCCFile();
+	}
+
+	if (directionCount <= 0 || direction == -1)
+	{
+		if (bAreGraphicsLoaded)
+		{
+			return loadedGraphicsData;
+		}
+
+		direction = 0;
+	}
+	else if (bAreGraphicsLoadedForDirection[direction])
+	{
+		return loadedGraphicsForDirection[direction];
+	}
+
+	// Do alloc callback?
+	DCC::GetDirectionSize(&dccFile, direction, &directionWidth, &directionHeight);
+	g_newData = allocCallback(directionWidth, directionHeight);
+	g_decoder = decodeCallback;
+
+	// Do decode
+	DCC::DecodeDirection(&dccFile, 0, [](BYTE* bitmap, uint32_t frameNum, int32_t frameX, int32_t frameY,
+		uint32_t frameW, uint32_t frameH) {
+			g_decoder((void*)bitmap, g_newData, frameNum, frameX, frameY, frameW, frameH);
+	});
+
+	bAreGraphicsLoadedForDirection[direction] = true;
+	loadedGraphicsForDirection[direction] = g_newData;
+
+	return g_newData;
+}
+
+void DCCReference::LoadDCCFile()
+{
+	DCC::LoadAnimation(dccHandleName, &dccFile);
+	bLoaded = true;
 }
 
 /**

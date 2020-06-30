@@ -128,6 +128,7 @@ namespace DCC
 	void LoadAnimation(const char* szPath, DCCFile* file);
 	void UnloadAnimation(DCCFile* animation);
 	void DecodeDirection(DCCFile* animation, uint32_t direction, DCCDirectionFrameDecodeCallback callback);
+	void GetDirectionSize(DCCFile* animation, uint32_t direction, uint32_t* frameSizeW, uint32_t* frameSizeH);
 
 	DWORD GetCellCount(int pos, int& sz); 
 };

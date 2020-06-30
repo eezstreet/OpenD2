@@ -172,7 +172,7 @@ void GLRenderObject::Render()
 						return (void*)returnResult;
 					},
 					/*                  frame decode callback               */
-						[](void* pixels, void* extraData, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+					[](void* pixels, void* extraData, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
 						GLuint texture = (GLuint)extraData;
 
 						glActiveTexture(GL_TEXTURE0);

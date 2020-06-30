@@ -629,4 +629,38 @@ namespace DCC
 		delete[] bitmap;
 		delete[] ppCellBuffer;
 	}
+
+	/**
+	 *	Gets the size of a particular direction.
+	 *	@author	eezstreet
+	 */
+	void GetDirectionSize(DCCFile* animation, uint32_t direction, uint32_t* frameSizeW, uint32_t* frameSizeH)
+	{
+		uint32_t sumW = 0;
+		uint32_t sumH = 0;
+
+		Log_ErrorAssertVoidReturn(animation);
+		Log_ErrorAssertVoidReturn(direction >= 0 && direction < animation->header.nNumberDirections);
+		
+		for (int i = 0; i < animation->header.dwFramesPerDirection; i++)
+		{
+			const DCCFrame& frame = animation->directions[direction].frames[i];
+			
+			if (frame.dwHeight > sumH)
+			{
+				sumH = frame.dwHeight;
+			}
+			sumW += frame.dwWidth;
+		}
+
+		if (frameSizeW)
+		{
+			*frameSizeW = sumW;
+		}
+
+		if (frameSizeH)
+		{
+			*frameSizeH = sumH;
+		}
+	}
 }
