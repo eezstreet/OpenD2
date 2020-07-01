@@ -550,8 +550,8 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 
 	// See explanation in ITokenReference for how this is used.
 	packed = ((unsigned short)mode << 10) | ((unsigned short)hitclass << 5) | (unsigned short)component;
-	ref[0] = (char)((packed & 0xFF) >> 8);
-	ref[1] = (char)(packed & 0x00FF);
+	ref[0] = (char)((packed & 0xFF00) >> 8) + 1; // this is to make sure we don't hit any null terminators
+	ref[1] = (char)(packed & 0x00FF) + 1; // see above
 	strncpy(&ref[2], armorClass, sizeof(ref) - 2);
 
 	handle graphicHandle;
@@ -569,11 +569,31 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 	reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now
 	if (reference == nullptr)
 	{
-		// File not found
-		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%s%s.dc6",
-			GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
-			GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode), GetHitclassName(hitclass));
-		reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent);
+		// File not found - try using "HTH" as a fallback for the hitclass
+		if (hitclass != WC_HTH)
+		{
+			snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%sHTH.dcc",
+				GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+				GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode));
+			reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now
+		}
+
+		if (reference == nullptr)
+		{
+			snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%s%s.dc6",
+				GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+				GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode), GetHitclassName(hitclass));
+			reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent);
+
+			if (reference == nullptr && hitclass != WC_HTH)
+			{	// try using "HTH" as a fallback for the hitclass
+				snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%sHTH.dc6",
+					GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+					GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode));
+				reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent);
+			}
+		}
+		
 	}
 
 	Log_ErrorAssertReturn(reference != nullptr, reference);
@@ -596,7 +616,7 @@ bool ITokenReference::HasComponentForMode(unsigned int component, unsigned int h
 const char* ITokenReference::GetHitclassName(unsigned int hitclass)
 {
 	static const char* HitclassNames[WC_MAX] = {
-		"HTH", "BOW", "1HS", "1HT", "STF", "2HS", "2HT", "XBW",
+		"XXX", "HTH", "BOW", "1HS", "1HT", "STF", "2HS", "2HT", "XBW",
 		"1JS", "1JT", "1SS", "1ST", "HT1", "HT2"
 	};
 

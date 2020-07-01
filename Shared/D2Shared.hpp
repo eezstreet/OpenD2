@@ -112,7 +112,6 @@ typedef handle anim_handle;
 typedef handle tbl_handle;
 typedef handle font_handle;
 typedef handle cof_handle;
-typedef handle token_handle;
 typedef handle thread_handle;
 typedef handle sfx_handle;
 typedef handle mus_handle;

@@ -4,7 +4,85 @@
 
 #define D2_NUM_VISIBLE_SAVES	8
 
+// Mappings for the class token
+static char* gszClassTokens[D2CLASS_MAX] = {
+	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
+};
 
+// So, funny story. The devs didn't actually tie these to .tbl entries, so they are not translated at all !
+// If you look in patchstring.tbl, expansionstring.tbl, and string.tbl, they are not listed at all!
+struct CharacterTitle {
+	const char16_t* maleTitle;
+	const char16_t* femaleTitle;
+};
+
+// NOTE: Expansion saves don't actually use every 4th slot.
+// This is because it skips over Diablo. When Baal is killed, it increments by one.
+// When the Eve of Destruction has completed, it is incremented again. So, twice.
+#define TITLE_BIGENDER(x, y)	{x, y}, {x, y}, {x, y}, {x, y}
+#define TITLE_NOGENDER(x)		{x, x}, {x, x}, {x, x}, {x, x}
+#define TITLE_BIGENDER_EXP(x,y)	{x, y}, {x, y}, {x, y}, {x, y}, {x, y}
+#define TITLE_NOGENDER_EXP(x)	{x, x}, {x, x}, {x, x}, {x, x}, {x, x}
+
+static const CharacterTitle TitleStatus_Classic[] =
+{
+	// Normal uncompleted = Nothing
+	TITLE_NOGENDER(0),
+
+	// Normal completed = "Sir" or "Dame"
+	TITLE_BIGENDER(u"Sir", u"Dame"),
+
+	// Nightmare completed = "Lord" or "Lady"
+	TITLE_BIGENDER(u"Lord", u"Lady"),
+
+	// Hell completed = "Baron" or "Baronness"
+	TITLE_BIGENDER(u"Baron", u"Baronness")
+};
+
+static const CharacterTitle TitleStatus_ClassicHardcore[] =
+{
+	// Normal uncompleted = Nothing
+	TITLE_NOGENDER(0),
+
+	// Normal completed = "Count" or "Countess"
+	TITLE_BIGENDER(u"Count", u"Countess"),
+
+	// Nightmare completed = "Duke" or "Duchess"
+	TITLE_BIGENDER(u"Duke", u"Duchess"),
+
+	// Hell completed = "King" or "Queen"
+	TITLE_BIGENDER(u"King", u"Queen")
+};
+
+static const CharacterTitle TitleStatus_Expansion[] =
+{
+	// Normal uncompleted = Nothing
+	TITLE_NOGENDER_EXP(0),
+
+	// Normal completed = "Slayer"
+	TITLE_NOGENDER_EXP(u"Slayer"),
+
+	// Nightmare completed = "Champion"
+	TITLE_NOGENDER_EXP(u"Champion"),
+
+	// Hell completed = "Patriarch" or "Matriarch"
+	TITLE_BIGENDER_EXP(u"Patriarch", u"Matriarch")
+};
+
+static const CharacterTitle TitleStatus_ExpansionHardcore[] =
+{
+	// Normal uncompleted = Nothing
+	TITLE_NOGENDER_EXP(0),
+
+	// Normal completed = "Destroyer"
+	TITLE_NOGENDER_EXP(u"Destroyer"),
+
+	// Nightmare completed = "Conqueror"
+	TITLE_NOGENDER_EXP(u"Conqueror"),
+
+	// Hell completed = "Guardian"
+	TITLE_NOGENDER_EXP(u"Guardian")
+};
 
 /*
  *	Creates a Character Select list widget.
@@ -19,6 +97,10 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 	nCurrentScroll = 0;
 	nCurrentSelection = -1;
 	saves = nullptr;
+	pCharacterData = nullptr;
+
+	greyFrameRef = engine->graphics->CreateReference("data\\global\\ui\\CharSelect\\charselectboxgrey.dc6", UsagePolicy_Permanent);
+	frameRef = engine->graphics->CreateReference("data\\global\\ui\\CharSelect\\charselectbox.dc6", UsagePolicy_Permanent);
 
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
@@ -34,6 +116,9 @@ D2Widget_CharSelectList::~D2Widget_CharSelectList()
 	{
 		delete saves;
 	}
+
+	engine->graphics->DeleteReference(greyFrameRef);
+	engine->graphics->DeleteReference(frameRef);
 }
 
 /*
@@ -46,7 +131,7 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	
 	newSave->SetNextInChain(saves);
 	saves = newSave;
-#if 0	// we need to keep this available for later
+
 	CharacterSaveData* pSaveData = (CharacterSaveData*)malloc(sizeof(CharacterSaveData));
 
 	// Copy the path, name, and header data
@@ -56,24 +141,33 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 
 	// Register the animations for it.
 	// TODO: use the actual anims (it just uses hth, lit, no weapon for now..)
-	pSaveData->token = engine->TOK_Register(TOKEN_CHAR, gszClassTokens[header.nCharClass], "hth");
-	pSaveData->tokenInstance = engine->TOK_CreateTokenAnimInstance(pSaveData->token);
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_HEAD, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEFTARM, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_LEGS, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_RIGHTARM, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SHIELD, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL1, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_SPECIAL2, "lit");
-	engine->TOK_SetTokenInstanceComponent(pSaveData->tokenInstance, COMP_TORSO, "lit");
-	engine->TOK_SetTokenInstanceMode(pSaveData->tokenInstance, PLRMODE_TN);
-	engine->TOK_SetTokenInstanceDirection(pSaveData->tokenInstance, 4);
-	engine->TOK_SetInstanceActive(pSaveData->tokenInstance, true);	// always set it as active so scrolling is smooth
+	pSaveData->token = engine->graphics->CreateReference(TOKEN_CHAR, gszClassTokens[header.nCharClass]);
+	pSaveData->renderedToken = engine->renderer->AllocateObject(0);
+	pSaveData->renderedToken->AttachTokenResource(pSaveData->token);
+	pSaveData->renderedToken->SetTokenHitClass(WC_HTH);
+	pSaveData->renderedToken->SetTokenMode(PLRMODE_TN);
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_HEAD, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_LEFTARM, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_LEGS, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_RIGHTARM, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SHIELD, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SPECIAL1, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SPECIAL2, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_TORSO, "lit");
+
+	pSaveData->frame = engine->renderer->AllocateObject(0);
+	pSaveData->title = engine->renderer->AllocateObject(1);
+	pSaveData->charName = engine->renderer->AllocateObject(1);
+	pSaveData->classAndLevel = engine->renderer->AllocateObject(1);
+	pSaveData->expansionChar = engine->renderer->AllocateObject(1);
+	pSaveData->title->AttachFontResource(cl.font16);
+	pSaveData->charName->AttachFontResource(cl.font16);
+	pSaveData->classAndLevel->AttachFontResource(cl.font16);
+	pSaveData->expansionChar->AttachFontResource(cl.font16);
 
 	// Add it to the linked list
 	pSaveData->pNext = pCharacterData;
 	pCharacterData = pSaveData;
-#endif 
 
 	// Increment the save count.
 	nNumberSaves++;
@@ -93,7 +187,6 @@ void D2Widget_CharSelectList::OnWidgetAdded()
  */
 void D2Widget_CharSelectList::Draw()
 {
-#if 0
 	// Draw the savegames
 	// This is pretty horrendously inefficient.
 	// But it doesn't need to be super efficient, considering it's only rendering 8 savegames at a time!
@@ -111,7 +204,6 @@ void D2Widget_CharSelectList::Draw()
 	}
 
 	// Draw the scrollbar
-#endif
 	if (saves)
 	{
 		saves->DrawLink(8, true);
@@ -121,7 +213,6 @@ void D2Widget_CharSelectList::Draw()
 /*
  *	Draws a CharacterSaveData on a slot in the display.
  */
-#if 0
 void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSaveData* pSaveData, int nSlot)
 {
 	// It draws a visual representation of the character on the left side of each slot, based on what the savegame says.
@@ -140,15 +231,17 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 			(pSaveData->header.nCharStatus & (1 << D2STATUS_DEAD)))
 		{
 			// Dead hardcore player gets a grey frame
-			engine->renderer->DrawTexture(greyFrameHandle, (bRightSlot ? x : x + nSlotWidth), nSlotY * nSlotHeight,
-				nSlotWidth, nSlotHeight, 0, 0);
+			pSaveData->frame->AttachCompositeTextureResource(greyFrameRef, 0, -1);
 		}
 		else
 		{
 			// Use the normal frame
-			engine->renderer->DrawTexture(frameHandle, (bRightSlot ? x + nSlotWidth : x), y + (nSlotY * nSlotHeight),
-				nSlotWidth, nSlotHeight, 0, 0);
+			pSaveData->frame->AttachCompositeTextureResource(frameRef, 0, -1);
 		}
+
+		pSaveData->frame->SetDrawCoords(bRightSlot ? x : x + nSlotWidth, nSlotY * nSlotHeight,
+			nSlotWidth, nSlotHeight);
+		pSaveData->frame->Draw();
 	}
 
 	// On the right, it draws text information:
@@ -163,11 +256,11 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Set font color to be gold. Or red if this is a hardcore character.
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_HARDCORE))
 	{
-		engine->renderer->ColorModFont(cl.font16, 186, 102, 100);
+		pSaveData->title->SetTextColor(TextColor_Red);
 	}
 	else
 	{
-		engine->renderer->ColorModFont(cl.font16, 171, 156, 135);
+		pSaveData->title->SetTextColor(TextColor_White);
 	}
 	
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
@@ -204,17 +297,23 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 
 	if (szCharacterTitle && szCharacterTitle[0])
 	{
-		// Draw the character title if we have one.
-		engine->renderer->DrawText(cl.font16, (char16_t*)szCharacterTitle, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		// Draw the character title if we have one. -- FIXME, we don't need to set everything here, we should just do a draw() here
+		pSaveData->title->SetText(szCharacterTitle);
+		pSaveData->title->SetTextAlignment(nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		pSaveData->title->Draw();
 	}
 	nY += 15;
 
-	// Draw character name
-	engine->renderer->DrawText(cl.font16, pSaveData->name, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	// Draw character name - FIXME, we don't need to set everything here, we should just do a draw() here
+	pSaveData->charName->SetText(pSaveData->name);
+	pSaveData->charName->SetTextColor(TextColor_White);
+	pSaveData->charName->SetTextAlignment(nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	pSaveData->charName->Draw();
 	nY += 15;
 
 	// Draw character level and class
-	engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
+	pSaveData->classAndLevel->SetTextColor(TextColor_White);
+	pSaveData->classAndLevel->SetTextAlignment(nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
 	// Format it so that it will read "Level %d <Class>
 	D2Lib::qsnprintf(szCharacterLevelClass, 32, u"%s %s",
 		engine->TBL_FindStringFromIndex(5017),
@@ -222,21 +321,22 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Reformat it again so that the level is filled in
 	D2Lib::qsnprintf(szDisplayString, 32, szCharacterLevelClass, pSaveData->header.nCharLevel);
 	// Now draw it!
-	engine->renderer->DrawText(cl.font16, szDisplayString, nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	pSaveData->classAndLevel->SetText(szDisplayString);
+	pSaveData->classAndLevel->Draw();
 	nY += 15;
 
 	// Draw whether this is an expansion character
 	if (pSaveData->header.nCharStatus & (1 << D2STATUS_EXPANSION))
 	{
-		engine->renderer->ColorModFont(cl.font16, 65, 200, 50);
-		engine->renderer->DrawText(cl.font16, engine->TBL_FindStringFromIndex(22731), nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		pSaveData->expansionChar->SetTextColor(TextColor_BrightGreen);
+		pSaveData->expansionChar->SetTextAlignment(nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+		pSaveData->expansionChar->Draw();
 	}
-	engine->renderer->ColorModFont(cl.font16, 255, 255, 255);
 
 	// Draw the token instance
-	engine->renderer->DrawTokenInstance(pSaveData->tokenInstance, nX - 40, nY + 30, 0, PAL_UNITS);
+	pSaveData->renderedToken->SetDrawCoords(nX - 40, nY + 30, 0, 0);
+	pSaveData->renderedToken->Draw();
 }
-#endif
 
 /*
  *	Returns the name of the currently selected character.
@@ -326,7 +426,6 @@ void D2Widget_CharSelectList::Selected(int nNewSelection)
  */
 void D2Widget_CharSelectList::LoadSave()
 {
-#if 0
 	CharacterSaveData* pCurrent;
 
 	if (nCurrentSelection == -1)
@@ -345,5 +444,4 @@ void D2Widget_CharSelectList::LoadSave()
 
 	memcpy(&cl.currentSave.header, &pCurrent->header, sizeof(pCurrent->header));
 	D2Lib::strncpyz(cl.szCurrentSave, pCurrent->path, MAX_D2PATH_ABSOLUTE);
-#endif
 }
