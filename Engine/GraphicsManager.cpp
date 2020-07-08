@@ -5,6 +5,7 @@
 #include "FileSystem.hpp"
 #include "Palette.hpp"
 #include "TBL_Font.hpp"
+#include <atomic>
 
 GraphicsManager* graphicsManager;
 
@@ -32,7 +33,35 @@ size_t DCCReference::GetNumberOfFrames()
 void DCCReference::GetGraphicsData(void** pixels, int32_t frame,
 	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY, int direction)
 {
+	if (direction < 0)
+	{
+		direction = 0;
+	}
 
+	if (width)
+	{
+		*width = dccFile.nDirectionW[direction];
+	}
+
+	if (height)
+	{
+		*height = dccFile.nDirectionH[direction];
+	}
+
+	// The destination rectangle is oriented from the upper left corner, but whenever we do a draw call,
+	// we are orienting from the "base point" of the token's DCC files. So we need to correct that.
+	if (offsetX)
+	{
+		*offsetX = -(dccFile.directions[direction].frames[frame].nMinX - dccFile.directions[direction].nMinX);
+		*offsetX += dccFile.directions[direction].frames[frame].nXOffset;
+	}
+
+	if (offsetY)
+	{
+		*offsetY = -(dccFile.directions[direction].frames[frame].nMinY - dccFile.directions[direction].nMinY);
+		*offsetY += dccFile.directions[direction].frames[frame].nYOffset;
+		*offsetY -= dccFile.nDirectionH[direction] - 1;
+	}
 }
 
 void DCCReference::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
@@ -47,7 +76,30 @@ void DCCReference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, At
 
 void DCCReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int direction)
 {
+	if (direction < 0)
+	{
+		direction = 0;
+	}
 
+	if (x)
+	{
+		*x = xOffsetForFrame[direction][frame];
+	}
+
+	if (y)
+	{
+		*y = yOffsetForFrame[direction][frame];
+	}
+
+	if (totalWidth)
+	{
+		*totalWidth = directionWidth[direction];
+	}
+
+	if (totalHeight)
+	{
+		*totalHeight = directionHeight[direction];
+	}
 }
 
 void DCCReference::Deallocate()
@@ -67,6 +119,11 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 {
 	static AnimTextureDecodeCallback g_decoder;
 	static void* g_newData;
+	static int g_frameStart;
+	static unsigned int* g_frameXOffsets;
+	static unsigned int* g_frameYOffsets;
+	static unsigned int* g_directionWidth;
+	static unsigned int* g_directionHeight;
 	uint32_t directionWidth, directionHeight;
 
 	if (!bLoaded)
@@ -94,9 +151,23 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 	g_decoder = decodeCallback;
 
 	// Do decode
+	g_frameStart = 0;
+	g_frameXOffsets = xOffsetForFrame[direction];
+	g_frameYOffsets = yOffsetForFrame[direction];
+	g_directionWidth = &directionWidth;
+	g_directionHeight = &directionHeight;
 	DCC::DecodeDirection(&dccFile, 0, [](BYTE* bitmap, uint32_t frameNum, int32_t frameX, int32_t frameY,
 		uint32_t frameW, uint32_t frameH) {
-			g_decoder((void*)bitmap, g_newData, frameNum, frameX, frameY, frameW, frameH);
+			g_frameStart += frameX;
+			g_frameXOffsets[frameNum] = g_frameStart;
+			g_frameYOffsets[frameNum] = frameY;
+			g_decoder((void*)bitmap, g_newData, frameNum, g_frameStart, frameY, frameW, frameH);
+			g_frameStart += frameW;
+			*g_directionWidth = g_frameStart;
+			if (frameY + frameH > *g_directionHeight)
+			{
+				*g_directionHeight = frameY + frameH;
+			}
 	});
 
 	bAreGraphicsLoadedForDirection[direction] = true;
@@ -547,6 +618,7 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 	IGraphicsReference* reference;
 	char ref[8];
 	unsigned short packed;
+	bool hasFallback = false;
 
 	// See explanation in ITokenReference for how this is used.
 	packed = ((unsigned short)mode << 10) | ((unsigned short)hitclass << 5) | (unsigned short)component;
@@ -593,7 +665,16 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 				reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent);
 			}
 		}
-		
+	}
+
+	// Revert to a fallback.
+	if (reference == nullptr)
+	{
+		GetFallbackForComponentMode(hasFallback, mode);
+		if (hasFallback)
+		{
+			return GetTokenGraphic(component, hitclass, mode, armorClass);
+		}
 	}
 
 	Log_ErrorAssertReturn(reference != nullptr, reference);
@@ -713,6 +794,26 @@ MonsterTokenReference::MonsterTokenReference(const char* tokenName)
 	SetTokenName(tokenName);
 }
 
+void MonsterTokenReference::GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode)
+{
+	switch (mode)
+	{
+		case MONMODE_KB:
+		case MONMODE_BL:
+			hasFallback = true;
+			mode = MONMODE_GH;
+			return;
+		case MONMODE_A2:
+			hasFallback = true;
+			mode = MONMODE_A1;
+			return;
+		case MONMODE_RN:
+			hasFallback = true;
+			mode = MONMODE_WL;
+			return;
+	}
+}
+
 /**
  *	Object token type
  */
@@ -721,12 +822,42 @@ ObjectTokenReference::ObjectTokenReference(const char* tokenName)
 	SetTokenName(tokenName);
 }
 
+void ObjectTokenReference::GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode)
+{
+	// object tokens don't have any component-mode fallbacks
+}
+
 /**
  *	Player token type
  */
 PlayerTokenReference::PlayerTokenReference(const char* tokenName)
 {
 	SetTokenName(tokenName);
+}
+
+void PlayerTokenReference::GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode)
+{
+	switch (mode)
+	{
+		case PLRMODE_KB:
+		case PLRMODE_BL:
+			hasFallback = true;
+			mode = PLRMODE_GH;
+			return;
+		case PLRMODE_A2:
+			hasFallback = true;
+			mode = PLRMODE_A1;
+			return;
+		case PLRMODE_TN:
+			hasFallback = true;
+			mode = PLRMODE_NU;
+			return;
+		case PLRMODE_TW:
+		case PLRMODE_RN:
+			hasFallback = true;
+			mode = PLRMODE_WL;
+			return;
+	}
 }
 
 /**

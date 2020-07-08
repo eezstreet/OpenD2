@@ -436,7 +436,7 @@ namespace D2Lib
 				len = qstrlen(strArg);
 				qstrncpyz(o, strArg, rem);
 				rem -= len;
-				o += len;
+				o += len - 1;
 				p++;
 				break;
 			}

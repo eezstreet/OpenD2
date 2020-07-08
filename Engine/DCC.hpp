@@ -41,7 +41,7 @@ struct DCCFrame
 };
 
 #define MAX_DCC_PIXEL_BUFFER	300000
-#define MAX_DCC_FRAMES			200
+#define MAX_DCC_FRAMES			2048
 struct DCCPixelBuffer
 {
 	BYTE			pixel[4];
@@ -104,6 +104,8 @@ struct DCCFile
 	// Other stuff used by OpenD2
 	DWORD			dwFileSize;
 	BYTE*			pFileBytes;
+	int				nDirectionW[MAX_DIRECTIONS];
+	int				nDirectionH[MAX_DIRECTIONS];
 };
 
 // Each frame in the DCC is composed of cells.

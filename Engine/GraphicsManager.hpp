@@ -51,6 +51,8 @@ public:
 		bAreGraphicsLoaded = false;
 		loadedGraphicsData = nullptr;
 		directionCount = -1;
+		memset(bAreGraphicsLoadedForDirection, 0, sizeof(bool) * MAX_DIRECTIONS * 2);
+		memset(loadedGraphicsForDirection, 0, sizeof(void*) * MAX_DIRECTIONS * 2);
 	}
 
 	/**
@@ -220,6 +222,10 @@ private:
 		bool bLoadedDirection[MAX_DIRECTIONS * 2]; // FIXME
 	};
 
+	unsigned int xOffsetForFrame[MAX_DIRECTIONS * 2][MAX_DCC_FRAMES];
+	unsigned int yOffsetForFrame[MAX_DIRECTIONS * 2][MAX_DCC_FRAMES];
+	unsigned int directionWidth[MAX_DIRECTIONS * 2];
+	unsigned int directionHeight[MAX_DIRECTIONS * 2];
 	char dccHandleName[MAX_D2PATH];
 	DCCFile dccFile;
 	bool bLoaded;
@@ -335,6 +341,7 @@ protected:
 public:
 	virtual D2TokenType GetTokenType() = 0;
 	virtual const char* GetTokenFolder() = 0;
+	virtual void GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode) = 0;
 	const char* GetTokenName() { return tokenName; }
 
 	virtual bool HasComponentForMode(unsigned int component, unsigned int hitclass, unsigned int mode);
@@ -360,6 +367,7 @@ class MonsterTokenReference : public ITokenReference
 public:
 	virtual D2TokenType GetTokenType() { return TOKEN_MONSTER; }
 	virtual const char* GetTokenFolder() { return "MONSTERS"; }
+	virtual void GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode);
 
 	MonsterTokenReference(const char* tokenName);
 };
@@ -372,6 +380,7 @@ class ObjectTokenReference : public ITokenReference
 public:
 	virtual D2TokenType GetTokenType() { return TOKEN_OBJECT; }
 	virtual const char* GetTokenFolder() { return "OBJECTS"; }
+	virtual void GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode);
 
 	ObjectTokenReference(const char* tokenName);
 };
@@ -384,6 +393,7 @@ class PlayerTokenReference : public ITokenReference
 public:
 	virtual D2TokenType GetTokenType() { return TOKEN_CHAR; }
 	virtual const char* GetTokenFolder() { return "CHARS"; }
+	virtual void GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode);
 
 	PlayerTokenReference(const char* tokenName);
 };

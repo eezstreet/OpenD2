@@ -188,6 +188,9 @@ namespace Log
 
 		// pull us out of the main game loop
 		currentModule = MODULE_NONE;
+#ifdef _DEBUG
+		SDL_assert(0);
+#endif
 
 		exit(1);
 	}

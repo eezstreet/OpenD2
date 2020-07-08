@@ -148,9 +148,11 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	pSaveData->renderedToken->SetTokenMode(PLRMODE_TN);
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_HEAD, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_LEFTARM, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_LEFTHAND, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_LEGS, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_RIGHTARM, "lit");
-	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SHIELD, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_RIGHTHAND, "lit");
+	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SHIELD, "");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SPECIAL1, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SPECIAL2, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_TORSO, "lit");
@@ -314,6 +316,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	// Draw character level and class
 	pSaveData->classAndLevel->SetTextColor(TextColor_White);
 	pSaveData->classAndLevel->SetTextAlignment(nX, nY, 194, 15, ALIGN_LEFT, ALIGN_TOP);
+	auto x = Client_className(pSaveData->header.nCharClass);
 	// Format it so that it will read "Level %d <Class>
 	D2Lib::qsnprintf(szCharacterLevelClass, 32, u"%s %s",
 		engine->TBL_FindStringFromIndex(5017),

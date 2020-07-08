@@ -335,13 +335,17 @@ namespace DCC
 		int nDirCellH = (nDirectionH >> 2) + 10;
 		DWORD dwNumCellsThisDir = nDirCellW * nDirCellH;
 
+		animation->nDirectionW[direction] = nDirectionW;
+		animation->nDirectionH[direction] = nDirectionH;
+
 		// Global cell buffer
-		DCCCell** ppCellBuffer = new DCCCell*[dwNumCellsThisDir];
-		memset(ppCellBuffer, 0, sizeof(ppCellBuffer));
+		int nFrames = animation->header.dwFramesPerDirection * animation->header.nNumberDirections;
+		DCCCell** ppCellBuffer = new DCCCell*[dwNumCellsThisDir + nFrames];
+		memset(ppCellBuffer, 0, sizeof(DCCCell*) * (dwNumCellsThisDir + nFrames));
 
 		// Cell buffer for all frames
 		DCCCell* pFrameCells[MAX_DCC_FRAMES];
-		memset(pFrameCells, 0, sizeof(pFrameCells));
+		memset(pFrameCells, 0, sizeof(DCCCell*) * MAX_DCC_FRAMES);
 
 		// Rewind all of the associated streams
 		pDirection->RewindAllStreams();
@@ -454,6 +458,8 @@ namespace DCC
 							pCurCell->clrmap[n] = pPrevCell->clrmap[n];
 						}
 					}
+
+					ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
 				}
 			}
 		}

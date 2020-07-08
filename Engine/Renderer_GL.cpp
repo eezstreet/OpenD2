@@ -133,7 +133,7 @@ void GLRenderObject::Render()
 		{
 			const char* armorType = data.tokenData.armorType[i];
 
-			if (!token->HasComponentForMode(i, hitclass, mode))
+			if (!token->HasComponentForMode(i, hitclass, mode) || armorType[0] == '\0')
 			{	// If this token lacks this component, don't draw it
 				continue;
 			}
