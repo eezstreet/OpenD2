@@ -14,6 +14,7 @@ private:
 
 	D2Panel_Main* pMainPanel;
 	IRenderObject* backgroundObject;
+	IGraphicsReference* background;
 
 public:
 	D2Menu_Main();

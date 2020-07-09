@@ -6,10 +6,6 @@
  */
 D2Menu_Main::D2Menu_Main() : D2Menu()
 {
-	IGraphicsReference* background = engine->graphics->CreateReference(
-		"data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6",
-		UsagePolicy_SingleUse // for now
-	);
 	IGraphicsReference* flameTexLeft = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6",
 		UsagePolicy_Permanent
@@ -27,12 +23,15 @@ D2Menu_Main::D2Menu_Main() : D2Menu()
 		UsagePolicy_Permanent
 	);
 
+	background = engine->graphics->CreateReference(
+		"data\\global\\ui\\FrontEnd\\gameselectscreenEXP.dc6",
+		UsagePolicy_Permanent // for now
+	);
+
 	backgroundObject = engine->renderer->AllocateObject(0);
 	backgroundObject->AttachCompositeTextureResource(background, 0, -1);
 	backgroundObject->SetDrawCoords(0, 0, 800, 600);
 	backgroundObject->SetPalshift(0);
-
-	engine->graphics->DeleteReference(background);
 
 	flameLeft = engine->renderer->AllocateObject(0);
 	flameRight = engine->renderer->AllocateObject(0);

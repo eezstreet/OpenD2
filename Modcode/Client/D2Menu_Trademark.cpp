@@ -10,9 +10,6 @@
  */
 D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 {
-	IGraphicsReference* background = engine->graphics->CreateReference(
-			"data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6",
-			UsagePolicy_SingleUse);
 	IGraphicsReference* flameTexLeft = engine->graphics->CreateReference(
 		"data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6",
 		UsagePolicy_Permanent
@@ -29,6 +26,10 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 		"data\\global\\ui\\FrontEnd\\D2LogoBlackRight.dc6",
 		UsagePolicy_Permanent
 	);
+
+	background = engine->graphics->CreateReference(
+		"data\\global\\ui\\FrontEnd\\trademarkscreenEXP.dc6",
+		UsagePolicy_SingleUse);
 
 	engine->renderer->SetGlobalPalette(PAL_SKY);
 	backgroundObject = engine->renderer->AllocateObject(0);
@@ -53,9 +54,6 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
 	flameRight->SetDrawCoords(400, -285, -1, -1);
 	blackLeft->SetDrawCoords(400, -285, -1, -1);
 	blackRight->SetDrawCoords(400, -285, -1, -1);
-
-	// Background isn't needed at this point, it should be in VRAM
-	engine->graphics->DeleteReference(background);
 
 	szCopyrightText = engine->TBL_FindStringFromIndex(TBLINDEX_COPYRIGHT);
 	szAllRightsReservedText = engine->TBL_FindStringFromIndex(TBLINDEX_ALLRIGHTS);
@@ -87,6 +85,7 @@ D2Menu_Trademark::D2Menu_Trademark() : D2Menu()
  */
 D2Menu_Trademark::~D2Menu_Trademark()
 {
+	engine->graphics->DeleteReference(background);
 	engine->renderer->Remove(backgroundObject);
 	engine->renderer->Remove(flameLeft);
 	engine->renderer->Remove(flameRight);

@@ -4,12 +4,6 @@
 class D2Menu_Trademark : public D2Menu
 {
 private:
-	tex_handle backgroundTexture;
-	anim_handle flameLeftAnim;
-	anim_handle flameRightAnim;
-	anim_handle blackLeftAnim;
-	anim_handle blackRightAnim;
-
 	char16_t* szCopyrightText;
 	char16_t* szAllRightsReservedText;
 	DWORD dwStartTicks;
@@ -21,6 +15,8 @@ private:
 	IRenderObject* blackRight;
 	IRenderObject* trademark;
 	IRenderObject* allRightsReserved;
+
+	IGraphicsReference* background;
 
 public:
 	D2Menu_Trademark();
