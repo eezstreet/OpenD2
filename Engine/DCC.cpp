@@ -622,7 +622,7 @@ namespace DCC
 			// Handle the individual frame
 			if(callback)
 			{
-				callback(bitmap, f, nFrameX, nFrameY, nFrameW, nFrameH);
+				callback(bitmap, f, nFrameX, nFrameY, frame->dwWidth, frame->dwHeight);
 			}
 		}
 

@@ -172,6 +172,8 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 
 	bAreGraphicsLoadedForDirection[direction] = true;
 	loadedGraphicsForDirection[direction] = g_newData;
+	this->directionWidth[direction] = *g_directionWidth;
+	this->directionHeight[direction] = *g_directionHeight;
 
 	return g_newData;
 }

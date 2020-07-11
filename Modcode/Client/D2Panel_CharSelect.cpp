@@ -82,28 +82,28 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 	exitButton = new D2Widget_Button(34, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	charSelectList = new D2Widget_CharSelectList(37, 86, 548, 370);
 
-	AddWidget(createCharButton);
-	AddWidget(deleteCharButton);
-	AddWidget(convertExpansionButton);
+	//AddWidget(createCharButton);
+	//AddWidget(deleteCharButton);
+	//AddWidget(convertExpansionButton);
 	AddWidget(okButton);
 	AddWidget(exitButton);
 	AddWidget(charSelectList);
 
-	createCharButton->AttachClickSignal(PanelSignal);
-	deleteCharButton->AttachClickSignal(PanelSignal);
-	convertExpansionButton->AttachClickSignal(PanelSignal);
+	//createCharButton->AttachClickSignal(PanelSignal);
+	//deleteCharButton->AttachClickSignal(PanelSignal);
+	//convertExpansionButton->AttachClickSignal(PanelSignal);
 	okButton->AttachClickSignal(PanelSignal);
 	exitButton->AttachClickSignal(PanelSignal);
 
-	createCharButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CREATECHAR));
-	deleteCharButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_DELETECHAR));
-	convertExpansionButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CONVERTCHAR));
+	//createCharButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CREATECHAR));
+	//deleteCharButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_DELETECHAR));
+	//convertExpansionButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CONVERTCHAR));
 	okButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OK));
 	exitButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_EXIT));
 
-	createCharButton->AttachIdentifier("cs_new");
-	deleteCharButton->AttachIdentifier("cs_delete");
-	convertExpansionButton->AttachIdentifier("cs_convert");
+	//createCharButton->AttachIdentifier("cs_new");
+	//deleteCharButton->AttachIdentifier("cs_delete");
+	//convertExpansionButton->AttachIdentifier("cs_convert");
 	okButton->AttachIdentifier("cs_ok");
 	exitButton->AttachIdentifier("cs_exit");
 

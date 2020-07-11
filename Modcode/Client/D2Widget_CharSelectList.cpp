@@ -337,7 +337,7 @@ void D2Widget_CharSelectList::DrawSaveSlot(D2Widget_CharSelectList::CharacterSav
 	}
 
 	// Draw the token instance
-	pSaveData->renderedToken->SetDrawCoords(nX - 40, nY + 30, 0, 0);
+	pSaveData->renderedToken->SetDrawCoords(nX - 40, nY - 140, 0, 0);
 	pSaveData->renderedToken->Draw();
 }
 
