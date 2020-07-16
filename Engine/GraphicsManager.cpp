@@ -40,12 +40,12 @@ void DCCReference::GetGraphicsData(void** pixels, int32_t frame,
 
 	if (width)
 	{
-		*width = dccFile.nDirectionW[direction];
+		*width = dccFile.directions[direction].frames[frame].dwWidth;
 	}
 
 	if (height)
 	{
-		*height = dccFile.nDirectionH[direction];
+		*height = dccFile.directions[direction].frames[frame].dwHeight;
 	}
 
 	// The destination rectangle is oriented from the upper left corner, but whenever we do a draw call,
@@ -124,7 +124,7 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 	static unsigned int* g_frameYOffsets;
 	static unsigned int* g_directionWidth;
 	static unsigned int* g_directionHeight;
-	uint32_t directionWidth, directionHeight;
+	uint32_t tempDirectionWidth, tempDirectionHeight;
 
 	if (!bLoaded)
 	{
@@ -146,22 +146,23 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 	}
 
 	// Do alloc callback?
-	DCC::GetDirectionSize(&dccFile, direction, &directionWidth, &directionHeight);
-	g_newData = allocCallback(directionWidth, directionHeight);
+	DCC::GetDirectionSize(&dccFile, direction, &this->directionWidth[direction], &this->directionHeight[direction]);
+	g_newData = allocCallback(this->directionWidth[direction], this->directionHeight[direction]);
 	g_decoder = decodeCallback;
+	tempDirectionWidth = this->directionWidth[direction];
+	tempDirectionHeight = this->directionHeight[direction];
 
 	// Do decode
 	g_frameStart = 0;
 	g_frameXOffsets = xOffsetForFrame[direction];
 	g_frameYOffsets = yOffsetForFrame[direction];
-	g_directionWidth = &directionWidth;
-	g_directionHeight = &directionHeight;
+	g_directionWidth = &tempDirectionWidth;
+	g_directionHeight = &tempDirectionHeight;
 	DCC::DecodeDirection(&dccFile, 0, [](BYTE* bitmap, uint32_t frameNum, int32_t frameX, int32_t frameY,
 		uint32_t frameW, uint32_t frameH) {
-			g_frameStart += frameX;
-			g_frameXOffsets[frameNum] = g_frameStart;
+			g_frameXOffsets[frameNum] = g_frameStart/* + frameX*/;
 			g_frameYOffsets[frameNum] = frameY;
-			g_decoder((void*)bitmap, g_newData, frameNum, g_frameStart, 0, frameW + frameX, frameH + frameY);
+			g_decoder((void*)bitmap, g_newData, frameNum, g_frameStart, frameY, frameW, frameH);
 			g_frameStart += frameW;
 			*g_directionWidth = g_frameStart;
 			if (frameY + frameH > *g_directionHeight)
@@ -172,8 +173,6 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 
 	bAreGraphicsLoadedForDirection[direction] = true;
 	loadedGraphicsForDirection[direction] = g_newData;
-	this->directionWidth[direction] = *g_directionWidth;
-	this->directionHeight[direction] = *g_directionHeight;
 
 	return g_newData;
 }

@@ -613,7 +613,7 @@ namespace DCC
 							for(int j = 0; j < nCountJ; j++)
 							{
 								DWORD dwPixelData = 0;
-								DWORD dwPixelPos = ((nFrameY + nYPos + i) * (nDirectionW)) + (nFrameX + nXPos + j);
+								DWORD dwPixelPos = ((nFrameY + nYPos + i) * (frame->dwWidth)) + (nFrameX + nXPos + j);
 								int nPalettePos;
 
 								pDirection->PixelCodeDisplacementStream->ReadBits(&dwPixelData, n);
@@ -635,7 +635,7 @@ namespace DCC
 			// Handle the individual frame
 			if(callback)
 			{
-				callback(bitmap, f, nFrameX, nFrameY, frame->dwWidth + nFrameX, frame->dwHeight + nFrameY);
+				callback(bitmap, f, nFrameX, nFrameY, frame->dwWidth, frame->dwHeight);
 			}
 		}
 

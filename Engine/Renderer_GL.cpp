@@ -176,15 +176,16 @@ void GLRenderObject::Render()
 						GLuint texture = (GLuint)extraData;
 
 						glActiveTexture(GL_TEXTURE0);
+						glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 						glBindTexture(GL_TEXTURE_2D, texture);
-						glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+						glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, 0, frameW, frameH, GL_RED,
 							GL_UNSIGNED_BYTE, pixels);
+						glPixelStorei(GL_PACK_ALIGNMENT, 1);
 				});
 				component->SetLoadedGraphicsData((void*)texture, -1, direction);
 			}
 			
 			// Bind the texture for the component
-			glPixelStorei(GL_PACK_ALIGNMENT, 1);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture);
 
