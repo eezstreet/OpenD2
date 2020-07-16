@@ -97,16 +97,16 @@ namespace DCC
 
 		// Calculate mins/maxs
 		frame.nMinX = frame.nXOffset;
-		frame.nMaxX = frame.nMinX + frame.dwWidth - 1;
+		frame.nMaxX = frame.nMinX + frame.dwWidth;
 		if (frame.dwFlipped)
 		{
 			frame.nMinY = frame.nYOffset;
-			frame.nMaxY = frame.nMinY + frame.dwHeight - 1;
+			frame.nMaxY = frame.nYOffset + frame.dwHeight;
 		}
 		else
 		{
-			frame.nMaxY = frame.nYOffset;
-			frame.nMinY = frame.nMaxY - frame.dwHeight + 1;
+			frame.nMinY = frame.nYOffset - frame.dwHeight + 1;
+			frame.nMaxY = frame.nYOffset + 1;
 		}
 	}
 
@@ -149,6 +149,12 @@ namespace DCC
 			dir.EqualCellStream = new Bitstream();
 			dir.EqualCellStream->SplitFrom(pBits, dir.dwEqualCellStreamSize);
 		}
+#ifdef _WIN32
+		else
+		{
+			printf("Direction bitstream created without EqualCellStream!\n");
+		}
+#endif
 
 		// Corresponds to `ColorMask` in SVR's code
 		dir.PixelMaskStream = new Bitstream();
@@ -161,6 +167,12 @@ namespace DCC
 			dir.EncodingTypeStream->SplitFrom(pBits, dir.dwEncodingStreamSize);
 			dir.RawPixelStream->SplitFrom(pBits, dir.dwRawPixelStreamSize);
 		}
+#ifdef _WIN32
+		else
+		{
+			printf("Direction bitstream created without EncodingType or RawPixelStream !\n");
+		}
+#endif
 
 		// Read the remainder into the pixel code displacement
 		// Corresponds to `PixelData` in SVR's code
@@ -314,6 +326,7 @@ namespace DCC
 	 *	Decodes a direction.
 	 *	@author	eezstreet, SVR, Paul Siramy, Necrolis, Bilian Belchev
 	 */
+	static DCCCell g_decodeCells[6][6];
 	void DecodeDirection(DCCFile* animation, uint32_t direction, DCCDirectionFrameDecodeCallback callback)
 	{
 		if(animation == nullptr)
@@ -329,7 +342,7 @@ namespace DCC
 		DCCDirection* pDirection = &animation->directions[direction];
 
 		// Create a buffer containing the cells for this direction
-		int nDirectionW = pDirection->nMaxX - pDirection->nMinX + 1;
+		int nDirectionW = pDirection->nMaxX - pDirection->nMinX;
 		int nDirectionH = pDirection->nMaxY - pDirection->nMinY + 1;
 		int nDirCellW = (nDirectionW >> 2) + 10;
 		int nDirCellH = (nDirectionH >> 2) + 10;
@@ -372,12 +385,12 @@ namespace DCC
 			int nStartY = nFrameY >> 2;
 
 			// Grab the four pixels (clrcode) color for each cell
-			for(int y = nStartY; y < (nStartY + nNumCellsH); y++)
+			for(int y = 0; y < nNumCellsH; y++)
 			{
-				for(int x = nStartX; x < (nStartX + nNumCellsW); x++)
+				for(int x = 0; x < nNumCellsW; x++)
 				{
 					DCCCell* pCurCell = pCell++;
-					DCCCell* pPrevCell = ppCellBuffer[(y * nDirCellW) + x];
+					DCCCell* pPrevCell = ppCellBuffer[(y * nNumCellsW) + x];
 					DWORD dwClrMask = 0xF;
 
 					*(DWORD*)(pCurCell->clrmap) = 0;
@@ -459,7 +472,7 @@ namespace DCC
 						}
 					}
 
-					ppCellBuffer[(y * nDirCellW) + x] = pCurCell;
+					ppCellBuffer[(y * nNumCellsW) + x] = pCurCell;
 				}
 			}
 		}
@@ -505,24 +518,24 @@ namespace DCC
 			int nXPos;
 
 			DCCCell* pCells = pFrameCells[f];
-			for(int y = nStartY; y < (nStartY + nNumCellsH); y++)
+			for(int y = 0; y < nNumCellsH; y++)
 			{
 				nXPos = 0;
 				nCountJ = nFirstColumnW;
 
-				if(y == ((nStartY + nNumCellsH) - 1))
+				if(y == nNumCellsH - 1)
 				{	// If it's the last row, use the last height
 					nCountI = nFrameH;
 				}
 
-				for(int x = nStartX; x < (nStartX + nNumCellsW); x++)
+				for(int x = 0; x < nNumCellsW; x++)
 				{
 					bool bTransparent = false;
 					DCCCell* pCurCell = pCells++;
 					DCCCell* pPrevCell = ppCellBuffer[(y * nDirCellW) + x];
 
-					if(x == ((nStartX + nNumCellsW) - 1))
-					{
+					if(x == nNumCellsW - 1)
+					{	// last cell = nFrameW
 						nCountJ = nFrameW;
 					}
 
@@ -622,11 +635,12 @@ namespace DCC
 			// Handle the individual frame
 			if(callback)
 			{
-				callback(bitmap, f, nFrameX, nFrameY, frame->dwWidth, frame->dwHeight);
+				callback(bitmap, f, nFrameX, nFrameY, frame->dwWidth + nFrameX, frame->dwHeight + nFrameY);
 			}
 		}
 
 		// Delete all of the data that we don't need any more.
+		// FIXME: should we really be doing this..? probably more efficient to use a statically-allocated buffer for decoding
 		for(int f = 0; f < animation->header.dwFramesPerDirection; f++)
 		{
 			delete pFrameCells[f];

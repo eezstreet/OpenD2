@@ -161,7 +161,7 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 			g_frameStart += frameX;
 			g_frameXOffsets[frameNum] = g_frameStart;
 			g_frameYOffsets[frameNum] = frameY;
-			g_decoder((void*)bitmap, g_newData, frameNum, g_frameStart, frameY, frameW, frameH);
+			g_decoder((void*)bitmap, g_newData, frameNum, g_frameStart, 0, frameW + frameX, frameH + frameY);
 			g_frameStart += frameW;
 			*g_directionWidth = g_frameStart;
 			if (frameY + frameH > *g_directionHeight)
@@ -647,6 +647,15 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 		if (hitclass != WC_HTH)
 		{
 			snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%sHTH.dcc",
+				GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+				GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode));
+			reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now
+		}
+
+		if (reference == nullptr && hitclass != WC_1HS)
+		{
+			// Try 1hs as a fallback?
+			snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%s1HS.dcc",
 				GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
 				GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode));
 			reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now

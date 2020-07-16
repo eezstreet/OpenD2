@@ -156,6 +156,7 @@ void D2Widget_CharSelectList::AddSave(D2SaveHeader& header, char* path)
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SPECIAL1, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_SPECIAL2, "lit");
 	pSaveData->renderedToken->SetTokenArmorLevel(COMP_TORSO, "lit");
+	pSaveData->renderedToken->SetAnimationDirection(3);
 
 	pSaveData->frame = engine->renderer->AllocateObject(0);
 	pSaveData->title = engine->renderer->AllocateObject(1);
