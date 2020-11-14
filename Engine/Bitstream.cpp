@@ -375,3 +375,16 @@ void Bitstream::FreeInternalStreamSource()
 		free(pStream);
 	}
 }
+
+/*
+ * Aligns the bitstream to the nearest byte boundary.
+ * @author Necrolis
+ */
+void Bitstream::Align()
+{
+	if (dwReadBit != 8)
+	{
+		dwReadBit = 8;
+		dwCurrentByte++;
+	}
+}

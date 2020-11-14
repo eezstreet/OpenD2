@@ -127,9 +127,18 @@ void GLRenderObject::Render()
 		int mode = data.tokenData.currentMode;
 		int direction = data.tokenData.direction;
 		int hitclass = data.tokenData.hitClass;
-		uint16_t frame = data.tokenData.currentFrame;
 
-		for (int i = 0; i < COMP_MAX; i++)
+		uint64_t ticks = SDL_GetTicks();
+		uint16_t lastFrame = data.tokenData.currentFrame;
+		int numFrames = data.tokenData.attachedTokenResource->GetNumberOfFrames(mode, hitclass);
+
+		data.tokenData.currentFrame += (ticks - data.tokenData.lastFrameTime) / (1000.0f / data.tokenData.frameRate);
+		int renderedFrame = data.tokenData.currentFrame;
+		renderedFrame %= numFrames;
+		data.tokenData.lastFrameTime = ticks;
+
+
+		for (int i = COMP_MAX - 1; i >= 0; i--)
 		{
 			const char* armorType = data.tokenData.armorType[i];
 
@@ -192,8 +201,8 @@ void GLRenderObject::Render()
 			// Determine where to draw the texture
 			uint32_t x, y, w, h, frameWidth, frameHeight;
 			int32_t offsetX, offsetY;
-			component->GetGraphicsData(nullptr, frame, &frameWidth, &frameHeight, &offsetX, &offsetY);
-			component->GetAtlasInfo(frame, &x, &y, &w, &h, direction);
+			component->GetGraphicsData(nullptr, renderedFrame, &frameWidth, &frameHeight, &offsetX, &offsetY);
+			component->GetAtlasInfo(renderedFrame, &x, &y, &w, &h, direction);
 			textureCoord[0] = (x) / (float)w;
 			textureCoord[1] = (y) / (float)h;
 			textureCoord[2] = frameWidth / (float)w;
@@ -232,22 +241,24 @@ void GLRenderObject::Render()
 	{
 		// update animation frame and set texture coordinates, if appropriate
 		uint64_t ticks = SDL_GetTicks();
-		uint16_t lastFrame = data.animationData.currentFrame;
+		int lastFrame = data.animationData.currentFrame;
 		
-		data.animationData.currentFrame += (ticks - data.animationData.lastFrameTime) / (1000 / data.animationData.frameRate);
+		data.animationData.currentFrame += (ticks - data.animationData.lastFrameTime) / (1000.0f / data.animationData.frameRate);
+		int renderedFrame = data.animationData.currentFrame;
 		
 		if (data.animationData.bLoop)
 		{
-			data.animationData.currentFrame %= data.animationData.numFrames;
+			renderedFrame %= data.animationData.numFrames;
+			data.animationData.currentFrame = renderedFrame;
 		}
-		else if (data.animationData.currentFrame >= data.animationData.numFrames)
+		else if (renderedFrame >= data.animationData.numFrames)
 		{
-			data.animationData.currentFrame = data.animationData.numFrames - 1;
+			renderedFrame = data.animationData.numFrames - 1;
 		}
 
-		if (lastFrame != data.animationData.currentFrame)
+		if (lastFrame != renderedFrame)
 		{
-			if (data.animationData.currentFrame < lastFrame || data.animationData.currentFrame == data.animationData.numFrames - 1)
+			if (renderedFrame < lastFrame || renderedFrame == data.animationData.numFrames - 1)
 			{	// if the current frame is less than the last frame or we are on the last frame, run the finish callback
 				// run all of the callbacks for finishing
 				for (int i = 0; i < data.animationData.numFinishCallbacks; i++)
@@ -257,13 +268,13 @@ void GLRenderObject::Render()
 						data.animationData.finishCallback[i].callback(this, data.animationData.finishCallback[i].extraData);
 					}
 					
-					if (data.animationData.currentFrame < lastFrame)
+					if (renderedFrame < lastFrame)
 					{	// we run the callback every time we loop ... ?
 						data.animationData.finishCallback[i].bHaveRun = false;
 					}
 				}
 
-				if (data.animationData.currentFrame < lastFrame)
+				if (renderedFrame < lastFrame)
 				{	// animation has been reset, reset the frame callbacks
 					for (int i = 0; i < data.animationData.numFrameCallbacks; i++)
 					{
@@ -274,7 +285,7 @@ void GLRenderObject::Render()
 
 			for (int i = 0; i < data.animationData.numFrameCallbacks; i++)
 			{
-				if (data.animationData.currentFrame >= data.animationData.frameCallback[i].frame &&
+				if (renderedFrame >= data.animationData.frameCallback[i].frame &&
 					!data.animationData.frameCallback[i].bHaveRun)
 				{	// current frame is greater than (or equal to) this frame callback's frame and hasn't been run. run it now!
 					data.animationData.frameCallback[i].callback(this, data.animationData.frameCallback[i].frame, data.animationData.frameCallback[i].extraData);
@@ -298,7 +309,7 @@ void GLRenderObject::Render()
 
 		uint32_t frameWidth, frameHeight;
 		int32_t offsetX, offsetY;
-		data.animationData.attachedAnimationResource->GetGraphicsData(nullptr, data.animationData.currentFrame,
+		data.animationData.attachedAnimationResource->GetGraphicsData(nullptr, renderedFrame,
 			&frameWidth, &frameHeight, &offsetX, &offsetY);
 
 		GLfloat drawCoords[] = { screenCoord[0] + offsetX,
@@ -308,7 +319,7 @@ void GLRenderObject::Render()
 		};
 
 		uint32_t x, y, w, h;
-		data.animationData.attachedAnimationResource->GetAtlasInfo(data.animationData.currentFrame, &x, &y, &w, &h);
+		data.animationData.attachedAnimationResource->GetAtlasInfo(renderedFrame, &x, &y, &w, &h);
 		textureCoord[0] = (x) / (float)w;
 		textureCoord[1] = (y) / (float)h;
 		textureCoord[2] = frameWidth / (float)w;
@@ -528,6 +539,9 @@ void GLRenderObject::AttachTokenResource(ITokenReference* handle)
 	memset(&data, 0, sizeof(data));
 	objectType = RO_Token;
 	data.tokenData.attachedTokenResource = handle;
+	data.tokenData.currentFrame = 0;
+	data.tokenData.lastFrameTime = SDL_GetTicks();
+	data.tokenData.frameRate = 12;
 }
 
 void GLRenderObject::AttachFontResource(IGraphicsReference* handle)

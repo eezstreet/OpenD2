@@ -93,12 +93,12 @@ void DCCReference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_
 
 	if (totalWidth)
 	{
-		*totalWidth = directionWidth[direction];
+		*totalWidth = dccFile.directions[direction].nWidth * dccFile.header.dwFramesPerDirection;
 	}
 
 	if (totalHeight)
 	{
-		*totalHeight = directionHeight[direction];
+		*totalHeight = dccFile.directions[direction].nHeight;
 	}
 }
 
@@ -118,6 +118,7 @@ void DCCReference::Deallocate()
 void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAllocCallback allocCallback, AnimTextureDecodeCallback decodeCallback)
 {
 	static AnimTextureDecodeCallback g_decoder;
+	static AnimTextureAllocCallback g_allocator;
 	static void* g_newData;
 	static int g_frameStart;
 	static unsigned int* g_frameXOffsets;
@@ -145,6 +146,28 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 		return loadedGraphicsForDirection[direction];
 	}
 
+#ifdef PAUL_SIRAMY_DCC
+	g_allocator = allocCallback;
+	g_decoder = decodeCallback;
+	g_frameStart = 0;
+	g_frameXOffsets = xOffsetForFrame[direction];
+	g_frameYOffsets = yOffsetForFrame[direction];
+	g_directionWidth = &tempDirectionWidth;
+	g_directionHeight = &tempDirectionHeight;
+	DCC::DecodeDirection(&dccFile, 0, [](unsigned int width, unsigned int height) {
+		g_newData = g_allocator(width, height);
+	}, [](BYTE* bitmap, uint32_t frameNum, int32_t frameX, int32_t frameY, uint32_t frameW, uint32_t frameH) {
+		g_frameXOffsets[frameNum] = frameX;
+		g_frameYOffsets[frameNum] = frameY;
+		g_decoder((void*)bitmap, g_newData, frameNum, frameX, frameY, frameW, frameH);
+		g_frameStart += frameW;
+		*g_directionWidth = g_frameStart;
+		if (frameY + frameH > *g_directionHeight)
+		{
+			*g_directionHeight = frameY + frameH;
+		}
+	});
+#else
 	// Do alloc callback?
 	DCC::GetDirectionSize(&dccFile, direction, &this->directionWidth[direction], &this->directionHeight[direction]);
 	g_newData = allocCallback(this->directionWidth[direction], this->directionHeight[direction]);
@@ -170,6 +193,7 @@ void* DCCReference::LoadSingleDirection(unsigned int direction, AnimTextureAlloc
 				*g_directionHeight = frameY + frameH;
 			}
 	});
+#endif
 
 	bAreGraphicsLoadedForDirection[direction] = true;
 	loadedGraphicsForDirection[direction] = g_newData;

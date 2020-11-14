@@ -41,6 +41,8 @@ public:
 
 	BYTE* GetHeldData(size_t& outSize);
 
+	void Align();
+
 private:
 	int ReadBits(int bitsCount);
 	void FreeInternalStreamSource();

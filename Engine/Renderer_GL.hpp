@@ -39,7 +39,7 @@ protected:
 		struct
 		{
 			uint64_t lastFrameTime;
-			uint16_t currentFrame;
+			float currentFrame;
 			uint16_t numFrames;
 			uint32_t frameRate;
 			class IGraphicsReference* attachedAnimationResource;
@@ -76,7 +76,9 @@ protected:
 			int currentMode;
 			int hitClass;
 			int direction;
-			uint16_t currentFrame;
+			float currentFrame;
+			uint64_t lastFrameTime;
+			uint16_t frameRate;
 			char armorType[COMP_MAX][4];
 		} tokenData;
 	} data;
