@@ -210,7 +210,7 @@ void GLRenderObject::Render()
 
 			GLfloat drawCoords[] = {
 				screenCoord[0] + offsetX,
-				screenCoord[1] + 400 - frameHeight + offsetY,
+				screenCoord[1] - frameHeight + offsetY,
 				frameWidth,
 				frameHeight - 1
 			};

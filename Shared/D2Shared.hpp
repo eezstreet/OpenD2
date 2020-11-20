@@ -926,3 +926,49 @@ namespace D2Lib
 		return b;
 	}
 };
+
+#define MAX_BOUND_TO_DELEGATELIST	16
+
+template<typename... Args>
+class UnorderedDelegateList 
+{
+private:
+	void (*m_bound[MAX_BOUND_TO_DELEGATELIST])(Args...);
+public:
+	UnorderedDelegateList()
+	{
+		for (int i = 0; i < MAX_BOUND_TO_DELEGATELIST; i++)
+		{
+			m_bound[i] = nullptr;
+		}
+	}
+
+	void Dispatch(Args... args)
+	{
+		for (int i = 0; i < MAX_BOUND_TO_DELEGATELIST; i++)
+		{
+			if (m_bound[i] != nullptr)
+			{
+				m_bound[i](args);
+			}
+		}
+	}
+
+	handle AddListener(void (*f)(Args...))
+	{
+		for (int i = 0; i < MAX_BOUND_TO_DELEGATELIST; i++)
+		{
+			if (m_bound[i] == nullptr)
+			{
+				m_bound[i] = f;
+				return (handle)i;
+			}
+		}
+		return INVALID_HANDLE;
+	}
+
+	void RemoveListener(const handle& h)
+	{
+		m_bound[h] = nullptr;
+	}
+};

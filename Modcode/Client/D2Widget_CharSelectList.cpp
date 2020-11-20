@@ -7,87 +7,12 @@ static char* gszClassTokens[D2CLASS_MAX] = {
 	"AM", "SO", "NE", "PA", "BA", "DZ", "AI",
 };
 
-// So, funny story. The devs didn't actually tie these to .tbl entries, so they are not translated at all !
-// If you look in patchstring.tbl, expansionstring.tbl, and string.tbl, they are not listed at all!
-struct CharacterTitle {
-	const char16_t* maleTitle;
-	const char16_t* femaleTitle;
-};
-
-// NOTE: Expansion saves don't actually use every 4th slot.
-// This is because it skips over Diablo. When Baal is killed, it increments by one.
-// When the Eve of Destruction has completed, it is incremented again. So, twice.
-#define TITLE_BIGENDER(x, y)	{x, y}, {x, y}, {x, y}, {x, y}
-#define TITLE_NOGENDER(x)		{x, x}, {x, x}, {x, x}, {x, x}
-#define TITLE_BIGENDER_EXP(x,y)	{x, y}, {x, y}, {x, y}, {x, y}, {x, y}
-#define TITLE_NOGENDER_EXP(x)	{x, x}, {x, x}, {x, x}, {x, x}, {x, x}
-
-static const CharacterTitle TitleStatus_Classic[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER(0),
-
-	// Normal completed = "Sir" or "Dame"
-	TITLE_BIGENDER(u"Sir", u"Dame"),
-
-	// Nightmare completed = "Lord" or "Lady"
-	TITLE_BIGENDER(u"Lord", u"Lady"),
-
-	// Hell completed = "Baron" or "Baronness"
-	TITLE_BIGENDER(u"Baron", u"Baronness")
-};
-
-static const CharacterTitle TitleStatus_ClassicHardcore[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER(0),
-
-	// Normal completed = "Count" or "Countess"
-	TITLE_BIGENDER(u"Count", u"Countess"),
-
-	// Nightmare completed = "Duke" or "Duchess"
-	TITLE_BIGENDER(u"Duke", u"Duchess"),
-
-	// Hell completed = "King" or "Queen"
-	TITLE_BIGENDER(u"King", u"Queen")
-};
-
-static const CharacterTitle TitleStatus_Expansion[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER_EXP(0),
-
-	// Normal completed = "Slayer"
-	TITLE_NOGENDER_EXP(u"Slayer"),
-
-	// Nightmare completed = "Champion"
-	TITLE_NOGENDER_EXP(u"Champion"),
-
-	// Hell completed = "Patriarch" or "Matriarch"
-	TITLE_BIGENDER_EXP(u"Patriarch", u"Matriarch")
-};
-
-static const CharacterTitle TitleStatus_ExpansionHardcore[] =
-{
-	// Normal uncompleted = Nothing
-	TITLE_NOGENDER_EXP(0),
-
-	// Normal completed = "Destroyer"
-	TITLE_NOGENDER_EXP(u"Destroyer"),
-
-	// Nightmare completed = "Conqueror"
-	TITLE_NOGENDER_EXP(u"Conqueror"),
-
-	// Hell completed = "Guardian"
-	TITLE_NOGENDER_EXP(u"Guardian")
-};
-
 /*
  *	Creates a Character Select list widget.
  *	This method is responsible for loading up all of the savegames.
  *	We should maybe cache the results of the savegame loading so that going to the charselect page doesn't take a while.
  */
-D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h) 
+D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h, IRenderObject* renderedName) 
 	: D2Widget(x, y, w, h)
 {
 	// Blank out our own data
@@ -102,6 +27,8 @@ D2Widget_CharSelectList::D2Widget_CharSelectList(int x, int y, int w, int h)
 
 	// Create the scrollbar - we manually draw it as part of this widget's display
 	//pScrollBar = new D2Widget_Scrollbar()
+
+	topName = renderedName;
 }
 
 /*
@@ -216,20 +143,37 @@ void D2Widget_CharSelectList::Clicked(DWORD dwX, DWORD dwY)
  */
 void D2Widget_CharSelectList::Selected(int nNewSelection)
 {
-	if (nNewSelection >= nNumberSaves)
+	if (nNewSelection >= nNumberSaves || nNewSelection + nCurrentScroll >= nNumberSaves)
 	{
 		nNewSelection = -1;
 	}
 
-	nCurrentSelection = nNewSelection;
-	if (nCurrentSelection == -1)
+	if (saves == nullptr)
+	{
+		nNewSelection = -1;
+	}
+
+	if (saves != nullptr)
+	{
+		saves->DeselectAllInChain();
+	}
+
+	if (nNewSelection == -1)
 	{
 		// Grey out the "OK", "Delete Character" and "Convert to Expansion" buttons
 		dynamic_cast<D2Panel_CharSelect*>(m_pOwner)->InvalidateSelection();
+		nCurrentSelection = nNewSelection;
+		topName->SetText(u"");
 	}
 	else
 	{
 		dynamic_cast<D2Panel_CharSelect*>(m_pOwner)->ValidateSelection();
+		nCurrentSelection = nCurrentScroll + nNewSelection;
+		if (saves != nullptr)
+		{
+			saves->Select(nCurrentSelection);
+			topName->SetText(saves->GetSelectedCharacterName());
+		}
 	}
 }
 

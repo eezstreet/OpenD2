@@ -645,8 +645,9 @@ void D2Widget_CharSelectSave::SetDrawPosition(uint32_t x, uint32_t y)
 	characterName->SetDrawCoords(x + 80, y + 14, 0, 0);
 	characterLevelAndClass->SetDrawCoords(x + 80, y + 28, 0, 0);
 	expansionText->SetDrawCoords(x + 80, y + 42, 0, 0);
-	characterRender->SetDrawCoords(x + 80, y, 0, 0);
+	characterRender->SetDrawCoords(x + 25, y + 80, 0, 0);
 	characterTitle->SetDrawCoords(x + 80, y, 0, 0);
+	selectionFrame->SetDrawCoords(x, y, -1, -1);
 }
 
 void D2Widget_CharSelectSave::Draw()
@@ -728,7 +729,7 @@ D2Widget_CharSelectSave* D2Widget_CharSelectSave::GetInChain(int counter)
 void D2Widget_CharSelectSave::DrawLink(int counter, bool bDrawLeft)
 {
 	// set parameters
-	SetDrawPosition(!bDrawLeft ? 35 : 305, 85 + (((D2_NUM_VISIBLE_SAVES - counter) % 2) * 95));
+	SetDrawPosition(bDrawLeft ? 35 : 305, 85 + (((D2_NUM_VISIBLE_SAVES - counter) % 2) * 95));
 
 	// draw it!
 	Draw();
@@ -761,6 +762,7 @@ void D2Widget_CharSelectSave::OnSelected()
 
 void D2Widget_CharSelectSave::DeselectAllInChain()
 {
+	bIsSelected = false;
 	if (nextInChain)
 	{
 		nextInChain->DeselectAllInChain();

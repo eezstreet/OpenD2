@@ -73,6 +73,8 @@ static void PanelSignal(D2Panel* pCallerPanel, D2Widget* pCallerWidget)
  */
 D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 {
+	characterDisplayName = engine->renderer->AllocateObject(1);
+
 	engine->renderer->SetGlobalPalette(PAL_SKY);
 	createCharButton = new D2Widget_Button(34, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallButton", 0, 0, 1, 1, 1, 1);
 	deleteCharButton = new D2Widget_Button(432, 467, "data\\global\\ui\\CharSelect\\TallButtonBlank.dc6", "tallbutton", 0, 0, 1, 1, 1, 1);
@@ -80,7 +82,7 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 
 	okButton = new D2Widget_Button(628, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
 	exitButton = new D2Widget_Button(34, 538, SMALL_BUTTON_DC6, "medium", 0, 0, 1, 1, 0, 0);
-	charSelectList = new D2Widget_CharSelectList(37, 86, 548, 370);
+	charSelectList = new D2Widget_CharSelectList(37, 86, 548, 370, characterDisplayName);
 
 	//AddWidget(createCharButton);
 	//AddWidget(deleteCharButton);
@@ -107,7 +109,7 @@ D2Panel_CharSelect::D2Panel_CharSelect() : D2Panel()
 	okButton->AttachIdentifier("cs_ok");
 	exitButton->AttachIdentifier("cs_exit");
 
-	characterDisplayName = engine->renderer->AllocateObject(1);
+	
 	characterDisplayName->AttachFontResource(cl.font42);
 }
 

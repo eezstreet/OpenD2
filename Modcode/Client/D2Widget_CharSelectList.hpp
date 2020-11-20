@@ -35,8 +35,10 @@ private:
 
 	void Clicked(DWORD dwX, DWORD dwY);
 
+	IRenderObject* topName;
+
 public:
-	D2Widget_CharSelectList(int x, int y, int w, int h);
+	D2Widget_CharSelectList(int x, int y, int w, int h, IRenderObject* renderedName);
 	virtual ~D2Widget_CharSelectList();
 
 	void AddSave(D2SaveHeader& header, char* path);
