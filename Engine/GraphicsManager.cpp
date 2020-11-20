@@ -664,6 +664,14 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 		GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode), GetHitclassName(hitclass));
 
 	reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now
+	if (reference == nullptr && hitclass == WC_HT2)
+	{	// freak case; RH always uses HT1. don't ask.
+		snprintf(path, MAX_D2PATH, "data\\global\\%s\\%s\\%s\\%s%s%s%sHT1.dcc",
+			GetTokenDataFolder(), GetTokenName(), GetComponentName(component),
+			GetTokenName(), GetComponentName(component), armorClass, GetModeName(mode));
+		reference = graphicsManager->CreateReference(path, UsagePolicy_Permanent); // for now
+	}
+
 	if (reference == nullptr)
 	{
 		// File not found - try using "HTH" as a fallback for the hitclass
@@ -719,6 +727,22 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 
 bool ITokenReference::HasComponentForMode(unsigned int component, unsigned int hitclass, unsigned int mode)
 {
+	// Don't render shield in certain modes
+	if (component == COMP_SHIELD)
+	{
+		switch (hitclass)
+		{
+			case WC_1JS:
+			case WC_1JT:
+			case WC_1SS:
+			case WC_1ST:
+			case WC_BOW:
+			case WC_2HS:
+			case WC_XBW:
+			case WC_HT2:
+				return false;
+		}
+	}
 	// Load COF if it isn't already loaded
 	if (cofFiles[mode][hitclass] == INVALID_HANDLE)
 	{

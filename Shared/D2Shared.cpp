@@ -393,12 +393,44 @@ namespace D2Lib
 		return p;
 	}
 
+	/**
+	 *	Count the number of characters in a char16_t.
+	 */
+	int qstrchrcnt(char16_t* str, char16_t chr)
+	{
+		int count = 0;
+		do
+		{
+			str = qstrchr(str, chr);
+			if (str == nullptr)
+			{
+				break;
+			}
+			count++;
+			str++;
+		} while (1);
+
+		return count;
+	}
+
 	/*
 	*	Pared-down format string handling. Only supports %%, %d and %s, but it uses char16_t to handle those.
 	*	@author	eezstreet
 	*/
 	int qvsnprintf(char16_t* buffer, size_t bufferCount, const char16_t* format, va_list args)
 	{
+		// If the buffer is the same as it's format, this can get messy.
+		// Keep a temporary copy for that case.
+		bool usingTempBuffer = buffer == format;
+		char16_t* tempBuffer;
+		char16_t* oldBuffer;
+		if (usingTempBuffer)
+		{
+			tempBuffer = (char16_t*)malloc(bufferCount * sizeof(char16_t));
+			oldBuffer = buffer;
+			buffer = tempBuffer;
+		}
+		
 		char16_t* p = (char16_t*)format;
 		char16_t* next = qstrchr(p, '%');
 		char16_t* o = buffer;
@@ -409,7 +441,7 @@ namespace D2Lib
 		while (next != nullptr && rem > 0)
 		{
 			size_t len = (next - p < rem) ? next - p : rem;
-			qstrncpyz(o, p, len);
+			qstrncpyz(o, p, len + 1);
 			o += len;
 			rem -= next - p;
 
@@ -427,7 +459,7 @@ namespace D2Lib
 				intArg = va_arg(args, int);
 				len = 0;
 				qnitoa(intArg, o, rem, 10, len);
-				o += len - 1;
+				o += len;
 				rem -= len;
 				p++;
 				break;
@@ -436,16 +468,28 @@ namespace D2Lib
 				len = qstrlen(strArg);
 				qstrncpyz(o, strArg, rem);
 				rem -= len;
-				o += len - 1;
+				o += len;
 				p++;
 				break;
 			}
 
 			next = qstrchr(p, '%');
+
+			// Find the length of the text past the null terminator that we just inserted
+			size_t l = qstrlen(p + 1);
+			if (l > 0)
+			{
+				qstrncpyz(o, p + 1, l + 1);
+			}
 		}
 
 		qstrncpyz(o, p, rem);
 
+		if (usingTempBuffer)
+		{
+			qstrncpyz(oldBuffer, tempBuffer, bufferCount);
+			free(tempBuffer);
+		}
 		return bufferCount - rem;
 	}
 

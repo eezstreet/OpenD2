@@ -34,7 +34,6 @@ private:
 	const int nSlotHeight = 93;
 
 	void Clicked(DWORD dwX, DWORD dwY);
-	void DrawSaveSlot(CharacterSaveData* pSaveData, int nSlot);
 
 public:
 	D2Widget_CharSelectList(int x, int y, int w, int h);
