@@ -73,7 +73,7 @@ namespace D2Menus
 		trademark->SetTextColor(TextColor_Gold);
 		allRightsReserved->SetTextColor(TextColor_Gold);
 
-		m_dwTimeRemaining = 10000;
+		m_timeRemaining = 10000;
 	}
 
 	/*
@@ -100,8 +100,8 @@ namespace D2Menus
 	{
 		D2Menu::Tick(dwDeltaMs);
 
-		m_dwTimeRemaining -= dwDeltaMs;
-		if (m_dwTimeRemaining <= 0)
+		m_timeRemaining -= dwDeltaMs;
+		if (m_timeRemaining <= 0)
 		{
 			delete cl.pActiveMenu;
 			cl.pActiveMenu = new Main();
@@ -130,7 +130,7 @@ namespace D2Menus
 	bool Trademark::HandleMouseClicked(DWORD dwX, DWORD dwY)
 	{
 		// if mouse is clicked, go to main menu
-		m_dwTimeRemaining = 0;
+		m_timeRemaining = 0;
 		return true;
 	}
 }

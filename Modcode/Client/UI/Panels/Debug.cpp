@@ -1,5 +1,6 @@
 #include "Debug.hpp"
 #include "../D2Menu.hpp"
+#include "../Menus/Main.hpp"
 
 #define MAIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\3WideButtonBlank.dc6"
 
@@ -17,8 +18,7 @@ namespace D2Panels
 		m_exitButton->AttachText(u"EXIT");
 		m_exitButton->AddEventListener(Clicked, [] {
 			delete cl.pActiveMenu;
-			D2Client_GoToContextMenu();
-			return;
+			cl.pActiveMenu = new D2Menus::Main();
 			});
 	}
 

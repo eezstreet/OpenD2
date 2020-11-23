@@ -22,7 +22,7 @@ struct D2CmdArgStrc
 	char szKeyName[16];		// +10
 	char szCmdName[16];		// +20
 	DWORD dwType;			// +30 ( 0 use GetProfInt - write bool, 1 DWORD , 2 string, 3 BYTE, 4 WORD)
-	int nOffset;			// +34
+	DWORD nOffset;			// +34
 	DWORD dwDefault;		// +38
 };							// +3C
 

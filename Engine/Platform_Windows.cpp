@@ -308,6 +308,7 @@ namespace Sys
 		Log_ErrorAssertReturn(bModuleFound, nullptr);
 
 		gModules[nModule].dwModule = LoadLibrary(szModulePath);
+		DWORD error = GetLastError();
 		Log_ErrorAssertReturn(gModules[nModule].dwModule != 0, nullptr);
 
 		GetAPIType ModuleAPI;

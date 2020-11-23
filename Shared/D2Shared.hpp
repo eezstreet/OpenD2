@@ -964,11 +964,18 @@ public:
 
 	void Dispatch(Args... args)
 	{
+		// TODO: find a workaround for this.
+		// Basically if we fire off a delegate that alters its containing object = this goes boom!
+		void (*bindList[MAX_BOUND_TO_DELEGATELIST])(Args...);
 		for (int i = 0; i < MAX_BOUND_TO_DELEGATELIST; i++)
 		{
-			if (m_bound[i] != nullptr)
+			bindList[i] = m_bound[i];
+		}
+		for (int i = 0; i < MAX_BOUND_TO_DELEGATELIST; i++)
+		{
+			if (bindList[i] != nullptr)
 			{
-				m_bound[i](args...);
+				bindList[i](args...);
 			}
 		}
 	}

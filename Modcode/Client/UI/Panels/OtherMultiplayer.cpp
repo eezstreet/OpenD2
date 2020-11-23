@@ -32,6 +32,15 @@ namespace D2Panels
 		m_openBattleNetButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OPENBNET));
 		m_TCPIPButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_TCPIP));
 		m_cancelButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CANCEL));
+
+		m_TCPIPButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = new D2Menus::TCPIP();
+			});
+		m_cancelButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = new D2Menus::Main();
+			});
 	}
 
 	/*

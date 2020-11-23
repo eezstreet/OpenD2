@@ -120,6 +120,17 @@ void D2Menu::HidePanel(D2Panel* pPanel)
 		pCurrent = pCurrent->m_pNextVisible;
 	}
 
+	if (pLast == nullptr)
+	{
+		return;
+	}
+
+	if (pCurrent == nullptr)
+	{
+		pLast->m_pNextVisible = nullptr;
+		return;
+	}
+
 	pLast->m_pNextVisible = pCurrent->m_pNextVisible;
 }
 

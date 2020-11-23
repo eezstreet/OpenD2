@@ -9,7 +9,7 @@ namespace D2Menus
 	/*
 	 *	Creates the CharSelect menu.
 	 */
-	CharSelect::CharSelect(char** pszSavePaths, int nNumFiles)
+	CharSelect::CharSelect(char** pszSavePaths, int nNumFiles) : D2Menu()
 	{
 		bool bPreloadedSave = (pszSavePaths != nullptr);
 		D2SaveHeader header{ 0 };

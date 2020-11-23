@@ -18,6 +18,14 @@
 #define SMALL_BUTTON_DC6		"data\\global\\ui\\FrontEnd\\MediumButtonBlank.dc6"
 #define THIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\NarrowButtonBlank.dc6"
 
+/**	Tries to advance to the character select screen.
+	 *	If there's no save files present, it advances to the character creation screen instead.
+	 */
+void D2Client_AdvanceToCharSelect()
+{
+	
+}
+
 namespace D2Panels
 {
 	/*
@@ -59,6 +67,42 @@ namespace D2Panels
 		m_cinematicsButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_CINEMATICS));
 		m_exitButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_EXIT));
 
+		m_singleplayerButton->AddEventListener(Clicked, [] {
+			cl.szCurrentIPDestination[0] = '\0'; // set IP to blank
+			engine->NET_SetPlayerCount(1);
+			cl.charSelectContext = CSC_SINGLEPLAYER;
+			
+			int nNumFiles = 0;
+			char** szFileList = engine->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
+
+			delete cl.pActiveMenu;
+			if (nNumFiles <= 0)
+			{
+				cl.pActiveMenu = new D2Menus::CharCreate();
+			}
+			else
+			{
+				cl.pActiveMenu = new D2Menus::CharSelect(szFileList, nNumFiles);
+				engine->FS_FreeFileList(szFileList, nNumFiles);
+			}
+			});
+
+		m_multiplayerButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = new D2Menus::OtherMultiplayer();
+			});
+
+		m_exitButton->AddEventListener(Clicked, [] {
+			cl.bKillGame = true;
+			});
+
+#ifdef _DEBUG
+		m_debugMapButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = new D2Menus::Debug();
+			});
+#endif
+
 		// Disable the battle.net button and the gateway button.
 		// Closed Battle.net is not allowed in OpenD2.
 		m_battleNetButton->Disable();
@@ -85,26 +129,5 @@ namespace D2Panels
 	void Main::Draw()
 	{
 		DrawAllWidgets();
-	}
-
-	/*
-	 *	Tries to advance to the character select screen.
-	 *	If there's no save files present, it advances to the character creation screen instead.
-	 */
-	void D2Client_AdvanceToCharSelect()
-	{
-		int nNumFiles = 0;
-		char** szFileList = engine->FS_ListFilesInDirectory("Save", "*.d2s", &nNumFiles);
-
-		delete cl.pActiveMenu;
-		if (nNumFiles <= 0)
-		{
-			cl.pActiveMenu = new D2Menus::CharCreate();
-		}
-		else
-		{
-			cl.pActiveMenu = new D2Menus::CharSelect(szFileList, nNumFiles);
-			engine->FS_FreeFileList(szFileList, nNumFiles);
-		}
 	}
 }

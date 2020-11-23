@@ -8,6 +8,8 @@ namespace D2Menus
 	 */
 	Main::Main() : D2Menu()
 	{
+		m_visiblePanels = nullptr;
+
 		IGraphicsReference* flameTexLeft = engine->graphics->CreateReference(
 			"data\\global\\ui\\FrontEnd\\D2LogoFireLeft.dc6",
 			UsagePolicy_Permanent
@@ -69,7 +71,14 @@ namespace D2Menus
 	Main::~Main()
 	{
 		// We don't kill the game select background, because we might need it again later
+		engine->renderer->Remove(backgroundObject);
+		engine->renderer->Remove(flameLeft);
+		engine->renderer->Remove(flameRight);
+		engine->renderer->Remove(blackLeft);
+		engine->renderer->Remove(blackRight);
 		delete pMainPanel;
+		pMainPanel = nullptr;
+		m_visiblePanels = nullptr;
 	}
 
 	/*

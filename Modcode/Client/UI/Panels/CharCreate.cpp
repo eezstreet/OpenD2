@@ -28,6 +28,11 @@ namespace D2Panels
 		pCancelButton->AttachIdentifier("cc_cancel");
 		pOKButton->AttachIdentifier("cc_ok");
 
+		pCancelButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = new D2Menus::CharSelect();
+			});
+
 		pOKButton->Disable();
 	}
 

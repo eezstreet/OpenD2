@@ -8,7 +8,7 @@ namespace D2Menus
 	private:
 		char16_t* szCopyrightText;
 		char16_t* szAllRightsReservedText;
-		DWORD m_dwTimeRemaining;
+		int m_timeRemaining;
 
 		IRenderObject* backgroundObject;
 		IRenderObject* flameLeft;

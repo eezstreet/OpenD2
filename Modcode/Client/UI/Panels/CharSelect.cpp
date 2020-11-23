@@ -45,6 +45,10 @@ namespace D2Panels
 		okButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_OK));
 		exitButton->AttachText(engine->TBL_FindStringFromIndex(TBLTEXT_EXIT));
 
+		exitButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = new D2Menus::Main();
+			});
 
 		characterDisplayName->AttachFontResource(cl.font42);
 	}

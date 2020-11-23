@@ -61,7 +61,7 @@ void CharCreateData::OnCharacterSteppedBack(class IRenderObject* caller, void* e
  */
 namespace D2Menus
 {
-	CharCreate::CharCreate(bool bFromCharSelect)
+	CharCreate::CharCreate(bool bFromCharSelect) : D2Menu()
 	{
 		engine->renderer->SetGlobalPalette(PAL_FECHAR);
 		backgroundTexture = engine->renderer->AllocateObject(0);
