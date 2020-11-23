@@ -108,19 +108,7 @@ endif()
 if(BUILD_D2CLIENT)
 	message(STATUS "Including D2Client.dll files")
 
-	file(GLOB_RECURSE D2CLIENT_SRC Modcode/Client/*.h Modcode/Client/*.hpp Modcode/Client/*.c Modcode/Client/*.cpp)
-
-	source_group("Client" FILES ${D2CLIENT_SRC})
-	source_group("Shared" FILES ${SHARED_SRC})
-
-	set(D2CLIENT_SRC ${D2CLIENT_SRC} ${SHARED_SRC})
-
-	add_library(D2Client SHARED ${D2CLIENT_SRC})
-	set_target_properties(D2Client PROPERTIES OUTPUT_NAME D2Client)
-	set_target_properties(D2Client PROPERTIES LINKER_LANGUAGE CXX)
-
-	target_link_libraries(D2Client ${STATIC_LIBRARIES} D2Common)
-	target_compile_definitions(D2Client PUBLIC D2CLIENT)
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/Modcode/Client")
 endif()
 
 

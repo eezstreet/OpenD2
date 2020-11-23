@@ -1,7 +1,7 @@
 #include "D2Client.hpp"
-#include "D2Menu_Trademark.hpp"
-#include "D2Menu_Main.hpp"
-#include "D2Menu_TCPIP.hpp"
+#include "UI/Menus/Trademark.hpp"
+#include "UI/Menus/Main.hpp"
+#include "UI/Menus/TCPIP.hpp"
 
 D2ModuleImportStrc* engine = nullptr;
 D2GameConfigStrc* config = nullptr;
@@ -34,7 +34,7 @@ static void D2Client_InitializeClient(D2GameConfigStrc* pConfig, OpenD2ConfigStr
 
 	// Set first menu to be trademark menu
 	cl.gamestate = GS_TRADEMARK;
-	cl.pActiveMenu = new D2Menu_Trademark();
+	cl.pActiveMenu = new D2Menus::Trademark();
 }
 
 /*
@@ -47,10 +47,10 @@ void D2Client_GoToContextMenu()
 	switch (cl.charSelectContext)
 	{
 		case CSC_SINGLEPLAYER:
-			cl.pActiveMenu = new D2Menu_Main();
+			cl.pActiveMenu = new D2Menus::Main();
 			break;
 		case CSC_TCPIP:
-			cl.pActiveMenu = new D2Menu_TCPIP();
+			cl.pActiveMenu = new D2Menus::TCPIP();
 			break;
 	}
 }
@@ -108,7 +108,7 @@ static void D2Client_HandleInput()
 	for (DWORD i = 0; i < openConfig->dwNumPendingCommands; i++)
 	{
 		D2CommandQueue* pCmd = &openConfig->pCmds[i];
-				// Handle all of the different event types
+		// Handle all of the different event types
 		switch (pCmd->cmdType)
 		{
 			case IN_WINDOW:
@@ -286,13 +286,10 @@ static void D2Client_PingServer()
  */
 static void D2Client_RunClientFrame()
 {
-	cl.dwMS = engine->Milliseconds();
+	const DWORD currentMs = engine->Milliseconds();
+	DWORD deltaMs = currentMs - cl.dwMS;
 
-	// Clear out menu signals
-	if (cl.pActiveMenu != nullptr)
-	{
-		cl.pActiveMenu->RefreshInputFrame();
-	}
+	cl.dwMS = currentMs;
 
 	// Pipe in input events
 	D2Client_HandleInput();
@@ -300,10 +297,10 @@ static void D2Client_RunClientFrame()
 	// Handle menus
 	if (cl.pActiveMenu != nullptr && cl.gamestate != GS_LOADING)
 	{
-		if (cl.pActiveMenu->WaitingSignal())
-		{ // Process any waiting signals from the menus
-			D2Menu::ProcessMenuSignals(cl.pActiveMenu);
-		}
+		// Tick on the current menu.
+		cl.pActiveMenu->Tick(deltaMs);
+
+		// Draw the active menu.
 		if (cl.pActiveMenu != nullptr)
 		{	// it can become null between now and then
 			cl.pActiveMenu->Draw();

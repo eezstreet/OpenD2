@@ -570,6 +570,24 @@ struct D2Seed
 	DWORD dwHiSeed;
 };
 
+/**
+ *	Game modes.
+ */
+enum OpenD2GameModes
+{
+	Menu, // In main menu (default)
+	SinglePlayer, // In singleplayer
+	MapPreviewer, //Unknown2, -- hijacked
+	Unknown3,
+	Unknown4,
+	Unknown5,
+	MultiplayerDirectClient, // TCP/IP multiplayer client
+	Unknown7,
+	Unknown8,
+	Unknown9,
+	MultiplayerDirectServer, // TCP/IP multiplayer host
+};
+
 /*
  *	The structure which contains OpenD2-specific data
  *	@author	eezstreet
@@ -589,6 +607,7 @@ struct OpenD2ConfigStrc
 	DWORD			dwNumPendingCommands;
 	DWORD			dwAudioDevice;
 	DWORD			dwAudioChannels;
+	OpenD2GameModes currentGameMode;
 };
 
 /**
@@ -949,7 +968,7 @@ public:
 		{
 			if (m_bound[i] != nullptr)
 			{
-				m_bound[i](args);
+				m_bound[i](args...);
 			}
 		}
 	}

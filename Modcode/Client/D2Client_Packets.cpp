@@ -1,5 +1,5 @@
 #include "D2Client.hpp"
-#include "D2Menu_LoadError.hpp"
+#include "UI/Menus/LoadError.hpp"
 
 /*
  *	This file is responsible for handling all of the behavior in response to a received packet.
@@ -172,7 +172,7 @@ namespace ClientPacket
 		cl.bLocalServer = false;
 		cl.gamestate = GS_MAINMENU;
 		delete cl.pActiveMenu;
-		cl.pActiveMenu = new D2Menu_LoadError(gwaTBLErrorEntries[wResponse]);
+		cl.pActiveMenu = new D2Menus::LoadError(gwaTBLErrorEntries[wResponse]);
 		engine->NET_Disconnect();
 	}
 
