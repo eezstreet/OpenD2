@@ -2,6 +2,9 @@
 #include "UI/Menus/Trademark.hpp"
 #include "UI/Menus/Main.hpp"
 #include "UI/Menus/TCPIP.hpp"
+#ifdef _DEBUG
+#include "D2ClientDebug.hpp"
+#endif
 
 D2ModuleImportStrc* engine = nullptr;
 D2GameConfigStrc* config = nullptr;
@@ -226,6 +229,12 @@ static void D2Client_LoadData()
 	else if (cl.nLoadState == 3)
 	{	// START HERE if in an inter-act loading.
 		// Create the level
+#ifdef _DEBUG
+		if (openConfig->currentGameMode == OpenD2GameModes::MapPreviewer)
+		{
+			Debug::LoadWorld();
+		}
+#endif
 		cl.nLoadState++;
 	}
 	else if (cl.nLoadState == 4)

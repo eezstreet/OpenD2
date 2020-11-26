@@ -1,6 +1,7 @@
 #include "Debug.hpp"
 #include "../D2Menu.hpp"
 #include "../Menus/Main.hpp"
+#include "../Menus/Loading.hpp"
 
 #define MAIN_BUTTON_DC6			"data\\global\\ui\\FrontEnd\\3WideButtonBlank.dc6"
 
@@ -19,6 +20,14 @@ namespace D2Panels
 		m_exitButton->AddEventListener(Clicked, [] {
 			delete cl.pActiveMenu;
 			cl.pActiveMenu = new D2Menus::Main();
+			});
+		m_loadEncampmentButton->AddEventListener(Clicked, [] {
+			delete cl.pActiveMenu;
+			cl.pActiveMenu = nullptr;
+			cl.pLoadingMenu = new D2Menus::Loading();
+			cl.gamestate = GS_LOADING;
+			cl.nLoadState = 0;
+			openConfig->currentGameMode = OpenD2GameModes::MapPreviewer;
 			});
 	}
 
