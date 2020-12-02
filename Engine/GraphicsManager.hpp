@@ -11,17 +11,10 @@ typedef void* (*AnimTextureAllocCallback)(unsigned int directionWidth, unsigned 
 typedef void (*AnimTextureDecodeCallback)(void* pixels, void* extraData, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH);
 
 /**
- *	GraphicsLRU is responsible for keeping track of temporary graphics.
- */
-class GraphicsLRU
-{
-private:
-	
-public:
-};
-
-/**
  *	IGraphicsReference is just a generic interface for handling various graphic formats in D2.
+ *	FIXME: There's a lot of methods here that are only used for specific cases.
+ *	This leads to a lot of empty stubs, but the advantage is that we aren't using potentially expensive RTTI.
+ *	Is there maybe a better way that we can organize it?
  */
 class IGraphicsReference
 {
@@ -277,19 +270,28 @@ public:
 class DT1Reference : public IGraphicsReference
 {
 private:
+	handle dt1Handle;
 	char filePath[MAX_D2PATH];
-
+	bool bLoaded = false;
 public:
 	DT1Reference(const char* fileName, GraphicsUsagePolicy usagePolicy);
+	// not needed?
 	virtual size_t GetTotalSizeInBytes(int32_t frame);
+	// not needed?
 	virtual size_t GetNumberOfFrames();
+	// not needed?
 	virtual void GetGraphicsData(void** pixels, int32_t frame, 
 		 uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY,
 		int directionNumber = -1);
+	// this one is needed
 	virtual void GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height);
+	// this one is needed
 	virtual void IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback);
+	// not needed?
 	virtual void GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int directionNumber = -1);
+
 	virtual void Deallocate();
+	virtual bool AreGraphicsLoaded(int direction = -1) override { return bLoaded; }
 };
 
 /**

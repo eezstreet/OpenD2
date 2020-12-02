@@ -31,6 +31,7 @@ protected:
 		RO_Static,
 		RO_Animated,
 		RO_Text,
+		RO_Tile,
 		RO_Token,
 	} objectType;
 
@@ -81,6 +82,13 @@ protected:
 			uint16_t frameRate;
 			char armorType[COMP_MAX][4];
 		} tokenData;
+
+		struct
+		{
+			IGraphicsReference* tileReference;
+			int tileIndex;
+			int layer;
+		} tileData;
 	} data;
 
 public:
@@ -106,6 +114,7 @@ public:
 	virtual void AttachAnimationResource(class IGraphicsReference* handle, bool bResetFrame);
 	virtual void AttachTokenResource(class ITokenReference* handle);
 	virtual void AttachFontResource(class IGraphicsReference* handle);
+	virtual void AttachTileResource(class IGraphicsReference* handle, int tileIndex, int layer);
 
 	virtual void SetFramerate(int framerate);
 	virtual void SetDrawMode(int drawMode);

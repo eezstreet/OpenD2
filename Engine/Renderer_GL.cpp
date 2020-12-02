@@ -587,6 +587,50 @@ void GLRenderObject::AttachFontResource(IGraphicsReference* handle)
 	}
 }
 
+void GLRenderObject::AttachTileResource(IGraphicsReference* handle, int tileIndex, int layer)
+{
+	if (!handle)
+	{
+		return;
+	}
+
+	objectType = RO_Tile;
+	data.tileData = {
+		handle,
+		tileIndex,
+		layer
+	};
+
+	if (handle->AreGraphicsLoaded())
+	{
+		texture = (unsigned int)handle->GetLoadedGraphicsData();
+	}
+	else
+	{
+		uint32_t width, height;
+		handle->GetGraphicsInfo(true, 0, -1, &width, &height);
+
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		handle->IterateFrames(true, 0, -1,
+			[](void* pixels, int32_t frameNum, int32_t frameX, int32_t frameY, int32_t frameW, int32_t frameH) {
+				glTexSubImage2D(GL_TEXTURE_2D, 0, frameX, frameY, frameW, frameH, GL_RED,
+					GL_UNSIGNED_BYTE, pixels);
+			});
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+		handle->SetLoadedGraphicsData((void*)texture);
+	}
+}
+
 void GLRenderObject::SetPalshift(BYTE palette)
 {
 	

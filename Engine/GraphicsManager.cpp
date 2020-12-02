@@ -1,6 +1,7 @@
 #include "GraphicsManager.hpp"
 #include "COF.hpp"
 #include "DC6.hpp"
+#include "DT1.hpp"
 #include "Logging.hpp"
 #include "FileSystem.hpp"
 #include "Palette.hpp"
@@ -438,38 +439,101 @@ void DC6Reference::Deallocate()
 DT1Reference::DT1Reference(const char* fileName, GraphicsUsagePolicy usagePolicy)
 	: IGraphicsReference(usagePolicy)
 {
-	D2Lib::strncpyz(filePath, fileName, sizeof(filePath));
+	dt1Handle = DT1::LoadDT1(fileName);
+	D2Lib::strncpyz(filePath, fileName, MAX_D2PATH);
 }
 
 size_t DT1Reference::GetTotalSizeInBytes(int32_t frame)
 {
-	return 0;
+	return 0; // FIXME?
 }
 
 size_t DT1Reference::GetNumberOfFrames()
 {
-	return 0;
+	return DT1::GetNumBlocks(dt1Handle);
 }
 
 void DT1Reference::GetGraphicsData(void** pixels, int32_t frame,
 	uint32_t* width, uint32_t* height, int32_t* offsetX, int32_t* offsetY, int direction)
 {
-
+	// not needed
 }
 
 void DT1Reference::GetGraphicsInfo(bool bAtlassing, int32_t start, int32_t end, uint32_t* width, uint32_t* height)
 {
+	size_t numBlocks = GetNumberOfFrames();
+	uint32_t widthTemp = 0;
+	uint32_t heightTemp = 0;
 
+	if (end < 0 || end >= numBlocks)
+	{ // bounds-check
+		end = numBlocks - 1;
+	}
+	if (start < 0 || start > numBlocks)
+	{ // bound-check
+		start = 0;
+	}
+	if (start > end)
+	{	// flip em
+		int32_t temp = start;
+		start = end;
+		end = temp;
+	}
+
+	for (int32_t i = start; i <= end; i++)
+	{
+		const DT1File::DT1Block* block = DT1::GetBlock(dt1Handle, i);
+		widthTemp += block->sizeX;
+		if (block->sizeY > heightTemp)
+		{
+			heightTemp = block->sizeY;
+		}
+	}
+
+	if (width)
+	{
+		*width = widthTemp;
+	}
+
+	if (height)
+	{
+		*height = heightTemp;
+	}
 }
 
 void DT1Reference::IterateFrames(bool bAtlassing, int32_t start, int32_t end, AtlassingCallback callback)
 {
+	size_t numBlocks = GetNumberOfFrames();
 
+	// do bounds checking and all that
+	if (end < 0 || end >= numBlocks)
+	{
+		end = numBlocks - 1;
+	}
+	if (start < 0 || start > numBlocks)
+	{
+		start = 0;
+	}
+	if (start > end)
+	{
+		int32_t temp = start;
+		start = end;
+		end = temp;
+	}
+
+	// pretty easy, get each block and go
+	for (int32_t i = start; i < end; i++)
+	{
+		uint32_t width, height;
+		int32_t x, y;
+		void* pix = DT1::DecodeDT1Block(dt1Handle, i, width, height, x, y);
+		callback(pix, i, x, y, width, height);
+	}
 }
 
 void DT1Reference::GetAtlasInfo(int32_t frame, uint32_t* x, uint32_t* y, uint32_t* totalWidth, uint32_t* totalHeight, int direction)
 {
-
+	// not needed
 }
 
 void DT1Reference::Deallocate()

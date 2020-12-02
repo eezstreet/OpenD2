@@ -944,6 +944,16 @@ namespace D2Lib
 		}
 		return b;
 	}
+
+	template <typename T>
+	T abs(T a)
+	{
+		if (a < (T)0)
+		{
+			return -a;
+		}
+		return a;
+	}
 };
 
 #define MAX_BOUND_TO_DELEGATELIST	16
