@@ -281,7 +281,6 @@ namespace FS
 	size_t Open(const char* filename, fs_handle* f, OpenD2FileModes mode, bool bBinary)
 	{
 		char path[MAX_D2PATH_ABSOLUTE]{ 0 };
-		char folder[MAX_D2PATH]{ 0 };
 		char filepathBuffer[MAX_D2PATH_ABSOLUTE]{ 0 };
 		const char* szModeStr = ModeStr(mode, bBinary);
 		fs_handle outHandle = 0;
@@ -561,10 +560,11 @@ namespace FS
 
 		SanitizeFilePath(szFileName);
 
+		size_t dwFileNameLen = strlen(szFileName);
 		for (int i = FS_MAXPATH - 1; i >= 0; i--)	// go in reverse since we're reading
 		{
 			D2Lib::strncpyz(szBuffer, pszPaths[i], dwBufferLen);
-			strncat(szBuffer, szFileName, strlen(szFileName));
+			strncat(szBuffer, szFileName, dwFileNameLen);
 			f = fopen(szBuffer, "r");
 			if (f != nullptr)
 			{	// at this point, szBuffer will point to the correct file path

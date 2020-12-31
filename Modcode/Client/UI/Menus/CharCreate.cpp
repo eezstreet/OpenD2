@@ -108,7 +108,6 @@ namespace D2Menus
 		for (int i = 0; i < D2CLASS_MAX; i++)
 		{
 			char szPath[MAX_D2PATH]{ 0 };
-			char szHandle[32]{ 0 };
 
 			// flag special animations that need to be done
 			switch (i) {

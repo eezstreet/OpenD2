@@ -118,7 +118,7 @@ namespace DCC
 			return true;
 		}
 
-		if ((*dest) & (1 << bitsNumber - 1))
+		if ((*dest) & (1 << (bitsNumber - 1)))
 		{
 			(*dest) |= ~((1 << bitsNumber) - 1);
 		}
@@ -814,7 +814,6 @@ namespace DCC
 		DCCCell* bufferCell, *cell;
 		DWORD pix;
 		int numCell, numBit, cellX, cellY, cellIdx;
-		char msg[2048];
 		Bitmap* frameBitmap = new Bitmap(dir->nWidth, dir->nHeight);
 
 		for (int c = 0; c < dir->nNumCellsW * dir->nNumCellsH; c++)
