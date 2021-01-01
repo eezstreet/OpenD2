@@ -657,6 +657,7 @@ namespace DCC
 					auto currentCell = currentCellX + (currentCellY * bufferW);
 					if (currentCell >= (bufferW * bufferH))
 					{
+						delete[] cellBuffer;
 						return; // catchme
 					}
 
