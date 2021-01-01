@@ -38,7 +38,7 @@ namespace DCC
 			return;
 		}
 
-		file->pFileBytes = (BYTE*)malloc(file->dwFileSize);
+		file->pFileBytes = new BYTE[file->dwFileSize];
 		if (file->pFileBytes == nullptr)
 		{
 			FS::CloseFile(f);
@@ -273,7 +273,7 @@ namespace DCC
 			size = animation->directions[direction].frames[f].dwOptionalBytes;
 			if (size)
 			{
-				animation->directions[direction].frames[f].pOptionalByteData = (BYTE*)malloc(size);
+				animation->directions[direction].frames[f].pOptionalByteData = new BYTE[size];
 				if (animation->directions[direction].frames[f].pOptionalByteData == nullptr)
 				{
 					return;
@@ -281,6 +281,7 @@ namespace DCC
 
 				if (!ReadBytes(bs, size, animation->directions[direction].frames[f].pOptionalByteData))
 				{
+					delete[] animation->directions[direction].frames[f].pOptionalByteData;
 					return;
 				}
 			}
@@ -398,7 +399,7 @@ namespace DCC
 	{
 		DCCDirection* dir = &animation->directions[direction];
 		DCCCell* cell;
-		int bufferW, bufferH, tmp, numCellsW, numCellsH, numCells, size, x0, y0;
+		int bufferW, bufferH, tmp, numCellsW, numCellsH, size, x0, y0;
 		int *cellW, * cellH;
 
 		bufferW = dir->nWidth;
@@ -410,29 +411,25 @@ namespace DCC
 		tmp = bufferH - 1;
 		numCellsH = 1 + (tmp / 4);
 
-		numCells = numCellsW * numCellsH;
-		size = numCells * sizeof(DCCCell);
-		dir->CellBuffer = (DCCCell*)malloc(size);
+		dir->CellBuffer = new DCCCell[numCellsW * numCellsH];
 		if (dir->CellBuffer == nullptr)
 		{
 			return;
 		}
 
-		memset(dir->CellBuffer, 0, size);
-		size = numCellsW * sizeof(int);
-		cellW = (int*)malloc(size);
+		memset(dir->CellBuffer, 0, (numCellsW * numCellsH) * sizeof(DCCCell));
+		cellW = new int[numCellsW];
 		if (cellW == nullptr)
 		{
-			free(dir->CellBuffer);
+			delete dir->CellBuffer;
 			return;
 		}
 
-		size = numCellsH * sizeof(int);
-		cellH = (int*)malloc(size);
+		cellH = new int[numCellsH];
 		if (cellH == nullptr)
 		{
-			free(dir->CellBuffer);
-			free(cellW);
+			delete[] dir->CellBuffer;
+			delete[] cellW;
 		}
 
 		if (numCellsW == 1)
@@ -482,8 +479,8 @@ namespace DCC
 			y0 += 4;
 		}
 
-		free(cellW);
-		free(cellH);
+		delete[] cellW;
+		delete[] cellH;
 	}
 
 	static void PrepareFrameCells(DCCFile* animation, int direction, int f)
@@ -491,7 +488,7 @@ namespace DCC
 		DCCDirection* dir = &animation->directions[direction];
 		DCCFrame* frame = &dir->frames[f];
 		DCCCell* cell = nullptr;
-		int frameW, frameH, w, h, tmp, numCellsW, numCellsH, numCells, size, x0, y0;
+		int frameW, frameH, w, h, tmp, numCellsW, numCellsH, x0, y0;
 		int* cellW, *cellH;
 
 		frameW = frame->nBoxW;
@@ -527,27 +524,23 @@ namespace DCC
 			}
 		}
 
-		numCells = numCellsW * numCellsH;
-		size = numCells * sizeof(DCCCell);
-		frame->cells = (DCCCell*)malloc(size);
+		frame->cells = new DCCCell[numCellsW * numCellsH];
 		if (frame->cells == nullptr)
 		{
 			return;
 		}
 
-		memset(frame->cells, 0, size);
-		size = numCellsW * sizeof(int);
-		cellW = (int*)malloc(size);
+		memset(frame->cells, 0, (numCellsW * numCellsH) * sizeof(DCCCell));
+		cellW = new int[numCellsW];
 		if (cellW == nullptr)
 		{
 			return;
 		}
 
-		size = numCellsH * sizeof(int);
-		cellH = (int*)malloc(size);
+		cellH = new int[numCellsH];
 		if (cellH == nullptr)
 		{
-			free(cellW);
+			delete[] cellW;
 			return;
 		}
 
@@ -599,8 +592,8 @@ namespace DCC
 			y0 += cell->h;
 		}
 
-		free(cellW);
-		free(cellH);
+		delete[] cellW;
+		delete[] cellH;
 	}
 
 	static const int gnNumPixTable[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
@@ -613,16 +606,15 @@ namespace DCC
 		int currentIdx;
 		bool nextCell = false;
 		DCCDirection* dir = &animation->directions[direction];
-		size_t size = DCC_MAX_PB_ENTRY * sizeof(DCCPixelBufferEntry);
 		DCCPixelBufferEntry* oldEntry, *newEntry;
 		int pbIdx = -1;
-		dir->pb = (DCCPixelBuffer)malloc(size);
+		dir->pb = new DCCPixelBufferEntry[DCC_MAX_PB_ENTRY];
 		if (dir->pb == nullptr)
 		{
 			return;
 		}
 
-		memset(dir->pb, 0, size);
+		memset(dir->pb, 0, DCC_MAX_PB_ENTRY * sizeof(DCCPixelBufferEntry));
 		for (int i = 0; i < DCC_MAX_PB_ENTRY; i++)
 		{
 			dir->pb[i].frame = -1;
@@ -638,16 +630,14 @@ namespace DCC
 
 		int bufferW = dir->nNumCellsW;
 		int bufferH = dir->nNumCellsH;
-		int totalCells = bufferW * bufferH;
-		size = totalCells * sizeof(DCCPixelBuffer);
-		DCCPixelBuffer* cellBuffer = (DCCPixelBuffer*)malloc(size);
+		DCCPixelBuffer* cellBuffer = new DCCPixelBuffer[bufferW * bufferH];
 		if (cellBuffer == nullptr)
 		{
-			free(dir->pb);
+			delete[] dir->pb;
 			return;
 		}
 
-		memset(cellBuffer, 0, size);
+		memset(cellBuffer, 0, (bufferW * bufferH) * sizeof(DCCPixelBuffer));
 		for (int f = 0; f < animation->header.dwFramesPerDirection; f++)
 		{
 			PrepareFrameCells(animation, direction, f);
@@ -665,7 +655,7 @@ namespace DCC
 				{
 					auto currentCellX = cell0X + x;
 					auto currentCell = currentCellX + (currentCellY * bufferW);
-					if (currentCell >= totalCells)
+					if (currentCell >= (bufferW * bufferH))
 					{
 						return; // catchme
 					}
@@ -760,7 +750,7 @@ namespace DCC
 						pbIdx++;
 						if (pbIdx >= DCC_MAX_PB_ENTRY)
 						{
-							free(cellBuffer);
+							delete[] cellBuffer;
 							return;
 						}
 
@@ -803,7 +793,7 @@ namespace DCC
 		}
 
 		dir->nNumPixelBufferEntries = pbIdx + 1;
-		free(cellBuffer);
+		delete[] cellBuffer;
 	}
 
 	static void MakeFrames(DCCFile* dcc, int direction, bool minimize, DCCDirectionFrameDecodeCallback decoder)
@@ -985,7 +975,7 @@ namespace DCC
 
 		if (dccDir->pb != nullptr)
 		{
-			free(dccDir->pb);
+			delete[] dccDir->pb;
 			dccDir->pb = nullptr;
 		}
 
