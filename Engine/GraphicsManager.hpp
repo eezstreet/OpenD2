@@ -53,7 +53,7 @@ public:
 	 */
 	~IGraphicsReference()
 	{
-		delete this;
+		//delete this;
 	}
 
 	/**

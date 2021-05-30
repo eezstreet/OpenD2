@@ -1435,6 +1435,7 @@ void Renderer_GL::Present()
 	//clear color and depth buffer 
 	glViewport(0, 0, 800, 600);
 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	glEnable(GL_BLEND);
