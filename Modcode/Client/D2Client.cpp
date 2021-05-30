@@ -149,6 +149,15 @@ static void D2Client_HandleInput()
 
 			case IN_KEYUP:
 				// FIXME: handle binds also
+#ifdef _DEBUG
+				if (openConfig->currentGameMode == OpenD2GameModes::MapPreviewer)
+				{
+					if (Debug::HandleKeyInput(pCmd->cmdData.button.buttonID))
+					{
+						break;
+					}
+				}
+#endif
 				if (cl.pActiveMenu != nullptr)
 				{
 					cl.pActiveMenu->HandleKeyUp(pCmd->cmdData.button.buttonID);
@@ -319,6 +328,12 @@ static void D2Client_RunClientFrame()
 	{
 		cl.pLoadingMenu->Draw();
 	}
+#ifdef _DEBUG
+	if (openConfig->currentGameMode == OpenD2GameModes::MapPreviewer)
+	{
+		Debug::DrawWorld();
+	}
+#endif
 
 	engine->renderer->Present();
 

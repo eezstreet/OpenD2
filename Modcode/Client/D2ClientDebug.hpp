@@ -3,5 +3,8 @@
 namespace Debug
 {
 	void LoadWorld();
+	void DrawWorld();
+
+	bool HandleKeyInput(int keyNum);
 }
 #endif

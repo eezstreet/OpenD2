@@ -570,6 +570,42 @@ struct D2Seed
 	DWORD dwHiSeed;
 };
 
+
+/*
+ * DS1 related stuff
+ */
+struct DS1Cell
+{
+	BYTE prop1;
+	BYTE prop2;
+	BYTE prop3;
+	BYTE prop4;
+	BYTE orientation; // only present on wall tiles
+	DWORD tileIndex;
+	BYTE flags;
+};
+
+struct DS1Object
+{
+	struct
+	{
+		DWORD x, y, action, flags;
+	} paths[100];
+	DWORD dwType;
+	DWORD dwId;
+	DWORD dwX;
+	DWORD dwY;
+	DWORD dwFlags;
+	DWORD dwPathNumber;
+};
+
+enum DS1CellType
+{
+	DS1Cell_Wall,
+	DS1Cell_Floor,
+	DS1Cell_Shadow,
+};
+
 /**
  *	Game modes.
  */
@@ -716,6 +752,13 @@ public:
 	 *	Clears the loaded data of a graphics reference
 	 */
 	virtual void DeleteLoadedGraphicsData(void* loadedData, class IGraphicsReference* ref) = 0;
+
+	/**
+	 *	The following are for drawing quick and dirty primitives.
+	 *	Only use them for editing/debugging purposes.
+	 */
+	virtual void DrawRectangle(float x, float y, float w, float h, float strokeWidth, float* strokeColor, float* fillColor) = 0;
+	virtual void DrawLine(float x1, float x2, float y1, float y2, float strokeWidth, float* strokeColor) = 0;
 };
 
 /**
@@ -766,7 +809,6 @@ public:
 	virtual void SetTokenMode(int newMode) = 0;
 	virtual void SetTokenArmorLevel(int component, const char* armorLevel) = 0;
 	virtual void SetTokenHitClass(int hitclass) = 0;
-
 };
 
 //////////////////////////////////////////////////
@@ -843,6 +885,13 @@ struct D2ModuleImportStrc
 	void			(*S_SetMasterVolume)(float volume);
 	void			(*S_SetMusicVolume)(float volume);
 	void			(*S_SetSoundVolume)(float volume);
+
+	// DS1 calls
+	handle			(*DS1_Load)(const char* path);
+	void			(*DS1_GetSize)(handle ds1, int32_t& width, int32_t& height);
+	DWORD			(*DS1_GetObjectCount)(handle ds1);
+	DS1Cell*		(*DS1_GetCellAt)(handle ds1, uint32_t x, uint32_t y, const DS1CellType& type);
+	const DS1Object&(*DS1_GetObject)(handle ds1, int32_t which);
 };
 
 struct D2ModuleExportStrc
@@ -950,7 +999,7 @@ namespace D2Lib
 	{
 		if (a < (T)0)
 		{
-			return -a;
+			return (T)-a;
 		}
 		return a;
 	}

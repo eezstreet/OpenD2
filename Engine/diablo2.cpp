@@ -1,6 +1,7 @@
 #include "Diablo2.hpp"
 #include "Audio.hpp"
 #include "COF.hpp"
+#include "DS1.hpp"
 #include "FileSystem.hpp"
 #include "GraphicsManager.hpp"
 #include "INI.hpp"
@@ -146,7 +147,13 @@ static D2ModuleImportStrc exports = {
 	Audio::ResumeAudio,
 	Audio::SetMasterVolume,
 	Audio::SetMusicVolume,
-	Audio::SetSoundVolume
+	Audio::SetSoundVolume,
+
+	DS1::LoadDS1,
+	DS1::GetSize,
+	DS1::GetObjectCount,
+	DS1::GetCellAt,
+	DS1::GetObject,
 };
 
 static D2ModuleExportStrc* imports[MODULE_MAX]{ 0 };

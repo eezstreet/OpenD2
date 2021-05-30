@@ -783,7 +783,11 @@ IGraphicsReference* ITokenReference::GetTokenGraphic(unsigned int component, uns
 		}
 	}
 
-	Log_ErrorAssertReturn(reference != nullptr, reference);
+	if (reference == nullptr)
+	{
+		return nullptr;
+	}
+	//Log_ErrorAssertReturn(reference != nullptr, reference);
 
 	m_cachedGraphicsReferences[ref] = reference;
 	return reference;
@@ -819,7 +823,7 @@ bool ITokenReference::HasComponentForMode(unsigned int component, unsigned int h
 const char* ITokenReference::GetHitclassName(unsigned int hitclass)
 {
 	static const char* HitclassNames[WC_MAX] = {
-		"XXX", "HTH", "BOW", "1HS", "1HT", "STF", "2HS", "2HT", "XBW",
+		"HTH", "HTH", "BOW", "1HS", "1HT", "STF", "2HS", "2HT", "XBW",
 		"1JS", "1JT", "1SS", "1ST", "HT1", "HT2"
 	};
 

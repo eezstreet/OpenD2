@@ -24,6 +24,76 @@ namespace DS1
 		loadedDS1Files.Insert(returnValue, path, new DS1File(path));
 		return returnValue;
 	}
+
+	void GetSize(handle ds1, int32_t& width, int32_t& height)
+	{
+		if (ds1 == INVALID_HANDLE)
+		{
+			return;
+		}
+
+		DS1File* ds1File = loadedDS1Files[ds1];
+		if(ds1File == nullptr)
+		{
+			return;
+		}
+
+		width = ds1File->fileHeader.dwWidth;
+		height = ds1File->fileHeader.dwHeight;
+	}
+
+	DWORD GetObjectCount(handle ds1)
+	{
+		if (ds1 == INVALID_HANDLE)
+		{
+			return 0;
+		}
+
+		DS1File* ds1File = loadedDS1Files[ds1];
+		if (ds1File == nullptr)
+		{
+			return 0;
+		}
+
+		return ds1File->objectHeader.dwNumObjects;
+	}
+
+	DS1Cell* GetCellAt(handle ds1, uint32_t x, uint32_t y, const DS1CellType& type)
+	{
+		if (ds1 == INVALID_HANDLE)
+		{
+			return nullptr;
+		}
+
+		DS1File* ds1File = loadedDS1Files[ds1];
+		if (ds1File == nullptr)
+		{
+			return nullptr;
+		}
+
+		if (x >= ds1File->fileHeader.dwWidth || y >= ds1File->fileHeader.dwHeight)
+		{
+			return nullptr; // out of bounds access
+		}
+
+		switch (type)
+		{
+			case DS1Cell_Floor:
+				return &ds1File->pFloorCells[(y * ds1File->fileHeader.dwWidth) + x];
+			case DS1Cell_Shadow:
+				return &ds1File->pShadowCells[(y * ds1File->fileHeader.dwWidth) + x];
+			case DS1Cell_Wall:
+				return &ds1File->pWallCells[(y * ds1File->fileHeader.dwWidth) + x];
+		}
+
+		return nullptr;
+	}
+
+	const DS1Object& GetObject(handle ds1, int32_t which)
+	{
+		DS1File* ds1File = loadedDS1Files[ds1];
+		return ds1File->objects[which];
+	}
 }
 
 BYTE directionLookup[] = {
@@ -172,22 +242,22 @@ DS1File::DS1File(const char* path) :
 	// walls
 	DWORD wallLine = fileHeader.dwWidth * layerHeader.dwWallLayers;
 	DWORD wallLen = wallLine * fileHeader.dwHeight;
-	size_t wallBufferLen = wallLen * sizeof(DS1File::DS1Cell);
-	pWallCells = (DS1File::DS1Cell*)malloc(wallBufferLen);
+	size_t wallBufferLen = wallLen * sizeof(DS1Cell);
+	pWallCells = (DS1Cell*)malloc(wallBufferLen);
 	memset(pWallCells, 0, wallBufferLen);
 
 	// floors
 	DWORD floorLine = fileHeader.dwWidth * layerHeader.dwFloorLayers;
 	DWORD floorLen = floorLine * fileHeader.dwHeight;
-	size_t floorBufferLen = floorLen * sizeof(DS1File::DS1Cell);
-	pFloorCells = (DS1File::DS1Cell*)malloc(floorBufferLen);
+	size_t floorBufferLen = floorLen * sizeof(DS1Cell);
+	pFloorCells = (DS1Cell*)malloc(floorBufferLen);
 	memset(pFloorCells, 0, floorBufferLen);
 
 	// shadow
 	DWORD shadowLine = fileHeader.dwWidth * layerHeader.dwShadowLayers;
 	DWORD shadowLen = shadowLine * fileHeader.dwHeight;
-	size_t shadowBufferLen = shadowLen * sizeof(DS1File::DS1Cell);
-	pShadowCells = (DS1File::DS1Cell*)malloc(shadowBufferLen);
+	size_t shadowBufferLen = shadowLen * sizeof(DS1Cell);
+	pShadowCells = (DS1Cell*)malloc(shadowBufferLen);
 	memset(pShadowCells, 0, shadowBufferLen);
 
 	// tags
@@ -197,11 +267,11 @@ DS1File::DS1File(const char* path) :
 	pTags = (DS1File::DS1Tag*)malloc(tagBufferLen);
 	memset(pTags, 0, tagBufferLen);
 
-	DS1File::DS1Cell* pFloor[MAX_DS1_FLOOR_LAYERS];
-	DS1File::DS1Cell* pShadow[MAX_DS1_SHADOW_LAYERS];
+	DS1Cell* pFloor[MAX_DS1_FLOOR_LAYERS];
+	DS1Cell* pShadow[MAX_DS1_SHADOW_LAYERS];
 	DS1File::DS1Tag* pTag[MAX_DS1_TAG_LAYERS];
-	DS1File::DS1Cell* pOrientation[MAX_DS1_WALL_LAYERS];
-	DS1File::DS1Cell* pWall[MAX_DS1_WALL_LAYERS];
+	DS1Cell* pOrientation[MAX_DS1_WALL_LAYERS];
+	DS1Cell* pWall[MAX_DS1_WALL_LAYERS];
 
 	for (int x = 0; x < MAX_DS1_FLOOR_LAYERS; x++)
 	{

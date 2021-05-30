@@ -56,30 +56,8 @@ struct DS1File
 		DWORD dwNumObjects;			// Number of objects to have in this DS1.
 	};
 
-	struct DS1Object {
-		struct {
-			DWORD x, y, action, flags;
-		} paths[100];
-		DWORD dwType;
-		DWORD dwId;
-		DWORD dwX;
-		DWORD dwY;
-		DWORD dwFlags;
-		DWORD dwPathNumber;
-	};
-
 	struct DS1PathElement {
 		DWORD dwPath;
-	};
-
-	struct DS1Cell {
-		BYTE prop1;
-		BYTE prop2;
-		BYTE prop3;
-		BYTE prop4;
-		BYTE orientation; // only present on wall tiles
-		DWORD tileIndex;
-		BYTE flags;
 	};
 
 	struct DS1Tag {
@@ -118,4 +96,8 @@ struct DS1File
 namespace DS1
 {
 	handle LoadDS1(const char* path);
+	void GetSize(handle ds1, int32_t& width, int32_t& height);
+	DWORD GetObjectCount(handle ds1);
+	DS1Cell* GetCellAt(handle ds1, uint32_t x, uint32_t y, const DS1CellType& type);
+	const DS1Object& GetObject(handle ds1, int32_t which);
 }

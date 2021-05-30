@@ -10,11 +10,10 @@
 #include "Palette.hpp"
 #include "DC6.hpp"
 
-static size_t CurrentPoolSize[RenderPass_NumRenderPasses];
-static size_t NumberDrawnThisFrame[RenderPass_NumRenderPasses];
+static size_t NumberDrawnThisFrame[RenderProgram_NumPrograms];
 static GLRenderObject*** DrawList;
 static GLRenderObject*** NewDrawList;
-static size_t DrawListSize[RenderPass_NumRenderPasses];
+static size_t DrawListSize[RenderProgram_NumPrograms];
 
 // UI phase
 static GLint uniform_ui_texture;
@@ -25,9 +24,15 @@ static GLint uniform_ui_drawPosition;
 static GLint uniform_ui_textureCoords;
 static GLint uniform_ui_colorModulate;
 
+// Rectangle debug
+static GLint uniform_rect_modelViewProjection;
+static GLint uniform_rect_drawPosition;
+static GLint uniform_rect_drawColor;
+
 static unsigned int global_palette = 0;
 
-static unsigned int global_program[RenderPass_NumRenderPasses];
+static unsigned int global_programs[RenderProgram_NumPrograms];
+static unsigned int current_program = RenderProgram_Diffuse;
 static unsigned int global_palette_texture;
 static unsigned int global_palshift_textures[256];
 
@@ -105,7 +110,27 @@ void GLRenderObject::PrerenderDrawMode(int mode)
 
 void GLRenderObject::Render()
 {
-	if (objectType == RO_Token)
+	if (current_program != renderProgram)
+	{
+		glUseProgram(global_programs[renderProgram]);
+		current_program = renderProgram;
+	}
+
+	if (objectType == RO_Primitive)
+	{
+		// Set uniforms ahead of time
+		if (data.primitiveData.type == data.primitiveData.PT_LINE)
+		{
+			glDrawArrays(GL_LINES, 0, 1);
+		}
+		else if (data.primitiveData.type == data.primitiveData.PT_RECTANGLE)
+		{
+			glUniform4fv(uniform_rect_drawColor, 1, data.primitiveData.fillColor);
+			glUniform4fv(uniform_rect_drawPosition, 1, data.primitiveData.position);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+	}
+	else if (objectType == RO_Token)
 	{
 		// Tokens are rendered differently from most other objects because they use multiple components
 		ITokenReference* token = data.tokenData.attachedTokenResource;
@@ -154,7 +179,11 @@ void GLRenderObject::Render()
 			IGraphicsReference* component = token->GetTokenGraphic(i, hitclass, mode, armorType);
 			GLuint texture;
 
-			if (component->AreGraphicsLoaded(direction))
+			if (component == nullptr)
+			{
+				continue;
+			}
+			else if (component->AreGraphicsLoaded(direction))
 			{
 				// they're loaded, just get them
 				texture = (GLuint)component->GetLoadedGraphicsData(direction);
@@ -860,6 +889,68 @@ void GLRenderObject::SetTokenHitClass(int hitclass)
 	}
 }
 
+void GLRenderObject::SetAsRectanglePrimitive(float x, float y, float w, float h, float strokeWidth, float* strokeColor, float* fillColor)
+{
+	objectType = RO_Primitive;
+	data.primitiveData.position[0] = x;
+	data.primitiveData.position[1] = y;
+	data.primitiveData.position[2] = w;
+	data.primitiveData.position[3] = h;
+	if (!fillColor)
+	{
+		data.primitiveData.fillColor[0] = data.primitiveData.fillColor[1] =
+			data.primitiveData.fillColor[2] = data.primitiveData.fillColor[3] = 0.0f;
+	}
+	else
+	{
+		data.primitiveData.fillColor[0] = fillColor[0];
+		data.primitiveData.fillColor[1] = fillColor[1];
+		data.primitiveData.fillColor[2] = fillColor[2];
+		data.primitiveData.fillColor[3] = fillColor[3];
+	}
+	
+	data.primitiveData.strokeWidth = strokeWidth;
+	if (!strokeColor)
+	{
+		data.primitiveData.strokeColor[0] = data.primitiveData.strokeColor[1] =
+			data.primitiveData.strokeColor[2] = data.primitiveData.strokeColor[3] = 0.0f;
+	}
+	else
+	{
+		data.primitiveData.strokeColor[0] = strokeColor[0];
+		data.primitiveData.strokeColor[1] = strokeColor[1];
+		data.primitiveData.strokeColor[2] = strokeColor[2];
+		data.primitiveData.strokeColor[3] = strokeColor[3];
+	}
+	
+	data.primitiveData.type = data.primitiveData.PT_RECTANGLE;
+
+}
+
+void GLRenderObject::SetAsLinePrimitive(float x1, float x2, float y1, float y2, float strokeWidth, float* strokeColor)
+{
+	objectType = RO_Primitive;
+	data.primitiveData.position[0] = x1;
+	data.primitiveData.position[1] = x2;
+	data.primitiveData.position[2] = y1;
+	data.primitiveData.position[3] = y2;
+	data.primitiveData.strokeWidth = strokeWidth;
+	if (!strokeColor)
+	{
+		data.primitiveData.strokeColor[0] = data.primitiveData.strokeColor[1] =
+			data.primitiveData.strokeColor[2] = data.primitiveData.strokeColor[3] = 0.0f;
+	}
+	else
+	{
+		data.primitiveData.strokeColor[0] = strokeColor[0];
+		data.primitiveData.strokeColor[1] = strokeColor[1];
+		data.primitiveData.strokeColor[2] = strokeColor[2];
+		data.primitiveData.strokeColor[3] = strokeColor[3];
+	}
+
+	data.primitiveData.type = data.primitiveData.PT_LINE;
+}
+
 /**
  *	The GLRenderPool is responsible for managing the lifetime of the GLRenderObjects.
  */
@@ -961,7 +1052,7 @@ D2Palettes Renderer_GL::GetGlobalPalette()
 IRenderObject* Renderer_GL::AllocateObject(int stage)
 {
 	GLRenderObject* allocated = pool->Allocate();
-	allocated->renderPass = RenderPass_UI;
+	allocated->renderProgram = RenderProgram_Diffuse;
 	return allocated;
 }
 
@@ -976,11 +1067,10 @@ Renderer_GL::Renderer_GL(D2GameConfigStrc * pConfig, OpenD2ConfigStrc * pOpenCon
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	DrawList = new GLRenderObject**[RenderPass_NumRenderPasses];
-	for (int i = 0; i < RenderPass_NumRenderPasses; i++)
+	DrawList = new GLRenderObject**[RenderProgram_NumPrograms];
+	for (int i = 0; i < RenderProgram_NumPrograms; i++)
 	{
 		DrawListSize[i] = 2048;
-		CurrentPoolSize[i] = sizeof(GLRenderObject) * DrawListSize[i];
 		DrawList[i] = new GLRenderObject*[DrawListSize[i]];
 		NumberDrawnThisFrame[i] = 0;
 	}
@@ -1202,11 +1292,33 @@ void main()                                                                    \
 }                                                                              \
 ";
 
+const char* __drawRectangle_Vertex = "#version 330 core                       \n\
+layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>      \n\
+uniform vec4 DrawPosition;                                                    \n\
+uniform mat4 ModelViewProjection;                                             \n\
+                                                                              \n\
+void main()                                                                   \n\
+{                                                                             \n\
+    vec2 NewPos = vec2((vertex.x * DrawPosition.z) + DrawPosition.x, (vertex.y * DrawPosition.w) + DrawPosition.y);\n\
+    gl_Position = ModelViewProjection * vec4(NewPos.xy, 0.0, 1.0);            \n\
+}                                                                             \n\
+";
+
+const char* __drawRectangle_Frag = "#version 330 core                         \n\
+uniform vec4 Color;                                                           \n\
+out vec4 outputColor;                                                         \n\
+                                                                              \n\
+void main()                                                                   \n\
+{                                                                             \n\
+    outputColor = Color;                                                      \n\
+}                                                                             \n\
+";
+
 void Renderer_GL::InitShaders()
 {
 	// Load the program.
 	// The lambda function gets called when the program hasn't been previously compiled.
-	LoadProgram("pass_ui.gl", global_program[RenderPass_UI], [](unsigned int& program, const char* programFile) {
+	LoadProgram("pass_ui.gl", global_programs[RenderProgram_Diffuse], [](unsigned int& program, const char* programFile) {
 		unsigned int vertexShader, fragmentShader;
 
 		glm::mat4 projMat = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
@@ -1234,11 +1346,36 @@ void Renderer_GL::InitShaders()
 		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, "ModelViewProjection"), 1, false, glm::value_ptr(mvp));
 	});
+
+	LoadProgram("debug_rect.gl", global_programs[RenderProgram_FlatColor], [](unsigned int& program, const char* programFile) {
+		unsigned int vertexShader, fragmentShader;
+
+		glm::mat4 projMat = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
+		glm::mat4 mvp = glm::translate(projMat, glm::vec3(0.375f, 0.375f, 0.0f));
+
+		LoadShaderText(__drawRectangle_Vertex, vertexShader, GL_VERTEX_SHADER);
+		LoadShaderText(__drawRectangle_Frag, fragmentShader, GL_FRAGMENT_SHADER);
+
+		glAttachShader(program, vertexShader);
+		glAttachShader(program, fragmentShader);
+
+		LinkProgram(program, "debugrect");
+
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+
+		SaveProgram(program, programFile);
+
+		uniform_rect_drawColor = glGetUniformLocation(program, "Color");
+		uniform_rect_drawPosition = glGetUniformLocation(program, "DrawPosition");
+		glUseProgram(program);
+		glUniformMatrix4fv(glGetUniformLocation(program, "ModelViewProjection"), 1, false, glm::value_ptr(mvp));
+	});
 }
 
 void Renderer_GL::DeleteShaders()
 {
-	glDeleteProgram(global_program[RenderPass_UI]);
+	glDeleteProgram(global_programs[RenderProgram_Diffuse]);
 }
 
 Renderer_GL::~Renderer_GL()
@@ -1259,22 +1396,38 @@ Renderer_GL::~Renderer_GL()
 
 void Renderer_GL::AddToRenderQueue(class GLRenderObject* Object)
 {
-	if (NumberDrawnThisFrame[Object->renderPass] < DrawListSize[Object->renderPass])
+	if (NumberDrawnThisFrame[Object->renderProgram] < DrawListSize[Object->renderProgram])
 	{
-		DrawList[Object->renderPass][NumberDrawnThisFrame[Object->renderPass]++] = Object;
+		DrawList[Object->renderProgram][NumberDrawnThisFrame[Object->renderProgram]++] = Object;
 	}
 	else
 	{
-		DrawListSize[Object->renderPass] *= 2;
-		NewDrawList[Object->renderPass] = new GLRenderObject*[DrawListSize[Object->renderPass]];
-		for (int i = 0; i < DrawListSize[Object->renderPass] / 2; i++)
+		DrawListSize[Object->renderProgram] *= 2;
+		NewDrawList[Object->renderProgram] = new GLRenderObject*[DrawListSize[Object->renderProgram]];
+		for (int i = 0; i < DrawListSize[Object->renderProgram] / 2; i++)
 		{
-			NewDrawList[Object->renderPass][i] = DrawList[Object->renderPass][i];
+			NewDrawList[Object->renderProgram][i] = DrawList[Object->renderProgram][i];
 		}
-		NewDrawList[Object->renderPass][NumberDrawnThisFrame[Object->renderPass]++] = Object;
-		delete[] DrawList[Object->renderPass];
-		DrawList[Object->renderPass] = NewDrawList[Object->renderPass];
+		NewDrawList[Object->renderProgram][NumberDrawnThisFrame[Object->renderProgram]++] = Object;
+		delete[] DrawList[Object->renderProgram];
+		DrawList[Object->renderProgram] = NewDrawList[Object->renderProgram];
 	}
+}
+
+void Renderer_GL::DrawRectangle(float x, float y, float w, float h, float strokeWidth, float* strokeColor, float* fillColor)
+{
+	GLRenderObject* allocated = pool->Allocate();
+	allocated->renderProgram = RenderProgram_Diffuse;
+	allocated->SetAsRectanglePrimitive(x, y, w, h, strokeWidth, strokeColor, fillColor);
+	AddToRenderQueue(allocated);
+}
+
+void Renderer_GL::DrawLine(float x1, float x2, float y1, float y2, float strokeWidth, float* strokeColor)
+{
+	GLRenderObject* allocated = pool->Allocate();
+	allocated->renderProgram = RenderProgram_Diffuse;
+	allocated->SetAsLinePrimitive(x1, x2, y1, y2, strokeWidth, strokeColor);
+	AddToRenderQueue(allocated);
 }
 
 void Renderer_GL::Present()
@@ -1288,9 +1441,9 @@ void Renderer_GL::Present()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Iterate through the number of drawn things this frame
-	for (int i = 0; i < RenderPass_NumRenderPasses; i++)
+	for (int i = 0; i < RenderProgram_NumPrograms; i++)
 	{
-		glUseProgram(global_program[i]);
+		glUseProgram(global_programs[i]);
 
 		for (size_t j = 0; j < NumberDrawnThisFrame[i]; j++)
 		{
@@ -1308,7 +1461,7 @@ void Renderer_GL::Present()
 
 void Renderer_GL::Clear()
 {
-	for (int i = 0; i < RenderPass_NumRenderPasses; i++)
+	for (int i = 0; i < RenderProgram_NumPrograms; i++)
 	{
 		NumberDrawnThisFrame[i] = 0;
 	}

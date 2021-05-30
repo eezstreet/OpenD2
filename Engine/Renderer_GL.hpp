@@ -2,11 +2,11 @@
 #include "Renderer.hpp"
 #include <GL/glew.h>
 
-enum GLRenderPasses
+enum GLRenderPrograms
 {
-	RenderPass_UI,
-	RenderPass_Text,
-	RenderPass_NumRenderPasses,
+	RenderProgram_Diffuse,
+	RenderProgram_FlatColor,
+	RenderProgram_NumPrograms,
 };
 
 #define MAX_ANIMATION_CALLBACKS 8
@@ -33,6 +33,7 @@ protected:
 		RO_Text,
 		RO_Tile,
 		RO_Token,
+		RO_Primitive,
 	} objectType;
 
 	union
@@ -89,12 +90,26 @@ protected:
 			int tileIndex;
 			int layer;
 		} tileData;
+
+		struct
+		{
+			enum 
+			{
+				PT_RECTANGLE,
+				PT_LINE
+			} type;
+
+			float strokeWidth;
+			float strokeColor[4];
+			float fillColor[4];
+			float position[4];
+		} primitiveData;
 	} data;
 
 public:
 	unsigned int texture;
 
-	GLRenderPasses renderPass;
+	GLRenderPrograms renderProgram;
 
 	GLRenderObject();
 	~GLRenderObject();
@@ -134,6 +149,9 @@ public:
 	virtual void SetTokenMode(int newMode);
 	virtual void SetTokenArmorLevel(int component, const char* armorLevel);
 	virtual void SetTokenHitClass(int hitclass);
+
+	void SetAsRectanglePrimitive(float x, float y, float w, float h, float strokeWidth, float* strokeColor, float* fillColor);
+	void SetAsLinePrimitive(float x1, float x2, float y1, float y2, float strokeWidth, float* strokeColor);
 };
 
 /**
@@ -173,6 +191,7 @@ private:
 	static void DeleteShaders();
 
 	GLRenderPool* pool;
+	GLRenderPool* primitivePool;
 	BYTE defaultPalshift[256];
 
 	unsigned int VAO, VBO;
@@ -190,4 +209,7 @@ public:
 
 	void AddToRenderQueue(class GLRenderObject* Object);
 	virtual void DeleteLoadedGraphicsData(void* loadedData, class IGraphicsReference* ref);
+
+	virtual void DrawRectangle(float x, float y, float w, float h, float strokeWidth, float* strokeColor, float* fillColor);
+	virtual void DrawLine(float x1, float x2, float y1, float y2, float strokeWidth, float* strokeColor);
 };
