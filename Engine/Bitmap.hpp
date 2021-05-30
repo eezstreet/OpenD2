@@ -149,7 +149,7 @@ public:
 
 	unsigned char* operator[](int idx)
 	{
-		GetAtIdx(idx);
+		return GetAtIdx(idx);
 	}
 
 	unsigned char* GetAtCoord(const basicCoord& c)

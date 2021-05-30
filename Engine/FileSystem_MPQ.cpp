@@ -87,6 +87,8 @@ namespace FSMPQ
 		pNew->pArchive = (D2MPQArchive*)malloc(sizeof(D2MPQArchive));
 		if (pNew->pArchive == nullptr)
 		{	// couldn't allocate memory
+			free(pNew->pArchive);
+			free(pNew);
 			Log_ErrorAssertReturn(!"Ran out of memory when adding MPQ search path.", nullptr);
 		}
 

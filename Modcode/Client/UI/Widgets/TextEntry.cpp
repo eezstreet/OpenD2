@@ -17,7 +17,7 @@ namespace D2Widgets
 		m_nCursorPos = 0;
 		m_bOverstrikeMode = false;
 		m_bHasAttachedText = false;
-		memset(szTextBuffer, 0, MAX_TEXTENTRY_LEN);
+		memset(szTextBuffer, 0, MAX_TEXTENTRY_LEN * sizeof(char16_t));
 		m_bSetCoords = false;
 
 		background = engine->renderer->AllocateObject(0);

@@ -49,6 +49,14 @@ public:
 	}
 
 	/**
+	 *	Default virtual destructor for virtual methods, takes a usage policy.
+	 */
+	~IGraphicsReference()
+	{
+		delete this;
+	}
+
+	/**
 	 *	Returns true if the graphics have been fully loaded.
 	 */
 	virtual bool AreGraphicsLoaded(int direction = -1)
@@ -341,6 +349,13 @@ protected:
 	void SetTokenName(const char* newTokenName);
 
 public:
+	/**
+	 *	Default virtual destructor for virtual methods.
+	 */
+	~ITokenReference()
+	{
+		delete this;
+	}
 	virtual D2TokenType GetTokenType() = 0;
 	virtual const char* GetTokenFolder() = 0;
 	virtual void GetFallbackForComponentMode(bool& hasFallback, unsigned int& mode) = 0;
