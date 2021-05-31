@@ -35,6 +35,16 @@ struct D2TxtColumnStrc
 
 // D2Common_Math.cpp
 void Math_Perform(D2MathFunc func, DWORD* pIn, DWORD pOperand);
+uint16_t Seed_Next(uint16_t& seed);
+uint32_t Seed_Next(uint32_t& seed);
+uint64_t Seed_Next(uint64_t& seed);
+int Seed_Range(uint16_t& seed, int min, int max);
+int Seed_Range(uint32_t& seed, int min, int max);
+int Seed_Range(uint64_t& seed, int min, int max);
+int Seed_Range(int& seed, int min, int max);
+
+// DRLG_Main.cpp
+D2COMMONAPI void D2Common_ConstructSingleLevel(int nLevelId, int& seed);
 
 // DataTables.cpp
 void DataTables_Init();

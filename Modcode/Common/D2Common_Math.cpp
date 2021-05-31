@@ -64,3 +64,70 @@ void Math_Perform(D2MathFunc func, DWORD* pIn, DWORD pOperand)
 {
 	MathFunctions[func](pIn, pOperand);
 }
+
+/**
+ *	Gets the next number in the seed sequence.
+ */
+uint16_t Seed_Next(uint16_t& seed)
+{
+	seed ^= seed << 7;
+	seed ^= seed >> 9;
+	seed ^= seed << 8;
+	return seed;
+}
+
+uint32_t Seed_Next(uint32_t& seed)
+{
+	seed ^= seed << 13;
+	seed ^= seed >> 17;
+	seed ^= seed << 5;
+	return seed;
+}
+
+uint64_t Seed_Next(uint64_t& seed)
+{
+	seed ^= seed << 13;
+	seed ^= seed >> 7;
+	seed ^= seed << 17;
+	return seed;
+}
+
+template<typename T>
+int Seed_RangeTemplated(T& seed, int min, int max)
+{
+	uint16_t seeded = Seed_Next(seed);
+	int range = max - min;
+	if (range == 0)
+		range = 1;
+	int randomNum = seeded % range;
+	randomNum += min;
+	if (randomNum > max)
+	{
+		randomNum = max;
+	}
+	else if (randomNum < min)
+	{
+		randomNum = min;
+	}
+	return randomNum;
+}
+
+int Seed_Range(uint16_t& seed, int min, int max)
+{
+	return Seed_RangeTemplated(seed, min, max);
+}
+
+int Seed_Range(uint32_t& seed, int min, int max)
+{
+	return Seed_RangeTemplated(seed, min, max);
+}
+
+int Seed_Range(uint64_t& seed, int min, int max)
+{
+	return Seed_RangeTemplated(seed, min, max);
+}
+
+int Seed_Range(int& seed, int min, int max)
+{
+	return Seed_Range((uint64_t&)seed, min, max);
+}

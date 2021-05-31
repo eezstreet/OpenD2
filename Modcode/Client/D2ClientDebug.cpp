@@ -15,12 +15,15 @@ namespace Debug
 	{
 		char levelName[128];
 		char16_t unicodeLevelName[128];
+		int seed = rand();
 		UnloadCurrentWorld();
 
 		if (currentLevel >= sgptDataTables->nLevelsTxtRecordCount)
 		{
 			currentLevel = 1;
 		}
+
+		D2Common_ConstructSingleLevel(currentLevel, seed);
 
 		if (text == nullptr)
 		{
